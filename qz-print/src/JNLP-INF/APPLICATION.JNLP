@@ -20,9 +20,9 @@
         
         -QZ Industries, LLC
 -->
-<jnlp codebase="." href="qz-print-2_jnlp.jnlp" spec="1.0+">
+<jnlp codebase="." href="qz-print_jnlp.jnlp" spec="1.0+">
         <information>
-		<title>QZ Print Plugin 2</title>
+		<title>QZ Print Plugin</title>
 		<vendor>QZ Industries, LLC</vendor>
                 <homepage href="http://qzindustries.com" />
 	</information>
@@ -32,11 +32,11 @@
 	<resources>
                 <!-- qz-print requires Java 1.5 or higher -->
 		<j2se version="1.5+" />
-		<jar href="qz-print-2.jar" eager="true" download="eager" main="true" />
+		<jar href="qz-print.jar" eager="true" download="eager" main="true" />
 		<!-- <jar href="lib/jssc_qz.jar" eager="false" download="lazy" /> -->
 		<!-- <jar href="lib/pdf-renderer_qz.jar" eager="false" download="lazy" /> -->
 	</resources>
-	<applet-desc name="QZ Print Plugin 2" main-class="qz.PrintApplet" width="1" height="1" />
+	<applet-desc name="QZ Print Plugin" main-class="qz.PrintApplet" width="1" height="1" />
     <!-- 
          Update check value of "background" checks for new jar files in the 
          background, speeding loading time slightly.  If this is causing

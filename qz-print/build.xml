@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Some custom compilation rules to add or override build-impl.xml. -->
 <!-- You may freely change this file. -->
-<project name="qz-print-2" default="default" basedir=".">
-    <description>Builds, tests, and runs the project qz-print-2.</description>
+<project name="qz-print" default="default" basedir=".">
+    <description>Builds, tests, and runs the project qz-print.</description>
     <import file="nbproject/build-impl.xml"/>
     
     <!-- Custom Code Signing -->
@@ -69,7 +69,7 @@
         <!-- <copy file="${basedir}/loading.html" tofile="${basedir}/dist/loading.html" overwrite="true" encoding="UTF-8" /> -->
         
         <!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
-        <copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print-2_jnlp.jnlp" overwrite="true" encoding="UTF-8" />
+        <copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />
 
         <copy file="${basedir}/misc/zpl_sample.txt" tofile="${basedir}/dist/misc/zpl_sample.txt" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/epl_sample.txt" tofile="${basedir}/dist/misc/epl_sample.txt" overwrite="true" encoding="UTF-8" />
@@ -78,14 +78,14 @@
         <copy file="${basedir}/misc/zpl_sample.xml" tofile="${basedir}/dist/misc/zpl_sample.xml" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/pdf_sample.pdf" tofile="${basedir}/dist/misc/pdf_sample.pdf" overwrite="true" encoding="UTF-8" />
 
-        <copy file="${basedir}/css/sample.css" tofile="${basedir}/dist/css/sample.css" overwrite="true" encoding="UTF-8" />
+        <copy file="${basedir}/css/qz-sample.css" tofile="${basedir}/dist/css/qz-sample.css" overwrite="true" encoding="UTF-8" />
 
         <copy file="${basedir}/js/jquery-1.10.2.js" tofile="${basedir}/dist/js/jquery-1.10.2.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/jquery.plugin.html2canvas.js" tofile="${basedir}/dist/js/jquery.plugin.html2canvas.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/html2canvas.js" tofile="${basedir}/dist/js/html2canvas.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/PluginDetect.js" tofile="${basedir}/dist/js/PluginDetect.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/deployJava.js" tofile="${basedir}/dist/js/deployJava.js" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/js/sample.js" tofile="${basedir}/dist/js/sample.js" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/js/qz-sample.js" tofile="${basedir}/dist/js/qz-sample.js" overwrite="true" encoding="UTF-8" />
 
         <!-- <copy file="${basedir}/img/loading_green.gif" tofile="${basedir}/dist/img/loading_green.gif" overwrite="true" encoding="UTF-8" /> -->
         <!-- <copy file="${basedir}/img/loading_red.gif" tofile="${basedir}/dist/img/loading_red.gif" overwrite="true" encoding="UTF-8" /> -->

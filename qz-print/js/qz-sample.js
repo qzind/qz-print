@@ -1,4 +1,4 @@
-/**
+	/**
 * Optionally used to deploy multiple versions of the applet for mixed
 * environments.  Oracle uses document.write(), which puts the applet at the
 * top of the page, bumping all HTML content down.
@@ -13,8 +13,8 @@ deployQZ();
 */
 function deployQZ() {
 	var attributes = {id: "qz", code:'qz.PrintApplet.class', 
-		archive:'qz-print-2.jar', width:1, height:1};
-	var parameters = {jnlp_href: 'qz-print-2_jnlp.jnlp', 
+		archive:'qz-print.jar', width:1, height:1};
+	var parameters = {jnlp_href: 'qz-print_jnlp.jnlp', 
 		cache_option:'plugin', disable_logging:'false', 
 		initial_focus:'false'};
 	if (deployJava.versionCheck("1.7+") == true) {}
@@ -265,8 +265,8 @@ function printEPL() {
 function printESCP() {
 	if (notReady()) { return; }
 	
-	// Append a png in ESCP format with single pixel density
-	qz.appendImage(getPath() + "img/image_sample_bw.png", "ESCP", "single");
+	// Append a png in ESCP format with double pixel density
+	qz.appendImage(getPath() + "img/image_sample_bw.png", "ESCP", "double");
 	
 	// Append the rest of our commands
 	qz.append('\nPrinted using qz-print plugin.\n\n\n\n\n\n');
@@ -549,7 +549,7 @@ function printFile(file) {
 * Not to be used in combination with raw printers.
 * Usage:
 *    qz.appendImage('/path/to/image.png');
-*    qz.printPS();
+*    qz.print();
 ***************************************************************************/ 
 function printImage(scaleImage) {
 	if (notReady()) { return; }
@@ -569,7 +569,7 @@ function printImage(scaleImage) {
 	qz.appendImage(getPath() + "img/image_sample.png");
 	
 	// Tell the applet to print PostScript.
-	qz.printPS();
+	qz.print();
 }
 
 /***************************************************************************
@@ -577,7 +577,7 @@ function printImage(scaleImage) {
 * Not to be used in combination with raw printers.
 * Usage:
 *    qz.appendPDF('/path/to/sample.pdf');
-*    qz.printPS();
+*    qz.print();
 ***************************************************************************/ 
 function printPDF() {
 	if (notReady()) { return; }
@@ -586,7 +586,7 @@ function printPDF() {
 	qz.appendPDF(getPath() + "misc/pdf_sample.pdf");
 	
 	// Tell the applet to print PostScript.
-	qz.printPS();
+	qz.print();
 	
 }
 
@@ -595,7 +595,7 @@ function printPDF() {
 * printer.  Not to be used in combination with raw printers.
 * Usage:
 *    qz.appendHTML('<h1>Hello world!</h1>');
-*    qz.printPS();
+*    qz.print();
 ***************************************************************************/ 
 function printHTML() {
 	if (notReady()) { return; }
@@ -614,7 +614,7 @@ function printHTML() {
 	'<td valign="top">' + colB + '</td>' + 
 	'</tr></table></html>');
 	
-	qz.printPS();
+	qz.print();
 }
 	
 /***************************************************************************
@@ -651,7 +651,7 @@ function printHTML5Div() {
 			qz.setPaperSize("8.5in", "11.0in");  // US Letter
 			qz.setAutoSize(true);
 			qz.appendImage($("canvas")[0].toDataURL('image/png'));
-			qz.printPS();
+			qz.print();
 		},
 		width: $('#wrapper').width() + 40,
 		height: $('#wrapper').height() + 40
@@ -666,7 +666,7 @@ function printHTML5Div() {
 * Usage: (identical to appendImage(), but uses html2canvas for png rendering)
 *    qz.setLogPostScriptFeatures(true);
 *    qz.appendHTML("<h1>Hello world!</h1>");
-*    qz.printPS();
+*    qz.print();
 ***************************************************************************/ 
 function logFeatures() {
 	if (isLoaded()) {
