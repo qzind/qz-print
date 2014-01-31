@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Some custom compilation rules to add or override build-impl.xml. -->
+<!-- You may freely change this file. -->
+<project name="jssc_qz" default="default" basedir=".">
+    <description>Builds, tests, and runs the project jssc_qz.</description>
+    <import file="nbproject/build-impl.xml"/>
+    
+    <!-- Custom Code Signing -->
+    <target depends="-pre-init" name="-init-private">
+        <echo message="Using custom private.properties file via build.xml..."/>
+        <property file="nbproject/private/config.properties"/>
+        <property file="nbproject/private/configs/${config}.properties"/>
+        <!-- Your custom code signing properties here. Feel free to change. -->
+        <!-- The project will default to qz.ks if it doesn't exist -->
+        <property file="${user.home}/Desktop/Code Signing/private.properties"/>
+        <!-- The default code signing properties which uses qz.ks. -->
+        <!-- Please leave this value the netbeans default as a fallback. -->
+        <property file="nbproject/private/private.properties"/>
+    </target>
+    
+    <target name="hello" depends="sign-jars"><echo message="Hello world!"/></target>
+    
+    <!-- Custom Code Timestamping using Ant's signjar instead of NetBeans -->
+    <!-- Note:  We can't timestamp the self-signed version, tsaurl omitted -->
+    <target name="sign-jars" depends="-jnlp-init-keystore,-check-signing-possible" if="jnlp.signed.true+signjars.task.available" unless="jnlp.signing.tsaurl">
+        <echo message="Self-signing code using Ant signjar via build.xml..."/>
+        <signjar jar="${dist.jar}"
+               signedjar="${dist.jar}"
+               alias="${jnlp.signjar.alias}"
+               storepass="${jnlp.signjar.storepass}"
+               keystore="${jnlp.signjar.keystore}"
+               keypass="${jnlp.signjar.keypass}"/>
+        <path>
+            <fileset dir="dist/lib" includes="*.jar" />
+        </path>
+    </target>
+    
+
+    <!-- We don't need NetBeans to generate the JNLP for for us, but we'll
+         reuse the task for the premium version signature + timestamp    -->
+    <target name="generate-jnlp" depends="sign-jars,-test-generate-task-available,-unavailable-generate-task" if="jnlp.signing.tsaurl">
+        <echo message="Timestamping and signing code using Ant signjar via build.xml..."/>
+        <signjar jar="${dist.jar}"
+               signedjar="${dist.jar}"
+               alias="${jnlp.signjar.alias}"
+               storepass="${jnlp.signjar.storepass}"
+               keystore="${jnlp.signjar.keystore}"
+               keypass="${jnlp.signjar.keypass}"
+               tsaurl="${jnlp.signing.tsaurl}"/>
+        <path>
+            <fileset dir="dist/lib" includes="*.jar" />
+        </path>
+    </target>
+    
+    <!-- Perform some cleanup and copying at the generate-html-preview stage -->
+    <target name="generate-html-preview" depends="-jnlp-init-keystore,-check-signing-possible">
+        <echo message="Using custom copy/delete tasks via build.xml..."/>
+        <!-- Delete some default NetBeans Applet stuff that's not needed -->
+        <delete file="${basedir}/dist/README.TXT" failonerror="false"/>
+
+        <!-- Attempt to copy to qz-print's dist/lib directory -->
+        <copy file="${basedir}/${dist.jar}" tofile="${basedir}/../qz-print/lib/jssc_qz.jar" overwrite="true" encoding="UTF-8" failonerror="false"/>
+    </target>
+    
+    
+
+</project>

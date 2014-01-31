@@ -1,0 +1,13 @@
+To test on a file, cd to this directory and type:
+
+% java SlideIndex <path_to_pdf_file>
+
+or
+
+% java Presenter <path_to_pdf_file>
+
+Note that there are many, many pdf files that either won't render correctly,
+throw exceptions, or render mostly correctly except for some odd characters.
+Please note those files, and let us know about what went wrong, or dig into
+the code and fix it yourself.  I don't suggest the latter until we get around
+to documenting the code.  :)

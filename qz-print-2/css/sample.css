@@ -1,0 +1,82 @@
+* {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+body {
+	font-family: Helvetica, sans-serif;
+	font-size: 15px;
+}
+h1 {
+	font-family: Georgia, serif;
+	margin-top: 15px;
+}
+h2 {
+	font-size: 1.3em;
+}
+table {
+	width: 100%;
+	border-collapse: collapse;
+
+}
+td {
+	border: 1px solid #000;
+	vertical-align: top;
+	padding: 15px;
+	width: 25%;
+}
+input {
+	padding: 5px;
+	border: 1px solid #666;
+	margin-bottom: 10px;
+	width: 100%;
+}
+input[type=text] {
+	width: 196px;
+}
+input#find-printer {
+	width: 92px;
+}
+input#open_port {
+	width: 91px;
+}
+input#printer, input#port_name {
+	width: 101px;
+}
+input.one-third-width {
+	width: 67px;
+}
+
+applet {
+	position: absolute;
+	bottom: 0;
+	right: 0;
+}
+
+a.button {
+	display: inline-block;
+	padding: 5px;
+	border: 1px solid #666;
+	text-decoration: none;
+	margin-bottom: 10px;
+	font-size: 0.8em;
+}
+
+#wrapper {
+	width: 960px;
+	margin: 20px;
+}
+
+#applet {
+	background-color: #CCC;
+	padding: 15px;
+}
+
+#loaded {
+	padding: 30px 0;
+	background-color: #FF0;
+	font-size: 2.5em;
+	text-align: center;
+}
+

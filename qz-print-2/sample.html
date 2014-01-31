@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<!-- License:  LGPL 2.1 or QZ INDUSTRIES SOURCE CODE LICENSE -->
+<head>
+	<title>QZ Print Plugin</title>
+	<script type="text/javascript" src="js/jquery-1.10.2.js"></script>
+	<script type="text/javascript" src="js/html2canvas.js"></script>
+	<script type="text/javascript" src="js/jquery.plugin.html2canvas.js"></script>	
+	<link href="css/sample.css" rel="stylesheet" />
+</head>
+<body id="content">
+	<div id="wrapper">
+		<h1 id="title">QZ Print Plugin</h1><br />
+		<table border="1px" cellpadding="5px" cellspacing="0px">
+			<tr>
+				<td valign="top">
+					<h2>All Printers</h2>
+					<input id="find-printer" type="button" onClick="findPrinter()" value="Detect Printer">
+					<input id="printer" type="text" value="zebra" size="15"><br />
+					<input type="button" onClick="findPrinters()" value="List All Printers"><br />
+					<input type="button" onClick="useDefaultPrinter()" value="Use Default Printer"><br /><br />
+					<div id="loaded">Loading...</div>
+				</td>
+				<td valign="top">
+					<h2>Raw Printers</h2>
+					<a href="http://qzindustries.com/WhatIsRawPrinting" target="new">What is Raw Printing?</a><br /><br />
+					<p>Find Printer:</p>
+						<a href="javascript:findPrinter('Zebra');">Zebra</a>&nbsp; 
+						<a href="javascript:findPrinter('Epson');">Epson</a>&nbsp; 
+						<a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp; 
+						<a href="javascript:findPrinter('Star');">Star</a><br /><br />
+					<p>Print raw data:</p>
+						<input class='one-third-width' type="button" onClick="printZPL()" value="ZPL" />
+						<input class='one-third-width' type="button" onClick="printEPL()" value="EPL" />
+						<input class='one-third-width' type="button" onClick="printESCP()" value="ESCP" /><br />
+					<input type="button" onClick="printEPCL()" value="Print EPCL" /><br />(Zebra Card Printer)<br /><br />
+					<input type="button" onClick="print64()" value="Print Base64" /><br />
+					<input type="button" onClick="printPages()" value="Print Spooling Every 2" /><br />
+					<input type="button" onClick="printXML()" value="Print XML" /><br />
+					<input type="button" onClick="printHex()" value="Print Hex" /><br /><br />
+					<p>Print from file:</p>
+						<input class='one-third-width' type="button" onClick="printFile('zpl_sample.txt')" value="ZPL" />
+						<input class='one-third-width' type="button" onClick="printFile('fgl_sample.txt')" value="FGL" />
+						<input class='one-third-width' type="button" onClick="printFile('epl_sample.txt')" value="EPL" /><br /><br />
+					<input type="button" onClick="printToFile()" value="Print To File" /><br />
+					<input type="button" onClick="printToHost()" value="Print To Host" /><br />
+					<input type="button" onClick="useAlternatePrinting()" value="Use Alternate Printing" />
+				</td>
+				<td valign="top">
+					<h2>PostScript Printers</h2>
+					<a href="http://qzindustries.com/WhatIsPostScriptPrinting" target="new">What is PostScript Printing?</a><br /><br />
+					<p>Find Printer:</p>
+						<a href="javascript:findPrinter('XPS');">Microsoft XPS</a> 
+						<a href="javascript:findPrinter('PDF');">PDF</a><br /><br />
+					<input type="button" onClick="printHTML()" value="Print HTML" /><br />
+					<input type="button" onClick="printPDF()" value="Print PDF" /><br />
+					<input type="button" onClick="printImage(false)" value="Print PostScript Image" /><br />
+					<input type="button" onClick="printImage(true)" value="Print Scaled PostScript Image" /><br />
+					<input type="button" onClick="printHTML5Div()" value="Print Current Page" /><br />
+					<input type="button" onClick="logFeatures()" value="Log Printer Features on Print" /><br />
+				</td>
+				<td valign="top">
+					<h2>Serial</h2>
+					<input type="button" id="list_ports" onClick="listSerialPorts()" value="List Serial Ports" /><br />
+					<input type="button" id="open_port" onClick="openSerialPort()" value="Open Port" />
+					<input type="text" id="port_name" size="8" /><br />
+					<input type="button" id="send_data" onClick="sendSerialData()" value="Send Port Cmd" /><br />
+					<input type="button" id="close_port" onClick="closeSerialPort()" value="Close Port" /><br />
+
+					<h2>Misc</h2>
+					<input type="button" onClick="listNetworkInfo()" value="List Network Info" /><br />
+				</td>
+			</tr>
+		</table>
+		<br />
+		<h2>Spool Info</h2>
+		<div id="queueInfo"></div>
+	</div>
+<canvas id="hidden_screenshot" style="display:none;"></canvas>
+<script type="text/javascript" src="js/deployJava.js"></script>
+<script type="text/javascript" src="js/sample.js"></script>
+</body>
+</html>

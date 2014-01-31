@@ -1,0 +1,124 @@
+Changes 1.7.6: (11/08/13)
+- Finished MAC Address code
+- Added detailed warning message for outdated Java versions
+Changes 1.7.5: (11/06/13)
+- Updated qz.getMacAddress() to better detect active MAC address for interfaces with only an IPv6 LinkLocal addresses
+Changes 1.7.4: (11/04/13)
+- Misc branding changes in sample.html (logos, etc)
+- New applet parameter <param name="initial_focus" value="false"/> added to fix focus
+  issues with key listeners and barcode scanners.
+- Brought back the "archive="./qz-print.jar" parameter as it seems to be backwards
+  and foward compatible (for now) and permits Java to still run in some Windows 
+  versions of Safari.
+Changes 1.7.3: (11/02/13)
+- Fixed PDF bug introduced with 1.6.7
+Changes 1.7.2: (11/01/13)
+- New "disable_logging" applet parameter completely disables Java Console log for production deployments
+- New qz.getMacAddress() and qz.IPAddress() features (first call qz.listNetworkInfo())
+- qz.appendPDF(...) now accepts Base64 encoded data (i.e. data:application/pdf;base64,)
+Changes 1.7.1: (10/26/13)
+- Deprecated "jzebra" JavaScript functions.
+  i.e. "jzebraReady()" has been replaced with "qzReady()"
+  Will keep the old functions around a while for backwards compatiblity.
+- Verbosity improvement;  Log now shows every JavaScript call attempted whether it was successful or not.
+Changes 1.7.0: (10/24/13)
+- Fixed unnecessary reliance on jssc_qz.jar, pdf-renderer_qz.jar
+- Fixed NullPointerException that occured when jssc_qz.jar was not present
+  *****************
+  *** IMPORTANT ***
+  *****************
+- New signed JNLP deployment method forces applet "archive" tag to no longer be supported.
+- (Source code) Fixed a bug where jssc_qz.jar and pdf-renderer_qz.jar were not getting signed properly.
+Changes 1.6.9: (10/22/13)
+- Added signed JNLP file per Oracle spec.
+- Added code timestamping (certificate will now continue working after September 2016)
+  *****************
+  *** IMPORTANT ***
+  *****************
+- New signed JNLP deployment method forces applet "archive" tag to no longer be supported.
+- (Source Code) Upgraded NetBeans project files for NetBeans 7.4
+Changes 1.6.8: (10/18/13)
+- Now uses Java Web Start to fix InvocationTargetException
+- Added manifest property to fix sub-domain scripting issues
+- Optional qz-run.jnlp file used for deployment. Old <applet> tags will still work.
+Changes 1.6.7: (10/17/13)
+- Added a 3rd party reflection class for future PDF plugin change
+Changes 1.6.6: (10/15/13)
+- Fixes a new unnecessary warning dialog introduced when upgrading to Java 7 u45.
+Changes 1.6.5: (10/08/13)
+- Final changes for ESC/P image support, sample added to sample.html.
+Changes 1.6.4: (10/07/13)
+- Small experimental code fix for ESC/P images (to fix images over 128px wide)
+  *****************
+  *** IMPORTANT ***
+  *****************
+- JAR filename has changed from jzebra.jar to qz-print.jar
+- JAR classname has changed from jzebra.PrintApplet to qz.PrintApplet
+Changes 1.6.3: (10/02/13)
+- Removed Manifest Attribute warnings
+- Experimental support for ESC/P images (old code wasn't working)
+- More branding clean-up (from "jzebra" to "qz-print")
+  *****************
+  *** IMPORTANT ***
+  *****************
+- JAR filename has changed from jzebra.jar to qz-print.jar
+- JAR classname has changed from jzebra.PrintApplet to qz.PrintApplet
+
+Changes 1.6.2: (9/16/13)
+- Bundled is a working example with serial support (MT Scales)
+- Bug fix preventing from loading without jssc_qz.jar.
+- Prepare code for Dual Certificate handling (trusted/self-signed)
+- More code refactoring and code rebranding
+  *****************
+  *** IMPORTANT ***
+  *****************
+- JAR filename has changed from jzebra.jar to qz-print.jar
+- JAR classname has changed from jzebra.PrintApplet to qz.PrintApplet
+
+Changes 1.6.1: (9/13/13)
+- No new features.
+- Prepare code for Dual Certificate handling (trusted/self-signed)
+- Major code refactoring and begin of code rebranding
+
+Changes 1.6.0: (8/15/13)
+- Adds new experimental Serial support, specifically for compatibility with serial attached Mettler Toledo scales.
+
+Changes 1.5.4: (8/3/13)
+- New experimental feature appendJSONArray(String jsonData)
+- Fix for appendHex() now allows "x1B" instead of "\x1B", fixing the "\x00" bug.  Just use "x00". (Issue 61)
+
+Changes 1.5.3: (8/1/13)
+- New EPL image handling.  Try appendImage("logo.png", "EPL", x_pos, y_pos);
+- Raw image handling now properly works with images widths that aren't a factor of 8.
+- Critical sample.html update for Java 7 update 25.  See issue 139 for more details.
+- Changed code internally to handle print commands as byte arrays instead of Strings (required for EPL image handling)
+- Fixed wrong url for new EPL button
+- Misc Java code cleanup
+
+08/03/2013: Version 1.5.3 Adds new EPL image handling (non-8-by pixels widths corrected too), HTML fix for Java 7 Update 25, raw data uses byte, misc code cleanup.
+04/19/2013: Version 1.4.7 fixes a bug with the Java 7 u21 update that throws "NPObject" errors. This is due to Liveconnect not allowing trusted/untrusted code to execute side-by-side. See  issue 126  for more details.
+08/28/2012: Version 1.4.5 sample.html improvements, image scaling/flipping support for PostScript? printing, New improved HTML printing feature for HTML5 capable browsers.
+06/26/2012: Version 1.4.3 Fixes with append64() NullPointerException?, appendImage(url, "ZPLII") incorrectly using EPL commands. Source for sample.html has hints for new jzebraDoneFinding, jzebraDoneAppending, jzebraDonePrinting helpers.
+03/15/2012: Version 1.4.1 Adds find/set printer fixes as well as much needed browser readiness features.
+03/15/2012: Version 1.3.5 Fixes some weird behavior when RegEx? characters "(){}" are used with findPrinter(). Also built against JDK 1.5, since 1.3.4 was rushed against JDK 1.6 and may have broken some backwards compatibility.
+03/13/2012: Version 1.3.4 Adds HTML printing support for LaserJets?, InkJets?, DeskJets?, etc. Also attempts to fix a print margin bug with PDFs. See sample.html for more info.
+02/22/2012: Version 1.2.3 Includes experimental image printing, including base64 printing for ZPLII capable printers.
+02/09/2012: Version 1.2.1 Fixes a problem in sample.html with "List All" printers.
+11/09/2011: Version 1.1.9 adds experimental PDF printing, support for printing directly to file (i.e. \\server\printer)
+01/30/2011: Front page & logo redesign
+01/12/2011: Version 1.1.1 available (not featured, see downloads). Adds a new appendFile() feature similar to original 1.0.3 and older functionality CONFIGPATH="http://site/epl.txt".
+01/08/2011: Version 1.1.0 available. Fixes XML parsing error discovered in Internet Explorer. Please note, the JavaScript in sample.html has timing improvements added in lieu.
+01/07/2011: Version 1.0.9 available. Adds experimental Cp1252 support, XML message parsing support.
+12/08/2010: Version 1.0.7 available for improved digital signature support. Versions 1.0.7 and higher will use the same trusted java signature: see source:/jzebra.ks.
+11/20/2010: Version 1.0.6 available for download. Added feature that allows larger print jobs to be spooled as separate jobs to the printer. (Example, every 5 labels spools a new print job)
+01/06/2010: An excellent article "RAW Printing from Web Based Application"
+04/13/2010: Version 1.0.5 available for download. Fixed "Magic Cookie" issue thank to James at ZenKraft?.
+12/03/2009: Updated applet tutorial for version 1.0.4.
+11/19/2009: Version 1.0.4 available for download. Note: Code changes will need to be made to incorporate new version!!
+11/07/2009: Uploaded more screenshots for Ubuntu 9.10 and Windows XP.
+11/06/2009: Raw Printing from Mac OSX created in wiki section
+10/24/2009: ReasonTransport to test Bluetooth printing capabilities
+01/09/2009: TutorialWebApplet added to wiki for 1.0.3 usage
+12/30/2008: jZebra 1.0.3 pre-release avaiable: Check the downloads.
+11/07/2008: jZebra 1.0.3 under development: Check SVN if curious.
+11/06/2008: Added 1.0.2 Bugs/Issues: click to review issues
