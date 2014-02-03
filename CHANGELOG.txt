@@ -1,3 +1,22 @@
+Changes 1.8.0 (12/05/13)
+- printToFile() now blocks common executable file extensions
+- Fixed printHTML() typo in sample.html
+- Fixed jzebraReady() backwards compatiblity for Ubuntu
+- Added workaround for possible browser lock-up, documented here:
+   https://bugs.launchpad.net/ubuntu/+source/firefox-3.0/+bug/331962
+- IE11 Fix - Updated deployJava.js from Oracle.
+- Updated jquery to latest version for HTML5 printing.
+- Removed loading.html
+- Added EPCL button to sample.html for card printers
+Changes 1.7.8.1 (11/16/13)
+- Removed feature per request - 3rd party reflection class for PDFs
+Changes 1.7.8: (11/13/13)
+- Removed untrusted dialogs for Java 6 by using custom deployJava.js script
+Changes 1.7.7: (11/10/13)
+- Fixed whitespace character breaking JNLP on Ubuntu
+- Better examples and explainations of new features in sample.html
+- Remove all while() loop examples from sample.html.
+- Fixed a bug where getPrinter() returns the last valid printer nam
 Changes 1.7.6: (11/08/13)
 - Finished MAC Address code
 - Added detailed warning message for outdated Java versions
