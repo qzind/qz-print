@@ -16,7 +16,7 @@ Changes 1.7.7: (11/10/13)
 - Fixed whitespace character breaking JNLP on Ubuntu
 - Better examples and explainations of new features in sample.html
 - Remove all while() loop examples from sample.html.
-- Fixed a bug where getPrinter() returns the last valid printer nam
+- Fixed a bug where getPrinter() returns the last valid printer name after none has been found
 Changes 1.7.6: (11/08/13)
 - Finished MAC Address code
 - Added detailed warning message for outdated Java versions
