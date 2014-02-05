@@ -344,6 +344,20 @@ public class PrintSpooler implements Runnable {
     }
     
     /**
+     * appendRtfFile reads the contents of an RTF file and adds the data to a 
+     * PostScript print job
+     * 
+     * @param url The path of the file
+     * @param charset The charset of the path
+     */
+    public void appendRtfFile(ByteArrayBuilder url, Charset charset) {
+        if(currentJob == null) {
+            createJob();
+        }
+        currentJob.appendRtfFile(url, charset);
+    }
+    
+    /**
      * appendHTML adds an HTML type PrintJobElement to an HTML PrintJob
      * 
      * @param html The HTML to add

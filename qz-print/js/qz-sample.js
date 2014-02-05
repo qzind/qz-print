@@ -572,6 +572,26 @@ function printImage(scaleImage) {
 	qz.print();
 }
 
+
+/***************************************************************************
+* Prototype function for printing an RTF file to a PostScript capable printer.
+* Not to be used in combination with raw printers.
+* This function will preserve special characters in the RTF document
+* Usage:
+*    qz.appendRTF('/path/to/sample.rtf');
+*    qz.print();
+***************************************************************************/ 
+function printRTF() {
+	if (notReady()) { return; }
+	
+	// Append our pdf
+	qz.appendRTF(getPath() + "misc/rtf_sample.rtf");
+	
+	// Tell the applet to print PostScript.
+	qz.print();
+	
+}
+
 /***************************************************************************
 * Prototype function for printing a PDF to a PostScript capable printer.
 * Not to be used in combination with raw printers.

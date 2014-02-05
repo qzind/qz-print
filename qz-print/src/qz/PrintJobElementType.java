@@ -33,5 +33,6 @@ public enum PrintJobElementType {
     TYPE_XML,
     TYPE_FILE,
     TYPE_HTML,
-    TYPE_PDF
+    TYPE_PDF,
+    TYPE_RTF
 }

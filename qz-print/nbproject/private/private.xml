@@ -2,6 +2,14 @@
 <project-private xmlns="http://www.netbeans.org/ns/project-private/1">
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
-        <group/>
+        <group>
+            <file>file:/C:/Users/Owner/Google%20Drive/Work/Clients/QZ%20Industries/qz-print/qz-print/src/qz/PrintJobElement.java</file>
+            <file>file:/C:/Users/Owner/Google%20Drive/Work/Clients/QZ%20Industries/qz-print/qz-print/src/qz/PrintSpooler.java</file>
+            <file>file:/C:/Users/Owner/Google%20Drive/Work/Clients/QZ%20Industries/qz-print/qz-print/src/qz/PSPrinter.java</file>
+            <file>file:/C:/Users/Owner/Google%20Drive/Work/Clients/QZ%20Industries/qz-print/qz-print/src/qz/PrintApplet.java</file>
+            <file>file:/C:/Users/Owner/Google%20Drive/Work/Clients/QZ%20Industries/qz-print/qz-print/src/qz/ByteUtilities.java</file>
+            <file>file:/C:/Users/Owner/Google%20Drive/Work/Clients/QZ%20Industries/qz-print/qz-print/src/qz/PrintJob.java</file>
+            <file>file:/C:/Users/Owner/Google%20Drive/Work/Clients/QZ%20Industries/qz-print/qz-print/src/qz/PrintJobType.java</file>
+        </group>
     </open-files>
 </project-private>

@@ -41,6 +41,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
+import javax.swing.JEditorPane;
 import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
@@ -68,6 +69,7 @@ public class PrintJobElement {
     private BufferedImage bufferedImage;
     private PDFFile pdfFile;
     private ByteBuffer bufferedPDF;
+    private JEditorPane rtfEditor = new JEditorPane();
     
     PrintJobElement(PrintJob pj, ByteArrayBuilder data, PrintJobElementType type, Charset charset, String lang, int dotDensity) {
         
@@ -190,6 +192,14 @@ public class PrintJobElement {
             String file = new String(data.getByteArray(), charset.name());
             data = new ByteArrayBuilder(FileUtilities.readRawFile(file));
         }
+        else if(type == PrintJobElementType.TYPE_RTF) {
+            String file = new String(data.getByteArray(), charset.name());
+            String data = new String(FileUtilities.readRawFile(file), charset.name());
+            rtfEditor.setBackground(Color.white);
+            rtfEditor.setVisible(false);
+            rtfEditor.setContentType("text/rtf");
+            rtfEditor.setText(data);
+        }
         else if(type == PrintJobElementType.TYPE_PDF) {
             String file = new String(data.getByteArray(), charset.name());
             bufferedPDF = ByteBuffer.wrap(ByteUtilities.readBinaryFile(file));
@@ -310,5 +320,29 @@ public class PrintJobElement {
         
         return PAGE_EXISTS;
         
-    }    
+    }
+    
+    /**
+     * This function returns the RTF data to the print job for printing
+     * @return The JEditorPane containing the rendered RTF data
+     */
+    public JEditorPane getRtfData() {
+        return rtfEditor;
+    }
+    
+    /**
+     * This function returns the RTF data height to the print job for printing
+     * @return The height of the RTF pane
+     */
+    public int getRtfHeight() {
+        return rtfEditor.getHeight();
+    }
+    
+    /**
+     * This function returns the rtf data width to the print job for printing
+     * @return The width of the RTF pane
+     */
+    public int getRtfWidth() {
+        return rtfEditor.getWidth();
+    }
 }

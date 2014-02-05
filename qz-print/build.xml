@@ -76,6 +76,7 @@
         <copy file="${basedir}/misc/epl_multiples.txt" tofile="${basedir}/dist/misc/epl_multiples.txt" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/fgl_sample.txt" tofile="${basedir}/dist/misc/fgl_sample.txt" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/zpl_sample.xml" tofile="${basedir}/dist/misc/zpl_sample.xml" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/misc/rtf_sample.rtf" tofile="${basedir}/dist/misc/rtf_sample.rtf" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/pdf_sample.pdf" tofile="${basedir}/dist/misc/pdf_sample.pdf" overwrite="true" encoding="UTF-8" />
 
         <copy file="${basedir}/css/qz-sample.css" tofile="${basedir}/dist/css/qz-sample.css" overwrite="true" encoding="UTF-8" />
