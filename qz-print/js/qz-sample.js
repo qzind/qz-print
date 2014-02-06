@@ -572,6 +572,26 @@ function printImage(scaleImage) {
 	qz.print();
 }
 
+
+/***************************************************************************
+* Prototype function for printing an RTF file to a PostScript capable printer.
+* Not to be used in combination with raw printers.
+* This function will preserve special characters in the RTF document
+* Usage:
+*    qz.appendRTF('/path/to/sample.rtf');
+*    qz.print();
+***************************************************************************/ 
+function printRTF() {
+	if (notReady()) { return; }
+	
+	// Append our pdf
+	qz.appendRTF(getPath() + "misc/rtf_sample.rtf");
+	
+	// Tell the applet to print PostScript.
+	qz.print();
+	
+}
+
 /***************************************************************************
 * Prototype function for printing a PDF to a PostScript capable printer.
 * Not to be used in combination with raw printers.
@@ -871,11 +891,20 @@ function updateQueueInfo() {
 	if (qz) {
 		queueJSON = qz.getQueueInfo();
 		queueInfo = $.parseJSON(queueJSON);
-		queueHtml = "";
+		queueHtml = "<table><thead><tr><th>ID</th><th>State</th><th>Copies</th><th>View Job Data (Raw Only)</th></tr></thead><tbody>";
 		
 		for(var i=0; i < queueInfo.length; i++) {
-			queueHtml += "JOB INFO ID: " + queueInfo[i].id + " TITLE: " + queueInfo[i].title + " STATE: " + queueInfo[i].state + " | <a href='javascript:console.log(qz.getJobInfo(" + queueInfo[i].id + "))'>View Job Info</a><br />";
+			queueHtml += "<tr>";
+			queueHtml += "<td>" + queueInfo[i].id + "</td>";
+			var jobState = queueInfo[i].state.replace("STATE_", "");
+			jobState = jobState.charAt(0) + jobState.slice(1).toLowerCase();
+			queueHtml += "<td>" + jobState + "</td>";
+			queueHtml += "<td>" + queueInfo[i].copies + "</td>";
+			queueHtml += "<td><a href='javascript:console.log(qz.getJobInfo(" + queueInfo[i].id + "))'>View Job Data</a></td>";
+			queueHtml += "</tr>";
 		}
+		
+		queueHtml += "</tbody></table>";
 	
 		$('#queueInfo').html(queueHtml);
 	}

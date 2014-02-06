@@ -65,7 +65,9 @@ public class ByteUtilities {
 
                 data = new byte[split.length];
                 for (int i = 0; i < split.length; i++) {
-                    data[i] = Byte.parseByte(split[i], 16);
+                    //data[i] = Byte.parseByte(split[i], 16);
+                    Integer signedByte = Integer.parseInt(split[i], 16);
+                    data[i] = (byte)(signedByte & 0xFF);
                 }
             } else if (s.length() == 2) {
                 data = new byte[]{Byte.parseByte(s)};

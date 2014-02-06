@@ -377,6 +377,28 @@ public class PrintApplet extends Applet {
     }
     
     /**
+     * appendRTF will read an RTF file and append the data to a new or
+     * existing PostScript job
+     * 
+     * NOTE: This function requires Java >= 1.6
+     * 
+     * @param url 
+     */
+    public void appendRTF(String url) {
+        ByteArrayBuilder bytes = new ByteArrayBuilder();
+            
+        try {
+            bytes.append(url, charset);
+        } catch (UnsupportedEncodingException ex) {
+            LogIt.log(Level.SEVERE, "Could not append file.", ex);
+        }
+        spooler.appendRtfFile(bytes, charset);
+        
+        // Deprecated callback. Remove in a future version.
+        btools.notifyBrowser("qzDoneAppending");
+    }
+    
+    /**
      * appendHTML adds an HTML element to an HTML PrintJob
      * 
      * @param html The HTML to add
@@ -561,6 +583,17 @@ public class PrintApplet extends Applet {
      */
     public void setLogPostScriptFeatures(boolean logPSFeatures) {
         spooler.setLogPostScriptFeatures(logPSFeatures);
+    }
+    
+    /**
+     * Set the number of copies to print for the current or a new job.
+     * 
+     * NOTE: Do not recommend using this with endOfDocument spooling
+     * 
+     * @param copies The number of copies to print
+     */
+    public void setCopies(int copies) {
+        spooler.setCopies(copies);
     }
     
     /**

@@ -31,5 +31,6 @@ package qz;
 public enum PrintJobType {
     TYPE_RAW,
     TYPE_PS,
-    TYPE_HTML
+    TYPE_HTML,
+    TYPE_RTF
 }
