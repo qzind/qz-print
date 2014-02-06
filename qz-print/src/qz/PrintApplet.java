@@ -586,6 +586,17 @@ public class PrintApplet extends Applet {
     }
     
     /**
+     * Set the number of copies to print for the current or a new job.
+     * 
+     * NOTE: Do not recommend using this with endOfDocument spooling
+     * 
+     * @param copies The number of copies to print
+     */
+    public void setCopies(int copies) {
+        spooler.setCopies(copies);
+    }
+    
+    /**
      * Set the character that marks the end of the document in spooled raw
      * print jobs
      * 

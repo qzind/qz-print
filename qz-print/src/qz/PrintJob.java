@@ -77,6 +77,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
     private boolean logPSFeatures;
     private boolean autoSize;
     private boolean alternatePrint;
+    private int copies = 1;
     
     public void run() {
         
@@ -318,224 +319,232 @@ public class PrintJob extends JLabel implements Runnable, Printable {
     public void print() {
         state = PrintJobState.STATE_SENDING;
         
-        if(type == PrintJobType.TYPE_RAW) {
-            ByteArrayBuilder jobData = new ByteArrayBuilder();
+        for(int i=0; i < copies; i++) {
+            if(type == PrintJobType.TYPE_RAW) {
+                ByteArrayBuilder jobData = new ByteArrayBuilder();
 
-            // Concatenate all the PrintJobElements into one ByteArrayBuilder
-            ListIterator dataIterator = rawData.listIterator();
+                // Concatenate all the PrintJobElements into one ByteArrayBuilder
+                ListIterator dataIterator = rawData.listIterator();
 
-            while(dataIterator.hasNext()) {
-                PrintJobElement pje = (PrintJobElement) dataIterator.next();
-                ByteArrayBuilder bytes = pje.getData();
-                jobData.append(bytes.getByteArray());
-            }
-            
-            try {
-                
-                printer.setJobTitle(title);
-                if(jobHost != null) {
-                    RawPrinter rawPrinter = (RawPrinter)printer;
-                    rawPrinter.printToHost(jobData, jobHost, jobPort);
+                while(dataIterator.hasNext()) {
+                    PrintJobElement pje = (PrintJobElement) dataIterator.next();
+                    ByteArrayBuilder bytes = pje.getData();
+                    jobData.append(bytes.getByteArray());
                 }
-                else if(alternatePrint) {
-                    printer.printAlternate(jobData);
-                }
-                else {
-                    printer.printRaw(jobData);
-                }
-            } catch (PrintException ex) {
-                LogIt.log(Level.SEVERE, "Could not print raw job.", ex);
-            }
-        }
-        else if(type == PrintJobType.TYPE_HTML) {
-            
-            ByteArrayBuilder jobData = new ByteArrayBuilder();
 
-            // Concatenate all the PrintJobElements into one ByteArrayBuilder
-            ListIterator dataIterator = rawData.listIterator();
-
-            Charset charset = null;
-            while(dataIterator.hasNext()) {
-                PrintJobElement pje = (PrintJobElement) dataIterator.next();
-                ByteArrayBuilder bytes = pje.getData();
-                jobData.append(bytes.getByteArray());
-                charset = pje.getCharset();
-            }
-            
-            JFrame j = new JFrame(title);
-            j.setUndecorated(true);
-            j.setLayout(new FlowLayout());
-            this.setBorder(null);
-
-            String jobDataString = null;
-            
-            try {
-                if(charset != null) {
-                    jobDataString = new String(jobData.getByteArray(), charset.name());
-                }
-                jobDataString += "</html>";
-            } catch (UnsupportedEncodingException ex) {
-                LogIt.log(Level.SEVERE, "Unsupported encoding.", ex);
-            }
-            
-            this.setText(jobDataString);
-            j.add(this);
-            j.pack();
-            j.setExtendedState(JFrame.ICONIFIED);
-            j.setVisible(true);
-
-            // Elimate any margins
-            HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();             
-            attr.add(new MediaPrintableArea(0f, 0f, getWidth()/72f, getHeight()/72f, MediaPrintableArea.INCH));               
-
-            PrinterJob job = PrinterJob.getPrinterJob();    
-            try {
-                job.setPrintService(printer.getPrintService());
-            } catch (PrinterException ex) {
-                LogIt.log(Level.SEVERE, "Could not print HTML job.", ex);
-            }
-            
-            if(logPSFeatures) {
-                logSupportedPrinterFeatures(job);
-            }
-            
-            job.setPrintable(this);
-            job.setJobName(title);
-            try {
-                job.print(attr);
-            } catch (PrinterException ex) {
-                LogIt.log(Level.SEVERE, "Could not print HTML job.", ex);
-            }
-            j.setVisible(false);
-            j.dispose();
-
-        }
-        else if(type == PrintJobType.TYPE_RTF) {
-            
-            // If printer is a raw printer, log an error and bypass printing.
-            if(printer instanceof RawPrinter) {
-                LogIt.log(Level.WARNING, "RTF data can not be sent to a raw printer.");
-            }
-            else {
                 try {
 
-                    PrintJobElement firstElement = rawData.get(0);
-                    PrinterJob job = PrinterJob.getPrinterJob();
-
-                    if(logPSFeatures) {
-                        logSupportedPrinterFeatures(job);
+                    printer.setJobTitle(title);
+                    if(jobHost != null) {
+                        RawPrinter rawPrinter = (RawPrinter)printer;
+                        rawPrinter.printToHost(jobData, jobHost, jobPort);
                     }
-
-                    int w = firstElement.getRtfWidth();;
-                    int h = firstElement.getRtfHeight();;
-
-                    HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
-
-                    /*
-                    if (paperSize != null) {
-                        attr.add(paperSize.getOrientationRequested());
-                        attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
-                    } else {
-                        attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
-                    }
-                    */
-                    
-                    job.setPrintService(printer.getPrintService());
-                    
-                    JEditorPane rtfData = firstElement.getRtfData();
-                    
-                    // Use Reflection to call getPrintable on a JEditorPane if
-                    // available. Must be compiled with Java >= 1.6
-                    Class c = rtfData.getClass();
-                    
-                    Class[] paramList = new Class[2];
-                    paramList[0] = MessageFormat.class;
-                    paramList[1] = MessageFormat.class;
-                    
-                    Method m = c.getMethod("getPrintable", paramList);
-                    MessageFormat format = new MessageFormat("");
-                    Printable p = (Printable)m.invoke(rtfData, format, format);
-                    
-                    job.setPrintable(p);
-                    job.setJobName(title);
-                    job.print(attr);
-                    
-                } catch (PrinterException | IndexOutOfBoundsException | IllegalAccessException | InvocationTargetException ex) {
-                    LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
-                } catch(NoSuchMethodException ex) {
-                    LogIt.log(Level.WARNING, "RTF printing requires Java >= 1.6");
-                } catch(IllegalArgumentException ex) {
-                    LogIt.log(Level.SEVERE, "Illegal argument exception. " + ex);
-                }
-            }
-
-        }
-        else if(type == PrintJobType.TYPE_PS) {
-            
-            // If printer is a raw printer, log an error and bypass printing.
-            if(printer instanceof RawPrinter) {
-                LogIt.log(Level.WARNING, "PostScript data can not be sent to a raw printer.");
-            }
-            else {
-                try {
-
-                    PrintJobElement firstElement = rawData.get(0);
-                    PrinterJob job = PrinterJob.getPrinterJob();
-
-                    if(logPSFeatures) {
-                        logSupportedPrinterFeatures(job);
-                    }
-
-                    int w;
-                    int h;
-
-                    if (firstElement.getBufferedImage() != null) {
-                        w = firstElement.getBufferedImage().getWidth();
-                        h = firstElement.getBufferedImage().getHeight();
-                    } 
-                    else if (firstElement.getPDFFile() != null) {
-                        w = (int) firstElement.getPDFFile().getPage(1).getWidth();
-                        h = (int) firstElement.getPDFFile().getPage(1).getHeight();
-                    }
-                    else if (firstElement.getRtfData() != null) {
-                        w = firstElement.getRtfWidth();
-                        h = firstElement.getRtfHeight();
+                    else if(alternatePrint) {
+                        printer.printAlternate(jobData);
                     }
                     else {
-                        throw new PrinterException("Corrupt or missing file supplied.");
+                        printer.printRaw(jobData);
                     }
-
-                    HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
-
-                    if (paperSize != null) {
-                        attr.add(paperSize.getOrientationRequested());
-                        if (paperSize.isAutoSize()) {
-                            if(rawData.get(0).getType() == PrintJobElementType.TYPE_IMAGE_PS) {
-                                paperSize.setAutoSize(rawData.get(0).getBufferedImage());
-                            }
-                        }
-                        attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
-
-                    } else {
-                        attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
-                    }
-
-                    job.setPrintService(printer.getPrintService());
-                    job.setPrintable(this);
-                    job.setJobName(title);
-                    job.print(attr);
-
-                } catch (PrinterException ex) {
-                    LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
-                } catch (IndexOutOfBoundsException ex) {
-                    LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
+                } catch (PrintException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print raw job.", ex);
                 }
             }
-        }
-        else {
-            LogIt.log(Level.WARNING, "Unsupported job type.");
-        }
-            
+            else if(type == PrintJobType.TYPE_HTML) {
+
+                ByteArrayBuilder jobData = new ByteArrayBuilder();
+
+                // Concatenate all the PrintJobElements into one ByteArrayBuilder
+                ListIterator dataIterator = rawData.listIterator();
+
+                Charset charset = null;
+                while(dataIterator.hasNext()) {
+                    PrintJobElement pje = (PrintJobElement) dataIterator.next();
+                    ByteArrayBuilder bytes = pje.getData();
+                    jobData.append(bytes.getByteArray());
+                    charset = pje.getCharset();
+                }
+
+                JFrame j = new JFrame(title);
+                j.setUndecorated(true);
+                j.setLayout(new FlowLayout());
+                this.setBorder(null);
+
+                String jobDataString = null;
+
+                try {
+                    if(charset != null) {
+                        jobDataString = new String(jobData.getByteArray(), charset.name());
+                    }
+                    jobDataString += "</html>";
+                } catch (UnsupportedEncodingException ex) {
+                    LogIt.log(Level.SEVERE, "Unsupported encoding.", ex);
+                }
+
+                this.setText(jobDataString);
+                j.add(this);
+                j.pack();
+                j.setExtendedState(JFrame.ICONIFIED);
+                j.setVisible(true);
+
+                // Elimate any margins
+                HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();             
+                attr.add(new MediaPrintableArea(0f, 0f, getWidth()/72f, getHeight()/72f, MediaPrintableArea.INCH));               
+
+                PrinterJob job = PrinterJob.getPrinterJob();    
+                try {
+                    job.setPrintService(printer.getPrintService());
+                } catch (PrinterException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print HTML job.", ex);
+                }
+
+                if(logPSFeatures) {
+                    logSupportedPrinterFeatures(job);
+                }
+
+                job.setPrintable(this);
+                job.setJobName(title);
+                try {
+                    job.print(attr);
+                } catch (PrinterException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print HTML job.", ex);
+                }
+                j.setVisible(false);
+                j.dispose();
+
+            }
+            else if(type == PrintJobType.TYPE_RTF) {
+
+                // If printer is a raw printer, log an error and bypass printing.
+                if(printer instanceof RawPrinter) {
+                    LogIt.log(Level.WARNING, "RTF data can not be sent to a raw printer.");
+                }
+                else {
+                    try {
+
+                        PrintJobElement firstElement = rawData.get(0);
+                        PrinterJob job = PrinterJob.getPrinterJob();
+
+                        if(logPSFeatures) {
+                            logSupportedPrinterFeatures(job);
+                        }
+
+                        int w = firstElement.getRtfWidth();;
+                        int h = firstElement.getRtfHeight();;
+
+                        HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+
+                        /*
+                        if (paperSize != null) {
+                            attr.add(paperSize.getOrientationRequested());
+                            attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
+                        } else {
+                            attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
+                        }
+                        */
+
+                        job.setPrintService(printer.getPrintService());
+
+                        JEditorPane rtfData = firstElement.getRtfData();
+
+                        // Use Reflection to call getPrintable on a JEditorPane if
+                        // available. Must be compiled with Java >= 1.6
+                        Class c = rtfData.getClass();
+
+                        Class[] paramList = new Class[2];
+                        paramList[0] = MessageFormat.class;
+                        paramList[1] = MessageFormat.class;
+
+                        Method m = c.getMethod("getPrintable", paramList);
+                        MessageFormat format = new MessageFormat("");
+                        Printable p = (Printable)m.invoke(rtfData, format, format);
+
+                        job.setPrintable(p);
+                        job.setJobName(title);
+                        job.print(attr);
+
+                    } catch (PrinterException ex) {
+                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                    }catch (IndexOutOfBoundsException ex) {
+                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                    }catch (IllegalAccessException ex) {
+                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                    }catch (InvocationTargetException ex) {
+                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                    } catch(NoSuchMethodException ex) {
+                        LogIt.log(Level.WARNING, "RTF printing requires this applet to be compiled with Java >= 1.6");
+                    } catch(IllegalArgumentException ex) {
+                        LogIt.log(Level.SEVERE, "Illegal argument exception. " + ex);
+                    }
+
+                }
+
+            }
+            else if(type == PrintJobType.TYPE_PS) {
+
+                // If printer is a raw printer, log an error and bypass printing.
+                if(printer instanceof RawPrinter) {
+                    LogIt.log(Level.WARNING, "PostScript data can not be sent to a raw printer.");
+                }
+                else {
+                    try {
+
+                        PrintJobElement firstElement = rawData.get(0);
+                        PrinterJob job = PrinterJob.getPrinterJob();
+
+                        if(logPSFeatures) {
+                            logSupportedPrinterFeatures(job);
+                        }
+
+                        int w;
+                        int h;
+
+                        if (firstElement.getBufferedImage() != null) {
+                            w = firstElement.getBufferedImage().getWidth();
+                            h = firstElement.getBufferedImage().getHeight();
+                        } 
+                        else if (firstElement.getPDFFile() != null) {
+                            w = (int) firstElement.getPDFFile().getPage(1).getWidth();
+                            h = (int) firstElement.getPDFFile().getPage(1).getHeight();
+                        }
+                        else if (firstElement.getRtfData() != null) {
+                            w = firstElement.getRtfWidth();
+                            h = firstElement.getRtfHeight();
+                        }
+                        else {
+                            throw new PrinterException("Corrupt or missing file supplied.");
+                        }
+
+                        HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+
+                        if (paperSize != null) {
+                            attr.add(paperSize.getOrientationRequested());
+                            if (paperSize.isAutoSize()) {
+                                if(rawData.get(0).getType() == PrintJobElementType.TYPE_IMAGE_PS) {
+                                    paperSize.setAutoSize(rawData.get(0).getBufferedImage());
+                                }
+                            }
+                            attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
+
+                        } else {
+                            attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
+                        }
+
+                        job.setPrintService(printer.getPrintService());
+                        job.setPrintable(this);
+                        job.setJobName(title);
+                        job.print(attr);
+
+                    } catch (PrinterException ex) {
+                        LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
+                    } catch (IndexOutOfBoundsException ex) {
+                        LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
+                    }
+                }
+            }
+            else {
+                LogIt.log(Level.WARNING, "Unsupported job type.");
+            }
+        }    
         state = PrintJobState.STATE_COMPLETE;
 
     }
@@ -664,4 +673,26 @@ public class PrintJob extends JLabel implements Runnable, Printable {
         this.alternatePrint = alternatePrint;
     }
     
+    /**
+     * Set the number of copies to print
+     * 
+     * @param copies The number of copies to print.
+     */
+    void setCopies(int copies) {
+        if(copies > 0) {
+            this.copies = copies;
+        }
+        else {
+            LogIt.log(Level.WARNING, "Copies must be a positive integer.");
+        }
+    }
+    
+    /**
+     * Returns the number of copies currently set for the job
+     * 
+     * @return The number of copies
+     */
+    int getCopies() {
+        return copies;
+    }
 }

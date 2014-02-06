@@ -135,6 +135,7 @@ public class PrintSpooler implements Runnable {
                         jobInfo.put("id", String.valueOf(jobIndex));
                         jobInfo.put("title", job.getTitle());
                         jobInfo.put("state", jobState.name());
+                        jobInfo.put("copies", Integer.toString(job.getCopies()));
                         currentQueueInfo.put(jobInfo);
                     }
                     queueInfo = currentQueueInfo;
@@ -735,6 +736,18 @@ public class PrintSpooler implements Runnable {
         LogIt.log("End of Document set to " + this.endOfDocument);
     }
 
+    /**
+     * Set the number of copies to print for the current or a new job
+     * 
+     * @param copies The number of copies to print
+     */
+    public void setCopies(int copies) {
+        if(currentJob == null) {
+            createJob();
+        }
+        currentJob.setCopies(copies);
+    }
+    
     /**
      * Set the documents to spool together per job in spooled raw print jobs
      * 

@@ -891,11 +891,20 @@ function updateQueueInfo() {
 	if (qz) {
 		queueJSON = qz.getQueueInfo();
 		queueInfo = $.parseJSON(queueJSON);
-		queueHtml = "";
+		queueHtml = "<table><thead><tr><th>ID</th><th>State</th><th>Copies</th><th>View Job Data (Raw Only)</th></tr></thead><tbody>";
 		
 		for(var i=0; i < queueInfo.length; i++) {
-			queueHtml += "JOB INFO ID: " + queueInfo[i].id + " TITLE: " + queueInfo[i].title + " STATE: " + queueInfo[i].state + " | <a href='javascript:console.log(qz.getJobInfo(" + queueInfo[i].id + "))'>View Job Info</a><br />";
+			queueHtml += "<tr>";
+			queueHtml += "<td>" + queueInfo[i].id + "</td>";
+			var jobState = queueInfo[i].state.replace("STATE_", "");
+			jobState = jobState.charAt(0) + jobState.slice(1).toLowerCase();
+			queueHtml += "<td>" + jobState + "</td>";
+			queueHtml += "<td>" + queueInfo[i].copies + "</td>";
+			queueHtml += "<td><a href='javascript:console.log(qz.getJobInfo(" + queueInfo[i].id + "))'>View Job Data</a></td>";
+			queueHtml += "</tr>";
 		}
+		
+		queueHtml += "</tbody></table>";
 	
 		$('#queueInfo').html(queueHtml);
 	}
