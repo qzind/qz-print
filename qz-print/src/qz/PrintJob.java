@@ -21,6 +21,7 @@
  */
 package qz;
 
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -41,7 +42,6 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.print.PrintException;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -75,22 +75,17 @@ public class PrintJob extends JLabel implements Runnable, Printable {
     private String jobHost;
     private int jobPort;
     private boolean logPSFeatures;
-    private boolean autoSize;
+    private boolean autoSize = false;
     private boolean alternatePrint;
     private int copies = 1;
+    private int leftMargin = 0;
+    private int topMargin = 0;
     
+    @Override
     public void run() {
         
-        this.autoSize = false;
-        
         while(running) {
-            /*try {
-                
-            } catch (InterruptedException ex) {
-                LogIt.log(Level.SEVERE, "PrintJob process was interrupted.", ex);
-                running = false;
-            }
-            */
+            //Loop
         }
     }
     
@@ -381,14 +376,15 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                 }
 
                 this.setText(jobDataString);
+                
                 j.add(this);
                 j.pack();
                 j.setExtendedState(JFrame.ICONIFIED);
                 j.setVisible(true);
-
+                
                 // Elimate any margins
                 HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();             
-                attr.add(new MediaPrintableArea(0f, 0f, getWidth()/72f, getHeight()/72f, MediaPrintableArea.INCH));               
+                attr.add(new MediaPrintableArea(0f, 0f, (getWidth()) /72f, (getHeight() + topMargin) / 72f, MediaPrintableArea.INCH));               
 
                 PrinterJob job = PrinterJob.getPrinterJob();    
                 try {
@@ -526,7 +522,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                             attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
 
                         } else {
-                            attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
+                            attr.add(new MediaPrintableArea(0f, 0f, (w + leftMargin) / 72f, (h + topMargin) / 72f, MediaSize.INCH));
                         }
 
                         job.setPrintService(printer.getPrintService());
@@ -576,6 +572,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
      * @return
      * @throws PrinterException 
      */
+    @Override
     public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
         if(pageIndex < rawData.size()) {
             PrintJobElement pje = rawData.get(pageIndex);
@@ -583,30 +580,37 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                 /* User (0,0) is typically outside the imageable area, so we must
                 * translate by the X and Y values in the PageFormat to avoid clipping
                 */
-               Graphics2D g2d = (Graphics2D) graphics;
+                Graphics2D g2d = (Graphics2D) graphics;
 
-               // Sugested by Bahadir 8/23/2012
-               g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-               g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-               g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // Sugested by Bahadir 8/23/2012
+                g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-               g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
-               BufferedImage imgToPrint = pje.getBufferedImage();
-               /* Now we perform our rendering */
-               g2d.drawImage(imgToPrint, 0, 0, (int) pageFormat.getImageableWidth(), (int) pageFormat.getImageableHeight(), imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
-
-               /* tell the caller that this page is part of the printed document */
-               return PAGE_EXISTS;
+                g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+                BufferedImage imgToPrint = pje.getBufferedImage();
+                
+                /* Now we perform our rendering */
+                if(autoSize) {
+                    g2d.drawImage(imgToPrint, leftMargin, topMargin, (int) pageFormat.getImageableWidth() - leftMargin, (int) pageFormat.getImageableHeight() - topMargin, imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
+                }
+                else {
+                    g2d.drawImage(imgToPrint, leftMargin, topMargin, imgToPrint.getWidth() + leftMargin, imgToPrint.getHeight() + topMargin, imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
+                }
+                
+                /* tell the caller that this page is part of the printed document */
+                return PAGE_EXISTS;
+                
             }
             else if(pje.getType() == PrintJobElementType.TYPE_PDF) {
-                return pje.printPDFRenderer(graphics, pageFormat, pageIndex);
+                return pje.printPDFRenderer(graphics, pageFormat, pageIndex, leftMargin, topMargin);
             }
             else if(pje.getType() == PrintJobElementType.TYPE_HTML) {
                 boolean doubleBuffered = super.isDoubleBuffered();
                 super.setDoubleBuffered(false);
 
                 Graphics2D g2d = (Graphics2D) graphics;
-                g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+                g2d.translate(pageFormat.getImageableX() + leftMargin, pageFormat.getImageableY() + topMargin);
                 //g2d.translate(paper.getImageableX(), paper.getImageableY());
                 this.paint(g2d);
                 super.setDoubleBuffered(doubleBuffered);
@@ -634,7 +638,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
      * 
      * @param paperSize The target paperSize
      */
-    void setPaperSize(PaperFormat paperSize) {
+    public void setPaperSize(PaperFormat paperSize) {
         this.paperSize = paperSize;
     }
 
@@ -643,8 +647,26 @@ public class PrintJob extends JLabel implements Runnable, Printable {
      * 
      * @param autoSize The new value for autoSize
      */
-    void setAutoSize(boolean autoSize) {
+    public void setAutoSize(boolean autoSize) {
         this.autoSize = autoSize;
+    }
+    
+    /**
+     * Set the left margin for the current job
+     * 
+     * @param leftMargin
+     */
+    public void setLeftMargin(int leftMargin) {
+        this.leftMargin = leftMargin;
+    }
+    
+    /**
+     * Set the top margin for the current job
+     * 
+     * @param topMargin
+     */
+    public void setTopMargin(int topMargin) {
+        this.topMargin = topMargin;
     }
     
     @SuppressWarnings("unchecked")

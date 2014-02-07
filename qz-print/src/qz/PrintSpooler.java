@@ -690,10 +690,16 @@ public class PrintSpooler implements Runnable {
      * @param paperSize 
      */
     public void setPaperSize(PaperFormat paperSize) {
-        this.paperSize = paperSize;
-        
+        this.paperSize = paperSize;   
     }
-
+    
+    /**
+     * Clear a previously set paper size
+     */
+    public void clearPaperSize() {
+        this.paperSize = null;
+    }
+    
     /**
      * Toggle whether PostScript autosizing should be enabled
      * 
@@ -701,6 +707,32 @@ public class PrintSpooler implements Runnable {
      */
     public void setAutoSize(boolean autoSize) {
         this.autoSize = autoSize;
+    }
+    
+    /**
+     * Set the left margin for the current job
+     * 
+     * @param leftMargin
+     */
+    public void setLeftMargin(int leftMargin) {
+        if(currentJob == null) {
+            createJob();
+        }
+        
+        currentJob.setLeftMargin(leftMargin);
+    }
+    
+    /**
+     * Set the top margin for the current job
+     * 
+     * @param topMargin
+     */
+    public void setTopMargin(int topMargin) {
+        if(currentJob == null) {
+            createJob();
+        }
+        
+        currentJob.setTopMargin(topMargin);
     }
     
     /**

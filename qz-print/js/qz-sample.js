@@ -551,7 +551,7 @@ function printFile(file) {
 *    qz.appendImage('/path/to/image.png');
 *    qz.print();
 ***************************************************************************/ 
-function printImage(scaleImage) {
+function printImage(scaleImage, leftMargin, topMargin) {
 	if (notReady()) { return; }
 	
 	// Optional, set up custom page size.  These only work for PostScript printing.
@@ -562,7 +562,15 @@ function printImage(scaleImage) {
 		qz.setAutoSize(true);
 		//qz.setOrientation("landscape");
 		//qz.setOrientation("reverse-landscape");
-		//qz.setCopies(3); //Does not seem to do anything
+		//qz.setCopies(3);
+	}
+	
+	// Set the margins if provided
+	if(leftMargin) {
+		qz.setLeftMargin(leftMargin);
+	}
+	if(topMargin) {
+		qz.setTopMargin(topMargin);
 	}
 	
 	// Append our image (only one image can be appended per print)
@@ -570,8 +578,12 @@ function printImage(scaleImage) {
 	
 	// Tell the applet to print PostScript.
 	qz.print();
+	
+	if (scaleImage) {
+		qz.clearPaperSize();
+		qz.setAutoSize(false);
+	}
 }
-
 
 /***************************************************************************
 * Prototype function for printing an RTF file to a PostScript capable printer.
@@ -599,17 +611,25 @@ function printRTF() {
 *    qz.appendPDF('/path/to/sample.pdf');
 *    qz.print();
 ***************************************************************************/ 
-function printPDF() {
+function printPDF(leftMargin, topMargin) {
 	if (notReady()) { return; }
 	
 	// Append our pdf
 	qz.appendPDF(getPath() + "misc/pdf_sample.pdf");
 	
+	// Set the margins if provided
+	if(leftMargin) {
+		qz.setLeftMargin(leftMargin);
+	}
+	if(topMargin) {
+		qz.setTopMargin(topMargin);
+	}
+	
 	// Tell the applet to print PostScript.
 	qz.print();
 	
 }
-
+	
 /***************************************************************************
 * Prototype function for printing plain HTML 1.0 to a PostScript capable 
 * printer.  Not to be used in combination with raw printers.
@@ -617,7 +637,7 @@ function printPDF() {
 *    qz.appendHTML('<h1>Hello world!</h1>');
 *    qz.print();
 ***************************************************************************/ 
-function printHTML() {
+function printHTML(leftMargin, topMargin) {
 	if (notReady()) { return; }
 	
 	// Preserve formatting for white spaces, etc.
@@ -633,6 +653,14 @@ function printHTML() {
 	'<td valign="top">' + colA + '</td>' + 
 	'<td valign="top">' + colB + '</td>' + 
 	'</tr></table></html>');
+	
+	// Set the margins if provided
+	if(leftMargin) {
+		qz.setLeftMargin(leftMargin);
+	}
+	if(topMargin) {
+		qz.setTopMargin(topMargin);
+	}
 	
 	qz.print();
 }
