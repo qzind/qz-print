@@ -13,7 +13,9 @@ Note:
    - Premium versions of the applet will work "out of the box"
    - Free versons of the applet are self-signed and will only 
      run when qz-free.csr has been added as a "Signer CA" from
-     within the Java Control Panel.
+     within the Java Control Panel.  If running Java 7 Update
+     51 or higher, the URL of the application must also be
+     "whitelisted" in the Java Control panel Security tab.
    - If clients do not recieve an update after refreshing the
      page you can force an update using Java Control Panel,
      General, View, Remove (Red X) "QZ Print Plugin"
