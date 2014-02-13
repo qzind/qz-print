@@ -530,6 +530,14 @@ public class PrintApplet extends Applet {
     }
 
     /**
+     * Clear a previously set paper size
+     */
+    public void clearPaperSize() {
+        spooler.clearPaperSize();
+        LogIt.log(Level.INFO, "Paper size has been cleared.");
+    }
+    
+    /**
      * Set the paper size for new jobs.
      * 
      * @param width The paper size's target width
@@ -565,6 +573,27 @@ public class PrintApplet extends Applet {
      */
     public void setAutoSize(boolean autoSize) {
         spooler.setAutoSize(autoSize);
+        LogIt.log(Level.INFO, "Auto size has been set to " + Boolean.toString(autoSize));
+    }
+    
+    /**
+     * Set the left margin for the current job
+     * 
+     * @param leftMargin
+     */
+    public void setLeftMargin(int leftMargin) {
+        spooler.setLeftMargin(leftMargin);
+        LogIt.log(Level.INFO, "Left margin set to " + leftMargin);
+    }
+    
+    /**
+     * Set the top margin for the current job
+     * 
+     * @param topMargin
+     */
+    public void setTopMargin(int topMargin) {
+        spooler.setTopMargin(topMargin);
+        LogIt.log(Level.INFO, "Top margin set to " + topMargin);
     }
     
     /**

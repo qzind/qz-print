@@ -27,6 +27,7 @@ import com.sun.pdfview.PDFRenderer;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Rectangle;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
@@ -289,7 +290,7 @@ public class PrintJobElement {
      * @return PAGE_EXISTS on success
      * @throws PrinterException
      */
-    public int printPDFRenderer(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
+    public int printPDFRenderer(Graphics graphics, PageFormat pageFormat, int pageIndex, int leftMargin, int topMargin) throws PrinterException {
         /*
          * Important:  This uses class reflection to instantiate and invoke
          * PDFRenderer to reduce reliance on the project's classpath for 3rd 
@@ -308,9 +309,13 @@ public class PrintJobElement {
         PDFPage page = pdf.getPage(pg);
         
         Rectangle2D pageBox = (Rectangle2D)page.getPageBox();
+        Rectangle imgBounds = pageBox.getBounds();
+        imgBounds.x = leftMargin;
+        imgBounds.y = topMargin;
+        
         Rectangle2D bBox = (Rectangle2D)page.getBBox();
         
-        PDFRenderer pgs = new PDFRenderer(page, g2, pageBox.getBounds(), bBox, Color.WHITE);
+        PDFRenderer pgs = new PDFRenderer(page, g2, imgBounds, bBox, Color.WHITE);
         try {
             page.waitForFinish();
         } catch (InterruptedException ex) {
