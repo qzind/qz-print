@@ -484,14 +484,21 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                 else {
                     try {
                         PDDocument pdfFile;
+                        pdfFile = null;
                         
-                        pdfFile = rawData.get(0).getPDFFile();
-
+                        while(pdfFile == null) {
+                            pdfFile = rawData.get(0).getPDFFile();
+                        }
+                        
                         PrinterJob job = PrinterJob.getPrinterJob();
                         job.setPrintService(printer.getPrintService());
+                        
                         pdfFile.silentPrint(job);
+                        pdfFile.close();
                     } catch (PrinterException ex) {
                         LogIt.log(Level.SEVERE, "There was an error printing this job. " + ex);
+                    } catch (IOException ex) {
+                        LogIt.log(Level.WARNING, "Could not close PDF file. " + ex);
                     }
                     
                 }

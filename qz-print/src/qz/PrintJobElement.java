@@ -201,8 +201,34 @@ public class PrintJobElement {
         }
         else if(type == PrintJobElementType.TYPE_PDF) {
             pdfFileName = new String(data.getByteArray(), charset.name());
-            LogIt.log("FILENAME: " + pdfFileName);
-            pdfFile = getPDFFile();
+            final String fileName = pdfFileName;
+            LogIt.log("DEBUG: fileName - " + fileName);
+            
+            pdfFile = AccessController.doPrivileged(new PrivilegedAction<PDDocument>() {
+                private PDDocument doc;
+                public PDDocument run() {
+                    
+                    try{
+                        doc = new PDDocument();
+                        URL fileUrl = new URL(fileName);
+                        doc = PDDocument.load(fileUrl);
+                    } catch (IOException ex) {
+                        LogIt.log("Error reading PDF file. " + ex);
+                        return null;
+                    } finally {
+                        /*
+                        try {
+                            doc.close();
+                        } catch (IOException ex) {
+                            LogIt.log("Error closing PDF file. " + ex);
+                        }
+                        */
+                        
+                    }
+                    
+                    return doc;
+                }
+            });
         }
 
         prepared = true;
@@ -263,6 +289,9 @@ public class PrintJobElement {
      */
     public PDDocument getPDFFile() {
         
+        return pdfFile;
+        
+        /*
         if (pdfFile != null) {
             return pdfFile;
         }
@@ -295,7 +324,7 @@ public class PrintJobElement {
             });
             return pdfFile;
         }
-        
+        */
     }
     
     /**
