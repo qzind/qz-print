@@ -42,7 +42,7 @@
         <copy file="misc/sample.pdf" tofile="dist/sample.pdf" failonerror="false"/>
         <delete dir="dist/lib" failonerror="false"/>
          <!-- Attempt to copy to qz-print's dist/lib directory -->
-        <copy file="${basedir}/${dist.jar}" tofile="${basedir}/../qz-print/lib/pdf-box_qz.jar" overwrite="true" encoding="UTF-8" failonerror="false"/>
+        <copy file="${basedir}/${dist.jar}" tofile="${basedir}/../qz-print/lib/pdfbox_qz.jar" overwrite="true" encoding="UTF-8" failonerror="false"/>
     
     </target>
    
