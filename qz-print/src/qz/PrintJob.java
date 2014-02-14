@@ -42,6 +42,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.print.PrintException;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -50,6 +51,7 @@ import javax.print.attribute.standard.MediaSize;
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import qz.exception.InvalidRawImageException;
 import qz.exception.NullCommandException;
 
@@ -81,7 +83,6 @@ public class PrintJob extends JLabel implements Runnable, Printable {
     private int leftMargin = 0;
     private int topMargin = 0;
     
-    @Override
     public void run() {
         
         while(running) {
@@ -235,7 +236,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
      * @param charset 
      */
     public void appendPDF(ByteArrayBuilder url, Charset charset) {
-        type = PrintJobType.TYPE_PS;
+        type = PrintJobType.TYPE_PDF;
         PrintJobElement pje = new PrintJobElement(this, url, PrintJobElementType.TYPE_PDF, charset);
         rawData.add(pje);
     }
@@ -475,6 +476,27 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                 }
 
             }
+            else if(type == PrintJobType.TYPE_PDF) {
+                // If printer is a raw printer, log an error and bypass printing.
+                if(printer instanceof RawPrinter) {
+                    LogIt.log(Level.WARNING, "PostScript data can not be sent to a raw printer.");
+                }
+                else {
+                    try {
+                        PDDocument pdfFile;
+                        
+                        pdfFile = rawData.get(0).getPDFFile();
+
+                        PrinterJob job = PrinterJob.getPrinterJob();
+                        job.setPrintService(printer.getPrintService());
+                        pdfFile.silentPrint(job);
+                    } catch (PrinterException ex) {
+                        LogIt.log(Level.SEVERE, "There was an error printing this job. " + ex);
+                    }
+                    
+                }
+                
+            }
             else if(type == PrintJobType.TYPE_PS) {
 
                 // If printer is a raw printer, log an error and bypass printing.
@@ -498,10 +520,12 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                             w = firstElement.getBufferedImage().getWidth();
                             h = firstElement.getBufferedImage().getHeight();
                         } 
+                        /*
                         else if (firstElement.getPDFFile() != null) {
-                            w = (int) firstElement.getPDFFile().getPage(1).getWidth();
-                            h = (int) firstElement.getPDFFile().getPage(1).getHeight();
+                            w = (int) firstElement.getPDFPages().getPageFormat(1).getWidth();
+                            h = (int) firstElement.getPDFPages().getPageFormat(1).getHeight();
                         }
+                        */
                         else if (firstElement.getRtfData() != null) {
                             w = firstElement.getRtfWidth();
                             h = firstElement.getRtfHeight();
@@ -572,7 +596,6 @@ public class PrintJob extends JLabel implements Runnable, Printable {
      * @return
      * @throws PrinterException 
      */
-    @Override
     public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
         if(pageIndex < rawData.size()) {
             PrintJobElement pje = rawData.get(pageIndex);
@@ -602,9 +625,11 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                 return PAGE_EXISTS;
                 
             }
+            /*
             else if(pje.getType() == PrintJobElementType.TYPE_PDF) {
                 return pje.printPDFRenderer(graphics, pageFormat, pageIndex, leftMargin, topMargin);
             }
+            */
             else if(pje.getType() == PrintJobElementType.TYPE_HTML) {
                 boolean doubleBuffered = super.isDoubleBuffered();
                 super.setDoubleBuffered(false);

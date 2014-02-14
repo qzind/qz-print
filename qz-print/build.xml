@@ -5,6 +5,44 @@
     <description>Builds, tests, and runs the project qz-print.</description>
     <import file="nbproject/build-impl.xml"/>
     
+	
+	
+	<!-- Build Versions for 1.5, 1.6 and 1.7 -->
+	<!-- Commented out for now
+	<path id="build.classpath">
+		<fileset dir="lib/">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+
+	<property name="src" location="src/"/>
+	<property name="build" location="build/"/>
+	<property name="build6" location="build6/"/>
+	<property name="build7" location="build7/"/>
+	<property name="dist" location="dist/"/>
+	<property name="dist6" location="dist6/"/>
+	<property name="dist7" location="dist7/"/>
+	
+	<target name="compile">
+		<mkdir dir="${build}"/>
+		<mkdir dir="${build6}"/>
+		<mkdir dir="${build7}"/>
+		<javac srcdir="${src}" destdir="${build}" classpathref="build.classpath" includes="*/**"/>
+		<javac srcdir="${src}" destdir="${build6}" classpathref="build.classpath" includes="*/**"/>
+		<javac srcdir="${src}" destdir="${build7}" classpathref="build.classpath" includes="*/**"/>
+	</target>
+	
+	<target name="dist" depends="compile">
+		<mkdir dir="${dist}"/>
+		<mkdir dir="${dist6}"/>
+		<mkdir dir="${dist7}"/>
+		<jar jarfile="${dist}/qz-print.jar" basedir="${build}"/>
+		<jar jarfile="${dist6}/qz-print.jar" basedir="${build6}"/>
+		<jar jarfile="${dist7}/qz-print.jar" basedir="${build7}"/>
+	</target>
+	
+	-->
+	
     <!-- Custom Code Signing -->
     <target depends="-pre-init" name="-init-private">
         <echo message="Using custom private.properties file via build.xml..."/>
