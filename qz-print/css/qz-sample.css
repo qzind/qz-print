@@ -3,6 +3,55 @@
 	padding: 0;
 	border: 0;
 }
+* {
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+div#container {
+	width: 900px;
+	padding: 30px;
+}
+
+/* Progress Bar */
+
+div#progressbar {
+	float: right;
+	width: 770px;
+	height: 40px;
+	margin: 5px 0px;
+}
+div.ui-progressbar {
+	position: relative;
+}
+div.progress-label {
+	position: absolute;
+	left: 30%;
+	top: 9px;
+	font-weight: bold;
+	text-shadow: 1px 1px 0px #FFF;
+	text-align: center;
+	width: 40%;
+}
+
+/* Printers Div */
+div#printers {
+    height: 50px;
+    text-align: center;
+}
+div#printers label {
+	font-size: 1.2em;
+	font-weight: bold;
+}
+div#printers select {
+	padding: 3px;
+	border: 1px solid #000;
+	font-size: 1.2em;
+}
+div#printers select option {
+	padding: 3px;
+}
 
 body {
 	font-family: Helvetica, sans-serif;
@@ -18,37 +67,17 @@ h2 {
 table {
 	width: 100%;
 	border-collapse: collapse;
-
+	border: 1px solid #000;
 }
 th {
 	text-align: left;
+	border: 1px solid #000;
+	padding: 5px;
 }
 td {
 	border: 1px solid #000;
 	vertical-align: top;
 	padding: 15px;
-	width: 25%;
-}
-input {
-	padding: 5px;
-	border: 1px solid #666;
-	margin-bottom: 10px;
-	width: 100%;
-}
-input[type=text] {
-	width: 196px;
-}
-input#find-printer {
-	width: 92px;
-}
-input#open_port {
-	width: 91px;
-}
-input#printer, input#port_name {
-	width: 101px;
-}
-input.one-third-width {
-	width: 67px;
 }
 
 applet {
@@ -66,20 +95,11 @@ a.button {
 	font-size: 0.8em;
 }
 
-#wrapper {
-	width: 960px;
-	margin: 20px;
-}
-
 #applet {
 	background-color: #CCC;
 	padding: 15px;
 }
 
-#loaded {
-	padding: 30px 0;
-	background-color: #FF0;
-	font-size: 2.5em;
-	text-align: center;
+div#queue-info {
+	padding: 15px;
 }
-

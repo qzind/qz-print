@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>QZ Print Plugin</title>
+	
+	<script src="js/jquery-1.10.2.js"></script>
+	<script src="js/jquery-ui-1.10.4.custom.min.js"></script>
+	<script src="js/html2canvas.js"></script>
+	<script src="js/jquery.plugin.html2canvas.js"></script>	
+	
+	<link href="css/jquery-ui.css" rel="stylesheet" />
+	<link href="css/qz-sample.css" rel="stylesheet" />
+	
+</head>
+<body>
+	<div id="container">
+	
+		<div id="header">
+			<img src="img/qz.png" height="50" width="100" alt="QZ" />
+			<div id="progressbar"><div class="progress-label">Loading...</div></div>
+		</div>
+		
+		<div id="printers">
+			<label for="printer_select">Select Printer:</label>
+			<select id="printer_select" name="printer_select">
+				<option value="">Default Printer</option>
+			</select>
+		</div>
+		
+		<div id="tabs">
+			<ul>
+				<li><a href="#tabs-label">Label</a></li>
+				<li><a href="#tabs-receipt">Receipt</a></li>
+				<li><a href="#tabs-ticket">Ticket</a></li>
+				<li><a href="#tabs-document">Document</a></li>
+				<li><a href="#tabs-serial">Serial</a></li>
+				<li><a href="#tabs-network">Network</a></li>
+				<li><a href="#tabs-misc">Misc</a></li>
+			</ul>
+			
+			<div id="tabs-label">
+				<label for="label_print_format">Print Format:</label><br />
+				<input type="radio" name="label_print_format" value="EPL" checked="checked">EPL (Raw)</input><br />
+				<input type="radio" name="label_print_format" value="ZPL">ZPL (Raw)</input><br />
+				<input type="radio" name="label_print_format" value="HTML5">HTML5 (PostScript)</input><br />
+				<input type="radio" name="label_print_format" value="IMAGE">Image (png, jpg, etc) (PostScript)</input><br /><br />
+				<a href="#" class="button" id="label_print_button">Print Label</a>
+			</div>
+			
+			<div id="tabs-receipt">
+				TAB RECEIPT
+			</div>
+			
+			<div id="tabs-ticket">
+				TAB TICKET
+			</div>
+			
+			<div id="tabs-document">
+				TAB DOCUMENT
+			</div>
+			
+			<div id="tabs-serial">
+				TAB SERIAL
+			</div>
+			
+			<div id="tabs-network">
+				TAB NETWORK
+			</div>
+			
+			<div id="tabs-misc">
+				TAB MISC
+			</div>
+			
+		</div>
+		
+		<div id="queue-info"></div>
+		
+	</div>
+	
+	
+	
+<canvas id="hidden_screenshot" style="display:none;"></canvas>
+<script type="text/javascript" src="js/deployJava.js"></script>
+<script type="text/javascript" src="js/qz-deploy.js"></script>
+<script type="text/javascript" src="js/qz-interface.js"></script>
+<script type="text/javascript" src="js/qz-sample.js"></script>
+</body>
+</html>

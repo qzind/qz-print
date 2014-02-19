@@ -103,6 +103,7 @@
         
         <!-- Copy some project specific files -->
         <copy file="${basedir}/sample.html" tofile="${basedir}/dist/sample.html" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/sample-new.html" tofile="${basedir}/dist/sample-new.html" overwrite="true" encoding="UTF-8" />
         <!-- <copy file="${basedir}/qz-run.jnlp" tofile="${basedir}/dist/qz-run.jnlp" overwrite="true" encoding="UTF-8" /> -->
         <!-- <copy file="${basedir}/loading.html" tofile="${basedir}/dist/loading.html" overwrite="true" encoding="UTF-8" /> -->
         
@@ -117,19 +118,24 @@
 		<copy file="${basedir}/misc/rtf_sample.rtf" tofile="${basedir}/dist/misc/rtf_sample.rtf" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/pdf_sample.pdf" tofile="${basedir}/dist/misc/pdf_sample.pdf" overwrite="true" encoding="UTF-8" />
 
-        <copy file="${basedir}/css/qz-sample.css" tofile="${basedir}/dist/css/qz-sample.css" overwrite="true" encoding="UTF-8" />
+        <copy file="${basedir}/css/jquery-ui.css" tofile="${basedir}/dist/css/jquery-ui.css" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/css/qz-sample.css" tofile="${basedir}/dist/css/qz-sample.css" overwrite="true" encoding="UTF-8" />
 
         <copy file="${basedir}/js/jquery-1.10.2.js" tofile="${basedir}/dist/js/jquery-1.10.2.js" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/js/jquery-ui-1.10.4.custom.min.js" tofile="${basedir}/dist/js/jquery-ui-1.10.4.custom.min.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/jquery.plugin.html2canvas.js" tofile="${basedir}/dist/js/jquery.plugin.html2canvas.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/html2canvas.js" tofile="${basedir}/dist/js/html2canvas.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/PluginDetect.js" tofile="${basedir}/dist/js/PluginDetect.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/deployJava.js" tofile="${basedir}/dist/js/deployJava.js" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/js/qz-deploy.js" tofile="${basedir}/dist/js/qz-deploy.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/qz-sample.js" tofile="${basedir}/dist/js/qz-sample.js" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/js/qz-interface.js" tofile="${basedir}/dist/js/qz-interface.js" overwrite="true" encoding="UTF-8" />
 
         <!-- <copy file="${basedir}/img/loading_green.gif" tofile="${basedir}/dist/img/loading_green.gif" overwrite="true" encoding="UTF-8" /> -->
         <!-- <copy file="${basedir}/img/loading_red.gif" tofile="${basedir}/dist/img/loading_red.gif" overwrite="true" encoding="UTF-8" /> -->
         <!-- <copy file="${basedir}/img/loading_yellow.gif" tofile="${basedir}/dist/img/loading_yellow.gif" overwrite="true" encoding="UTF-8" /> -->
         <copy file="${basedir}/img/image_sample_bw.png" tofile="${basedir}/dist/img/image_sample_bw.png" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/img/image_sample.png" tofile="${basedir}/dist/img/image_sample.png" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/img/qz.png" tofile="${basedir}/dist/img/qz.png" overwrite="true" encoding="UTF-8" />
     </target>
 </project>
