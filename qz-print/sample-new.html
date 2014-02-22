@@ -16,15 +16,14 @@
 	<div id="container">
 	
 		<div id="header">
-			<img src="img/qz.png" height="50" width="100" alt="QZ" />
+			<div id="logo"><img src="img/qz.png" height="50" width="100" alt="QZ" /></div>
 			<div id="progressbar"><div class="progress-label">Loading...</div></div>
-		</div>
-		
-		<div id="printers">
-			<label for="printer_select">Select Printer:</label>
-			<select id="printer_select" name="printer_select">
-				<option value="">Default Printer</option>
-			</select>
+			<div id="printers">
+				<label for="printer_select">Select Printer:</label>
+				<select id="printer_select" name="printer_select" disabled="disabled">
+					<option value="">Default Printer</option>
+				</select>
+			</div>
 		</div>
 		
 		<div id="tabs">
@@ -81,8 +80,8 @@
 	
 <canvas id="hidden_screenshot" style="display:none;"></canvas>
 <script type="text/javascript" src="js/deployJava.js"></script>
-<script type="text/javascript" src="js/qz-deploy.js"></script>
-<script type="text/javascript" src="js/qz-interface.js"></script>
+<script type="text/javascript" src="js/qz-core.js"></script>
+<script type="text/javascript" src="js/qz-gui.js"></script>
 <script type="text/javascript" src="js/qz-sample.js"></script>
 </body>
 </html>
