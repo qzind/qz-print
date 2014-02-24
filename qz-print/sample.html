@@ -15,9 +15,9 @@
 			<tr>
 				<td valign="top">
 					<h2>All Printers</h2>
-					<input id="find-printer" type="button" onClick="findPrinter()" value="Detect Printer">
+					<input id="find-printer" type="button" onClick="alert(qz.findPrinter($('printer').val()));" value="Detect Printer">
 					<input id="printer" type="text" value="zebra" size="15"><br />
-					<input type="button" onClick="findPrinters()" value="List All Printers"><br />
+					<input type="button" onClick="alert(qz.getPrinters().replace(/,/g, '\n'));" value="List All Printers"><br />
 					<input type="button" onClick="useDefaultPrinter()" value="Use Default Printer"><br /><br />
 					<div id="loaded">Loading...</div>
 				</td>
@@ -25,10 +25,10 @@
 					<h2>Raw Printers</h2>
 					<a href="http://qzindustries.com/WhatIsRawPrinting" target="new">What is Raw Printing?</a><br /><br />
 					<p>Find Printer:</p>
-						<a href="javascript:findPrinter('Zebra');">Zebra</a>&nbsp; 
-						<a href="javascript:findPrinter('Epson');">Epson</a>&nbsp; 
-						<a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp; 
-						<a href="javascript:findPrinter('Star');">Star</a><br /><br />
+						<a href="javascript:alert(qz.findPrinter('Zebra'));">Zebra</a>&nbsp; 
+						<a href="javascript:alert(qz.findPrinter('Epson'));">Epson</a>&nbsp; 
+						<a href="javascript:alert(qz.findPrinter('Citizen'));">Citizen</a>&nbsp; 
+						<a href="javascript:alert(qz.findPrinter('Star'));">Star</a><br /><br />
 					<p>Print raw data:</p>
 						<input class='one-third-width' type="button" onClick="printZPL()" value="ZPL" />
 						<input class='one-third-width' type="button" onClick="printEPL()" value="EPL" />
@@ -81,6 +81,7 @@
 	</div>
 <canvas id="hidden_screenshot" style="display:none;"></canvas>
 <script type="text/javascript" src="js/deployJava.js"></script>
+<script type="text/javascript" src="js/qz-core.js"></script>
 <script type="text/javascript" src="js/qz-sample.js"></script>
 </body>
 </html>

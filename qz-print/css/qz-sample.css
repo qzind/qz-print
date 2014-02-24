@@ -9,60 +9,80 @@
 	border: 0;
 }
 
+
+
 div#container {
-	width: 900px;
+	width: 100%;
 	padding: 30px;
+}
+
+div#header {
+	width: 100%;
+	display: inline-block;
+	/*border: solid red;*/
 }
 
 /* Progress Bar */
 
+div#logo {
+	float: left;
+    display: inline-block;
+	/*border: solid green;*/
+}
+
 div#progressbar {
-	float: right;
-	width: 770px;
-	height: 40px;
-	margin: 5px 0px;
+	/*border: solid blue;*/
+	margin-top: 12px; 
+	margin-left: 8px; 
+	float: left;
+	width: 100px;
+	height: 20px;
 }
 div.ui-progressbar {
 	position: relative;
 }
 div.progress-label {
 	position: absolute;
-	left: 30%;
-	top: 9px;
-	font-weight: bold;
+	/*left: 30%;*/
+	top: 3px;
 	text-shadow: 1px 1px 0px #FFF;
 	text-align: center;
-	width: 40%;
+	height: 100%;
+	width: 100%;
+	font-size: 10px;
 }
 
 /* Printers Div */
 div#printers {
-    height: 50px;
-    text-align: center;
+	margin-top: 12px; 
+	margin-left: 8px; 
+	float: left;
+	display: inline-block;
+	/*border: solid;*/
 }
 div#printers label {
-	font-size: 1.2em;
-	font-weight: bold;
+	/* font-size: 1.2em; */
+	/* font-weight: bold; */
 }
 div#printers select {
 	padding: 3px;
 	border: 1px solid #000;
-	font-size: 1.2em;
+	/* font-size: 1.2em; */
 }
 div#printers select option {
 	padding: 3px;
 }
 
 body {
-	font-family: Helvetica, sans-serif;
-	font-size: 15px;
+	/* font-family: Helvetica, sans-serif; */
+	/* font-size: 15px; */
 }
 h1 {
-	font-family: Georgia, serif;
+	/* font-family: Georgia, serif; */
 	margin-top: 15px;
 }
 h2 {
-	font-size: 1.3em;
+	/* font-size: 1.3em; */
 }
 table {
 	width: 100%;
@@ -92,7 +112,7 @@ a.button {
 	border: 1px solid #666;
 	text-decoration: none;
 	margin-bottom: 10px;
-	font-size: 0.8em;
+	/*font-size: 0.8em;*/
 }
 
 #applet {

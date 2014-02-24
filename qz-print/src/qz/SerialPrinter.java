@@ -195,7 +195,7 @@ public class SerialPrinter implements Printer {
         this.btools.notifyBrowser("qzDoneOpeningPort", portName);
         return port.isOpened();
     }
-
+    
     /**
      * closePort closes the currently open port. A port name is provided but is
      * only used in the log. Since only one port can be open at a time, 
@@ -205,8 +205,23 @@ public class SerialPrinter implements Printer {
      * @return A boolean representing whether the close routine was successful.
      */
     public boolean closePort(String portName) {
+        return closePort(portName, true);
+    }
+
+    /**
+     * closePort closes the currently open port. A port name is provided but is
+     * only used in the log. Since only one port can be open at a time, 
+     * closePort does not require you to specify the correct port.
+     * 
+     * @param portName The name of the port to close. Only used in log.
+     * @param warnClosed Warn the user if the port is already closed
+     * @return A boolean representing whether the close routine was successful.
+     */
+    public boolean closePort(String portName, boolean warnClosed) {
         if (port == null || !port.isOpened()) {
-            LogIt.log(Level.WARNING, "Serial Port [" + portName + "] does not appear to be open.");
+            if (warnClosed) {
+                LogIt.log(Level.WARNING, "Serial Port [" + portName + "] does not appear to be open.");
+            }
             return false;
         }
         
