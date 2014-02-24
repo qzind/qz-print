@@ -120,6 +120,7 @@
 
         <copy file="${basedir}/css/jquery-ui.css" tofile="${basedir}/dist/css/jquery-ui.css" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/css/qz-sample.css" tofile="${basedir}/dist/css/qz-sample.css" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/css/qz-sample-new.css" tofile="${basedir}/dist/css/qz-sample-new.css" overwrite="true" encoding="UTF-8" />
 
         <copy file="${basedir}/js/jquery-1.10.2.js" tofile="${basedir}/dist/js/jquery-1.10.2.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/jquery-ui-1.10.4.custom.min.js" tofile="${basedir}/dist/js/jquery-ui-1.10.4.custom.min.js" overwrite="true" encoding="UTF-8" />
@@ -129,6 +130,7 @@
 		<copy file="${basedir}/js/deployJava.js" tofile="${basedir}/dist/js/deployJava.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/qz-core.js" tofile="${basedir}/dist/js/qz-core.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/qz-sample.js" tofile="${basedir}/dist/js/qz-sample.js" overwrite="true" encoding="UTF-8" />
+		<copy file="${basedir}/js/qz-sample-new.js" tofile="${basedir}/dist/js/qz-sample-new.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/qz-gui.js" tofile="${basedir}/dist/js/qz-gui.js" overwrite="true" encoding="UTF-8" />
 
         <!-- <copy file="${basedir}/img/loading_green.gif" tofile="${basedir}/dist/img/loading_green.gif" overwrite="true" encoding="UTF-8" /> -->
