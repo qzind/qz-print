@@ -48,6 +48,7 @@ public class SerialPrinter implements Printer {
     private int stopBits;
     private int flowControl;
     private int parity;
+    private boolean serialPortsFound = false;
     
     // Beginning and ending patterns that signify port has responded
     private byte[] begin = { '\u0002' };
@@ -64,7 +65,7 @@ public class SerialPrinter implements Printer {
     
     private byte[] output;
     
-    private SerialPort port;
+    private SerialPort port = null;
     private String serialPorts;
     private String[] portArray;
     private String portName;
@@ -160,6 +161,9 @@ public class SerialPrinter implements Printer {
      * @return A boolean representing whether or not opening the port succeeded.
      */
     public boolean openPort(String portName) {
+        if(!serialPortsFound) {
+            findPorts();
+        }
         if (port == null) {
             port = new SerialPort(this.portName = portName);
             
@@ -343,6 +347,7 @@ public class SerialPrinter implements Printer {
                 sb.append(portArray[i]).append(i < portArray.length - 1 ? "," : "");
             }
             serialPorts = sb.toString();
+            serialPortsFound = true;
             LogIt.log("Found Serial Ports: " + serialPorts);
         }
         catch (NullPointerException ex) {
