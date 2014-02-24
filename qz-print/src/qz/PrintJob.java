@@ -411,162 +411,149 @@ public class PrintJob extends JLabel implements Runnable, Printable {
             }
             else if(type == PrintJobType.TYPE_RTF) {
 
-                // If printer is a raw printer, log an error and bypass printing.
-                if(printer instanceof RawPrinter) {
-                    LogIt.log(Level.WARNING, "RTF data can not be sent to a raw printer.");
-                }
-                else {
-                    try {
+                // If printer is a raw printer, log a warning
+                LogIt.log(Level.WARNING, "Current printer reported no PostScript support.");
+                try {
 
-                        PrintJobElement firstElement = rawData.get(0);
-                        PrinterJob job = PrinterJob.getPrinterJob();
+                    PrintJobElement firstElement = rawData.get(0);
+                    PrinterJob job = PrinterJob.getPrinterJob();
 
-                        if(logPSFeatures) {
-                            logSupportedPrinterFeatures(job);
-                        }
-
-                        int w = firstElement.getRtfWidth();;
-                        int h = firstElement.getRtfHeight();;
-
-                        HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
-
-                        /*
-                        if (paperSize != null) {
-                            attr.add(paperSize.getOrientationRequested());
-                            attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
-                        } else {
-                            attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
-                        }
-                        */
-
-                        job.setPrintService(printer.getPrintService());
-
-                        JEditorPane rtfData = firstElement.getRtfData();
-
-                        // Use Reflection to call getPrintable on a JEditorPane if
-                        // available. Must be compiled with Java >= 1.6
-                        Class c = rtfData.getClass();
-
-                        Class[] paramList = new Class[2];
-                        paramList[0] = MessageFormat.class;
-                        paramList[1] = MessageFormat.class;
-
-                        Method m = c.getMethod("getPrintable", paramList);
-                        MessageFormat format = new MessageFormat("");
-                        Printable p = (Printable)m.invoke(rtfData, format, format);
-
-                        job.setPrintable(p);
-                        job.setJobName(title);
-                        job.print(attr);
-
-                    } catch (PrinterException ex) {
-                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
-                    }catch (IndexOutOfBoundsException ex) {
-                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
-                    }catch (IllegalAccessException ex) {
-                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
-                    }catch (InvocationTargetException ex) {
-                        LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
-                    } catch(NoSuchMethodException ex) {
-                        LogIt.log(Level.WARNING, "RTF printing requires this applet to be compiled with Java >= 1.6");
-                    } catch(IllegalArgumentException ex) {
-                        LogIt.log(Level.SEVERE, "Illegal argument exception. " + ex);
+                    if(logPSFeatures) {
+                        logSupportedPrinterFeatures(job);
                     }
 
+                    int w = firstElement.getRtfWidth();;
+                    int h = firstElement.getRtfHeight();;
+
+                    HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+
+                    /*
+                    if (paperSize != null) {
+                        attr.add(paperSize.getOrientationRequested());
+                        attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
+                    } else {
+                        attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
+                    }
+                    */
+
+                    job.setPrintService(printer.getPrintService());
+
+                    JEditorPane rtfData = firstElement.getRtfData();
+
+                    // Use Reflection to call getPrintable on a JEditorPane if
+                    // available. Must be compiled with Java >= 1.6
+                    Class c = rtfData.getClass();
+
+                    Class[] paramList = new Class[2];
+                    paramList[0] = MessageFormat.class;
+                    paramList[1] = MessageFormat.class;
+
+                    Method m = c.getMethod("getPrintable", paramList);
+                    MessageFormat format = new MessageFormat("");
+                    Printable p = (Printable)m.invoke(rtfData, format, format);
+
+                    job.setPrintable(p);
+                    job.setJobName(title);
+                    job.print(attr);
+
+                } catch (PrinterException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                }catch (IndexOutOfBoundsException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                }catch (IllegalAccessException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                }catch (InvocationTargetException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print RTF job.", ex);
+                } catch(NoSuchMethodException ex) {
+                    LogIt.log(Level.WARNING, "RTF printing requires this applet to be compiled with Java >= 1.6");
+                } catch(IllegalArgumentException ex) {
+                    LogIt.log(Level.SEVERE, "Illegal argument exception. " + ex);
                 }
 
             }
             else if(type == PrintJobType.TYPE_PDF) {
-                // If printer is a raw printer, log an error and bypass printing.
-                if(printer instanceof RawPrinter) {
-                    LogIt.log(Level.WARNING, "PostScript data can not be sent to a raw printer.");
-                }
-                else {
-                    try {
-                        PDDocument pdfFile;
-                        pdfFile = null;
-                        
-                        while(pdfFile == null) {
-                            pdfFile = rawData.get(0).getPDFFile();
-                        }
-                        
-                        PrinterJob job = PrinterJob.getPrinterJob();
-                        job.setPrintService(printer.getPrintService());
-                        
-                        pdfFile.silentPrint(job);
-                        pdfFile.close();
-                    } catch (PrinterException ex) {
-                        LogIt.log(Level.SEVERE, "There was an error printing this job. " + ex);
-                    } catch (IOException ex) {
-                        LogIt.log(Level.WARNING, "Could not close PDF file. " + ex);
+                // If printer is a raw printer, log a warning
+                LogIt.log(Level.WARNING, "Current printer reported no PostScript support.");
+                try {
+                    PDDocument pdfFile;
+                    pdfFile = null;
+
+                    while(pdfFile == null) {
+                        pdfFile = rawData.get(0).getPDFFile();
                     }
-                    
+
+                    PrinterJob job = PrinterJob.getPrinterJob();
+                    job.setPrintService(printer.getPrintService());
+
+                    pdfFile.silentPrint(job);
+                    pdfFile.close();
+                } catch (PrinterException ex) {
+                    LogIt.log(Level.SEVERE, "There was an error printing this job. " + ex);
+                } catch (IOException ex) {
+                    LogIt.log(Level.WARNING, "Could not close PDF file. " + ex);
                 }
-                
+
             }
             else if(type == PrintJobType.TYPE_PS) {
 
-                // If printer is a raw printer, log an error and bypass printing.
-                if(printer instanceof RawPrinter) {
-                    LogIt.log(Level.WARNING, "PostScript data can not be sent to a raw printer.");
-                }
-                else {
-                    try {
+                // If printer is a raw printer, log a warning
+                LogIt.log(Level.WARNING, "Current printer reported no PostScript support.");
+                try {
 
-                        PrintJobElement firstElement = rawData.get(0);
-                        PrinterJob job = PrinterJob.getPrinterJob();
+                    PrintJobElement firstElement = rawData.get(0);
+                    PrinterJob job = PrinterJob.getPrinterJob();
 
-                        if(logPSFeatures) {
-                            logSupportedPrinterFeatures(job);
-                        }
-
-                        int w;
-                        int h;
-
-                        if (firstElement.getBufferedImage() != null) {
-                            w = firstElement.getBufferedImage().getWidth();
-                            h = firstElement.getBufferedImage().getHeight();
-                        } 
-                        /*
-                        else if (firstElement.getPDFFile() != null) {
-                            w = (int) firstElement.getPDFPages().getPageFormat(1).getWidth();
-                            h = (int) firstElement.getPDFPages().getPageFormat(1).getHeight();
-                        }
-                        */
-                        else if (firstElement.getRtfData() != null) {
-                            w = firstElement.getRtfWidth();
-                            h = firstElement.getRtfHeight();
-                        }
-                        else {
-                            throw new PrinterException("Corrupt or missing file supplied.");
-                        }
-
-                        HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
-
-                        if (paperSize != null) {
-                            attr.add(paperSize.getOrientationRequested());
-                            if (paperSize.isAutoSize()) {
-                                if(rawData.get(0).getType() == PrintJobElementType.TYPE_IMAGE_PS) {
-                                    paperSize.setAutoSize(rawData.get(0).getBufferedImage());
-                                }
-                            }
-                            attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
-
-                        } else {
-                            attr.add(new MediaPrintableArea(0f, 0f, (w + leftMargin) / 72f, (h + topMargin) / 72f, MediaSize.INCH));
-                        }
-
-                        job.setPrintService(printer.getPrintService());
-                        job.setPrintable(this);
-                        job.setJobName(title);
-                        job.print(attr);
-
-                    } catch (PrinterException ex) {
-                        LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
-                    } catch (IndexOutOfBoundsException ex) {
-                        LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
+                    if(logPSFeatures) {
+                        logSupportedPrinterFeatures(job);
                     }
+
+                    int w;
+                    int h;
+
+                    if (firstElement.getBufferedImage() != null) {
+                        w = firstElement.getBufferedImage().getWidth();
+                        h = firstElement.getBufferedImage().getHeight();
+                    } 
+                    /*
+                    else if (firstElement.getPDFFile() != null) {
+                        w = (int) firstElement.getPDFPages().getPageFormat(1).getWidth();
+                        h = (int) firstElement.getPDFPages().getPageFormat(1).getHeight();
+                    }
+                    */
+                    else if (firstElement.getRtfData() != null) {
+                        w = firstElement.getRtfWidth();
+                        h = firstElement.getRtfHeight();
+                    }
+                    else {
+                        throw new PrinterException("Corrupt or missing file supplied.");
+                    }
+
+                    HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+
+                    if (paperSize != null) {
+                        attr.add(paperSize.getOrientationRequested());
+                        if (paperSize.isAutoSize()) {
+                            if(rawData.get(0).getType() == PrintJobElementType.TYPE_IMAGE_PS) {
+                                paperSize.setAutoSize(rawData.get(0).getBufferedImage());
+                            }
+                        }
+                        attr.add(new MediaPrintableArea(0f, 0f, paperSize.getAutoWidth(), paperSize.getAutoHeight(), paperSize.getUnits()));
+
+                    } else {
+                        attr.add(new MediaPrintableArea(0f, 0f, (w + leftMargin) / 72f, (h + topMargin) / 72f, MediaSize.INCH));
+                    }
+
+                    job.setPrintService(printer.getPrintService());
+                    job.setPrintable(this);
+                    job.setJobName(title);
+                    job.print(attr);
+
+                } catch (PrinterException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
+                } catch (IndexOutOfBoundsException ex) {
+                    LogIt.log(Level.SEVERE, "Could not print PostScript job.", ex);
                 }
+
             }
             else {
                 LogIt.log(Level.WARNING, "Unsupported job type.");
