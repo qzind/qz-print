@@ -94,7 +94,7 @@ function notReady() {
 	} 
 	// If a printer hasn't been selected, display a message.
 	else if (!qz.getPrinter()) {
-		return !qzAlert('warning', 'Please select a printer first by using the "findPrinter()" function.');
+		return !qzAlert('Please select a printer first by using the "findPrinter()" function.', 'warning');
 	}
 	return false;
 }
@@ -116,8 +116,8 @@ function qzReady() {
 		}
 		// LiveConnect error, display a detailed meesage
 		catch(err) {
-			qzAlert(qzFailedMessage);
 			blindCall('qzLoaded(false)');
+			qzAlert(qzFailedMessage);
 	  }
   }
 }
@@ -150,22 +150,15 @@ function qzDonePrinting() {
 	}
 	
 	// Alert success message
-	qzAlert('info', 'Successfully sent print data to "' + qz.getLastPrinter() + '" queue.');
+	qzAlert('Successfully sent print data to "' + qz.getLastPrinter() + '" queue.', 'info');
 }
 
 /**
 * A wrapper for the alert() function so that alerts can be suppressed without
 * editing this file.
 */
-function qzAlert(type, msg) {
+function qzAlert(msg, type) {
 	if (qzAlerts) { alert((type ? type.toUpperCase() : 'ERROR') + ':\n\n\t' + msg); }
 	else { console.log(msg); }
 	return false;
-}
-
-/**
-* Convenience method for qzAlert(null, msg);
-*/
-function qzAlert(msg) {
-	return qzAlert(null, msg);
 }

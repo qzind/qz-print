@@ -3,24 +3,25 @@
 <head>
 	<title>QZ Print Plugin</title>
 	
-	<script src="js/jquery-1.10.2.js"></script>
-	<script src="js/jquery-ui-1.10.4.custom.min.js"></script>
-	<script src="js/html2canvas.js"></script>
-	<script src="js/jquery.plugin.html2canvas.js"></script>	
+	<script type="text/javascript" src="js/jquery.js"></script>
+	<script type="text/javascript" src="js/jquery-ui.js"></script>
+	<script type="text/javascript" src="js/html2canvas.js"></script>
+	<script type="text/javascript" src="js/jquery-html2canvas.js"></script>
+	<script type="text/javascript" src="js/qz-ui.js"></script>
 	
 	<link href="css/jquery-ui.css" rel="stylesheet" />
-	<link href="css/qz-sample-new.css" rel="stylesheet" />
+	<link href="css/qz-ui.css" rel="stylesheet" />
 	
 </head>
 <body>
 	<div id="container">
 	
 		<div id="header">
-			<div id="logo"><img src="img/qz.png" height="50" width="100" alt="QZ" /></div>
+			<div id="logo"><img src="img/qz.png" alt="QZ" /></div>
 			<div id="progressbar"><div class="progress-label">Loading...</div></div>
 			<div id="printers">
-				<label for="printer_select">Select Printer:</label>
-				<select id="printer_select" name="printer_select" disabled="disabled">
+				<label id="printer_select_label" for="printer_menu">Select Printer:</label>
+					<select id="printer_select" name="printer_select">
 					<option value="">Default Printer</option>
 				</select>
 			</div>
@@ -43,7 +44,7 @@
 				<input type="radio" name="label_print_format" value="ZPL">ZPL (Raw)</input><br />
 				<input type="radio" name="label_print_format" value="HTML5">HTML5 (PostScript)</input><br />
 				<input type="radio" name="label_print_format" value="IMAGE">Image (png, jpg, etc) (PostScript)</input><br /><br />
-				<a href="#" class="button" id="label_print_button">Print Label</a>
+				<a href="#" class="ui-button" id="label_print_button">Print Label</a>
 			</div>
 			
 			<div id="tabs-receipt">
@@ -72,7 +73,7 @@
 			
 		</div>
 		
-		<div id="queue-info"></div>
+		<div id="queue"></div>
 		
 	</div>
 	
@@ -81,7 +82,5 @@
 <canvas id="hidden_screenshot" style="display:none;"></canvas>
 <script type="text/javascript" src="js/deployJava.js"></script>
 <script type="text/javascript" src="js/qz-core.js"></script>
-<script type="text/javascript" src="js/qz-gui.js"></script>
-<script type="text/javascript" src="js/qz-sample-new.js"></script>
 </body>
 </html>

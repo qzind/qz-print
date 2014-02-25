@@ -1,4 +1,25 @@
 /**
+********************************************************************************
+*               QZ-PRINT JQUERY/GRAPHICAL USER INTERFACE DEMO
+********************************************************************************
+* Summary: 
+*    A series of JavaScript/jQuery functions for interacting with the "QZ-PRINT"
+*    Applet/Plugin.  This file is a sample only and was created ONLY for
+*    sample.html.  Therfore this file is NOT recommended for redistributing with
+*    3rd party software, although you are free to do so per one of the following
+*    licenses:
+* 
+* Licenses (Please choose ONLY one):
+*    - LGPL 2.1
+*          OR 
+*    - Public Domain, no restrictions
+*
+* Author:
+*    QZ Industries, LLC 2014
+*/
+
+
+/**
 * Automatically gets called when document is finished loading.
 * We can use this to initialize our interface elements
 */
@@ -6,12 +27,24 @@ $(document).ready(function() {
 	// Set up the tab elements
 	$('#tabs').tabs();
 	
-	// Set the progress bar to 33% / "Loading Applet" / Red
-	$('#progressbar').progressbar({
-		value: 33
-	});
+	$('#label_print_button').button();
+	$('#printer_select').menu(
+		{ select: function( event, ui ) {qz.setPrinter(ui.item.children().data('index'));}}
+	);
+	
+	//$('.printer_select').menu('disable');
+	$('#printer_menu').menu(
+		/*{ select: function( event, ui ) {qz.setPrinter(ui.item.children().data('index'));}},*/
+		{ icons: { submenu: "ui-icon-triangle-1-e" } }
+	);
+	
+	$('#queue').addClass("ui-widget-content ui-corner-bottom");
+	
+	// Set the progress bar to 33%, Loading Applet, "QZ-Yellow"
+	$('#progressbar').progressbar({value: 33});
 	$('.progress-label').text("Loading Applet...");
-	$('.ui-progressbar-value').css('backgroundColor', '#F00');
+	//$('.ui-progressbar-value').css('backgroundColor', '#DBD78E');
+	
 	
 		
 	$('#printer_select').on('change', function() {
@@ -19,7 +52,9 @@ $(document).ready(function() {
 		if (selected.data('index')) {
 			qz.setPrinter(selected.data('index'));
 		}
+		$('#printer_select').effect("highlight", {color : "#99EB29"});
 	});
+	
 	
 	/**
 	* Print functions to respond to button presses. Grab the value of the radio select and call the appropriate sample print function.
@@ -33,18 +68,10 @@ $(document).ready(function() {
 		console.log("Print Label! Format: " + format);
 		
 		switch(format) {
-			case 'EPL':
-				printEPL();
-				break;
-			case 'ZPL':
-				printZPL();
-				break;
-			case 'HTML5':
-				printHTML();
-				break;
-			case 'IMAGE':
-				printImage();
-				break;
+			case 'EPL': 	printEPL(); 	break;
+			case 'ZPL': 	printZPL(); 	break;
+			case 'HTML5': 	printHTML(); 	break;
+			case 'IMAGE': 	printImage(); 	break;
 		}
 
 		event.preventDefault();
@@ -61,7 +88,7 @@ function qzLoaded(success) {
 		// Set the progress bar to 66% / "Finding Printers" / Yellow
 		$('#progressbar').progressbar({ value: 66 });
 		$('.progress-label').text("Finding Printers...");
-		$('.ui-progressbar-value').css('backgroundColor', '#FF0');
+		//$('.ui-progressbar-value').css('backgroundColor', '#FF0');
 		document.title = document.title + " " + qz.getVersion();
 	} else {
 		// Set the progress bar to 100% / "Error" / Red
@@ -81,25 +108,23 @@ function qzLoaded(success) {
 function qzDoneFinding() {
     // Get the CSV listing of attached printers
 	var printers = qz.getPrinters().split(',');
-    // Set the printer select with the current list of printers	
+	
+    // Clear, and then Re-populate the printer select options
 	$('#printer_select').find('option').remove();
 	$('#printer_select').removeAttr('disabled');
-	
-	//var ps_html = '<option value="" data-index="-1">Default Printer</option>';
 	$('<option>').val('').text('Default Printer').data('index', -1).appendTo('#printer_select');
 	for (var i in printers) {
 		var sel = (qz.getPrinter() == printers[i]);
 		$('<option>').val(printers[i]).text(printers[i]).data('index', i).prop('selected', sel).appendTo('#printer_select');
+		if (sel) { $('#printer_select').effect("highlight", {color : "#99EB29"}); }
 	}
-	//$('#printer_select').html(ps_html);
-
-	// Set the progress bar to 100% / "Ready" / Green
+	
+	// Refresh the jQuery UI, just in case
+	$('.printer_select').menu("refresh");
+	
+	// Set the progress bar to 100%, "Ready", "QZ-Green"
 	$('#progressbar').progressbar({ value: 100 });
 	$('.progress-label').text("Ready");
-	$('.ui-progressbar-value').css('backgroundColor', '#0F0');
-
-	// Use the default printer automatically
-	/*findPrinter();*/
 }
 
 /***************************************************************************
@@ -111,11 +136,11 @@ function updateQueueInfo() {
 	if (qz) {
 		queueJSON = qz.getQueueInfo();
 		queueInfo = $.parseJSON(queueJSON);
-		queueHtml = "<table><thead><tr><th>ID</th><th>State</th><th>Copies</th><th>View Job Data (Raw Only)</th></tr></thead><tbody>";
+		queueHtml = '<table id="queue_data"><thead"><tr><th>ID</th><th>State</th><th>Copies</th><th>View Job Data in Browser Console (Raw Only)</th></tr></thead><tbody>';
 		
 		for(var i=0; i < queueInfo.length; i++) {
 			queueHtml += "<tr>";
-			queueHtml += "<td>" + queueInfo[i].id + "</td>";
+			queueHtml += '<td class="queue_cell">' + queueInfo[i].id + "</td>";
 			var jobState = queueInfo[i].state.replace("STATE_", "");
 			jobState = jobState.charAt(0) + jobState.slice(1).toLowerCase();
 			queueHtml += "<td>" + jobState + "</td>";
@@ -126,7 +151,8 @@ function updateQueueInfo() {
 		
 		queueHtml += "</tbody></table>";
 	
-		$('#queue-info').html(queueHtml);
+		$('#queue').html(queueHtml);
+		restyleQueueInfo();
 	}
 	else {
 		//queueInfo = "Error: Applet does not appear to be loaded!";
@@ -135,12 +161,19 @@ function updateQueueInfo() {
 
 }
 
+function restyleQueueInfo() {
+	$("#queue th").each(function(){$(this).addClass("ui-state-default");});
+	$("#queue td").each(function(){$(this).addClass("ui-widget-content");});
+	/*$("#queue-info tr").hover(function(){$(this).children("td").addClass("ui-state-hover");},function(){$(this).children("td").removeClass("ui-state-hover");});*/
+	/*$("#queue-info tr").click(function(){$(this).children("td").toggleClass("ui-state-highlight");});*/
+}
+
 /***************************************************************************
 * Prototype function for finding the closest match to a printer name.
 * Usage:
 *    qz.findPrinter('zebra');
 ***************************************************************************/
-function findPrinter() {
+/*function findPrinter() {
 	
 	// Set to blank by default. This will search for the default printer
 	var printer_name = '';
@@ -174,4 +207,4 @@ function findPrinter() {
 		return alert('Error:\n\n\tApplet is not loaded!');
 	}
 	
-}
+}*/

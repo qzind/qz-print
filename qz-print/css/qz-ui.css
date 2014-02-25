@@ -1,18 +1,10 @@
 * {
-	margin: 0;
-	padding: 0;
-	border: 0;
+	font-family: Verdana,Arial,sans-serif;
+	font-size: 8pt;
 }
-* {
-	margin: 0;
-	padding: 0;
-	border: 0;
-}
-
-
 
 div#container {
-	width: 100%;
+	width: 95%;
 	padding: 30px;
 }
 
@@ -22,17 +14,18 @@ div#header {
 	/*border: solid red;*/
 }
 
-/* Progress Bar */
 
 div#logo {
+	position: relative;
+	top: 10px;
 	float: left;
     display: inline-block;
-	/*border: solid green;*/
 }
 
+/* Progress Bar */
 div#progressbar {
 	/*border: solid blue;*/
-	margin-top: 12px; 
+	margin-top: 16px; 
 	margin-left: 8px; 
 	float: left;
 	width: 100px;
@@ -54,41 +47,30 @@ div.progress-label {
 
 /* Printers Div */
 div#printers {
-	margin-top: 12px; 
+	margin-top: 3px;
 	margin-left: 8px; 
 	float: left;
 	display: inline-block;
 	/*border: solid;*/
-}
-div#printers label {
-	/* font-size: 1.2em; */
-	/* font-weight: bold; */
-}
-div#printers select {
-	padding: 3px;
-	border: 1px solid #000;
-	/* font-size: 1.2em; */
-}
-div#printers select option {
-	padding: 3px;
 }
 
 body {
 	/* font-family: Helvetica, sans-serif; */
 	/* font-size: 15px; */
 }
-h1 {
-	/* font-family: Georgia, serif; */
-	margin-top: 15px;
+
+table#queue_data {
+	width: 100%;
+	text-align: center;
+	border-spacing: 0;
 }
-h2 {
-	/* font-size: 1.3em; */
-}
-table {
+
+/*table {
 	width: 100%;
 	border-collapse: collapse;
 	border: 1px solid #000;
 }
+
 th {
 	text-align: left;
 	border: 1px solid #000;
@@ -98,7 +80,7 @@ td {
 	border: 1px solid #000;
 	vertical-align: top;
 	padding: 15px;
-}
+}*/
 
 applet {
 	position: absolute;
@@ -115,11 +97,11 @@ a.button {
 	/*font-size: 0.8em;*/
 }
 
-#applet {
+/*#applet {
 	background-color: #CCC;
 	padding: 15px;
-}
+}*/
 
-div#queue-info {
+div#queue {
 	padding: 15px;
 }
