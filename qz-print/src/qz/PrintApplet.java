@@ -44,7 +44,7 @@ public class PrintApplet extends Applet {
     /**
      * The version number for the applet
      */
-    public static final String VERSION = "2.0.0";
+    public static final String VERSION = "1.9.9.2";
     
     private BrowserTools btools;
     private PrintSpooler spooler;
@@ -55,6 +55,7 @@ public class PrintApplet extends Applet {
         
         super.start();
         
+        LogIt.log("QZ-PRINT " + getVersion());
         LogIt.log("Applet Started");
         
         btools = new BrowserTools(this);
@@ -65,13 +66,14 @@ public class PrintApplet extends Applet {
         
         charset = Charset.defaultCharset();
         
-        btools.notifyBrowser("qzReady");
+        // Moved after printer population finished
+        //btools.notifyBrowser("qzReady");
         
     }
     
     @Override
     public void stop() {
-        spooler.closePort("");
+        spooler.closePort("", false);
         super.stop();
     }
     
@@ -128,11 +130,15 @@ public class PrintApplet extends Applet {
      * when complete.
      * 
      * @param printerName The name (or partial name) of the printer to find
+     * @return The name of the printer that is found, or null if none is found
      */
-    public void findPrinter(String printerName) {
-        spooler.findPrinter(printerName);
-        // Deprecated callback. Remove in a future version.
+    public String findPrinter(String printerName) {
+        Printer p = null;
+        if (spooler.getPrinterList() != null) {
+            p = spooler.findPrinter(printerName);
+        }
         btools.notifyBrowser("qzDoneFinding");
+        return p == null ? null : p.getName();
     }
     
     /**
@@ -160,15 +166,18 @@ public class PrintApplet extends Applet {
      */
     public String getPrinters() {
         
-        try {
+        /*try {
             String printerListString = spooler.getPrinters();
             return printerListString;
         }
         catch(NullPointerException ex) {
             LogIt.log(Level.WARNING, "Could not get printer list.", ex);
             return "";
+        }*/
+        if (spooler.getPrinterList() != null) {
+            return spooler.getPrinters();
         }
-        
+        return "";
     }
     
     /**

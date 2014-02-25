@@ -34,7 +34,7 @@
 		<j2se version="1.5+" />
 		<jar href="qz-print.jar" eager="true" download="eager" main="true" />
 		<!-- <jar href="lib/jssc_qz.jar" eager="false" download="lazy" /> -->
-		<!-- <jar href="lib/pdf-renderer_qz.jar" eager="false" download="lazy" /> -->
+		<!-- <jar href="lib/pdfbox-1.8.4_qz.jar" eager="false" download="lazy" /> -->
 	</resources>
 	<applet-desc name="QZ Print Plugin" main-class="qz.PrintApplet" width="1" height="1" />
     <!-- 
