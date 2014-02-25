@@ -1,14 +1,14 @@
-Changes 2.0.0 (Target 02/17/13)
+Changes 2.0.0 (Target 03/15/14)
 - Complete code rewrite for asyncronous handling of events
   - Find and print without the need for "waiting" or "call-backs"
   - Print to multiple printers without "waiting" or "call-backs"
 - Replaced pdf-renderer with updated pdfbox.
-- New setMargin function - FIXME NOT DONE IN 1.9.9.1
+- New setMargin function
 - New setCopies() function.  i.e. qz.setCopies(10);
 - New appendRTF() function.  i.e. qz.appendRTF("/path/to/sample.rtf");
 - Fixed appendHex() bug not allowing byte values over 127 (x7F)
 - Moved JavaScript code examples out of sample.html and into qz-sample.js
-- Updated 3rd party serial library (jssc) from 1.6.0 to 1.8.0
+- Updated 3rd party serial library (jssc) from 2.6.0 to 2.8.0
 - New getQueueInfo() function - JSON formatted queue info. $.parseJSON(qz.getQueueInfo());
 - Now prints some qz-print debug info to the browser's console (in addition to the Java console)
 - Begin project migration from Google Code to GitHub
