@@ -474,10 +474,9 @@ public class PrintJob extends JLabel implements Runnable, Printable {
             else if(type == PrintJobType.TYPE_PDF) {
                 // If printer is a raw printer, log a warning
                 LogIt.log(Level.WARNING, "Current printer reported no PostScript support.");
+                PDDocument pdfFile = null;
                 try {
-                    PDDocument pdfFile;
-                    pdfFile = null;
-
+ 
                     while(pdfFile == null) {
                         pdfFile = rawData.get(0).getPDFFile();
                     }
@@ -486,11 +485,17 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                     job.setPrintService(printer.getPrintService());
 
                     pdfFile.silentPrint(job);
-                    pdfFile.close();
+                    
                 } catch (PrinterException ex) {
                     LogIt.log(Level.SEVERE, "There was an error printing this job. " + ex);
-                } catch (IOException ex) {
-                    LogIt.log(Level.WARNING, "Could not close PDF file. " + ex);
+                } finally {
+                    try {
+                        if (pdfFile != null) {
+                            pdfFile.close();
+                        }
+                    }  catch (IOException ex) {
+                        LogIt.log(Level.WARNING, "Could not close PDF file. " + ex);
+                    } 
                 }
 
             }

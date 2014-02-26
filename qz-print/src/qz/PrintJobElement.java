@@ -205,16 +205,16 @@ public class PrintJobElement {
             LogIt.log("DEBUG: fileName - " + fileName);
             
             pdfFile = AccessController.doPrivileged(new PrivilegedAction<PDDocument>() {
-                private PDDocument doc;
+                //private PDDocument doc;
                 public PDDocument run() {
                     
                     try{
-                        doc = new PDDocument();
+                        //doc = new PDDocument();
                         URL fileUrl = new URL(fileName);
-                        doc = PDDocument.load(fileUrl);
+                        return PDDocument.load(fileUrl);
                     } catch (IOException ex) {
                         LogIt.log("Error reading PDF file. " + ex);
-                        return null;
+                        //return null;
                     } finally {
                         /*
                         try {
@@ -226,7 +226,7 @@ public class PrintJobElement {
                         
                     }
                     
-                    return doc;
+                    return null;
                 }
             });
         }
