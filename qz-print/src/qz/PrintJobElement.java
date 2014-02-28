@@ -25,7 +25,6 @@ import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.print.PrinterException;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -34,7 +33,6 @@ import java.nio.charset.Charset;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.imageio.ImageIO;
 import javax.swing.JEditorPane;
 import javax.xml.parsers.ParserConfigurationException;
@@ -44,7 +42,6 @@ import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
 import qz.exception.InvalidRawImageException;
 import qz.exception.NullCommandException;
-import qz.ThreadMonitor.ThreadMonitor;
 
 /**
  * A PrintJobElement is a piece of a PrintJob that contains a data string,

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package qz.ThreadMonitor;
+package qz.threadmonitor;
 
 /**
  * Monitors a thread, interrupting it of it reaches the specified timout.
