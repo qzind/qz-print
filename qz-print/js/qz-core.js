@@ -126,11 +126,13 @@ function qzReady() {
 * Blindly calls a the specified JavaScript function without throwing an
 * exception to the browser.  For security reasons, only function starting 
 * with "qz" can be called this way.
+* setTimeout() is used over eval() because it fires asyncronous
+* (i.e. so qzReady() finishes completely prior to calling the "blind" function)
 */
 function blindCall(funcName) {
 	// Make sure the function starts with "qz"
 	if (funcName.lastIndexOf('qz', 0) === 0) {
-		try { return eval(funcName + ';'); }
+		try { window.setTimeout(funcName, 0); return true;}
 		catch (err) {}
 	}
 	return false; 
