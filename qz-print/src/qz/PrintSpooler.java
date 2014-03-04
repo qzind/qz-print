@@ -557,14 +557,14 @@ public class PrintSpooler implements Runnable {
             //printerListString += printerName;
             Printer printer;
 
-            if (ps.isDocFlavorSupported(DocFlavor.INPUT_STREAM.POSTSCRIPT)) {
-                printer = (PSPrinter) new PSPrinter();
-            } else {
+            //if (ps.isDocFlavorSupported(DocFlavor.INPUT_STREAM.POSTSCRIPT)) {
+            //    printer = (PSPrinter) new PSPrinter();
+            //} else {
                 printer = (RawPrinter) new RawPrinter();
-            }
+            //}
 
             printer.setPrintService(ps);
-            printer.setName(psa.get(PrinterName.class).toString());
+            printer.setName(((PrinterName)ps.getAttribute(PrinterName.class)).getValue());
             printers.add(printer);
         }
         LogIt.log("Found " + printers.size() + " printers.");
