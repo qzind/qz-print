@@ -110,6 +110,11 @@ public class RawPrinter implements Printer {
             pj.print(doc, reqAttr);
         } catch (PrintException ex) {
             LogIt.log(Level.SEVERE, "Raw print error.", ex);
+            if (ex.getLocalizedMessage().toLowerCase().contains("/usr/bin/lpr") || 
+                    ex.getLocalizedMessage().toLowerCase().contains("operation not permitted")) {
+                LogIt.log(Level.INFO, "Browser security seems to be blocking the print operation."
+                        + "  Please trust this applet via browser settings.");
+            }
         }
 
         while (!isFinished) {
