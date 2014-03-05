@@ -33,7 +33,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.logging.Level;
-import javax.print.DocFlavor;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.PrintServiceAttributeSet;
@@ -133,7 +132,7 @@ public class PrintSpooler implements Runnable {
                                     job.print();
                                 }
                                 break;
-                        };
+                        }
 
                         HashMap<String, String> jobInfo = new HashMap<String, String>();
                         jobInfo.put("id", String.valueOf(jobIndex));
@@ -145,6 +144,9 @@ public class PrintSpooler implements Runnable {
                     queueInfo = currentQueueInfo;
                 }
             }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {}
         }
     }
 
@@ -180,8 +182,9 @@ public class PrintSpooler implements Runnable {
 
     /**
      * Create a PrintJob and add it to the spool
+     * @return Returns a new <code>PrintJob</code>
      */
-    public void createJob() {
+    public PrintJob createJob() {
 
         openJobs += 1;
 
@@ -202,6 +205,8 @@ public class PrintSpooler implements Runnable {
         synchronized (spool) {
             spool.add(currentJob);
         }
+        
+        return currentJob;
     }
 
     /**
@@ -802,6 +807,7 @@ public class PrintSpooler implements Runnable {
      * @param copies The number of copies to print
      */
     public void setCopies(int copies) {
+        LogIt.log(Level.INFO, "[PrintSpooler] Copies set to " + copies);
         if (currentJob == null) {
             createJob();
         }

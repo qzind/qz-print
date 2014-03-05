@@ -44,7 +44,7 @@ public class PrintApplet extends Applet {
     /**
      * The version number for the applet
      */
-    public static final String VERSION = "1.9.9.3";
+    public static final String VERSION = "1.9.9.4";
     
     private BrowserTools btools;
     private PrintSpooler spooler;

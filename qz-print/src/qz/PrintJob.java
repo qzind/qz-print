@@ -83,9 +83,12 @@ public class PrintJob extends JLabel implements Runnable, Printable {
     
     public void run() {
         
+        /*
+         * This is spiking CPU to 100%
+         *        
         while(running) {
             //Loop
-        }
+        }*/
     }
     
     /**
@@ -724,6 +727,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
      */
     void setCopies(int copies) {
         if(copies > 0) {
+            LogIt.log(Level.INFO, "[PrintJob] Copies set to " + copies);
             this.copies = copies;
         }
         else {
