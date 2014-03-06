@@ -73,11 +73,11 @@ public class BrowserTools {
                         + "Please use \"" + function.replaceFirst("jzebra", "qz")
                         + "(...)\" instead.");
             }
-            else if (function.equals("qzDoneAppending") || 
+            /*else if (function.equals("qzDoneAppending") || 
                      function.equals("qzDoneFinding") || 
                      function.equals("qzDoneFindingNetwork")) {
                 LogIt.log(Level.WARNING, "JavaScript function \"" + function + "(...)\" is deprecated and will be removed in future releases.");
-            }
+            }*/
             
             return true;
         } catch (JSException e) { 

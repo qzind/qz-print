@@ -21,29 +21,23 @@
  */
 package qz;
 
-import com.sun.pdfview.PDFFile;
-import com.sun.pdfview.PDFPage;
-import com.sun.pdfview.PDFRenderer;
 import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.print.PageFormat;
-import static java.awt.print.Printable.PAGE_EXISTS;
 import java.awt.print.PrinterException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.swing.JEditorPane;
 import javax.xml.parsers.ParserConfigurationException;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPageable;
 import org.w3c.dom.DOMException;
 import org.xml.sax.SAXException;
 import qz.exception.InvalidRawImageException;
@@ -68,8 +62,9 @@ public class PrintJobElement {
     private LanguageType lang;
     private String xmlTag;
     private BufferedImage bufferedImage;
-    private PDFFile pdfFile;
-    private ByteBuffer bufferedPDF;
+    private PDDocument pdfFile;
+    private PDPageable pdfPages;
+    private String pdfFileName;
     private JEditorPane rtfEditor = new JEditorPane();
     
     PrintJobElement(PrintJob pj, ByteArrayBuilder data, PrintJobElementType type, Charset charset, String lang, int dotDensity) {
@@ -202,13 +197,35 @@ public class PrintJobElement {
             rtfEditor.setText(data);
         }
         else if(type == PrintJobElementType.TYPE_PDF) {
-            String file = new String(data.getByteArray(), charset.name());
-            bufferedPDF = ByteBuffer.wrap(ByteUtilities.readBinaryFile(file));
-            try {
-                pdfFile = getPDFFile();
-            } catch (PrinterException ex) {
-                LogIt.log(Level.SEVERE, "Could not prepare PDF element.", ex);
-            }
+            pdfFileName = new String(data.getByteArray(), charset.name());
+            final String fileName = pdfFileName;
+            LogIt.log("DEBUG: fileName - " + fileName);
+            
+            pdfFile = AccessController.doPrivileged(new PrivilegedAction<PDDocument>() {
+                //private PDDocument doc;
+                public PDDocument run() {
+                    
+                    try{
+                        //doc = new PDDocument();
+                        URL fileUrl = new URL(fileName);
+                        return PDDocument.load(fileUrl);
+                    } catch (IOException ex) {
+                        LogIt.log("Error reading PDF file. " + ex);
+                        //return null;
+                    } finally {
+                        /*
+                        try {
+                            doc.close();
+                        } catch (IOException ex) {
+                            LogIt.log("Error closing PDF file. " + ex);
+                        }
+                        */
+                        
+                    }
+                    
+                    return null;
+                }
+            });
         }
 
         prepared = true;
@@ -262,22 +279,49 @@ public class PrintJobElement {
     }
     
     /**
-     * Getter for the PDFFile object. This object is used for pdf PrintJobElements
+     * Getter for the PDDocument object. This object is used for pdf PrintJobElements
      * 
-     * @return The processed PDFFile
+     * @return The processed PDDocument
      * @throws PrinterException
      */
-    public PDFFile getPDFFile() throws PrinterException {
-        
-        if (pdfFile == null && bufferedPDF != null) {
-            try {    
-                pdfFile = new PDFFile(this.bufferedPDF);
-            } catch (IOException ex) {
-                LogIt.log(Level.SEVERE, "Could not get PDF file.", ex);
-            }
-        }
+    public PDDocument getPDFFile() {
         
         return pdfFile;
+        
+        /*
+        if (pdfFile != null) {
+            return pdfFile;
+        }
+        else {
+            // Need to double escape slashes before feeding to PDDocument.load
+            final String fileName = pdfFileName.replaceAll("\\", "\\\\");
+            LogIt.log("FILENAME: " + fileName);
+            pdfFile = AccessController.doPrivileged(new PrivilegedAction<PDDocument>() {
+                private PDDocument doc;
+                public PDDocument run() {
+                    
+                    try{
+                        doc = new PDDocument();
+                        doc = PDDocument.load(fileName);
+                        
+                    } catch (IOException ex) {
+                        LogIt.log("Error reading PDF file. " + ex);
+                        return null;
+                    } finally {
+                        try {
+                            doc.close();
+                        } catch (IOException ex) {
+                            LogIt.log("Error closing PDF file. " + ex);
+                        }
+                        return doc;
+                    }
+                    
+                    
+                }
+            });
+            return pdfFile;
+        }
+        */
     }
     
     /**
@@ -287,45 +331,23 @@ public class PrintJobElement {
      * @param graphics The target graphics context
      * @param pageFormat The desired pageFormat
      * @param pageIndex The page index currently being processed
+     * @param leftMargin The left margin to use when printing
+     * @param topMargin The top margin to use when printing
+     * 
      * @return PAGE_EXISTS on success
      * @throws PrinterException
      */
+    /*
     public int printPDFRenderer(Graphics graphics, PageFormat pageFormat, int pageIndex, int leftMargin, int topMargin) throws PrinterException {
-        /*
-         * Important:  This uses class reflection to instantiate and invoke
-         * PDFRenderer to reduce reliance on the project's classpath for 3rd 
-         * party libraries.
-         */
-        PDFFile pdf = getPDFFile();
         
-        int pg = pageIndex + 1;
-        
-        if (pdf == null) {
-            throw new PrinterException("No PDF data specified");
+        if (pdfPages == null) {
+            throw new PrinterException("No PDF data loaded.");
         }
         
-        // fit the PDFPage into the printing area
-        Graphics2D g2 = (Graphics2D) graphics;
-        PDFPage page = pdf.getPage(pg);
-        
-        Rectangle2D pageBox = (Rectangle2D)page.getPageBox();
-        Rectangle imgBounds = pageBox.getBounds();
-        imgBounds.x = leftMargin;
-        imgBounds.y = topMargin;
-        
-        Rectangle2D bBox = (Rectangle2D)page.getBBox();
-        
-        PDFRenderer pgs = new PDFRenderer(page, g2, imgBounds, bBox, Color.WHITE);
-        try {
-            page.waitForFinish();
-        } catch (InterruptedException ex) {
-            LogIt.log(Level.SEVERE, "Printing was interrupted.", ex);
-        }
-        pgs.run();
-        
-        return PAGE_EXISTS;
+        return pdfPages.print(graphics, pageFormat, pageIndex);
         
     }
+    */
     
     /**
      * This function returns the RTF data to the print job for printing

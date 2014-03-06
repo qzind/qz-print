@@ -78,5 +78,5 @@ public class PSPrinter implements Printer {
     public void setJobTitle(String jobTitle) {
         this.jobTitle = jobTitle;
     }
-        
+
 }

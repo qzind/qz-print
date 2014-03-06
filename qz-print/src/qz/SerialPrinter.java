@@ -48,6 +48,7 @@ public class SerialPrinter implements Printer {
     private int stopBits;
     private int flowControl;
     private int parity;
+    private boolean serialPortsFound = false;
     
     // Beginning and ending patterns that signify port has responded
     private byte[] begin = { '\u0002' };
@@ -64,7 +65,7 @@ public class SerialPrinter implements Printer {
     
     private byte[] output;
     
-    private SerialPort port;
+    private SerialPort port = null;
     private String serialPorts;
     private String[] portArray;
     private String portName;
@@ -160,6 +161,9 @@ public class SerialPrinter implements Printer {
      * @return A boolean representing whether or not opening the port succeeded.
      */
     public boolean openPort(String portName) {
+        if(!serialPortsFound) {
+            findPorts();
+        }
         if (port == null) {
             port = new SerialPort(this.portName = portName);
             
@@ -195,7 +199,7 @@ public class SerialPrinter implements Printer {
         this.btools.notifyBrowser("qzDoneOpeningPort", portName);
         return port.isOpened();
     }
-
+    
     /**
      * closePort closes the currently open port. A port name is provided but is
      * only used in the log. Since only one port can be open at a time, 
@@ -205,8 +209,23 @@ public class SerialPrinter implements Printer {
      * @return A boolean representing whether the close routine was successful.
      */
     public boolean closePort(String portName) {
+        return closePort(portName, true);
+    }
+
+    /**
+     * closePort closes the currently open port. A port name is provided but is
+     * only used in the log. Since only one port can be open at a time, 
+     * closePort does not require you to specify the correct port.
+     * 
+     * @param portName The name of the port to close. Only used in log.
+     * @param warnClosed Warn the user if the port is already closed
+     * @return A boolean representing whether the close routine was successful.
+     */
+    public boolean closePort(String portName, boolean warnClosed) {
         if (port == null || !port.isOpened()) {
-            LogIt.log(Level.WARNING, "Serial Port [" + portName + "] does not appear to be open.");
+            if (warnClosed) {
+                LogIt.log(Level.WARNING, "Serial Port [" + portName + "] does not appear to be open.");
+            }
             return false;
         }
         
@@ -328,6 +347,7 @@ public class SerialPrinter implements Printer {
                 sb.append(portArray[i]).append(i < portArray.length - 1 ? "," : "");
             }
             serialPorts = sb.toString();
+            serialPortsFound = true;
             LogIt.log("Found Serial Ports: " + serialPorts);
         }
         catch (NullPointerException ex) {
