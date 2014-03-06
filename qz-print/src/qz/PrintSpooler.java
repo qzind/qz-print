@@ -189,9 +189,7 @@ public class PrintSpooler implements Runnable {
         openJobs += 1;
 
         currentJob = new PrintJob();
-        currentJobThread = new Thread(currentJob);
-        currentJobThread.start();
-
+        
         if (paperSize != null) {
             currentJob.setPaperSize(paperSize);
         }

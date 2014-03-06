@@ -59,7 +59,7 @@ import qz.exception.NullCommandException;
  * 
  * @author Thomas Hart
  */
-public class PrintJob extends JLabel implements Runnable, Printable {
+public class PrintJob extends JLabel implements Printable {
     
     private PrintJobState state = PrintJobState.STATE_CREATED;
     private final String title = "Print Job";
@@ -80,17 +80,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
     private int copies = 1;
     private int leftMargin = 0;
     private int topMargin = 0;
-    
-    public void run() {
         
-        /*
-         * This is spiking CPU to 100%
-         *        
-        while(running) {
-            //Loop
-        }*/
-    }
-    
     /**
      * Cancel a print job.
      */
