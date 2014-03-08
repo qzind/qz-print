@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.ListIterator;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.PrintServiceAttributeSet;
@@ -107,9 +108,12 @@ public class PrintSpooler implements Runnable {
         currentPrinter = null;
         defaultPS = PrintServiceLookup.lookupDefaultPrintService();
 
+        // Set the loop delay for the spooler
+        int loopDelay = 100;
+        
         // Tell the web browser the applet is ready
         btools.notifyBrowser("qzReady");
-
+        
         // Main loop
         while (running) {
             synchronized (spool) {
@@ -123,11 +127,16 @@ public class PrintSpooler implements Runnable {
                         PrintJobState jobState = job.getJobState();
 
                         switch (jobState) {
+                            case STATE_PROCESSING:
+                                // Check if job is processed. This will trigger the PrintJob to check all it's elements and set itself to STATE_PROCESSED if all set
+                                job.isProcessed();
+                                break;
                             case STATE_PROCESSED:
+                                // Once a job is marked as processed, it's ready to be queued up
                                 job.queue();
                                 break;
                             case STATE_QUEUED:
-                                // Get Printer Status from the job
+                                // Get Printer Status from the job. If it's ready, go ahead and send the queued job
                                 if (job.getPrinter().ready()) {
                                     job.print();
                                 }
@@ -145,8 +154,10 @@ public class PrintSpooler implements Runnable {
                 }
             }
             try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {}
+                Thread.sleep(loopDelay);
+            } catch (InterruptedException ex) {
+                LogIt.log(Level.SEVERE, "Print spooler interrupted.", ex);
+            }
         }
     }
 
@@ -411,15 +422,7 @@ public class PrintSpooler implements Runnable {
             return false;
         } else if (openJobs == 1) {
             currentJob.setPrinter(currentPrinter);
-            try {
-                currentJob.prepareJob();
-            } catch (InvalidRawImageException ex) {
-                LogIt.log(Level.SEVERE, "Raw image error.", ex);
-                setException(ex);
-            } catch (NullCommandException ex) {
-                LogIt.log(Level.SEVERE, "No data has been provided.", ex);
-                setException(ex);
-            }
+            currentJob.prepareJob();
             currentJob = null;
             openJobs = 0;
             return true;
@@ -428,15 +431,7 @@ public class PrintSpooler implements Runnable {
                 while (openJobs > 0) {
                     PrintJob job = spool.get(spool.size() - openJobs);
                     job.setPrinter(currentPrinter);
-                    try {
-                        job.prepareJob();
-                    } catch (InvalidRawImageException ex) {
-                        LogIt.log(Level.SEVERE, "Raw image error.", ex);
-                        setException(ex);
-                    } catch (NullCommandException ex) {
-                        LogIt.log(Level.SEVERE, "No data has been provided.", ex);
-                        setException(ex);
-                    }
+                    job.prepareJob();
                     openJobs -= 1;
                 }
             }
@@ -457,12 +452,6 @@ public class PrintSpooler implements Runnable {
                 filePrinter.setOutputPath(filePath);
                 currentJob.setPrinter(filePrinter);
                 currentJob.prepareJob();
-            } catch (InvalidRawImageException ex) {
-                LogIt.log(Level.SEVERE, "Raw image error.", ex);
-                setException(ex);
-            } catch (NullCommandException ex) {
-                LogIt.log(Level.SEVERE, "No data has been provided.", ex);
-                setException(ex);
             } catch (InvalidFileTypeException ex) {
                 LogIt.log(Level.SEVERE, "Invalid file type.", ex);
                 setException(ex);
@@ -484,15 +473,7 @@ public class PrintSpooler implements Runnable {
         if (currentJob != null) {
             lastPrinterName = "Remote Host";
             currentJob.setHostOutput(jobHost, jobPort);
-            try {
-                currentJob.prepareJob();
-            } catch (InvalidRawImageException ex) {
-                LogIt.log(Level.SEVERE, "Raw image error.", ex);
-                setException(ex);
-            } catch (NullCommandException ex) {
-                LogIt.log(Level.SEVERE, "No data has been provided.", ex);
-                setException(ex);
-            }
+            currentJob.prepareJob();
             currentJob = null;
         } else {
             LogIt.log(Level.SEVERE, "No data has been provided.");

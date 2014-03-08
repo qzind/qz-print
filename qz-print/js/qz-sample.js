@@ -30,8 +30,9 @@ function deployQZ() {
 */
 function qzReady() {
 	
-	// set updateQueueInfo to trigger every second
-	queueUpdateInterval = setInterval(updateQueueInfo, 1000);
+	// set updateQueueInfo to trigger on a configured delay
+	queueDelay = 100;
+	queueUpdateInterval = setInterval(updateQueueInfo, queueDelay);
 	
 	// Setup our global qz object
 	window["qz"] = document.getElementById('qz');
@@ -107,7 +108,8 @@ function qzDonePrinting() {
 	}
 	
 	// Alert success message
-	alert('Successfully sent print data to "' + qz.getLastPrinter() + '" queue.');
+	//alert('Successfully sent print data to "' + qz.getLastPrinter() + '" queue.');
+	console.log('Successfully sent print data to "' + qz.getLastPrinter() + '" queue.');
 }
 
 /***************************************************************************
@@ -921,7 +923,7 @@ function updateQueueInfo() {
 		queueInfo = $.parseJSON(queueJSON);
 		queueHtml = "<table><thead><tr><th>ID</th><th>State</th><th>Copies</th><th>View Job Data (Raw Only)</th></tr></thead><tbody>";
 		
-		for(var i=0; i < queueInfo.length; i++) {
+		for(var i = queueInfo.length - 1; i >= 0; i--) {
 			queueHtml += "<tr>";
 			queueHtml += "<td>" + queueInfo[i].id + "</td>";
 			var jobState = queueInfo[i].state.replace("STATE_", "");

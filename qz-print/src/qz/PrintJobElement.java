@@ -55,6 +55,7 @@ public class PrintJobElement {
     private PrintJobElementType type;
     private PrintJob pj;
     private ByteArrayBuilder data;
+    private ByteArrayBuilder preparedData;
     private final Charset charset;
     private int imageX = 0;
     private int imageY = 0;
@@ -121,115 +122,31 @@ public class PrintJobElement {
     /**
      * Prepare the PrintJobElement
      * 
-     * @return Boolean representing success
      * @throws IOException
      * @throws InvalidRawImageException
      * @throws NullCommandException 
      */
-    public boolean prepare() throws IOException, InvalidRawImageException, NullCommandException {
-
-        // An image file, pull the file into an ImageWrapper and get the 
-        // encoded data
-        if(type == PrintJobElementType.TYPE_IMAGE) {
-            
-            // Prepare the image
-            String file = new String(data.getByteArray(), charset.name());
-            
-            BufferedImage bi;
-            ImageWrapper iw;
-            if (ByteUtilities.isBase64Image(file)) {
-                byte[] imageData = Base64.decode(file.split(",")[1]);
-                bi = ImageIO.read(new ByteArrayInputStream(imageData));
-            } else {
-                bi = ImageIO.read(new URL(file));
-            }
-            iw = new ImageWrapper(bi, lang);
-            iw.setCharset(charset);
-            // Image density setting (ESCP only)
-            iw.setDotDensity(dotDensity);
-            // Image coordinates, (EPL only)
-            iw.setxPos(imageX);
-            iw.setyPos(imageY);
-            
-            try {
-                this.data = new ByteArrayBuilder(iw.getImageCommand());
-            } catch (UnsupportedEncodingException ex) {
-                LogIt.log(Level.SEVERE, "Unsupported encoding.", ex);
-            }
-        }
-        else if(type == PrintJobElementType.TYPE_IMAGE_PS) {
-            String file = new String(data.getByteArray(), charset.name());
-            if (ByteUtilities.isBase64Image(file)) {
-                byte[] imgData = Base64.decode(file.split(",")[1]);
-                InputStream in = new ByteArrayInputStream(imgData);
-                bufferedImage = ImageIO.read(in);
-            } else {
-                bufferedImage = ImageIO.read(new URL(file));
-            }
-        }
-        else if(type == PrintJobElementType.TYPE_XML) {
-            String file = new String(data.getByteArray(), charset.name());
-            String dataString;
-            byte[] dataByteArray;
-            
-            try {
-                dataString = FileUtilities.readXMLFile(file, xmlTag);
-                dataByteArray = Base64.decode(dataString);
-                data = new ByteArrayBuilder(dataByteArray);
-            } catch (DOMException ex) {
-                LogIt.log(Level.SEVERE, "Could not prepare XML element.", ex);
-            } catch (ParserConfigurationException ex) {
-                LogIt.log(Level.SEVERE, "Could not prepare XML element.", ex);
-            } catch (SAXException ex) {
-                LogIt.log(Level.SEVERE, "Could not prepare XML element.", ex);
-            }
-        }
-        else if(type == PrintJobElementType.TYPE_FILE) {
-            String file = new String(data.getByteArray(), charset.name());
-            data = new ByteArrayBuilder(FileUtilities.readRawFile(file));
-        }
-        else if(type == PrintJobElementType.TYPE_RTF) {
-            String file = new String(data.getByteArray(), charset.name());
-            String data = new String(FileUtilities.readRawFile(file), charset.name());
-            rtfEditor.setBackground(Color.white);
-            rtfEditor.setVisible(false);
-            rtfEditor.setContentType("text/rtf");
-            rtfEditor.setText(data);
-        }
-        else if(type == PrintJobElementType.TYPE_PDF) {
-            pdfFileName = new String(data.getByteArray(), charset.name());
-            final String fileName = pdfFileName;
-            LogIt.log("DEBUG: fileName - " + fileName);
-            
-            pdfFile = AccessController.doPrivileged(new PrivilegedAction<PDDocument>() {
-                //private PDDocument doc;
-                public PDDocument run() {
-                    
-                    try{
-                        //doc = new PDDocument();
-                        URL fileUrl = new URL(fileName);
-                        return PDDocument.load(fileUrl);
-                    } catch (IOException ex) {
-                        LogIt.log("Error reading PDF file. " + ex);
-                        //return null;
-                    } finally {
-                        /*
-                        try {
-                            doc.close();
-                        } catch (IOException ex) {
-                            LogIt.log("Error closing PDF file. " + ex);
-                        }
-                        */
-                        
-                    }
-                    
-                    return null;
-                }
-            });
-        }
-
-        prepared = true;
-        return true;
+    public void prepare() throws IOException, InvalidRawImageException, NullCommandException {
+        PrintJobElementPreparer preparer = new PrintJobElementPreparer(type, data, charset, lang, dotDensity, imageX, imageY, xmlTag, this);
+        Thread preparerThread = new Thread(preparer);
+        preparerThread.start();
+    }
+    
+    /**
+     * Callback for when the element is done preparing
+     * 
+     * @param preparedData The returned data
+     * @param bufferedImage The returned image
+     * @param rtfEditor The returned rtf editor JEditorPane
+     * @param pdfFile The PDDocument representing the PDF file
+     */
+    public void donePreparing(ByteArrayBuilder preparedData, BufferedImage bufferedImage, JEditorPane rtfEditor, PDDocument pdfFile) {
+        this.prepared = true;
+        this.preparedData = preparedData;
+        this.bufferedImage = bufferedImage;
+        this.rtfEditor = rtfEditor;
+        this.pdfFile = pdfFile;
+        LogIt.log("Done preparing PrintJobElement.");
     }
     
     /**
@@ -248,7 +165,7 @@ public class PrintJobElement {
      * @return The element's data
      */
     public ByteArrayBuilder getData() {
-        return data;
+        return preparedData;
     }
     
     /**
