@@ -41,6 +41,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.ListIterator;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.print.PrintException;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.HashPrintRequestAttributeSet;
@@ -59,7 +60,7 @@ import qz.exception.NullCommandException;
  * 
  * @author Thomas Hart
  */
-public class PrintJob extends JLabel implements Runnable, Printable {
+public class PrintJob extends JLabel implements Printable {
     
     private PrintJobState state = PrintJobState.STATE_CREATED;
     private final String title = "Print Job";
@@ -80,17 +81,7 @@ public class PrintJob extends JLabel implements Runnable, Printable {
     private int copies = 1;
     private int leftMargin = 0;
     private int topMargin = 0;
-    
-    public void run() {
         
-        /*
-         * This is spiking CPU to 100%
-         *        
-        while(running) {
-            //Loop
-        }*/
-    }
-    
     /**
      * Cancel a print job.
      */
@@ -246,10 +237,8 @@ public class PrintJob extends JLabel implements Runnable, Printable {
      * prepareJob processes the list of PrintJobElements and gets the data
      * prepared for printing.
      * 
-     * @throws InvalidRawImageException
-     * @throws NullCommandException 
      */
-    public void prepareJob() throws InvalidRawImageException, NullCommandException {
+    public void prepareJob() {
         
         state = PrintJobState.STATE_PROCESSING;
         
@@ -261,11 +250,31 @@ public class PrintJob extends JLabel implements Runnable, Printable {
                 pje.prepare();
             } catch (IOException ex) {
                 LogIt.log(Level.SEVERE, "Could not prepare job.", ex);
+            } catch (InvalidRawImageException ex) {
+                LogIt.log(Level.SEVERE, "Invalid raw image.", ex);
+            } catch (NullCommandException ex) {
+                LogIt.log(Level.SEVERE, "Null command.", ex);
             }
         }
         
-        state = PrintJobState.STATE_PROCESSED;
+    }
+    
+    public void isProcessed() {
         
+        ListIterator dataIterator = rawData.listIterator();
+        Boolean prepared = true;
+        while(dataIterator.hasNext()) {
+            PrintJobElement pje = (PrintJobElement) dataIterator.next();
+            if(pje.isPrepared() != true) {
+                prepared = false;
+                break;
+            }
+        }
+        // Check all the print job elements
+        if(prepared) {
+            LogIt.log("Done preparing PrintJob.");
+            state = PrintJobState.STATE_PROCESSED;
+        }
     }
     
     /**
