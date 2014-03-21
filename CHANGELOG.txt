@@ -29,6 +29,7 @@ Changes 1.7.8.1 (11/16/13)
 - Removed feature per request - 3rd party reflection class for PDFs
 Changes 1.7.8: (11/13/13)
 - Removed untrusted dialogs for Java 6 by using custom deployJava.js script
+- appendPDF() now accepts base64 encoded data.
 Changes 1.7.7: (11/10/13)
 - Fixed whitespace character breaking JNLP on Ubuntu
 - Better examples and explainations of new features in sample.html
