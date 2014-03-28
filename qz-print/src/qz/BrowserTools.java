@@ -86,7 +86,7 @@ public class BrowserTools {
                 // Try to call the old jzebra function
                 success = notifyBrowser(function.replaceFirst("qz", "jzebra"), o);
             }
-            if (function.equals("jebraDoneFinding")) {
+            if (function.equals("jzebraDoneFinding")) {
                 // Try to call yet another deprecated jzebra function
                 success = notifyBrowser("jzebraDoneFindingPrinters", o);
             }
