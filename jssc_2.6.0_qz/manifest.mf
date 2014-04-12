@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+X-COMMENT: Main-Class will be added automatically by build
+Permissions: all-permissions
+Codebase: *
+Caller-Allowable-Codebase: *
+Application-Name: Serial Plugin
+Application-Library-Allowable-Codebase: *
