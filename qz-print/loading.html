@@ -1,0 +1,92 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html><body>
+<!-- License:  LGPL 2.1 or QZ INDUSTRIES SOURCE CODE LICENSE -->
+<script type="text/javascript" src="js/PluginDetect.js"></script>
+<script type="text/javascript">
+
+// Applet constants.  These shouldn't ever change unless you recompile qz-print.jar
+var JAVA_MIN_VER = '1.5';
+var APPLET_NAME = 'QZ Print Plugin';
+var APPLET_ID = 'qz'
+var APPLET_URL = './qz-print.jar';
+var APPLET_CLASS = 'qz.PrintApplet.class';
+
+// Time to wait before loading the applet, in seconds (necessary for IE)
+var WAIT = 0.5;
+
+// Display messages, feel free to change
+var ERR_MIN_VER = 'Sorry, Java ' + JAVA_MIN_VER + ' or higher was not detected.';
+var ERR_LOADING = 'Sorry, ' + APPLET_NAME + ' was unable to load properly.';
+var ERR_PRINTER = 'Error: Could not find printer';
+var MSG_LOADING = '<img src="img/loading_yellow.gif"><br>Loading ' + APPLET_NAME + ', please wait...';
+var MSG_LOADED = '<img src="img/loading_green.gif"><br>Finished loading ' + APPLET_NAME + '.  Searching for printer...';
+var MSG_PRINTER = 'Found printer: ';
+var MSG_SUCCESS = 'Print successful';
+
+var qz = null;
+var isReady = false;
+
+// Wait 200ms before appending the applet
+PluginDetect.onWindowLoaded(function() {setTimeout(function() {appendApplet()}, WAIT * 1000.0)});
+
+// Automatically gets called when the applet is finished loading
+function jzebraReady() {
+   qz = document.getElementById[APPLET_ID];
+   setStatus(MSG_LOADED);
+   document.getElementById('heading').innerHTML = 'QZ Print Plugin ' + qz.getVersion();
+   isReady = true;
+   
+   qz.findPrinter('zebra');
+}
+
+// Automatically gets called when applet is done appending a file
+function jzebraDoneAppending() { }
+
+function jzebraDoneFinding() { 
+   if (qz.getPrinter() == null) {
+      return alert(ERR_PRINTER); 
+   }
+   setStatus(MSG_PRINTER + '"' + qz.getPrinter() + '"');
+   document.getElementById('button').disabled = false;
+}
+
+// Automatically gets called when the applet is done printing
+function jzebraDonePrinting() {
+   if (qz.getException() != null) {
+      return alert('Error:' + qz.getExceptionMessage());
+   }
+   return alert(MSG_SUCCESS);
+}
+
+// Check for proper Java version, then append the applet
+function appendApplet() {
+   if (PluginDetect.isMinVersion('Java', JAVA_MIN_VER) == 1) {
+      if (document.getElementById[APPLET_ID] == null) {
+         setStatus(MSG_LOADING);
+         // Note, for faster loading, it's recommended to also use 
+         // cache applet param tags.  See sample.html for more information.
+         // i.e. 
+         //    <applet ...>
+         //       <param name="cache_option" value="plugin">
+         //       <param name="cache_archive" value="./qz-print.jar">
+         //       <param name="cache_version" value="1.6.3.0">
+         //    </applet>
+         
+         document.getElementById('applet').innerHTML = '<applet id="' + APPLET_ID + '" name="' + APPLET_NAME + '" code="' + APPLET_CLASS + 
+      	      '" archive="' + APPLET_URL + '" width="0" height="0" mayscript></applet>';
+      }
+   } else {
+      setStatus(ERR_MIN_VER);
+   }
+}
+
+// Display status
+function setStatus(text) {
+   document.getElementById('status').innerHTML = text;
+}
+
+</script>
+<h1 id="heading">QZ Print Plugin</h1>
+<a id="status"><img src="img/loading_red.gif"><br>Please wait... (Loading is slow on some browsers)...</a>
+<br><button type="button" id="button" disabled="disabled" onClick="javascript:qz.print()">Print</button>
+<div id="applet"></div></body></html>
