@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?> 
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
                         QZ INDUSTRIES SIGNED JNLP FILE
     Author:
@@ -8,7 +8,7 @@
     Internal Filename: 
         qz-print.jar\JNLP-INF\APPLICATION.JNLP
     External Filename:
-        qz-print-2_jnlp.jnlp (suppled as "href" below)
+        qz-print_jnlp.jnlp (suppled as "href" below)
     Important:
         The internal and external files listed above MUST MATCH IDENTICALLY
         on a binary level or Java will complain about unsigned jnlp.  Unsigned
@@ -34,7 +34,7 @@
 		<j2se version="1.5+" />
 		<jar href="qz-print.jar" eager="true" download="eager" main="true" />
 		<!-- <jar href="lib/jssc_qz.jar" eager="false" download="lazy" /> -->
-		<!-- <jar href="lib/pdfbox-1.8.4_qz.jar" eager="false" download="lazy" /> -->
+		<!-- <jar href="lib/pdf-renderer_qz.jar" eager="false" download="lazy" /> -->
 	</resources>
 	<applet-desc name="QZ Print Plugin" main-class="qz.PrintApplet" width="1" height="1" />
     <!-- 

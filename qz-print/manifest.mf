@@ -3,5 +3,5 @@ X-COMMENT: Main-Class will be added automatically by build
 Codebase: *
 Permissions: all-permissions
 Caller-Allowable-Codebase: *
-Application-Name: QZ Print Plugin 2.0
+Application-Name: QZ Print Plugin
 Application-Library-Allowable-Codebase: *

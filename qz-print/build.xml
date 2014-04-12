@@ -1,48 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Some custom compilation rules to add or override build-impl.xml. -->
 <!-- You may freely change this file. -->
-<project name="qz-print" default="default" basedir=".">
+<project name="qz" default="default" basedir=".">
     <description>Builds, tests, and runs the project qz-print.</description>
     <import file="nbproject/build-impl.xml"/>
     
-	
-	
-	<!-- Build Versions for 1.5, 1.6 and 1.7 -->
-	<!-- Commented out for now
-	<path id="build.classpath">
-		<fileset dir="lib/">
-			<include name="**/*.jar"/>
-		</fileset>
-	</path>
-
-	<property name="src" location="src/"/>
-	<property name="build" location="build/"/>
-	<property name="build6" location="build6/"/>
-	<property name="build7" location="build7/"/>
-	<property name="dist" location="dist/"/>
-	<property name="dist6" location="dist6/"/>
-	<property name="dist7" location="dist7/"/>
-	
-	<target name="compile">
-		<mkdir dir="${build}"/>
-		<mkdir dir="${build6}"/>
-		<mkdir dir="${build7}"/>
-		<javac srcdir="${src}" destdir="${build}" classpathref="build.classpath" includes="*/**"/>
-		<javac srcdir="${src}" destdir="${build6}" classpathref="build.classpath" includes="*/**"/>
-		<javac srcdir="${src}" destdir="${build7}" classpathref="build.classpath" includes="*/**"/>
-	</target>
-	
-	<target name="dist" depends="compile">
-		<mkdir dir="${dist}"/>
-		<mkdir dir="${dist6}"/>
-		<mkdir dir="${dist7}"/>
-		<jar jarfile="${dist}/qz-print.jar" basedir="${build}"/>
-		<jar jarfile="${dist6}/qz-print.jar" basedir="${build6}"/>
-		<jar jarfile="${dist7}/qz-print.jar" basedir="${build7}"/>
-	</target>
-	
-	-->
-	
     <!-- Custom Code Signing -->
     <target depends="-pre-init" name="-init-private">
         <echo message="Using custom private.properties file via build.xml..."/>
@@ -91,8 +53,7 @@
     <target name="generate-html-preview" depends="-jnlp-init-keystore,-check-signing-possible">
         
         <echo message="Using custom copy/delete tasks via build.xml..."/>
-        
-        <!-- We will instead  provide our own JNLP (in JNLP-INF directory) -->
+        <!-- We're aren't using JWS, no JNLP file needed -->
         <delete file="${basedir}/dist/jnlpcomponent1.jnlp" failonerror="false"/>
         
         <!-- Delete some default NetBeans Applet stuff that's not needed -->
@@ -102,64 +63,31 @@
         <!-- standard JRE. Required for build but not needed for dist -->
         <delete file="${basedir}/dist/lib/plugin.jar" failonerror="false"/>
         
-        <!-- Copy /js, /img, /css, /misc folders from the base directory to /dist-->
-        <copy todir="${basedir}/dist/"><fileset dir="${basedir}"><include name="/js/*"/></fileset></copy>
-        <copy todir="${basedir}/dist/"><fileset dir="${basedir}"><include name="/img/*"/></fileset></copy>
-        <copy todir="${basedir}/dist/"><fileset dir="${basedir}"><include name="/css/*"/></fileset></copy>
-        <copy todir="${basedir}/dist/"><fileset dir="${basedir}"><include name="/misc/*"/></fileset></copy>
-        
-        <!-- Copy sample.html from the base directory to /dist-->
-        <copy todir="${basedir}/dist/"><fileset dir="${basedir}"><include name="/sample*.html"/></fileset></copy>
-        
-        <!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
-        <copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />
-
-        
         <!-- Copy some project specific files -->
-        <!-- 
         <copy file="${basedir}/sample.html" tofile="${basedir}/dist/sample.html" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/sample-new.html" tofile="${basedir}/dist/sample-new.html" overwrite="true" encoding="UTF-8" />
-                
-                -->
         <!-- <copy file="${basedir}/qz-run.jnlp" tofile="${basedir}/dist/qz-run.jnlp" overwrite="true" encoding="UTF-8" /> -->
         <!-- <copy file="${basedir}/loading.html" tofile="${basedir}/dist/loading.html" overwrite="true" encoding="UTF-8" /> -->
         
         <!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
-        <!-- <copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" /> -->
+        <copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />
 
-        <!-- 
         <copy file="${basedir}/misc/zpl_sample.txt" tofile="${basedir}/dist/misc/zpl_sample.txt" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/epl_sample.txt" tofile="${basedir}/dist/misc/epl_sample.txt" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/epl_multiples.txt" tofile="${basedir}/dist/misc/epl_multiples.txt" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/fgl_sample.txt" tofile="${basedir}/dist/misc/fgl_sample.txt" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/zpl_sample.xml" tofile="${basedir}/dist/misc/zpl_sample.xml" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/misc/rtf_sample.rtf" tofile="${basedir}/dist/misc/rtf_sample.rtf" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/misc/pdf_sample.pdf" tofile="${basedir}/dist/misc/pdf_sample.pdf" overwrite="true" encoding="UTF-8" />
 
-        <copy file="${basedir}/css/jquery-ui.css" tofile="${basedir}/dist/css/jquery-ui.css" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/css/qz-sample.css" tofile="${basedir}/dist/css/qz-sample.css" overwrite="true" encoding="UTF-8" />
-
         <copy file="${basedir}/js/jquery-1.10.2.js" tofile="${basedir}/dist/js/jquery-1.10.2.js" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/js/jquery-ui-1.10.4.custom.min.js" tofile="${basedir}/dist/js/jquery-ui-1.10.4.custom.min.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/jquery.plugin.html2canvas.js" tofile="${basedir}/dist/js/jquery.plugin.html2canvas.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/html2canvas.js" tofile="${basedir}/dist/js/html2canvas.js" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/js/PluginDetect.js" tofile="${basedir}/dist/js/PluginDetect.js" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/js/deployJava.js" tofile="${basedir}/dist/js/deployJava.js" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/js/qz-core.js" tofile="${basedir}/dist/js/qz-core.js" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/js/qz-sample.js" tofile="${basedir}/dist/js/qz-sample.js" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/js/qz-gui.js" tofile="${basedir}/dist/js/qz-gui.js" overwrite="true" encoding="UTF-8" />
-         -->
-         
-         
+        <copy file="${basedir}/js/deployJava.js" tofile="${basedir}/dist/js/deployJava.js" overwrite="true" encoding="UTF-8" />
+
         <!-- <copy file="${basedir}/img/loading_green.gif" tofile="${basedir}/dist/img/loading_green.gif" overwrite="true" encoding="UTF-8" /> -->
         <!-- <copy file="${basedir}/img/loading_red.gif" tofile="${basedir}/dist/img/loading_red.gif" overwrite="true" encoding="UTF-8" /> -->
         <!-- <copy file="${basedir}/img/loading_yellow.gif" tofile="${basedir}/dist/img/loading_yellow.gif" overwrite="true" encoding="UTF-8" /> -->
-        <!-- 
-        
         <copy file="${basedir}/img/image_sample_bw.png" tofile="${basedir}/dist/img/image_sample_bw.png" overwrite="true" encoding="UTF-8" />
         <copy file="${basedir}/img/image_sample.png" tofile="${basedir}/dist/img/image_sample.png" overwrite="true" encoding="UTF-8" />
-		<copy file="${basedir}/img/qz.png" tofile="${basedir}/dist/img/qz.png" overwrite="true" encoding="UTF-8" />
-                
-                -->
     </target>
 </project>

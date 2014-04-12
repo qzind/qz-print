@@ -31,6 +31,8 @@ import javax.print.event.PrintJobEvent;
 public class LogIt {
     public static boolean disableLogging = false;
     
+    
+
     public static void log(Level lvl, String msg, Throwable t) {
         log(LogIt.class.getName(), lvl, msg, t);
     }

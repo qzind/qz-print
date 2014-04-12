@@ -258,7 +258,6 @@ public class PaperFormat {
      * Parses paper size (such as 8.5in x 11.0 in) and sets it
      * @param width
      * @param height 
-     * @return parsed PaperFormat
      */
     public static PaperFormat parseSize(String width, String height) throws NumberFormatException {
         if (width.toLowerCase().endsWith("in") && height.toLowerCase().endsWith("in")) {
@@ -273,9 +272,8 @@ public class PaperFormat {
     /**
      * Sets paper size and units, example:  8.5, 11.0, mm.
      * @param width
-     * @param height 
-     * @param units 
-     * @return parsed PaperFormat
+     * @param height
+     * @param unit 
      */
     public static PaperFormat parseSize(String width, String height, String units) throws NumberFormatException {
         if (width == null || height == null) {

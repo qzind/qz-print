@@ -35,12 +35,12 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import qz.exception.NullCommandException;
 
+
 /**
  * Common static file i/o utilities
  * @author Tres Finocchiaro
  */
 public class FileUtilities {
-    
     public static String[] badExtensions = new String[]{
         "exe", "pif", "paf", "application", "msi", "com", "cmd", "bat", "lnk", // Windows Executable program or script
         "gadget", // Windows desktop gadget

@@ -71,10 +71,10 @@ public class ImageWrapper {
     private int lumaThreshold = 127;
     private boolean[] imageAsBooleanArray;        //Image representation as an array of boolean, with true values representing imageAsBooleanArray dots
     private int[] imageAsIntArray;                //Image representation as an array of ints, with each bit representing a imageAsBooleanArray dot
-    private final ByteArrayBuilder byteBuffer = new ByteArrayBuilder();
+    private ByteArrayBuilder byteBuffer = new ByteArrayBuilder();
     private int alphaThreshold = 127;
     private BufferedImage bufferedImage;
-    private final LanguageType languageType;
+    private LanguageType languageType;
     private Charset charset = Charset.defaultCharset();
     private int imageQuantizationMethod = CHECK_LUMA;
     private int xPos = 0;   // X coordinate used for EPL2, CPCL.  Irrelevant for ZPLII, ESC/P, etc
@@ -87,7 +87,6 @@ public class ImageWrapper {
      * <code>BufferedImage.</code>
      *
      * @param bufferedImage The image to convert for thermal printing
-     * @param languageType The image's language type
      */
     public ImageWrapper(BufferedImage bufferedImage, LanguageType languageType) {
         this.bufferedImage = bufferedImage;
@@ -309,8 +308,6 @@ public class ImageWrapper {
      *
      * @return The commands to print the image as an array of bytes, ready to be
      * sent to the printer
-     * @throws qz.exception.InvalidRawImageException
-     * @throws java.io.UnsupportedEncodingException
      */
     public byte[] getImageCommand() throws InvalidRawImageException, UnsupportedEncodingException {
         this.getByteBuffer().clear();

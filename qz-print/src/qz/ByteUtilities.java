@@ -65,9 +65,7 @@ public class ByteUtilities {
 
                 data = new byte[split.length];
                 for (int i = 0; i < split.length; i++) {
-                    //data[i] = Byte.parseByte(split[i], 16);
-                    Integer signedByte = Integer.parseInt(split[i], 16);
-                    data[i] = (byte)(signedByte & 0xFF);
+                    data[i] = Byte.parseByte(split[i], 16);
                 }
             } else if (s.length() == 2) {
                 data = new byte[]{Byte.parseByte(s)};
@@ -94,7 +92,7 @@ public class ByteUtilities {
      * Returns an array of positions. TODO: Make this natively Iterable.
      *
      * @param array
-     * @param sublist
+     * @param target
      * @return
      */
     public static int[] indicesOfSublist(byte[] array, byte[] sublist) {
@@ -225,7 +223,7 @@ public class ByteUtilities {
         if (o instanceof byte[]) {
             return ((byte[]) o).length < 1;
         } else if (o instanceof String) {
-            return ((String) o).equals("");
+            return ((String) o) == null || ((String) o).equals("");
         } else {
             LogIt.log(Level.WARNING, "Uchecked blank comparison.");
             return o == null;
@@ -279,4 +277,42 @@ public class ByteUtilities {
             return out.toByteArray();
         }
     }
+
+
+
+    /**
+     * Alternative to getHex(). Not used. Converts a <code>byte[]</code> to a
+     * Hexadecimal (base 16) String representation. i.e. { 0x1B, 0x00 } would
+     * look like this: "1B00"
+     *
+     * @param b
+     * @return
+     * @throws Exception
+     */
+    /*public static String getHexString(byte[] b) throws Exception {
+     String result = "";
+     for (int i = 0; i < b.length; i++) {
+     result +=
+     Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
+     }
+     return result;
+     }*/
 }
+
+/*if (offset > 0 && end > 0 && end > offset
+
+    
+ ) { 
+ //LogIt.log("Start: " + offset + ": " + orig[offset] + ", End: " + end + ": " + orig[end]);
+ byte[] printBytes = new byte[end - offset];
+ int counter = 0;
+ for (int i = offset; i < end; i++) {
+ printBytes[counter++] = orig[i];
+ }
+ doc = new SimpleDoc(printBytes, docFlavor.get(), docAttr.get());
+ }
+
+    
+ else {
+ doc = new SimpleDoc(orig, docFlavor.get(), docAttr.get());
+ }*/
