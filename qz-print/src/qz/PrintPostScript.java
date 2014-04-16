@@ -70,7 +70,8 @@ public class PrintPostScript implements Printable {
     private final AtomicReference<Float> pixelsPerInch = new AtomicReference<Float>(null);
     private final AtomicReference<Integer> copies = new AtomicReference<Integer>(null);
     private final AtomicReference<Boolean> logPostScriptFeatures = new AtomicReference<Boolean>(false);
-    private static final float DPI = 72f;
+    public static final float DPI = 72f;
+    public static final float MMPI = 280f;
     private String pdfClass;
 
     public PrintPostScript() {
@@ -109,6 +110,7 @@ public class PrintPostScript implements Printable {
         // *Note:  Computer screen dpi's can change, but print consistancy 
         // cross-platform is more important than accuracy, so we'll always assume 72dpi
         if (paperSize.get() != null) {
+            LogIt.log("A custom paper size was supplied.");
             attr.add(paperSize.get().getOrientationRequested());
             if (paperSize.get().isAutoSize()) {
                 paperSize.get().setAutoSize(bufferedImage.get());
@@ -117,7 +119,15 @@ public class PrintPostScript implements Printable {
                     paperSize.get().getAutoHeight(), paperSize.get().getUnits()));
 
         } else {
-            attr.add(new MediaPrintableArea(0f, 0f, w / 72f, h / 72f, MediaSize.INCH));
+            LogIt.log("A custom paper size was not supplied.");
+            switch (paperSize.get().getUnits()) {
+                case MediaSize.MM:
+                    attr.add(new MediaPrintableArea(0f, 0f, w / MMPI, h / MMPI, MediaSize.MM));
+                    break;
+                default:
+                    attr.add(new MediaPrintableArea(0f, 0f, w / DPI, h / DPI, MediaSize.INCH));
+            }
+            
         }
 
         logSizeCalculations(paperSize.get(), w, h);
@@ -478,7 +488,7 @@ public class PrintPostScript implements Printable {
             try {
                 pixelsPerInch.set(new Float(Toolkit.getDefaultToolkit().getScreenResolution()));
             } catch (AWTError e) {
-                pixelsPerInch.set(new Float(72f));
+                pixelsPerInch.set(new Float(DPI));
             }
         }
         return pixelsPerInch.get().floatValue();
@@ -523,8 +533,8 @@ public class PrintPostScript implements Printable {
         return this.bufferedImage.get();
     }
 
-    public void setPaperSize(PaperFormat PaperSize) {
-        this.paperSize.set(PaperSize);
+    public void setPaperSize(PaperFormat paperSize) {
+        this.paperSize.set(paperSize);
     }
 
     public void setPrintParameters(PrintApplet a) {
@@ -580,7 +590,7 @@ public class PrintPostScript implements Printable {
                     + p.toString());
         } else {
             LogIt.log("Using image at \"natural\" resolution  " + w + "px " + h
-                    + "px scaled to " + (int) (w / 72f) + "in x " + (int) (h / 72f)
+                    + "px scaled to " + (int) (w / DPI) + "in x " + (int) (h / DPI)
                     + "in (assumes 72dpi)");
         }
     }
