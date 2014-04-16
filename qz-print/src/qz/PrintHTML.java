@@ -102,7 +102,7 @@ public class PrintHTML extends JLabel implements Printable {
 
             // Elimate any margins
             HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();             
-            attr.add(new MediaPrintableArea(0f, 0f, getWidth()/72f, getHeight()/72f, MediaPrintableArea.INCH));               
+            attr.add(new MediaPrintableArea(0f, 0f, getWidth()/PrintPostScript.DPI, getHeight()/PrintPostScript.DPI, MediaPrintableArea.INCH));               
 
             PrinterJob job = PrinterJob.getPrinterJob();    
             job.setPrintService(ps.get());
