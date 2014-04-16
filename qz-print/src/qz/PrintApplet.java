@@ -63,7 +63,7 @@ import qz.reflection.ReflectException;
 public class PrintApplet extends Applet implements Runnable {
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
-    public static final String VERSION = "1.8.0";
+    public static final String VERSION = "1.8.1";
     private static final long serialVersionUID = 2787955484074291340L;
     public static final int APPEND_XML = 1;
     public static final int APPEND_RAW = 2;
@@ -1678,6 +1678,10 @@ public class PrintApplet extends Applet implements Runnable {
 
     private void logAndPrint(PrintPostScript printPS) throws PrinterException {
         logCommands("    <<" + file + ">>");
+        // Fix GitHub Bug #24
+        if (paperSize != null) {
+            printPS.setPaperSize(paperSize);
+        }
         printPS.print();
         psPrint = false;
     }
@@ -1786,7 +1790,7 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     public void setCopies(int copies) {
-        this.copies = Integer.valueOf(copies);
+        this.copies = copies;
     }
 
     public PaperFormat getPaperSize() {
