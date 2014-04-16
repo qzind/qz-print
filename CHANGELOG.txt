@@ -1,4 +1,7 @@
-Changes 1.8.0
+Changes 1.8.1 (4/15/2014)
+- Fixed PostScript sizing bug when printing to two separate page sizes
+- Removed separate Java 6 build
+Changes 1.8.0 (12/05/2013)
 - printToFile() now blocks common executable file extensions
 - Fixed printHTML() typo in sample.html
 - Fixed jzebraReady() backwards compatiblity for Ubuntu
