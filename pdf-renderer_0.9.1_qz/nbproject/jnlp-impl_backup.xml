@@ -672,22 +672,11 @@ made subject to such option by the copyright holder.
     <target name="-unavailable-signjars-task" depends="-test-signjars-task-available" unless="signjars.task.available">
         <echo message="Task required to sign JAR file is missing, probably the library 'JWS Ant Tasks' is missing either from shared folder or from IDE installation. JAR files will not be signed."/>
     </target>
-    
-    <target name="signjar" depends="-jnlp-init-keystore,-check-signing-possible" if="jnlp.signed.true+signjars.task.available">
-        <taskdef name="signjar">
-        <signjar jar="${dist.jar}"
-               signedjar="${dist.jar}"
-               alias="${jnlp.signjar.alias}"
-               storepass="${jnlp.signjar.alias}"
-               keystore="${jnlp.signjar.keystore}"
-               keypass="${jnlp.signjar.keypass}"/>
-        </taskdef> 
-    </target>
 
     <target name="sign-jars" depends="-jnlp-init-keystore,-check-signing-possible" if="jnlp.signed.true+signjars.task.available">
         <taskdef name="sign-jars" classname="org.netbeans.modules.javawebstart.anttasks.SignJarsTask" 
             classpath="${libs.JWSAntTasks.classpath}"/>
-            <sign-jars keystore="${jnlp.signjar.keystore}" storepass="${jnlp.signjar.storepass}" 
+        <sign-jars keystore="${jnlp.signjar.keystore}" storepass="${jnlp.signjar.storepass}" 
                 keypass="${jnlp.signjar.keypass}" alias="${jnlp.signjar.alias}" mainjar="${dist.jar}" destdir="dist"
                 codebase="${jnlp.codebase.value}" signedjarsprop="jnlp.signed.jars"
                 componentsprop="jnlp.components">

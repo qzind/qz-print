@@ -59,6 +59,7 @@ public class PaperFormat {
     public PaperFormat(float width, float height) {
         this.width = width;
         this.height = height;
+        LogIt.log("Warning, a unit was not specified.  Defaulting to [" + this.getUnitDescription() + "]");
     }
 
     /*public PaperSize(String width, String height, String units) {
@@ -83,6 +84,12 @@ public class PaperFormat {
         }
     }
     
+    /**
+     * Parses a human orientation such as <code>"landscape"</code> into an enumerated orientation
+     * such as <code>PageFormat.LANDSCAPE</code>
+     * @param orientation Must be either "LANDSCAPE", "PORTRAIT", "REVERSE-LANDSCAPE", "REVERSE-PORTRAIT"
+     * @return 
+     */
     public static int parseOrientation(String orientation) {
         if (orientation.equalsIgnoreCase("landscape")) {
            return PageFormat.LANDSCAPE;
