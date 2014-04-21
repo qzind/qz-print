@@ -120,14 +120,7 @@ public class PrintPostScript implements Printable {
 
         } else {
             LogIt.log("A custom paper size was not supplied.");
-            switch (paperSize.get().getUnits()) {
-                case MediaSize.MM:
-                    attr.add(new MediaPrintableArea(0f, 0f, w / MMPI, h / MMPI, MediaSize.MM));
-                    break;
-                default:
-                    attr.add(new MediaPrintableArea(0f, 0f, w / DPI, h / DPI, MediaSize.INCH));
-            }
-            
+            attr.add(new MediaPrintableArea(0f, 0f, w / DPI, h / DPI, MediaSize.INCH));
         }
 
         logSizeCalculations(paperSize.get(), w, h);
