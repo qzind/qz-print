@@ -63,7 +63,7 @@ import qz.reflection.ReflectException;
 public class PrintApplet extends Applet implements Runnable {
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
-    public static final String VERSION = "1.8.1";
+    public static final String VERSION = "1.8.2";
     private static final long serialVersionUID = 2787955484074291340L;
     public static final int APPEND_XML = 1;
     public static final int APPEND_RAW = 2;
