@@ -1686,8 +1686,6 @@ public class PrintApplet extends Applet implements Runnable {
             printPS.setPaperSize(paperSize);
         }
         printPS.print();
-        
-        copies = 1;
         psPrint = false;
     }
 
