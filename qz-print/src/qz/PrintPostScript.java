@@ -124,15 +124,32 @@ public class PrintPostScript implements Printable {
         }
 
         logSizeCalculations(paperSize.get(), w, h);
-
-        if (copies.get() != null) {
-            attr.add(new Copies(copies.get().intValue()));
-        }
-
+        
         job.setPrintService(ps.get());
         job.setPrintable(this);
         job.setJobName(jobName.get());
-        job.print(attr);
+        
+        // If copies are specified, handle them prior to printing
+        if (copies.get() != null && copies.get() > 1) {
+            LogIt.log("Copies specified: " + copies.get());
+            // Does the DocFlavor and Printer support "Copies" (this lies)
+            //if (ps.get().isAttributeCategorySupported(Copies.class)) {
+            //    LogIt.log("Printer supports copies");
+            //    attr.add(new Copies(copies.get()));
+            //    job.print();
+            //} else {
+            // Copies is unsupported, handle copies manually (yuck)
+                for (int i = 0; i < copies.get(); i++) {
+                    job.print(attr);
+                }
+            //}
+        } 
+        // No copies specified, just print
+        else {
+            job.print(attr);
+        }
+        
+        
 
         bufferedImage.set(null);
         bufferedPDF.set(null);

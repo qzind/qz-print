@@ -77,6 +77,7 @@ public class PrintRaw {
     private final AtomicReference<String> socketHost = new AtomicReference<String>(null);
     private final AtomicReference<Integer> socketPort = new AtomicReference<Integer>(null);
     private final AtomicBoolean alternatePrint = new AtomicBoolean(false);
+    //private final AtomicReference<Integer> copies = new AtomicReference<Integer>(null);
 
     public PrintRaw() {
     }
@@ -498,6 +499,17 @@ public class PrintRaw {
         this.alternatePrint.set(alternatePrint);
     }
 
+    public void setCopies(int copies) {
+        LogIt.log(Level.WARNING, "Copies is unsupported for print()", 
+                    new UnsupportedOperationException("Copies attribute for raw data has not yet been implemented"));
+    }
+    
+    public int getCopies() {
+        LogIt.log(Level.WARNING, "Copies is unsupported for print()", 
+                    new UnsupportedOperationException("Copies attribute for raw data has not yet been implemented"));
+        return -1;
+    }
+
     public String getJobName() {
         return this.jobName.get();
     }
@@ -507,6 +519,9 @@ public class PrintRaw {
         this.setJobName(rpa.getJobName().replace(" ___ ", " Raw "));
         this.setCharset(rpa.getCharset());
         this.setAlternatePrinting(rpa.isAlternatePrinting());
+        if (rpa.getCopies() > 0) {
+            setCopies(rpa.getCopies());
+        }
         this.clear();
     }
 

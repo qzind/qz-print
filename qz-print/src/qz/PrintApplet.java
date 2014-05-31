@@ -63,7 +63,7 @@ import qz.reflection.ReflectException;
 public class PrintApplet extends Applet implements Runnable {
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
-    public static final String VERSION = "1.8.2";
+    public static final String VERSION = "1.8.3";
     private static final long serialVersionUID = 2787955484074291340L;
     public static final int APPEND_XML = 1;
     public static final int APPEND_RAW = 2;
@@ -121,7 +121,7 @@ public class PrintApplet extends Applet implements Runnable {
     private String printer;
     //private String orientation;
     //private Boolean maintainAspect;
-    private Integer copies;
+    private int copies = 1;
     private Charset charset = Charset.defaultCharset();
     //private String pageBreak; // For spooling pages one at a time
     private int documentsPerSpool = 0;
@@ -332,7 +332,9 @@ public class PrintApplet extends Applet implements Runnable {
                         set(e);
                     } finally {
                         setDonePrinting(true);
-                        getPrintRaw().clear();
+                        if (this.printRaw != null) {
+                            getPrintRaw().clear();
+                        }
                     }
                 }
             } catch (InterruptedException e) {
@@ -359,6 +361,7 @@ public class PrintApplet extends Applet implements Runnable {
 
     private void setDonePrinting(boolean donePrinting) {
         this.donePrinting = donePrinting;
+        this.copies = 1;
         this.notifyBrowser("qzDonePrinting");
     }
 
@@ -1683,6 +1686,8 @@ public class PrintApplet extends Applet implements Runnable {
             printPS.setPaperSize(paperSize);
         }
         printPS.print();
+        
+        copies = 1;
         psPrint = false;
     }
 
@@ -1785,7 +1790,7 @@ public class PrintApplet extends Applet implements Runnable {
      public void setMaintainAspect(boolean maintainAspect) {
      setAutoSize(maintainAspect);
      }*/
-    public Integer getCopies() {
+    public int getCopies() {
         return copies;
     }
 

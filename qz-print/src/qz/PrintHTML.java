@@ -34,6 +34,7 @@ import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 import javax.print.PrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
@@ -118,6 +119,20 @@ public class PrintHTML extends JLabel implements Printable {
     public void setPrintParameters(PrintApplet a) {
         this.ps.set(a.getPrintService());
         this.jobName.set(a.getJobName().replace(" ___ ", " HTML "));
+        if (a.getCopies() > 1) {
+            setCopies(a.getCopies());
+        }
+    }
+    
+    public void setCopies(int copies) {
+        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()", 
+                    new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
+    }
+    
+    public int getCopies() {
+        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()", 
+                    new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
+        return -1;
     }
     
     public void setPrintService(PrintService ps) {

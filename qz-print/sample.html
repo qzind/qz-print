@@ -622,8 +622,10 @@
 			qz.setAutoSize(true);
 			//qz.setOrientation("landscape");
 			//qz.setOrientation("reverse-landscape");
-			//qz.setCopies(3); //Does not seem to do anything
 		}
+		
+		//qz.setCopies(3);
+		qz.setCopies(parseInt(document.getElementById("copies").value));
 		
 		// Append our image (only one image can be appended per print)
 		qz.appendImage(getPath() + "img/image_sample.png");
@@ -649,6 +651,9 @@
 		if (notReady()) { return; }
 		// Append our pdf (only one pdf can be appended per print)
 		qz.appendPDF(getPath() + "misc/pdf_sample.pdf");
+		
+		//qz.setCopies(3);
+		qz.setCopies(parseInt(document.getElementById("copies").value));
 		
 		// Automatically gets called when "qz.appendPDF()" is finished.
 		window['qzDoneAppending'] = function() {
@@ -678,12 +683,15 @@
 		// HTML image
 		var colB = '<img src="' + getPath() + 'img/image_sample.png">';
 		
+                //qz.setCopies(3);
+		qz.setCopies(parseInt(document.getElementById("copies").value));
+                
 		// Append our image (only one image can be appended per print)
 		qz.appendHTML('<html><table face="monospace" border="1px"><tr height="6cm">' + 
 		'<td valign="top">' + colA + '</td>' + 
 		'<td valign="top">' + colB + '</td>' + 
 		'</tr></table></html>');
-		
+                
 		qz.printHTML();
 	}
         
@@ -729,6 +737,10 @@
 				qz.setPaperSize("8.5in", "11.0in");  // US Letter
 				qz.setAutoSize(true);
 				qz.appendImage($("canvas")[0].toDataURL('image/png'));
+				
+				//qz.setCopies(3);
+				qz.setCopies(parseInt(document.getElementById("copies").value));
+				
 				// Automatically gets called when "qz.appendFile()" is finished.
 				window['qzDoneAppending'] = function() {
 					// Tell the applet to print.
@@ -1007,10 +1019,12 @@
 	<input type="button" onClick="printImage(true)" value="Print Scaled PostScript Image" /><br />
 	<input type="button" onClick="printHTML5Page()" value="Print Current Page" /><br />
 	<input type="button" onClick="logFeatures()" value="Log Printer Features on Print" /><br />
+        <p>Copies<p>
+        <input type="text" id="copies" size="8" value="1" />
 
 	</td><td valign="top"><h2>Serial</h2>
 	<input type="button" id="list_ports" onClick="listSerialPorts()" value="List Serial Ports" /><br />
-	<input type=text id="port_name" size="8" />
+	<input type="text" id="port_name" size="8" />
 	<input type="button" id="open_port"  onClick="openSerialPort()" value="Open Port" /><br />
 	<input type="button" id="send_data" onClick="sendSerialData()" value="Send Port Cmd" /><br />
 	<input type="button" id="close_port"  onClick="closeSerialPort()" value="Close Port" /><br />

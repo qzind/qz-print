@@ -1,3 +1,7 @@
+Changes 1.8.3 (5/30/2014)
+- Fixes qz.setCopies() function for PostScript printing
+Changes 1.8.2 (4/23/2014)
+- Fixes invalid hex character decoding bug (google code issue 191)
 Changes 1.8.1 (4/15/2014)
 - Fixed PostScript sizing bug when printing to two separate page sizes
 - Removed separate Java 6 build
