@@ -1,4 +1,4 @@
-Changes 1.8.3 (5/30/2014)
+Changes 1.8.4 (5/30/2014)
 - Fixes qz.setCopies() function for PostScript printing
 Changes 1.8.2 (4/23/2014)
 - Fixes invalid hex character decoding bug (google code issue 191)

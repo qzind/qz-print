@@ -48,11 +48,9 @@ import javax.imageio.ImageIO;
 import javax.print.PrintService;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.standard.Copies;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
 
-import javax.print.attribute.standard.OrientationRequested;
 
 /**
  *
