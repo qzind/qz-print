@@ -93,6 +93,7 @@
 				<include name="*.mf" />
 			</fileset>
 		</copy>
+		<!-- FIXME - Seems to have no effect -->
 		<manifest file="${build.dir}/manifest.mf" mode="update">
 			<attribute name="Application-Name" value="QZ Print Plugin" />
 			<attribute name="Application-Library-Allowable-Codebase" value="${APPLICATION_LIBRARY_ALLOWABLE_CODEBASE}" />
