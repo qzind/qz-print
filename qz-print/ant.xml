@@ -89,7 +89,7 @@
 			</fileset>
 		</copy>
 		<copy todir="${build.dir}">
-			<fileset dir=".">
+			<fileset dir="${src.dir}">
 				<include name="*.mf" />
 			</fileset>
 		</copy>
