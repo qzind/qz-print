@@ -5,10 +5,6 @@
 	<description>Builds, tests, and runs the project qz-print.</description>
 	<target depends="-init-private, -deps-jar-init,deps-jar,-check-automatic-build,-pre-pre-compile,-compile-depend,-do-compile,compile,compile-single,-do-jar-copylibs,-do-jar-jar,jar.core,signjars,signjarspremium,generate-html-preview,zipFiles,zipPremiumFiles" description="Build JAR." name="default" />
 	<property name="helper.file" location="helper.txt" />
-	<property name="APPLICATION_NAME" value="Application-Name" />
-	<property name="APPLICATION_LIBRARY_ALLOWABLE_CODEBASE" value="Application-Library-Allowable-Codebase" />
-	<property name="CALLER_ALLOWABLE_CODEBASE" value="Caller-Allowable-Codebase" />
-	<property name="CLASS_PATH" value="Class-Path" />
 
 	<!-- Custom Code Signing -->
 	<target name="-init-private">
@@ -93,15 +89,17 @@
 			</fileset>
 		</copy>
 		<copy todir="${build.dir}">
-			<fileset dir="${src.dir}">
+			<fileset dir=".">
 				<include name="*.mf" />
 			</fileset>
 		</copy>
 		<manifest file="${build.dir}/manifest.mf" mode="update">
-			<attribute name="${APPLICATION_NAME}" value="${APPLICATION_NAME}" />
-			<attribute name="${APPLICATION_LIBRARY_ALLOWABLE_CODEBASE}" value="${APPLICATION_LIBRARY_ALLOWABLE_CODEBASE}" />
-			<attribute name="${CALLER_ALLOWABLE_CODEBASE}" value="${CALLER_ALLOWABLE_CODEBASE_VALUE}" />
-			<attribute name="${CLASS_PATH}" value="${CLASS_PATH}" />
+			<attribute name="Application-Name" value="QZ Print Plugin" />
+			<attribute name="Application-Library-Allowable-Codebase" value="${APPLICATION_LIBRARY_ALLOWABLE_CODEBASE}" />
+			<attribute name="Caller-Allowable-Codebase" value="*" />
+			<attribute name="Codebase" value="*" />
+			<attribute name="Permissions" value="all-permissions" />
+			<attribute name="Class-Path" value="*" />
 		</manifest>
 	</target>
 	<target depends="deps-jar,-pre-pre-compile,copyJnlp" name="-do-compile-single">
