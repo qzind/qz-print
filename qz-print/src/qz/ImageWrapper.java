@@ -1,7 +1,7 @@
 /*
  * 
  * Copyright (C) 2013 Tres Finocchiaro, QZ Industries
- * Copyright (C) 2013 Antoni Ten Monrós
+ * Copyright (C) 2013 Antoni Ten Monro's
  * 
  * IMPORTANT:  This software is dual-licensed
  * 
@@ -34,7 +34,7 @@ import qz.exception.InvalidRawImageException;
  * Abstract wrapper for images to be printed with thermal printers.
  *
  * @author Tres Finocchiaro
- * @author Antoni Ten Monrós
+ * @author Antoni Ten Monro's
  *
  * Changelog: 
  * 
@@ -42,7 +42,7 @@ import qz.exception.InvalidRawImageException;
  * Antoni's better instantiation, "black" pixel logic, removing class abstraction
  * (uses LanguageType Enum switching instead for smaller codebase)
  * 
- * 20130710 (Antoni Ten Monrós) Refactored the original, to have the
+ * 20130710 (Antoni Ten Monro's) Refactored the original, to have the
  * actual implementation of the different ImageWrapper classes in derived
  * classes, while leaving common functionality here.
  *
