@@ -1,8 +1,8 @@
 /**
- * @author Antoni Ten Monrós
- * 
+ * @author Antoni Ten Monro's
+ * Monros
  * Copyright (C) 2013 Tres Finocchiaro, QZ Industries
- * Copyright (C) 2013 Antoni Ten Monrós
+ * Copyright (C) 2013 Antoni Ten Monro's
  *
  * IMPORTANT:  This software is dual-licensed
  * 
@@ -38,7 +38,7 @@ import java.util.ArrayList;
 
 
 /**
- * @author Antoni Ten Monrós
+ * @author Antoni Ten Monro's
  */
 
 public final class ByteArrayBuilder {
