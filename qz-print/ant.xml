@@ -3,7 +3,7 @@
 <!-- You may freely change this file. -->
 <project name="qz" default="default" basedir=".">
 	<description>Builds, tests, and runs the project qz-print.</description>
-	<target depends="-init-private, -deps-jar-init,deps-jar,-check-automatic-build,-pre-pre-compile,-compile-depend,-do-compile,compile,compile-single,-do-jar-copylibs,-do-jar-jar,jar.core,signjars,signjarspremium,generate-html-preview,zipFiles" description="Build JAR." name="default" />
+	<target depends="-init-private, -deps-jar-init,deps-jar,-check-automatic-build,-pre-pre-compile,-compile-depend,-do-compile,compile,compile-single,-do-jar-copylibs,-do-jar-jar,jar.core,signjars,signjarspremium,generate-html-preview,zipFiles,zipPremiumFiles" description="Build JAR." name="default" />
 	<property name="helper.file" location="helper.txt" />
 	<property name="APPLICATION_NAME" value="Application-Name" />
 	<property name="APPLICATION_LIBRARY_ALLOWABLE_CODEBASE" value="Application-Library-Allowable-Codebase" />
