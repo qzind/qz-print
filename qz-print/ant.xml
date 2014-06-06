@@ -93,7 +93,6 @@
 				<include name="*.mf" />
 			</fileset>
 		</copy>
-		<!-- FIXME SEEMS TO BE INEFFECTIVE
 		<manifest file="${build.dir}/manifest.mf" mode="update">
 			<attribute name="Application-Name" value="QZ Print Plugin" />
 			<attribute name="Application-Library-Allowable-Codebase" value="${APPLICATION_LIBRARY_ALLOWABLE_CODEBASE}" />
@@ -102,7 +101,6 @@
 			<attribute name="Permissions" value="all-permissions" />
 			<attribute name="Class-Path" value="*" />
 		</manifest>
-		-->
 	</target>
 	<target depends="deps-jar,-pre-pre-compile,copyJnlp" name="-do-compile-single">
 
