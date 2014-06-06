@@ -58,12 +58,12 @@
 				<include name="*" />
 			</dirset>
 		</pathconvert>
-		<depend srcdir="${src.dir}:${build.generated.subdirs}" />
+		<depend srcdir="${}:${build.generated.subdirs}" />
 	</target>
 	<target depends="deps-jar,-pre-pre-compile,-pre-compile, -copy-persistence-xml,-compile-depend" if="have.sources" name="-do-compile">
 		<javac gensrcdir="${build.generated.sources.dir}" />
 		<copy todir="${build.classes.dir}">
-			<fileset dir="${src.dir}" excludes="${build.classes.excludes},${excludes}" includes="${includes}" />
+			<fileset dir="${}" excludes="${build.classes.excludes},${excludes}" includes="${includes}" />
 		</copy>
 	</target>
 	<target if="has.persistence.xml" name="-copy-persistence-xml">
@@ -89,7 +89,7 @@
 			</fileset>
 		</copy>
 		<copy todir="${build.dir}">
-			<fileset dir="${src.dir}">
+			<fileset dir="${basedir}">
 				<include name="*.mf" />
 			</fileset>
 		</copy>
