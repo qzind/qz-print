@@ -267,7 +267,7 @@
 		<echo message="Using custom copy/delete tasks via build.xml..." />
 		<!-- We're aren't using JWS, no JNLP file needed -->
 		<delete file="${basedir}/dist/jnlpcomponent1.jnlp" failonerror="false" />
-
+		
 		<!-- Delete some default NetBeans Applet stuff that's not needed -->
 		<delete file="${basedir}/dist/README.TXT" failonerror="false" />
 
@@ -275,11 +275,12 @@
 		<!-- standard JRE. Required for build but not needed for dist -->
 		<delete file="${basedir}/dist/lib/plugin.jar" failonerror="false" />
 
+		<!-- Remove Java WebStart jar -->
+                <delete file="${basedir}/dist/lib/javaws.jar" failonerror="false" />
+
 		<!-- Copy some project specific files -->
 		<copy file="${basedir}/sample.html" tofile="${basedir}/dist/sample.html" overwrite="true" encoding="UTF-8" />
-		<!-- <copy file="${basedir}/qz-run.jnlp" tofile="${basedir}/dist/qz-run.jnlp" overwrite="true" encoding="UTF-8" /> -->
-		<!-- <copy file="${basedir}/loading.html" tofile="${basedir}/dist/loading.html" overwrite="true" encoding="UTF-8" /> -->
-
+		
 		<!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
 		<copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />
 
@@ -296,10 +297,10 @@
 		<copy file="${basedir}/js/PluginDetect.js" tofile="${basedir}/dist/js/PluginDetect.js" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/js/deployJava.js" tofile="${basedir}/dist/js/deployJava.js" overwrite="true" encoding="UTF-8" />
 
-		<!-- <copy file="${basedir}/img/loading_green.gif" tofile="${basedir}/dist/img/loading_green.gif" overwrite="true" encoding="UTF-8" /> -->
-		<!-- <copy file="${basedir}/img/loading_red.gif" tofile="${basedir}/dist/img/loading_red.gif" overwrite="true" encoding="UTF-8" /> -->
-		<!-- <copy file="${basedir}/img/loading_yellow.gif" tofile="${basedir}/dist/img/loading_yellow.gif" overwrite="true" encoding="UTF-8" /> -->
 		<copy file="${basedir}/img/image_sample_bw.png" tofile="${basedir}/dist/img/image_sample_bw.png" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/img/image_sample.png" tofile="${basedir}/dist/img/image_sample.png" overwrite="true" encoding="UTF-8" />
+		
+		<!-- Fix newlines on Windows -->
+		<fixcrlf srcdir="${basedir}/.." includes="**/*.txt" eol="crlf" />
 	</target>
 </project>
