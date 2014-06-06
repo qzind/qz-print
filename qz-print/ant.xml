@@ -17,6 +17,7 @@
 		<property file="resources/private/configs/${config}.properties" />
 		<!-- Your custom code signing properties here. Feel free to change. -->
 		<!-- The project will default to qz.ks if it doesn't exist -->
+		<property file="${user.home}/java/ca/private.properties" />
 		<property file="${user.home}/Desktop/Code Signing/private.properties" />
 		<!-- The default code signing properties which uses qz.ks. -->
 		<!-- Please leave this value the netbeans default as a fallback. -->
@@ -232,7 +233,7 @@
 		<property name="jnlp.signjar.vendor" value="CN=${application.vendor.filtered}" />
 		<genkey dname="${jnlp.signjar.vendor}" alias="${jnlp.signing.alias}" keystore="${jnlp.signing.keystore}" storepass="${jnlp.signing.storepass}" keypass="${jnlp.signing.keypass}" />
 	</target>
-	<target name="signjars" unless="premium.signing.tsaurl">
+	<target name="signjars" unless="jnlp.signing.tsaurl">
 		<echo message="Signing Free version" />
 		<signjar jar="${dist.jar}" signedjar="${dist.jar}" alias="${jnlp.signing.alias}" storepass="${jnlp.signing.storepass}" keystore="${jnlp.signing.keystore}" keypass="${jnlp.signing.storepass}" />
 		<path>
@@ -240,24 +241,24 @@
 		</path>
 	</target>
 
-	<target name="signjarspremium" if="premium.signing.tsaurl">
+	<target name="signjarspremium" if="jnlp.signing.tsaurl">
 		<echo message="Signing Premium version" />
-		<signjar jar="${dist.jar}" signedjar="${dist.jar}" alias="${jnlp.signing.alias}" storepass="${jnlp.signing.storepass}" keystore="${jnlp.signing.keystore}" keypass="${jnlp.signing.storepass}" tsaurl="${premium.signing.tsaurl}" />
+		<signjar jar="${dist.jar}" signedjar="${dist.jar}" alias="${jnlp.signing.alias}" storepass="${jnlp.signing.storepass}" keystore="${jnlp.signing.keystore}" keypass="${jnlp.signing.storepass}" tsaurl="${jnlp.signing.tsaurl}" />
 		<path>
 			<fileset dir="dist/lib" includes="*.jar" />
 		</path>
 	</target>
-	<target name="zipFiles" unless="premium.signing.tsaurl">
+	<target name="zipFiles" unless="jnlp.signing.tsaurl">
 		<zip destfile="manual.zip">
 			<zipfileset dir="dist" prefix="dist"/>
 			<zipfileset dir=".." includes="*.txt" />
 		</zip>
 	</target>
-	<target name="zipPremiumFiles" if="premium.signing.tsaurl">
+	<target name="zipPremiumFiles" if="jnlp.signing.tsaurl">
 		<zip destfile="manual.zip">
 			<zipfileset dir="dist" prefix="dist"/>
 			<zipfileset dir=".." includes="*.txt" />
-			<zipfileset dir="${software.agreement.dir}" includes="*.txt" />
+			<zipfileset dir="${user.home}/java/ca/" includes="AGREEMENT.TXT" />
 		</zip>
 	</target>
 
@@ -307,5 +308,6 @@
 		
 		<!-- Fix newlines on Windows -->
 		<fixcrlf srcdir="${basedir}/.." includes="**/*.txt" eol="crlf" />
+		<fixcrlf srcdir="${user.home}/java/ca/" includes="**/*.txt" eol="crlf" />
 	</target>
 </project>
