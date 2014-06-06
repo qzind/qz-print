@@ -263,8 +263,13 @@
 
 	<!-- Perform some cleanup and copying at the generate-html-preview stage -->
 	<target name="generate-html-preview">
-
 		<echo message="Using custom copy/delete tasks via build.xml..." />
+		
+		<!-- Copy our "lib" directory -->
+		<copy todir="${basedir}/dist/lib">
+		   <fileset dir="${basedir}/lib"/>
+		</copy>
+		
 		<!-- We're aren't using JWS, no JNLP file needed -->
 		<delete file="${basedir}/dist/jnlpcomponent1.jnlp" failonerror="false" />
 		
