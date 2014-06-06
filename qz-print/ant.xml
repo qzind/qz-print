@@ -89,10 +89,11 @@
 			</fileset>
 		</copy>
 		<copy todir="${build.dir}">
-			<fileset dir="${src.dir}">
+			<fileset dir=".">
 				<include name="*.mf" />
 			</fileset>
 		</copy>
+		<!-- FIXME SEEMS TO BE INEFFECTIVE
 		<manifest file="${build.dir}/manifest.mf" mode="update">
 			<attribute name="Application-Name" value="QZ Print Plugin" />
 			<attribute name="Application-Library-Allowable-Codebase" value="${APPLICATION_LIBRARY_ALLOWABLE_CODEBASE}" />
@@ -101,6 +102,7 @@
 			<attribute name="Permissions" value="all-permissions" />
 			<attribute name="Class-Path" value="*" />
 		</manifest>
+		-->
 	</target>
 	<target depends="deps-jar,-pre-pre-compile,copyJnlp" name="-do-compile-single">
 
@@ -284,9 +286,6 @@
 
 		<!-- Copy some project specific files -->
 		<copy file="${basedir}/sample.html" tofile="${basedir}/dist/sample.html" overwrite="true" encoding="UTF-8" />
-		
-		<!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
-		<copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />
 
 		<copy file="${basedir}/misc/zpl_sample.txt" tofile="${basedir}/dist/misc/zpl_sample.txt" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/misc/epl_sample.txt" tofile="${basedir}/dist/misc/epl_sample.txt" overwrite="true" encoding="UTF-8" />
@@ -304,8 +303,12 @@
 		<copy file="${basedir}/img/image_sample_bw.png" tofile="${basedir}/dist/img/image_sample_bw.png" overwrite="true" encoding="UTF-8" />
 		<copy file="${basedir}/img/image_sample.png" tofile="${basedir}/dist/img/image_sample.png" overwrite="true" encoding="UTF-8" />
 		
-		<!-- Fix newlines on Windows -->
+		<!-- Fix newlines for readiblity on Windows -->
 		<fixcrlf srcdir="${basedir}/.." includes="**/*.txt" eol="crlf" />
 		<fixcrlf srcdir="${user.home}/java/ca/" includes="**/*.txt" eol="crlf" />
+		<fixcrlf srcdir="${basedir}/src/JNLP-INF/" includes="**/*.JNLP" eol="crlf" />
+		
+		<!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
+		<copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />	
 	</target>
 </project>
