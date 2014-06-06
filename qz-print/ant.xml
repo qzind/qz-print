@@ -306,7 +306,7 @@
 		<!-- Fix newlines for readiblity on Windows -->
 		<fixcrlf srcdir="${basedir}/.." includes="**/*.txt" eol="crlf" />
 		<fixcrlf srcdir="${user.home}/java/ca/" includes="**/*.txt" eol="crlf" />
-		<fixcrlf srcdir="${basedir}/src/JNLP-INF/" includes="**/*.JNLP" eol="crlf" />
+		<fixcrlf srcdir="${basedir}/src/JNLP-INF/" includes="**/*.*" eol="crlf" />
 		
 		<!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
 		<copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />	
