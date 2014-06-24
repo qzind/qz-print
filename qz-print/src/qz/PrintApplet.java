@@ -63,7 +63,7 @@ import qz.reflection.ReflectException;
 public class PrintApplet extends Applet implements Runnable {
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
-    public static final String VERSION = "1.8.4";
+    public static final String VERSION = "1.8.5";
     private static final long serialVersionUID = 2787955484074291340L;
     public static final int APPEND_XML = 1;
     public static final int APPEND_RAW = 2;
@@ -121,7 +121,7 @@ public class PrintApplet extends Applet implements Runnable {
     private String printer;
     //private String orientation;
     //private Boolean maintainAspect;
-    private int copies = 1;
+    private int copies = -1;
     private Charset charset = Charset.defaultCharset();
     //private String pageBreak; // For spooling pages one at a time
     private int documentsPerSpool = 0;
@@ -361,7 +361,7 @@ public class PrintApplet extends Applet implements Runnable {
 
     private void setDonePrinting(boolean donePrinting) {
         this.donePrinting = donePrinting;
-        this.copies = 1;
+        this.copies = -1;
         this.notifyBrowser("qzDonePrinting");
     }
 
@@ -1685,9 +1685,11 @@ public class PrintApplet extends Applet implements Runnable {
         if (paperSize != null) {
             printPS.setPaperSize(paperSize);
         }
-        // Fix GitHub Bug #30
-        if (copies > 1) {
+        // Fix GitHub Bug #30, #31
+        if (copies > 0) {
             printPS.setCopies(copies);
+        } else {
+            printPS.setCopies(1);
         }
         printPS.print();
         psPrint = false;
@@ -1793,11 +1795,19 @@ public class PrintApplet extends Applet implements Runnable {
      setAutoSize(maintainAspect);
      }*/
     public int getCopies() {
-        return copies;
+        if (copies > 0) {
+            return copies;
+        } else {
+            return 1;
+        }
     }
 
     public void setCopies(int copies) {
-        this.copies = copies;
+        if (copies > 0) {
+            this.copies = copies;
+        } else {
+            LogIt.log(Level.WARNING, "Copies must be greater than zero", new UnsupportedOperationException("Copies must be greater than zero"));
+        }
     }
 
     public PaperFormat getPaperSize() {
