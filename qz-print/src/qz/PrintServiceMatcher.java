@@ -24,6 +24,8 @@
 
 package qz;
 
+import qz.common.LogIt;
+
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

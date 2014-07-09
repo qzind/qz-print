@@ -24,6 +24,8 @@
 
 package qz;
 
+import qz.common.LogIt;
+
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.util.logging.Level;

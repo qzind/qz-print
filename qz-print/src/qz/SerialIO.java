@@ -8,7 +8,10 @@ import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 import jssc.SerialPortTimeoutException;
+import qz.common.LogIt;
 import qz.exception.SerialException;
+import qz.utils.ByteUtilities;
+import qz.utils.SerialUtilities;
 
 /**
  *

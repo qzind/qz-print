@@ -2,14 +2,16 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package qz;
+package qz.utils;
+
+import jssc.SerialPort;
+import qz.common.LogIt;
+import qz.exception.SerialException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.logging.Level;
-import jssc.SerialPort;
-import qz.exception.SerialException;
 
 /**
  *
@@ -36,8 +38,8 @@ public class SerialUtilities {
     /**
      * Calls REG.EXE to obtain the port settings.  These should be returned in the
      * format "COM10:    REG_SZ    9600,n,8,1"
-     * @param portName
-     * @return
+     * @param portName name of windows port
+     * @return windows port attributes
      * @throws IOException 
      */
     public static int[] getWindowsAttributes(String portName) throws IOException, SerialException {
@@ -57,11 +59,11 @@ public class SerialUtilities {
             for (int i = 0; i < _attr.length; i++) {
                 String val = _attr[i];
                 switch (i) {
-                    case 0: attr[0] = SerialUtilities.parseBaudRate(val); break;
-                    case 1: attr[3] = SerialUtilities.parseParity(val); break;
-                    case 2: attr[1] = SerialUtilities.parseDataBits(val); break;
-                    case 3: attr[2] = SerialUtilities.parseStopBits(val); break;
-                    case 4: attr[4] = SerialUtilities.parseFlowControl(val); break;
+                    case 0: attr[0] = parseBaudRate(val); break;
+                    case 1: attr[3] = parseParity(val); break;
+                    case 2: attr[1] = parseDataBits(val); break;
+                    case 3: attr[2] = parseStopBits(val); break;
+                    case 4: attr[4] = parseFlowControl(val); break;
                     default: // Do nothing
                 }
             }
@@ -82,7 +84,7 @@ public class SerialUtilities {
      * returns either SerialUtilities.WINDOWS, LINUX, or OSX.  Solaris, AIX, OS/2,
      * etc are not currently handled and will return -1, which will cause an error.
      * BSD defaults to OSX, which may need to be changed.
-     * @return 
+     * @return operating system constant
      */
     public static int getOS() {
         String os = System.getProperty("os.name", "Windows 7").toLowerCase();
@@ -106,13 +108,13 @@ public class SerialUtilities {
      * DATABITS_X <code>int</code> value that corresponds with the provided 
      * String.  Returns -1 if the data bits value can't be parsed.
      * 
-     * @param s
-     * @return 
+     * @param s data bits value
+     * @return  number of data bits
      */
     public static int parseDataBits(String s) {
         s = s.trim();
         if (s.equals("")) {
-            LogIt.log(Level.SEVERE, "Canot parse empty data bits value.");
+            LogIt.log(Level.SEVERE, "Cannot parse empty data bits value.");
         } else if (s.equals("5")) {
             LogIt.log("Parsed serial setting: " + s + "=DATABITS_" + s);
             return SerialPort.DATABITS_5;
@@ -132,15 +134,15 @@ public class SerialUtilities {
     }
     
       /**
-     * Parses the suppled String flow control parameter and returns the SerialPorts's
+     * Parses the supplied String flow control parameter and returns the SerialPorts's
      * FLOWCONTROL_TYPE_DIRECTION <code>int</code> value that corresponds with the provided 
      * String.  Returns -1 if the flow control value can't be parsed.
      * TODO: (TEST THIS) By default flow control is assumed to be in the "out" 
      * direction.  This could be backwards on Windows, as the registry does not 
      * specify direction.
      * 
-     * @param s
-     * @return 
+     * @param s number of stop bits
+     * @return  number of stop bits
      */
     public static int parseStopBits(String s) {
         s = s.trim();
@@ -226,7 +228,7 @@ public class SerialUtilities {
     
 
     /**
-     * Parses the suppled String baud rate parameter and returns the SerialPorts's
+     * Parses the supplied String baud rate parameter and returns the SerialPorts's
      * BAUDRATE_XXX <code>int</code> value that corresponds with the provided 
      * String.  Returns -1 if the baud rate value can't be parsed.
      * 
@@ -234,52 +236,37 @@ public class SerialUtilities {
      * @return 
      */
     public static int parseBaudRate(String s) {
-        s = s.trim();
-        if (s.equals("")) {
-            LogIt.log(Level.SEVERE, "Canot parse empty baud rate value.");
-        } else if (s.equals("110")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_110;
-        } else if (s.equals("300")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_300; 
-        } else if (s.equals("600")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_600; 
-        } else if (s.equals("1200")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_1200; 
-        } else if (s.equals("4800")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_4800; 
-        } else if (s.equals("9600")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_9600; 
-        } else if (s.equals("14400")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_14400; 
-        } else if (s.equals("19200")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_19200; 
-        } else if (s.equals("38400")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_38400; 
-        } else if (s.equals("57600")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_57600; 
-        } else if (s.equals("115200")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_115200; 
-        } else if (s.equals("128000")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_128000; 
-        } else if (s.equals("256000")) {
-            LogIt.log("Parsed serial setting: " + s + "=BAUDRATE_" + s);
-            return SerialPort.BAUDRATE_256000; 
-        } else {
-            LogIt.log(Level.SEVERE, "Baud rate of " + s + " not supported");
+        int baud = -1;
+        try {
+            baud = Integer.decode(s.trim());
+        } catch (Exception ex) {
+            LogIt.log(Level.SEVERE, "Cannot parse baud rate value. " + ex.getMessage());
+            return -1;
         }
-        return -1;
+
+        switch(baud) {
+            // valid baud rates
+            case 110:
+            case 300:
+            case 600:
+            case 1200:
+            case 4800:
+            case 9600:
+            case 14400:
+            case 19200:
+            case 38400:
+            case 57600:
+            case 115200:
+            case 128000:
+            case 256000:
+                LogIt.log(String.format("Parsed serial setting: %d=BAUDRATE_%d", baud, baud));
+                break;
+            default:
+                LogIt.log(Level.SEVERE, "Baud rate of " + s + " not supported");
+                baud = -1;
+        }
+
+        return baud;
     }
     
 }

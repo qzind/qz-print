@@ -21,19 +21,23 @@
  * be voided.
  * 
  */
-package qz;
+package qz.utils;
 
-import java.io.DataInputStream;
-import java.io.IOException;
-import java.net.URL;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
+import qz.ByteArrayBuilder;
+import qz.common.LogIt;
+import qz.common.Constants;
 import qz.exception.NullCommandException;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.net.URL;
 
 
 /**
@@ -41,7 +45,7 @@ import qz.exception.NullCommandException;
  * @author Tres Finocchiaro
  */
 public class FileUtilities {
-    public static String[] badExtensions = new String[]{
+    public static final String[] badExtensions = new String[]{
         "exe", "pif", "paf", "application", "msi", "com", "cmd", "bat", "lnk", // Windows Executable program or script
         "gadget", // Windows desktop gadget
         "msp", "mst", // Microsoft installer patch/transform file
@@ -81,7 +85,7 @@ public class FileUtilities {
     
     public static byte[] readRawFile(String url) throws IOException {
         ByteArrayBuilder rawCmds = new ByteArrayBuilder();
-        byte[] buffer = new byte[512];
+        byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
         DataInputStream in = new DataInputStream(new URL(url).openStream());
         while (true) {
             int len = in.read(buffer);
@@ -123,7 +127,7 @@ public class FileUtilities {
             if (nodeList.getLength() > 0) {
                 return nodeList.item(0).getTextContent();
             }
-            throw new NullCommandException("Node \"" + dataTag + "\" could not be found in XML file specified");
+            throw new NullCommandException(String.format("Node \"%s\" could not be found in XML file specified", dataTag));
     }
 
 }

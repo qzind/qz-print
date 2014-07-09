@@ -28,7 +28,10 @@ import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+
+import qz.common.LogIt;
 import qz.exception.InvalidRawImageException;
+import qz.utils.ByteUtilities;
 
 /**
  * Abstract wrapper for images to be printed with thermal printers.
