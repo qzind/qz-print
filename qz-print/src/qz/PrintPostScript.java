@@ -24,6 +24,8 @@ package qz;
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
 import com.sun.pdfview.PDFRenderer;
+import qz.common.LogIt;
+
 import java.awt.AWTError;
 
 import java.awt.Graphics;

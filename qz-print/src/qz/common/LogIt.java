@@ -22,11 +22,11 @@
  * 
  */
 
-package qz;
+package qz.common;
 
+import javax.print.event.PrintJobEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.print.event.PrintJobEvent;
 
 public class LogIt {
     public static boolean disableLogging = false;

@@ -24,6 +24,8 @@
 
 package qz;
 
+import qz.common.LogIt;
+
 import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.Graphics;
@@ -125,8 +127,8 @@ public class PrintHTML extends JLabel implements Printable {
     }
     
     public void setCopies(int copies) {
-        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()", 
-                    new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
+        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
+                new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
     }
     
     public int getCopies() {

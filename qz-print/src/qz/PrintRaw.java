@@ -51,9 +51,13 @@ import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.JobName;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
+
+import qz.common.LogIt;
 import qz.exception.InvalidFileTypeException;
 import qz.exception.NullCommandException;
 import qz.exception.NullPrintServiceException;
+import qz.utils.ByteUtilities;
+import qz.utils.FileUtilities;
 
 /**
  * Sends raw data to the printer, overriding your operating system's print

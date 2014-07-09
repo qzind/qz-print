@@ -19,7 +19,12 @@
  * the LGPL 2.1 license be voided.
  *
  */
-package qz;
+package qz.utils;
+
+import qz.Base64;
+import qz.ByteArrayBuilder;
+import qz.common.LogIt;
+import qz.common.Constants;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -31,7 +36,7 @@ import java.util.LinkedList;
 import java.util.logging.Level;
 
 /**
- * Place for all raw static byte conversion functions. Expecially useful for
+ * Place for all raw static byte conversion functions. Especially useful for
  * converting typed Hex (<code>String</code> base 16) to <code>byte[]</code>,
  * <code>byte[]</code> to Hex (<code>String</code> base 16), <code>byte[]</code>
  * to <code>int[]</code> conversions, etc.
@@ -42,7 +47,7 @@ public class ByteUtilities {
 
     /**
      * Converts typed Hex (<code>String</code> base 16) to <code>byte[]</code>.
-     * This is expecially useful for special characters that are appended via
+     * This is especially useful for special characters that are appended via
      * JavaScript, specifically the "\0" or <code>NUL</code> character, which
      * will early terminate a JavaScript <code>String</code>.
      *
@@ -76,15 +81,13 @@ public class ByteUtilities {
         return data;
     }
 
-    final protected static char[] HEXES_ARRAY = "0123456789ABCDEF".toCharArray();
-
     public static String bytesToHex(byte[] bytes) {
         char[] hexChars = new char[bytes.length * 2];
         int v;
         for (int j = 0; j < bytes.length; j++) {
             v = bytes[j] & 0xFF;
-            hexChars[j * 2] = HEXES_ARRAY[v >>> 4];
-            hexChars[j * 2 + 1] = HEXES_ARRAY[v & 0x0F];
+            hexChars[j * 2] = Constants.HEXES_ARRAY[v >>> 4];
+            hexChars[j * 2 + 1] = Constants.HEXES_ARRAY[v & 0x0F];
         }
         return new String(hexChars);
     }
@@ -94,7 +97,7 @@ public class ByteUtilities {
      * Returns an array of positions. TODO: Make this natively Iterable.
      *
      * @param array
-     * @param target
+     * @param sublist
      * @return
      */
     public static int[] indicesOfSublist(byte[] array, byte[] sublist) {
@@ -172,6 +175,7 @@ public class ByteUtilities {
         return byteArrayList;
     }
 
+    // TODO: RKC - Verify method is not needed
     public static byte[] intArrayToByteArray(int ints[]) {
         byte[] bytes = new byte[ints.length];
         for (int i = 0; i < ints.length; i++) {
@@ -180,6 +184,7 @@ public class ByteUtilities {
         return bytes;
     }
 
+    // TODO: RKC - Verify method is not needed
     /**
      * Base 2 array to Base 10 array converter: Takes a binary array (using a
      * boolean array for storage) and converts every 8 rows to a full byte,
@@ -201,9 +206,7 @@ public class ByteUtilities {
         return hex;
     }
 
-    private static final String HEXES = "0123456789ABCDEF";
-
-    /*
+    /**
      * Converts an integer array (<code>int[]</code>) to a String representation
      * of a hexadecimal array.
      * 
@@ -216,7 +219,7 @@ public class ByteUtilities {
         }
         final StringBuilder hex = new StringBuilder(2 * raw.length);
         for (final int i : raw) {
-            hex.append(HEXES.charAt((i & 0xF0) >> 4)).append(HEXES.charAt((i & 0x0F)));
+            hex.append(Constants.HEXES.charAt((i & 0xF0) >> 4)).append(Constants.HEXES.charAt((i & 0x0F)));
         }
         return hex.toString();
     }
@@ -227,7 +230,7 @@ public class ByteUtilities {
         } else if (o instanceof String) {
             return ((String) o) == null || ((String) o).equals("");
         } else {
-            LogIt.log(Level.WARNING, "Uchecked blank comparison.");
+            LogIt.log(Level.WARNING, "Unchecked blank comparison.");
             return o == null;
         }
     }
@@ -249,7 +252,7 @@ public class ByteUtilities {
      * @throws IOException
      * @throws MalformedURLException 
      */
-    public static byte[] readBinaryFile(String file) throws IOException, MalformedURLException {
+    public static byte[] readBinaryFile(String file) throws IOException {
         if (isBase64PDF(file)) {
             return Base64.decode(file.split(",")[1]);
         } else {
@@ -262,10 +265,10 @@ public class ByteUtilities {
                 out = new ByteArrayOutputStream(size);
             } else {
                  // Pick some appropriate size
-                out = new ByteArrayOutputStream(20480);
+                out = new ByteArrayOutputStream(Constants.OUTPUT_STREAM_SIZE);
             }
 
-            byte[] buffer = new byte[512];
+            byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
             while (true) {
                 int len = in.read(buffer);
                 if (len == -1) {
@@ -279,42 +282,4 @@ public class ByteUtilities {
             return out.toByteArray();
         }
     }
-
-
-
-    /**
-     * Alternative to getHex(). Not used. Converts a <code>byte[]</code> to a
-     * Hexadecimal (base 16) String representation. i.e. { 0x1B, 0x00 } would
-     * look like this: "1B00"
-     *
-     * @param b
-     * @return
-     * @throws Exception
-     */
-    /*public static String getHexString(byte[] b) throws Exception {
-     String result = "";
-     for (int i = 0; i < b.length; i++) {
-     result +=
-     Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
-     }
-     return result;
-     }*/
 }
-
-/*if (offset > 0 && end > 0 && end > offset
-
-    
- ) { 
- //LogIt.log("Start: " + offset + ": " + orig[offset] + ", End: " + end + ": " + orig[end]);
- byte[] printBytes = new byte[end - offset];
- int counter = 0;
- for (int i = offset; i < end; i++) {
- printBytes[counter++] = orig[i];
- }
- doc = new SimpleDoc(printBytes, docFlavor.get(), docAttr.get());
- }
-
-    
- else {
- doc = new SimpleDoc(orig, docFlavor.get(), docAttr.get());
- }*/

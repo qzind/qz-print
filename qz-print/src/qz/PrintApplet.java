@@ -21,8 +21,25 @@
  */
 package qz;
 
+import netscape.javascript.JSException;
+import netscape.javascript.JSObject;
+import qz.common.LogIt;
+import qz.exception.InvalidFileTypeException;
+import qz.exception.NullCommandException;
+import qz.exception.NullPrintServiceException;
+import qz.exception.SerialException;
+import qz.json.JSONArray;
+import qz.reflection.ReflectException;
+import qz.utils.ByteUtilities;
+import qz.utils.FileUtilities;
+import qz.utils.NetworkUtilities;
+
+import javax.imageio.ImageIO;
+import javax.print.PrintException;
+import javax.print.PrintService;
+import javax.print.PrintServiceLookup;
 import java.applet.Applet;
-import java.awt.Graphics;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.print.PrinterException;
 import java.io.ByteArrayInputStream;
@@ -40,18 +57,6 @@ import java.security.PrivilegedExceptionAction;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import javax.imageio.ImageIO;
-import javax.print.PrintException;
-import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
-import netscape.javascript.JSException;
-import netscape.javascript.JSObject;
-import qz.exception.InvalidFileTypeException;
-import qz.exception.NullCommandException;
-import qz.exception.NullPrintServiceException;
-import qz.exception.SerialException;
-import qz.json.JSONArray;
-import qz.reflection.ReflectException;
 
 /**
  * An invisible web applet for use with JavaScript functions to send raw
@@ -567,12 +572,12 @@ public class PrintApplet extends Applet implements Runnable {
         return getSerialIO().getSerialPorts();
     }
 
-    /**
-     * Tells jZebra to spool a new document when the raw data matches
-     * <code>pageBreak</code>
-     *
-     * @param pageBreak
-     */
+//    /**
+//     * Tells jZebra to spool a new document when the raw data matches
+//     * <code>pageBreak</code>
+//     *
+//     * @param pageBreak
+//     */
     //   @Deprecated
     //   public void setPageBreak(String pageBreak) {
     //       this.pageBreak = pageBreak;
@@ -608,8 +613,8 @@ public class PrintApplet extends Applet implements Runnable {
      * contents and appends it to the buffer. Assumes XML content is base64
      * formatted.
      *
-     * @param xmlFile
-     * @param tagName
+     * @param url
+     * @param xmlTag
      */
     public void appendXML(String url, String xmlTag) {
         appendFromThread(url, APPEND_XML);
@@ -623,7 +628,7 @@ public class PrintApplet extends Applet implements Runnable {
     /**
      * Appends the entire contents of the specified file to the buffer
      *
-     * @param rawDataFile
+     * @param url
      */
     public void appendFile(String url) {
         appendFromThread(url, APPEND_RAW);
@@ -631,7 +636,7 @@ public class PrintApplet extends Applet implements Runnable {
 
     /**
      *
-     * @param imageFile
+     * @param url
      */
     public void appendImage(String url) {
         appendFromThread(url, APPEND_IMAGE_PS);
@@ -729,7 +734,8 @@ public class PrintApplet extends Applet implements Runnable {
     /**
      * Appends a file of the specified type
      *
-     * @param url
+     * @param file
+     * @param appendType
      * @param appendType
      */
     private void appendFromThread(String file, int appendType) {
@@ -1149,7 +1155,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Creates the print service by iterating through printers until finding
      * matching printer containing "printerName" in its description
      *
-     * @param printerName
+     * @param printer
      * @return
      */
     public void findPrinter(String printer) {
@@ -1357,14 +1363,14 @@ public class PrintApplet extends Applet implements Runnable {
      }
      return this.networkUtilities;
      }*/
-    /**
-     * Returns a comma delimited <code>String</code> containing the IP Addresses
-     * found for the specified MAC address. The format of these (IPv4 vs. IPv6)
-     * may vary depending on the system.
-     *
-     * @param macAddress
-     * @return
-     */
+//    /**
+//     * Returns a comma delimited <code>String</code> containing the IP Addresses
+//     * found for the specified MAC address. The format of these (IPv4 vs. IPv6)
+//     * may vary depending on the system.
+//     *
+//     * @param macAddress
+//     * @return
+//     */
    /* public String getIPAddresses(String macAddress) {
         return getNetworkHashMap().get(macAddress).getInetAddressesCSV();
     }*/
