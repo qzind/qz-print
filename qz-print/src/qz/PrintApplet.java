@@ -63,7 +63,7 @@ import qz.reflection.ReflectException;
 public class PrintApplet extends Applet implements Runnable {
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
-    public static final String VERSION = "1.8.5";
+    public static final String VERSION = "1.8.6";
     private static final long serialVersionUID = 2787955484074291340L;
     public static final int APPEND_XML = 1;
     public static final int APPEND_RAW = 2;
@@ -468,7 +468,7 @@ public class PrintApplet extends Applet implements Runnable {
             // Ubuntu doesn't properly raise exceptions when calling invalid
             // functions, so this is the work-around
             if (!type.equals("function")) {
-                throw new JSException("Object \"" + function + "\" does not "
+                throw new Exception("Object \"" + function + "\" does not "
                         + "exist or is not a function.");
             }
             
@@ -483,7 +483,7 @@ public class PrintApplet extends Applet implements Runnable {
                         + "(...)\" instead.");
             }
             return true;
-        } catch (JSException e) {
+        } catch (Throwable e) {
         //} catch (Throwable t) {
             boolean success = false;
             if (function.startsWith("qz")) {
