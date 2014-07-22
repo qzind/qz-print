@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.StringCharacterIterator;
 import java.util.LinkedList;
 import java.util.logging.Level;
 
@@ -67,7 +68,7 @@ public class ByteUtilities {
                 for (int i = 0; i < split.length; i++) {
                     //data[i] = Byte.parseByte(split[i], 16);
                     Integer signedByte = Integer.parseInt(split[i], 16);
-                    data[i] = (byte)(signedByte & 0xFF);
+                    data[i] = (byte) (signedByte & 0xFF);
                 }
             } else if (s.length() == 2) {
                 data = new byte[]{Byte.parseByte(s)};
@@ -231,7 +232,7 @@ public class ByteUtilities {
             return o == null;
         }
     }
-    
+
     public static boolean isBase64Image(String path) {
         return path.startsWith("data:image/") && path.contains(";base64,");
     }
@@ -239,15 +240,16 @@ public class ByteUtilities {
     public static boolean isBase64PDF(String path) {
         return path.startsWith("data:application/pdf;base64,");
     }
-    
+
     /**
      * Reads a binary file (i.e. PDF) from URL to a ByteBuffer. This is later
      * appended to the applet, but needs a renderer capable of printing it to
      * PostScript
+     *
      * @param file
      * @return
      * @throws IOException
-     * @throws MalformedURLException 
+     * @throws MalformedURLException
      */
     public static byte[] readBinaryFile(String file) throws IOException, MalformedURLException {
         if (isBase64PDF(file)) {
@@ -261,7 +263,7 @@ public class ByteUtilities {
             if (size != -1) {
                 out = new ByteArrayOutputStream(size);
             } else {
-                 // Pick some appropriate size
+                // Pick some appropriate size
                 out = new ByteArrayOutputStream(20480);
             }
 
@@ -280,7 +282,41 @@ public class ByteUtilities {
         }
     }
 
-
+    /**
+     * Escapes a string for use as a literal, such as JavaScript eval() or setTimout()
+     * @param unescaped
+     * @return 
+     */
+    public String escape(String unescaped) {
+        final StringBuilder result = new StringBuilder();
+        StringCharacterIterator iterator = new StringCharacterIterator(unescaped);
+        char character = iterator.current();
+        while (character != StringCharacterIterator.DONE) {
+            if (character == '\"') {
+                result.append("\\\"");
+            } else if (character == '\\') {
+                result.append("\\\\");
+            } else if (character == '/') {
+                result.append("\\/");
+            } else if (character == '\b') {
+                result.append("\\b");
+            } else if (character == '\f') {
+                result.append("\\f");
+            } else if (character == '\n') {
+                result.append("\\n");
+            } else if (character == '\r') {
+                result.append("\\r");
+            } else if (character == '\t') {
+                result.append("\\t");
+            } else {
+                //the char is not a special one
+                //add it to the result as is
+                result.append(character);
+            }
+            character = iterator.next();
+        }
+        return result.toString();
+    }
 
     /**
      * Alternative to getHex(). Not used. Converts a <code>byte[]</code> to a
