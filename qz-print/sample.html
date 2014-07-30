@@ -24,8 +24,7 @@
 			initial_focus:'false'};
 		if (deployJava.versionCheck("1.7+") == true) {}
 		else if (deployJava.versionCheck("1.6+") == true) {
-			attributes['archive'] = 'jre6/qz-print.jar';
-			parameters['jnlp_href'] = 'jre6/qz-print_jnlp.jnlp';
+			delete parameters['jnlp_href'];
 		}
 		deployJava.runApplet(attributes, parameters, '1.5');
 	}
