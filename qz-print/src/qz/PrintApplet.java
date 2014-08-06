@@ -567,16 +567,6 @@ public class PrintApplet extends Applet implements Runnable {
         return getSerialIO().getSerialPorts();
     }
 
-//    /**
-//     * Tells jZebra to spool a new document when the raw data matches
-//     * <code>pageBreak</code>
-//     *
-//     * @param pageBreak
-//     */
-    //   @Deprecated
-    //   public void setPageBreak(String pageBreak) {
-    //       this.pageBreak = pageBreak;
-    //   }
     public void append64(String base64) {
         try {
             getPrintRaw().append(Base64.decode(base64));
@@ -613,10 +603,6 @@ public class PrintApplet extends Applet implements Runnable {
      */
     public void appendXML(String url, String xmlTag) {
         appendFromThread(url, Constants.APPEND_XML);
-        //this.startAppending = true;
-        //this.doneAppending = false;
-        //this.appendType = APPEND_XML;
-        //this.file = xmlFile;
         this.xmlTag = xmlTag;
     }
 
@@ -750,29 +736,6 @@ public class PrintApplet extends Applet implements Runnable {
         return this.paperSize.getOrientationDescription();
     }
 
-    /*
-     // Due to applet security, can only be invoked by run() thread
-     private String readXMLFile() {
-     try {
-     DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-     DocumentBuilder db;
-     Document doc;
-     db = dbf.newDocumentBuilder();
-     doc = db.parse(file);
-     doc.getDocumentElement().normalize();
-     LogIt.log("Root element " + doc.getDocumentElement().getNodeName());
-     NodeList nodeList = doc.getElementsByTagName(xmlTag);
-     if (nodeList.getLength() > 0) {
-     return nodeList.item(0).getTextContent();
-     } else {
-     LogIt.log("Node \"" + xmlTag + "\" could not be found in XML file specified");
-     }
-     } catch (Exception e) {
-     LogIt.log(Level.WARNING, "Error reading/parsing specified XML file", e);
-     }
-     return "";
-     }
-     */
     public void printToFile() {
         printToFile(null);
     }
@@ -854,47 +817,6 @@ public class PrintApplet extends Applet implements Runnable {
         return printHTML;
     }
 
-    /*
-     public double[] getPSMargin() {
-     return psMargin;
-     }
-    
-     public void setPSMargin(int psMargin) {
-     this.psMargin = new double[]{psMargin};
-     }
-    
-     public void setPSMargin(double psMargin) {
-     this.psMargin = new double[]{psMargin};
-     }
-    
-     public void setPSMargin(int top, int left, int bottom, int right) {
-     this.psMargin = new double[]{top, left, bottom, right};
-     }
-    
-     public void setPSMargin(double top, double left, double bottom, double right) {
-     this.psMargin = new double[]{top, left, bottom, right};
-     }*/
-    /*
-     // Due to applet security, can only be invoked by run() thread
-     private String readRawFile() {
-     String rawData = "";
-     try {
-     byte[] buffer = new byte[512];
-     DataInputStream in = new DataInputStream(new URL(file).openStream());
-     //String inputLine;
-     while (true) {
-     int len = in.read(buffer);
-     if (len == -1) {
-     break;
-     }
-     rawData += new String(buffer, 0, len, charset.name());
-     }
-     in.close();
-     } catch (Exception e) {
-     LogIt.log(Level.WARNING, "Error reading/parsing specified RAW file", e);
-     }
-     return rawData;
-     }*/
     /**
      * Prints the appended data without clearing the print buffer afterward.
      */
@@ -969,25 +891,6 @@ public class PrintApplet extends Applet implements Runnable {
 
     public void append(String s) {
         try {
-            // Fix null character for ESC/P syntax
-            /*if (s.contains("\\x00")) {
-             LogIt.log("Replacing \\\\x00 with NUL character");
-             s = s.replace("\\x00", NUL_CHAR);
-             } else if (s.contains("\\0")) {
-             LogIt.log("Replacing \\\\0 with NUL character");
-             s = s.replace("\\0", NUL_CHAR);
-             } */
-
-            // JavaScript hates the NUL, perhaps we can allow the excaped version?
-            /*if (s.contains("\\x00")) {
-             String[] split = s.split("\\\\\\\\x00");
-             for (String ss : split) {
-             getPrintRaw().append(ss.getBytes(charset.name()));
-             getPrintRaw().append(new byte[]{'\0'});
-             }
-             } else {
-             getPrintRaw().append(s.getBytes(charset.name()));
-             }*/
             getPrintRaw().append(s.getBytes(charset.name()));
         } catch (UnsupportedEncodingException ex) {
             this.set(ex);
@@ -1345,35 +1248,6 @@ public class PrintApplet extends Applet implements Runnable {
         return this.networkUtilities;
     }
 
-  /*  private NetworkHashMap getNetworkHashMap() {
-        if (this.networkHashMap == null) {
-            this.networkHashMap = new NetworkHashMap();
-        }
-        return this.networkHashMap;
-    }*/
-
-    /*private NetworkUtilities getNetworkUtilities() {
-     if (this.networkUtilities == null) {
-     this.networkUtilities = new NetworkUtilities();
-     }
-     return this.networkUtilities;
-     }*/
-//    /**
-//     * Returns a comma delimited <code>String</code> containing the IP Addresses
-//     * found for the specified MAC address. The format of these (IPv4 vs. IPv6)
-//     * may vary depending on the system.
-//     *
-//     * @param macAddress
-//     * @return
-//     */
-   /* public String getIPAddresses(String macAddress) {
-        return getNetworkHashMap().get(macAddress).getInetAddressesCSV();
-    }*/
-    
-    /*public String getIpAddresses() {
-        return getIpAddresses();
-    }*/
-    
     public String getIP() {
         return this.getIPAddress();
     }
@@ -1384,11 +1258,7 @@ public class PrintApplet extends Applet implements Runnable {
      *
      * @return
      */
-    /*
-    public String getMacAddresses() {
-        return getNetworkHashMap().getKeysCSV();
-    }*/
-    
+
     public String getMac() {
         return this.getMacAddress();
     }
@@ -1437,53 +1307,6 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
     
-    /*public String getIpAddress() {
-        return getIPAddress();
-    }*/
-    
-    /**
-     * Retrieves a <code>String</code> containing a single IP address. i.e.
-     * 192.168.1.101. This attempts to get the most appropriate match for 
-     * systems with a single adapter by attempting to choose an enabled and 
-     * non-loopback adapter first if possible.
-     * <strong>Note:</strong> If running JRE 1.5, Java won't be able to
-     * determine "enabled" or "loopback", so it will attempt to use other methods
-     * such as filtering out the 127.0.0.1 addresses, etc.
-     * information. Returns <code>null</code> if no adapters are found.
-     *
-     * @return
-     */
-  /*  public String getIPV4Address() {
-        return getNetworkHashMap().getLightestNetworkObject().getInet4Address();
-    }
-    
-    public String getIpV4Address() {
-        return getIpV4Address();
-    }*/
-    
-    
-    /**
-     * Retrieves a <code>String</code> containing a single IP address. i.e.
-     * fe80::81ca:bcae:d6c4:9a16%25. This attempts to get the most appropriate 
-     * match for systems with a single adapter by attempting to choose an
-     * enabled and non-loopback adapter first if possible.
-     * <strong>Note:</strong> If running JRE 1.5, Java won't be able to
-     * determine "enabled" or "loopback", so it will attempt to use other methods
-     * such as filtering out the 127.0.0.1 addresses, etc.
-     * information. Returns <code>null</code> if no adapters are found.
-     *
-     * @return
-     */
-    /*
-    public String getIPV6Address() {
-        return getNetworkHashMap().getLightestNetworkObject().getInet6Address();
-    }
-    
-    public String getIpV6Address() {
-        return getIpV4Address();
-    }*/
-    
-
     /**
      * Returns the PrintService object associated with this applet, if any.
      * Returns null if none is set.
