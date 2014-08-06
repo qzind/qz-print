@@ -23,6 +23,7 @@ package qz;
 
 import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
+import qz.common.Constants;
 import qz.common.LogIt;
 import qz.exception.InvalidFileTypeException;
 import qz.exception.NullCommandException;
@@ -68,14 +69,7 @@ import java.util.logging.Level;
 public class PrintApplet extends Applet implements Runnable {
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
-    public static final String VERSION = "1.8.5";
     private static final long serialVersionUID = 2787955484074291340L;
-    public static final int APPEND_XML = 1;
-    public static final int APPEND_RAW = 2;
-    public static final int APPEND_IMAGE = 3;
-    public static final int APPEND_IMAGE_PS = 4;
-    public static final int APPEND_PDF = 8;
-    public static final int APPEND_HTML = 16;
     private JSObject window = null;
     private LanguageType lang;
     private int appendType;
@@ -141,8 +135,9 @@ public class PrintApplet extends Applet implements Runnable {
     //@Override
     public void run() {
         final PrintApplet instance = this;
-        window = JSObject.getWindow(instance);
-        logStart();
+        // TODO: RKC - Fix the import to make this work!
+        // window = JSObject.getWindow(this);
+        LogIt.logStart();
         try {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                 //@Override
@@ -157,7 +152,7 @@ public class PrintApplet extends Applet implements Runnable {
             LogIt.log("Error starting main JavaScript thread.  All else will fail.", e);
             set(e);
         } finally {
-            logStop();
+            LogIt.logStop();
         }
     }
 
@@ -172,18 +167,18 @@ public class PrintApplet extends Applet implements Runnable {
                 if (startAppending) {
                     try {
                         switch (appendType) {
-                            case APPEND_HTML:
+                            case Constants.APPEND_HTML:
                                 appendHTML(new String(FileUtilities.readRawFile(file), charset.name()));
-                            case APPEND_XML:
+                            case Constants.APPEND_XML:
                                 append64(FileUtilities.readXMLFile(file, xmlTag));
                                 break;
-                            case APPEND_RAW:
+                            case Constants.APPEND_RAW:
                                 getPrintRaw().append(FileUtilities.readRawFile(file));
                                 break;
-                            case APPEND_IMAGE_PS:
+                            case Constants.APPEND_IMAGE_PS:
                                 readImage();
                                 break;
-                            case APPEND_IMAGE:
+                            case Constants.APPEND_IMAGE:
                                 BufferedImage bi;
                                 ImageWrapper iw;
                                 if (ByteUtilities.isBase64Image(file)) {
@@ -201,7 +196,7 @@ public class PrintApplet extends Applet implements Runnable {
                                 iw.setyPos(imageY);
                                 getPrintRaw().append(iw.getImageCommand());
                                 break;
-                            case APPEND_PDF:
+                            case Constants.APPEND_PDF:
                                 getPrintPS().setPDF(ByteBuffer.wrap(ByteUtilities.readBinaryFile(file)));
                                 break;
                             default: // Do nothing
@@ -214,13 +209,13 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneAppending(true);
                 }
                 if (startFindingPorts) {
-                    logFindPorts();
+                    LogIt.logFindPorts();
                     startFindingPorts = false;
                     getSerialIO().fetchSerialPorts();
                     setDoneFindingPorts(true);
                 }
                 if (startFindingNetwork) {
-                    logFindingNetwork();
+                    LogIt.logFindingNetwork();
                     startFindingNetwork = false;
                     //getNetworkHashMap().clear();
                     try {
@@ -240,7 +235,7 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneFindingNetwork(true);
                 }
                 if (startOpeningPort) {
-                    logOpeningPort();
+                    LogIt.logOpeningPort(serialPortName);
                     startOpeningPort = false;
                     try {
                         if (serialPortIndex != -1) {
@@ -259,7 +254,7 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneOpeningPort(true);
                 }
                 if (startClosingPort) {
-                    logClosingPort();
+                    LogIt.logClosingPort(serialPortName);
                     startClosingPort = false;
                     try {
                         getSerialIO().close();
@@ -269,7 +264,7 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneClosingPort(true);
                 }
                 if (startFindingPrinters) {
-                    logFindPrinter();
+                    LogIt.logFindPrinter();
                     startFindingPrinters = false;
                     if (printer == null) {
                         PrintApplet.this.setPrintService(PrintServiceLookup.lookupDefaultPrintService());
@@ -300,7 +295,7 @@ public class PrintApplet extends Applet implements Runnable {
                     serialIO.clearOutput();
                 }
                 if (startPrinting) {
-                    logPrint();
+                    LogIt.logPrint();
                     try {
                         startPrinting = false;
 
@@ -413,7 +408,7 @@ public class PrintApplet extends Applet implements Runnable {
         return this.logFeaturesPS;
     }
 
-    private void processParameters() {
+    private void resetVariables() {
         jobName = "QZ-PRINT ___ Printing";
         running = true;
         startPrinting = false;
@@ -591,7 +586,7 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     public void appendHTMLFile(String url) {
-        this.appendType = APPEND_HTML;
+        this.appendType = Constants.APPEND_HTML;
         this.appendFromThread(url, appendType);
         //throw new UnsupportedOperationException("Sorry, not yet supported.");
     }
@@ -617,7 +612,7 @@ public class PrintApplet extends Applet implements Runnable {
      * @param xmlTag
      */
     public void appendXML(String url, String xmlTag) {
-        appendFromThread(url, APPEND_XML);
+        appendFromThread(url, Constants.APPEND_XML);
         //this.startAppending = true;
         //this.doneAppending = false;
         //this.appendType = APPEND_XML;
@@ -631,7 +626,7 @@ public class PrintApplet extends Applet implements Runnable {
      * @param url
      */
     public void appendFile(String url) {
-        appendFromThread(url, APPEND_RAW);
+        appendFromThread(url, Constants.APPEND_RAW);
     }
 
     /**
@@ -639,11 +634,11 @@ public class PrintApplet extends Applet implements Runnable {
      * @param url
      */
     public void appendImage(String url) {
-        appendFromThread(url, APPEND_IMAGE_PS);
+        appendFromThread(url, Constants.APPEND_IMAGE_PS);
     }
 
     public void appendPDF(String url) {
-        appendFromThread(url, APPEND_PDF);
+        appendFromThread(url, Constants.APPEND_PDF);
     }
 
     public void setLanguage(String lang) {
@@ -662,7 +657,7 @@ public class PrintApplet extends Applet implements Runnable {
      */
     public void appendImage(String imageFile, String lang) {
         setLanguage(lang);
-        appendFromThread(imageFile, APPEND_IMAGE);
+        appendFromThread(imageFile, Constants.APPEND_IMAGE);
     }
 
     /**
@@ -681,7 +676,7 @@ public class PrintApplet extends Applet implements Runnable {
     public void appendImage(String imageFile, String lang, int dotDensity) {
         this.dotDensity = dotDensity;
         setLanguage(lang);
-        appendFromThread(imageFile, APPEND_IMAGE);
+        appendFromThread(imageFile, Constants.APPEND_IMAGE);
     }
 
     /**
@@ -712,7 +707,7 @@ public class PrintApplet extends Applet implements Runnable {
                     + dotDensity + "'.  Using '" + this.dotDensity + "'.");
         }
         setLanguage(lang);
-        appendFromThread(imageFile, APPEND_IMAGE);
+        appendFromThread(imageFile, Constants.APPEND_IMAGE);
     }
 
     /**
@@ -1094,7 +1089,7 @@ public class PrintApplet extends Applet implements Runnable {
             LogIt.log(Level.INFO, "init() called, but applet already "
                     + "seems to be running.  Allowing.");
         }
-        processParameters();
+        resetVariables();
         thisThread.set(new Thread(this));
         super.init();
     }
@@ -1533,7 +1528,7 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     public String getVersion() {
-        return VERSION;
+        return Constants.VERSION;
     }
 
     /**
@@ -1614,39 +1609,6 @@ public class PrintApplet extends Applet implements Runnable {
         LogIt.log(t);
     }
 
-    private void logStart() {
-        LogIt.log("QZ-PRINT " + VERSION);
-        LogIt.log("===== JAVASCRIPT LISTENER THREAD STARTED =====");
-    }
-
-    private void logStop() {
-        LogIt.log("===== JAVASCRIPT LISTENER THREAD STOPPED =====");
-    }
-
-    private void logPrint() {
-        LogIt.log("===== SENDING DATA TO THE PRINTER =====");
-    }
-
-    private void logFindPrinter() {
-        LogIt.log("===== SEARCHING FOR PRINTER =====");
-    }
-
-    private void logFindPorts() {
-        LogIt.log("===== SEARCHING FOR SERIAL PORTS =====");
-    }
-
-    private void logFindingNetwork() {
-        LogIt.log("===== GATHERING NETWORK INFORMATION =====");
-    }
-
-    private void logOpeningPort() {
-        LogIt.log("===== OPENING SERIAL PORT " + serialPortName + " =====");
-    }
-
-    private void logClosingPort() {
-        LogIt.log("===== CLOSING SERIAL PORT " + serialPortName + " =====");
-    }
-
     private void logCommands(PrintHTML ph) {
         logCommands(ph.get());
     }
@@ -1670,12 +1632,12 @@ public class PrintApplet extends Applet implements Runnable {
         LogIt.log("\r\n\r\n" + commands + "\r\n\r\n");
     }
 
-    private void logAndPrint(PrintRaw pr, byte[] data) throws IOException, InterruptedException, PrintException, UnsupportedEncodingException {
+    private void logAndPrint(PrintRaw pr, byte[] data) throws IOException, InterruptedException, PrintException {
         logCommands(data);
         pr.print(data);
     }
 
-    private void logAndPrint(PrintRaw pr) throws IOException, PrintException, InterruptedException, UnsupportedEncodingException {
+    private void logAndPrint(PrintRaw pr) throws IOException, PrintException, InterruptedException {
         logCommands(pr);
         if (reprint) {
             pr.print();

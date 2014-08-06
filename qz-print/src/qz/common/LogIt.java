@@ -105,4 +105,38 @@ public class LogIt {
         LogIt.log(lvl, msg);
     }
 
+
+    public static void logStart() {
+        log("QZ-PRINT " + Constants.VERSION);
+        log("===== JAVASCRIPT LISTENER THREAD STARTED =====");
+    }
+
+    public static void logStop() {
+        log("===== JAVASCRIPT LISTENER THREAD STOPPED =====");
+    }
+
+    public static void logPrint() {
+        log("===== SENDING DATA TO THE PRINTER =====");
+    }
+
+    public static void logFindPrinter() {
+        log("===== SEARCHING FOR PRINTER =====");
+    }
+
+    public static void logFindPorts() {
+        log("===== SEARCHING FOR SERIAL PORTS =====");
+    }
+
+    public static void logFindingNetwork() {
+        log("===== GATHERING NETWORK INFORMATION =====");
+    }
+
+    public static void logOpeningPort(String serialPortName) {
+        log("===== OPENING SERIAL PORT " + serialPortName + " =====");
+    }
+
+    public static void logClosingPort(String serialPortName) {
+        log("===== CLOSING SERIAL PORT " + serialPortName + " =====");
+    }
+
 }
