@@ -1192,12 +1192,11 @@ public class PrintApplet extends Applet implements Runnable {
 
     // Generally called internally only after a printer is found.
     private void setPrintService(PrintService ps) {
+        this.ps = ps;
         if (ps == null) {
             LogIt.log(Level.WARNING, "Setting null PrintService");
-            this.ps = ps;
             return;
         }
-        this.ps = ps;
         if (printHTML != null) {
             printHTML.setPrintService(ps);
         }
