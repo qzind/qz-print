@@ -26,10 +26,8 @@ import netscape.javascript.JSObject;
 import qz.common.Constants;
 import qz.common.LogIt;
 import qz.exception.InvalidFileTypeException;
-import qz.exception.NullCommandException;
 import qz.exception.NullPrintServiceException;
 import qz.exception.SerialException;
-import qz.json.JSONArray;
 import qz.reflection.ReflectException;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
@@ -113,7 +111,6 @@ public class PrintApplet extends Applet implements Runnable {
     private int dotDensity = 32;
 
     private boolean allowMultiple;
-    //private double[] psMargin;
     private String jobName;
     private String file;
     private String xmlTag;
@@ -395,10 +392,6 @@ public class PrintApplet extends Applet implements Runnable {
         this.notifyBrowser("qzDoneAppending");
     }
 
-    public void logPostScriptFeatures(boolean logFeaturesPS) {
-        setLogPostScriptFeatures(logFeaturesPS);
-    }
-
     public void setLogPostScriptFeatures(boolean logFeaturesPS) {
         this.logFeaturesPS = logFeaturesPS;
         LogIt.log("Console logging of PostScript printing features set to \"" + logFeaturesPS + "\"");
@@ -579,14 +572,6 @@ public class PrintApplet extends Applet implements Runnable {
         this.appendType = Constants.APPEND_HTML;
         this.appendFromThread(url, appendType);
         //throw new UnsupportedOperationException("Sorry, not yet supported.");
-    }
-
-    public void appendHtmlFile(String url) {
-        this.appendHTMLFile(url);
-    }
-
-    public void appendHtml(String html) {
-        this.appendHTML(html);
     }
 
     public void appendHTML(String html) {
@@ -818,15 +803,6 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     /**
-     * Prints the appended data without clearing the print buffer afterward.
-     */
-    public void printPersistent() {
-        startPrinting = true;
-        donePrinting = false;
-        reprint = true;
-    }
-
-    /**
      * Appends raw hexadecimal bytes in the format "x1Bx00", etc.
      *
      * @param s
@@ -839,55 +815,6 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
 
-    /**
-     * Interprets the supplied JSON formatted <code>String</code> value into a
-     * <code>byte</code> array or a <code>String</code> array.
-     *
-     * @param s
-     */
-    public void appendJSONArray(String s) {
-        JSONArray array = new JSONArray(s);
-        if (array == null || array.length() < 0) {
-            this.set(new NullCommandException("Empty or null JSON Array provided.  "
-                    + "Cannot append raw data."));
-            return;
-        } else {
-            Object o = array.get(0);
-            if (o instanceof Integer) {
-                LogIt.log("Interpreting JSON data as Integer array.  "
-                        + "Will automatically convert to bytes.");
-                byte[] b = new byte[array.length()];
-                for (int i = 0; i < b.length; i++) {
-                    if (!array.isNull(i)) {
-                        b[i] = (byte) array.getInt(i);
-                    } else {
-                        LogIt.log(Level.WARNING, "Cannot parse null byte value.  "
-                                + "Defaulting to 0x00");
-                        b[i] = (byte) 0;
-                    }
-                }
-                getPrintRaw().append(b);
-            } else if (o instanceof String) {
-                LogIt.log("Interpreting JSON data as String array");
-                for (int i = 0; i < array.length(); i++) {
-                    if (!array.isNull(i)) {
-                        try {
-                            getPrintRaw().append(array.getString(i));
-                        } catch (UnsupportedEncodingException e) {
-                            LogIt.log(Level.WARNING, "String encoding exception "
-                                    + "occured while parsing JSON.", e);
-                        }
-                    } else {
-                        LogIt.log(Level.WARNING, "Cannot parse null String value.  "
-                                + "Defaulting to blank");
-                    }
-                }
-            } else {
-                this.set(new NullCommandException("JSON Arrays of type "
-                        + o.getClass().getName() + " are not yet supported"));
-            }
-        }
-    }
 
     public void append(String s) {
         try {
@@ -907,48 +834,6 @@ public class PrintApplet extends Applet implements Runnable {
         getPrintRaw().append(new byte[]{'\0'});
     }
 
-    public void appendNUL() {
-        appendNull();
-    }
-
-    public void appendNul() {
-        appendNull();
-    }
-
-    /**
-     * Replaces a String with the specified value. PrintRaw only.
-     *
-     * @param tag
-     * @param value
-     *
-     * public void replace(String tag, String value) { replaceAll(tag, value); }
-     */
-    /**
-     * Replaces a String with the specified value. PrintRaw only.
-     *
-     * @param tag
-     * @param value
-     *
-     * public void replaceAll(String tag, String value) {
-     * getPrintRaw().set(printRaw.get().replaceAll(tag, value)); }
-     */
-    /**
-     * Replaces the first occurance of a String with a specified value. PrintRaw
-     * only.
-     *
-     * @param tag
-     * @param value
-     *
-     * public void replaceFirst(String tag, String value) {
-     * getPrintRaw().set(printRaw.get().replaceFirst(tag, value)); }
-     */
-    /**
-     * Sets/overwrites the cached raw commands. PrintRaw only.
-     *
-     * @param s
-     *
-     * public void set(String s) { getPrintRaw().set(s); }
-     */
     /**
      * Clears the cached raw commands. PrintRaw only.
      */
@@ -1107,14 +992,6 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
 
-    public void sendHex(String portName, String data) {
-        try {
-            send(portName, new String(ByteUtilities.hexStringToByteArray(data), charset.name()));
-        } catch (UnsupportedEncodingException ex) {
-            this.set(ex);
-        }
-    }
-
     public void setSerialProperties(int baud, int dataBits, String stopBits, int parity, String flowControl) {
         setSerialProperties(Integer.toString(baud), Integer.toString(dataBits),
                 stopBits, Integer.toString(parity), flowControl);
@@ -1165,34 +1042,6 @@ public class PrintApplet extends Applet implements Runnable {
 
     public boolean isDoneFinding() {
         return doneFindingPrinters;
-    }
-
-    public boolean isDoneFindingPorts() {
-        return doneFindingPorts;
-    }
-
-    public boolean isDoneOpeningPort() {
-        return doneOpeningPort;
-    }
-
-    public boolean isDoneClosingPort() {
-        return doneClosingPort;
-    }
-
-    public boolean isDoneFindingNetwork() {
-        return doneFindingNetwork;
-    }
-
-    public boolean isDonePrinting() {
-        return donePrinting;
-    }
-
-    public boolean isDoneAppending() {
-        return doneAppending;
-    }
-
-    public boolean isDoneSending() {
-        return doneSending;
     }
 
     /**
@@ -1317,19 +1166,6 @@ public class PrintApplet extends Applet implements Runnable {
         return ps;
     }
 
-    /**
-     * Returns the PrintService's name (the printer name) associated with this
-     * applet, if any. Returns null if none is set.
-     *
-     * @return
-     */
-    @Deprecated
-    public String getPrinterName() {
-        LogIt.log(Level.WARNING, "Function \"getPrinterName()\" has been deprecated since v. 1.2.3."
-                + "  Please use \"getPrinter()\" instead.");
-        return getPrinter();
-    }
-
     public Throwable getError() {
         return getException();
     }
@@ -1338,33 +1174,8 @@ public class PrintApplet extends Applet implements Runnable {
         return t;
     }
 
-    public void clearException() {
-        this.t = null;
-    }
-
-    public String getExceptionMessage() {
-        return t.getLocalizedMessage();
-    }
-
-    public long getSleepTime() {
-        return sleep;
-    }
-
     public String getVersion() {
         return Constants.VERSION;
-    }
-
-    /**
-     * Sets the time the listener thread will wait between actions
-     *
-     * @param sleep
-     */
-    public void setSleepTime(long sleep) {
-        this.sleep = sleep;
-    }
-
-    public String getEndOfDocument() {
-        return endOfDocument;
     }
 
     public void setEndOfDocument(String endOfPage) {
@@ -1398,24 +1209,8 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
 
-
-    /*    public String getManualBreak() {
-     return manualBreak;
-     }*/
-
-    /*    public void setManualBreak(String manualBreak) {
-     this.manualBreak = manualBreak;
-     }*/
-    public int getDocumentsPerSpool() {
-        return documentsPerSpool;
-    }
-
     public void setDocumentsPerSpool(int pagesPer) {
         this.documentsPerSpool = pagesPer;
-    }
-
-    public void setJobName(String jobName) {
-        this.jobName = jobName;
     }
 
     public String getJobName() {
@@ -1496,10 +1291,6 @@ public class PrintApplet extends Applet implements Runnable {
         htmlPrint = false;
     }
 
-    /*private void logAndPrint(String commands) throws PrintException, InterruptedException, UnsupportedEncodingException {
-     logCommands(commands);
-     getPrintRaw().print(commands);
-     }*/
     /**
      * Sets character encoding for raw printing only
      *
@@ -1527,52 +1318,11 @@ public class PrintApplet extends Applet implements Runnable {
         return this.charset;
     }
 
-    /**
-     * Can't seem to get this to work, removed from sample.html
-     *
-     * @param orientation
-     *
-     * @Deprecated public void setImageOrientation(String orientation) {
-     * getPrintPS().setOrientation(orientation); }
-     */
-    /**
-     * Sets orientation (Portrait/Landscape) as to be picked up by PostScript
-     * printing only. Some documents (such as PDFs) have capabilities of
-     * supplying their own orientation in the document format. Some choose to
-     * allow the orientation to be defined by the printer definition (Advanced
-     * Printing Features, etc).
-     * <p>
-     * Example:</p>
-     * <code>setOrientation("landscape");</code>
-     * <code>setOrientation("portrait");</code>
-     * <code>setOrientation("reverse_landscape");</code>
-     *
-     * @param orientation
-     */
-    public void setOrientation(String orientation) {
-        if (this.paperSize == null) {
-            LogIt.log(Level.WARNING, "A paper size must be specified before setting orientation!");
-        } else {
-            this.paperSize.setOrientation(orientation);
-        }
-    }
-
     public void allowMultipleInstances(boolean allowMultiple) {
         this.allowMultiple = allowMultiple;
         LogIt.log("Allow multiple applet instances set to \"" + allowMultiple + "\"");
     }
 
-    public void setAllowMultipleInstances(boolean allowMultiple) {
-        allowMultipleInstances(allowMultiple);
-    }
-
-    public boolean getAllowMultipleInstances() {
-        return allowMultiple;
-    }
-
-    /*public Boolean getMaintainAspect() {
-     return maintainAspect;
-     }*/
     public void setAutoSize(boolean autoSize) {
         if (this.paperSize == null) {
             LogIt.log(Level.WARNING, "A paper size must be specified before setting auto-size!");
@@ -1581,10 +1331,6 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
 
-    /*@Deprecated
-     public void setMaintainAspect(boolean maintainAspect) {
-     setAutoSize(maintainAspect);
-     }*/
     public int getCopies() {
         if (copies > 0) {
             return copies;
