@@ -26,10 +26,11 @@ package qz;
 
 import qz.common.LogIt;
 
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
+import javax.print.PrintService;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.standard.MediaPrintableArea;
+import javax.swing.*;
+import java.awt.*;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -37,11 +38,6 @@ import java.awt.print.PrinterJob;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
-import javax.print.PrintService;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.standard.MediaPrintableArea;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
 
 public class PrintHTML extends JLabel implements Printable {
 
@@ -89,19 +85,19 @@ public class PrintHTML extends JLabel implements Printable {
     //}
     
     public void print() throws PrinterException {
-        JFrame j = new JFrame(jobName.get());
-        j.setUndecorated(true);
-        j.setLayout(new FlowLayout());
+        JFrame jFrame = new JFrame(jobName.get());
+        jFrame.setUndecorated(true);
+        jFrame.setLayout(new FlowLayout());
         this.setBorder(null);
         
         for (String s : getHTMLDataArray()) {
             this.setText(s + "</html>");
-            j.add(this);
+            jFrame.add(this);
 
 
-            j.pack();
-            j.setExtendedState(j.ICONIFIED);
-            j.setVisible(true);
+            jFrame.pack();
+            jFrame.setExtendedState(Frame.ICONIFIED);
+            jFrame.setVisible(true);
 
             // Elimate any margins
             HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();             
@@ -112,21 +108,22 @@ public class PrintHTML extends JLabel implements Printable {
             job.setPrintable(this);
             job.setJobName(jobName.get());
             job.print(attr);
-            j.setVisible(false);
+            jFrame.setVisible(false);
         }
-        j.dispose();
+        jFrame.dispose();
         clear();
     }
     
-    public void setPrintParameters(PrintApplet a) {
-        this.ps.set(a.getPrintService());
-        this.jobName.set(a.getJobName().replace(" ___ ", " HTML "));
-        if (a.getCopies() > 1) {
-            setCopies(a.getCopies());
+    public void setPrintParameters(PrintApplet applet) {
+        this.ps.set(applet.getPrintService());
+        this.jobName.set(applet.getJobName().replace(" ___ ", " HTML "));
+        if (applet.getCopies() > 1) {
+            setCopies(applet.getCopies());
         }
     }
-    
-    public void setCopies(int copies) {
+
+    /*This warning is suppresed because this is a non-implemented method that *shouldn't* be used... */
+    public void setCopies(@SuppressWarnings("UnusedParameters") int copies) {
         LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
                 new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
     }
@@ -141,11 +138,11 @@ public class PrintHTML extends JLabel implements Printable {
         this.ps.set(ps);
     }
 
-    public int print(Graphics g, PageFormat pf, int pageIndex) throws PrinterException {
-        if (g == null) {
+    public int print(Graphics graphics, PageFormat format, int pageIndex) throws PrinterException {
+        if (graphics == null) {
             throw new PrinterException("No graphics specified");
         }
-        if (pf == null) {
+        if (format == null) {
             throw new PrinterException("No page format specified");
         }
         if (pageIndex > 0) {
@@ -155,24 +152,24 @@ public class PrintHTML extends JLabel implements Printable {
         boolean doubleBuffered = super.isDoubleBuffered();
         super.setDoubleBuffered(false);
         
-        pf.setOrientation(orientation.get());
+        format.setOrientation(orientation.get());
         
         //Paper paper = new Paper();
         //paper.setSize(8.5 * 72, 11 * 72);
         //paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-        //pf.setPaper(paper);
-        //Paper paper = pf.getPaper();
+        //format.setPaper(paper);
+        //Paper paper = format.getPaper();
         //paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
-        //pf.getPaper().setImageableArea(0, 0, paper.getWidth() + 200, paper.getHeight() + 200);
+        //format.getPaper().setImageableArea(0, 0, paper.getWidth() + 200, paper.getHeight() + 200);
         
-        //pf.getPaper().setImageableArea(-100, -100, 200, 200);
+        //format.getPaper().setImageableArea(-100, -100, 200, 200);
         
         
         
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.translate(pf.getImageableX(), pf.getImageableY());
+        Graphics2D graphics2D = (Graphics2D) graphics;
+        graphics2D.translate(format.getImageableX(), format.getImageableY());
         //g2d.translate(paper.getImageableX(), paper.getImageableY());
-        this.paint(g2d);
+        this.paint(graphics2D);
         super.setDoubleBuffered(doubleBuffered);
         return (PAGE_EXISTS);
     }
