@@ -50,7 +50,7 @@ import java.util.logging.Level;
 
 /**
  * Sends raw data to the printer, overriding your operating system's print
- * driver. Most usefull for printers such as zebra card or barcode printers.
+ * driver. Most useful for printers such as zebra card or barcode printers.
  *
  * @author A. Tres Finocchiaro
  */
@@ -61,7 +61,6 @@ public class PrintRaw {
     private final AtomicReference<DocAttributeSet> docAttr = new AtomicReference<DocAttributeSet>(null);
     private final AtomicReference<PrintRequestAttributeSet> reqAttr = new AtomicReference<PrintRequestAttributeSet>(new HashPrintRequestAttributeSet());
     private final AtomicReference<PrintService> printServiceAtomicReference = new AtomicReference<PrintService>(null);
-    //private final AtomicReference<String> rawCmds = new AtomicReference<String>(null);
     private final AtomicReference<ByteArrayBuilder> rawCmds = new AtomicReference<ByteArrayBuilder>(null);
     private final AtomicBoolean isFinished = new AtomicBoolean(false);
     private final AtomicReference<Charset> charset = new AtomicReference<Charset>(Charset.defaultCharset());
@@ -70,7 +69,6 @@ public class PrintRaw {
     private final AtomicReference<String> socketHost = new AtomicReference<String>(null);
     private final AtomicReference<Integer> socketPort = new AtomicReference<Integer>(null);
     private final AtomicBoolean alternatePrint = new AtomicBoolean(false);
-    //private final AtomicReference<Integer> copies = new AtomicReference<Integer>(null);
 
     public PrintRaw() {
     }
