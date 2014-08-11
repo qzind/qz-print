@@ -84,20 +84,13 @@ public class PrintApplet extends Applet implements Runnable {
     private boolean startFindingPrinters;
     private boolean doneFindingPrinters;
     private boolean startPrinting;
-    private boolean donePrinting;
     private boolean startFindingNetwork;
-    private boolean doneFindingNetwork;
     private boolean startAppending;
-    private boolean doneAppending;
     private boolean startFindingPorts;
-    private boolean doneFindingPorts;
     private boolean startSending;
-    private boolean doneSending;
     private boolean autoSetSerialProperties = false;
     private boolean startOpeningPort;
-    private boolean doneOpeningPort;
     private boolean startClosingPort;
-    private boolean doneClosingPort;
     private String serialPortName;
     private int serialPortIndex = -1;
     private boolean running;
@@ -131,7 +124,6 @@ public class PrintApplet extends Applet implements Runnable {
      */
     //@Override
     public void run() {
-        final PrintApplet instance = this;
         // TODO: RKC - Fix the import to make this work!
         // window = JSObject.getWindow(this);
         LogIt.logStart();
@@ -276,7 +268,6 @@ public class PrintApplet extends Applet implements Runnable {
                         startSending = false;
                         logCommands(new String(getSerialIO().getInputBuffer().getByteArray(), charset.name()));
                         getSerialIO().send();
-                        doneSending = true;
                     } catch (Throwable t) {
                         this.set(t);
                     }
@@ -357,7 +348,6 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     private void setDonePrinting(boolean donePrinting) {
-        this.donePrinting = donePrinting;
         this.copies = -1;
         this.notifyBrowser("qzDonePrinting");
     }
@@ -368,27 +358,22 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     private void setDoneOpeningPort(boolean doneOpeningPort) {
-        this.doneOpeningPort = doneOpeningPort;
         this.notifyBrowser("qzDoneOpeningPort", getSerialIO() == null ? null : getSerialIO().getPortName());
     }
 
     private void setDoneClosingPort(boolean doneClosingPort) {
-        this.doneClosingPort = doneClosingPort;
         this.notifyBrowser("qzDoneClosingPort", serialPortName);
     }
 
     private void setDoneFindingNetwork(boolean doneFindingNetwork) {
-        this.doneFindingNetwork = doneFindingNetwork;
         this.notifyBrowser("qzDoneFindingNetwork");
     }
 
     private void setDoneFindingPorts(boolean doneFindingPorts) {
-        this.doneFindingPorts = doneFindingPorts;
         this.notifyBrowser("qzDoneFindingPorts");
     }
 
     private void setDoneAppending(boolean doneAppending) {
-        this.doneAppending = doneAppending;
         this.notifyBrowser("qzDoneAppending");
     }
 
@@ -405,19 +390,14 @@ public class PrintApplet extends Applet implements Runnable {
         jobName = "QZ-PRINT ___ Printing";
         running = true;
         startPrinting = false;
-        donePrinting = true;
         startFindingPrinters = false;
         doneFindingPrinters = true;
         startFindingPorts = false;
-        doneFindingPorts = true;
         startOpeningPort = false;
         startClosingPort = false;
         startSending = false;
-        doneSending = true;
         startFindingNetwork = false;
-        doneFindingNetwork = true;
         startAppending = false;
-        doneAppending = true;
         sleep = getParameter("sleep", 100);
         psPrint = false;
         appendType = 0;
@@ -706,7 +686,6 @@ public class PrintApplet extends Applet implements Runnable {
      */
     private void appendFromThread(String file, int appendType) {
         this.startAppending = true;
-        this.doneAppending = false;
         this.appendType = appendType;
         this.file = file;
     }
@@ -848,7 +827,6 @@ public class PrintApplet extends Applet implements Runnable {
      */
     public void print() {
         startPrinting = true;
-        donePrinting = false;
         reprint = false;
     }
 
@@ -954,7 +932,6 @@ public class PrintApplet extends Applet implements Runnable {
      */
     public void findPorts() {
         this.startFindingPorts = true;
-        this.doneFindingPorts = false;
     }
 
     public void setSerialBegin(String begin) {
@@ -980,7 +957,6 @@ public class PrintApplet extends Applet implements Runnable {
             } else if (getSerialIO().getPortName().equals(portName)) {
                 getSerialIO().append(data.getBytes(charset.name()));
                 this.startSending = true;
-                this.doneSending = false;
             } else {
                 throw new SerialException("Port specified [" + portName + "] "
                         + "differs from previously opened port "
@@ -1012,7 +988,6 @@ public class PrintApplet extends Applet implements Runnable {
     public void closePort(String portName) {
         if (getSerialIO().getPortName().equals(portName)) {
             this.startClosingPort = true;
-            this.doneClosingPort = false;
         } else {
             this.set(new SerialException("Port specified [" + portName + "] "
                     + "could not be closed. Please close "
@@ -1025,7 +1000,6 @@ public class PrintApplet extends Applet implements Runnable {
         this.serialPortIndex = -1;
         this.serialPortName = serialPortName;
         this.startOpeningPort = true;
-        this.doneOpeningPort = false;
         this.autoSetSerialProperties = autoSetSerialProperties;
     }
 
@@ -1037,7 +1011,6 @@ public class PrintApplet extends Applet implements Runnable {
         this.serialPortName = null;
         this.serialPortIndex = serialPortIndex;
         this.startOpeningPort = true;
-        this.doneOpeningPort = false;
     }
 
     public boolean isDoneFinding() {
@@ -1065,11 +1038,8 @@ public class PrintApplet extends Applet implements Runnable {
         } catch (ClassNotFoundException e) {
             // Stop whatever is happening
             this.startFindingPorts = false;
-            this.doneFindingPorts = true;
             this.startSending = false;
-            this.doneSending = true;
             this.startOpeningPort = false;
-            this.doneOpeningPort = true;
             // Raise our exception
             this.set(e);
         }
@@ -1218,7 +1188,6 @@ public class PrintApplet extends Applet implements Runnable {
 
     public void findNetworkInfo() {
         this.startFindingNetwork = true;
-        this.doneFindingNetwork = false;
     }
 
     private void set(Throwable t) {
