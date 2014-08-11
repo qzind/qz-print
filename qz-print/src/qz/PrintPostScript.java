@@ -26,31 +26,21 @@ import com.sun.pdfview.PDFPage;
 import com.sun.pdfview.PDFRenderer;
 import qz.common.LogIt;
 
-import java.awt.AWTError;
-
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.Toolkit;
-
-import java.awt.image.BufferedImage;
-import java.awt.print.PageFormat;
-import java.awt.print.Paper;
-import java.awt.print.Printable;
-import java.awt.print.PrinterException;
-import java.awt.print.PrinterJob;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 import javax.imageio.ImageIO;
 import javax.print.PrintService;
 import javax.print.attribute.Attribute;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.awt.print.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
 
 
 /**
@@ -62,7 +52,7 @@ public class PrintPostScript implements Printable {
     private final AtomicReference<BufferedImage> bufferedImage = new AtomicReference<BufferedImage>(null);
     private final AtomicReference<ByteBuffer> bufferedPDF = new AtomicReference<ByteBuffer>(null);
     private final AtomicReference<PDFFile> pdfFile = new AtomicReference<PDFFile>(null);
-    private final AtomicReference<PrintService> ps = new AtomicReference<PrintService>(null);
+    private final AtomicReference<PrintService> printServiceAtomicReference = new AtomicReference<PrintService>(null);
     private final AtomicReference<String> jobName = new AtomicReference<String>("jZebra 2D Printing");
     private final AtomicReference<Paper> paper = new AtomicReference<Paper>(null);
     private final AtomicReference<PaperFormat> paperSize = new AtomicReference<PaperFormat>(null);
@@ -70,7 +60,8 @@ public class PrintPostScript implements Printable {
     private final AtomicReference<Integer> copies = new AtomicReference<Integer>(null);
     private final AtomicReference<Boolean> logPostScriptFeatures = new AtomicReference<Boolean>(false);
     public static final float DPI = 72f;
-    public static final float MMPI = 280f;
+    //Never used, OK to delete?
+    //public static final float MMPI = 280f;
     private String pdfClass;
 
     public PrintPostScript() {
@@ -83,15 +74,15 @@ public class PrintPostScript implements Printable {
      */
     public void print() throws PrinterException {
         PrinterJob job = PrinterJob.getPrinterJob();
-        int w;
-        int h;
+        int width;
+        int height;
 
         if (this.bufferedImage.get() != null) {
-            w = bufferedImage.get().getWidth();
-            h = bufferedImage.get().getHeight();
+            width = bufferedImage.get().getWidth();
+            height = bufferedImage.get().getHeight();
         } else if (this.getPDFFile() != null) {
-            w = (int) getPDFFile().getPage(1).getWidth();
-            h = (int) getPDFFile().getPage(1).getHeight();
+            width = (int) getPDFFile().getPage(1).getWidth();
+            height = (int) getPDFFile().getPage(1).getHeight();
         } else {
             throw new PrinterException("Corrupt or missing file supplied.");
         }
@@ -119,12 +110,12 @@ public class PrintPostScript implements Printable {
 
         } else {
             LogIt.log("A custom paper size was not supplied.");
-            attr.add(new MediaPrintableArea(0f, 0f, w / DPI, h / DPI, MediaSize.INCH));
+            attr.add(new MediaPrintableArea(0f, 0f, width / DPI, height / DPI, MediaSize.INCH));
         }
 
-        logSizeCalculations(paperSize.get(), w, h);
+        logSizeCalculations(paperSize.get(), width, height);
         
-        job.setPrintService(ps.get());
+        job.setPrintService(printServiceAtomicReference.get());
         job.setPrintable(this);
         job.setJobName(jobName.get());
         
@@ -132,7 +123,7 @@ public class PrintPostScript implements Printable {
         if (copies.get() != null && copies.get() > 1) {
             LogIt.log("Copies specified: " + copies.get());
             // Does the DocFlavor and Printer support "Copies" (this lies)
-            //if (ps.get().isAttributeCategorySupported(Copies.class)) {
+            //if (printServiceAtomicReference.get().isAttributeCategorySupported(Copies.class)) {
             //    LogIt.log("Printer supports copies");
             //    attr.add(new Copies(copies.get()));
             //    job.print();
@@ -155,59 +146,19 @@ public class PrintPostScript implements Printable {
         pdfFile.set(null);
     }
 
+    @SuppressWarnings("UnusedDeclaration")//Need to see if this should be deleted or implemented properly
     public void setPaper(Paper paper) {
         this.paper.set(paper);
-    }
-    /*
-     public void setMargin(double[] margin) {
-     if (margin != null) {
-     switch (margin.length) {
-     case 1:
-     setMargin(margin[0]);
-     return;
-     case 4:
-     setMargin(margin[0], margin[1], margin[2], margin[3]);
-     return;
-     default:
-     return;
-     }
-     }
-     }
-    
-     public void setMargin(int margin) {
-     setMargin((double) margin);
-     }
-    
-     public void setMargin(double margin) {
-     setMargin(margin, margin, margin, margin);
-     }
-    
-     public void setMargin(double top, double left, double bottom, double right) {
-     if (this.paper.get() == null) {
-     this.paper.set(new Paper());
-     }
-     this.paper.get().setImageableArea(left, top, paper.get().getWidth() - (left + right), paper.get().getHeight() - (top + bottom));
-     }*/
+    }//Unused. Probably needs to be implemented?
 
-    /*public void setMargin(Rectangle r) {
-     if (this.paper.get() == null) {
-     this.paper.set(new Paper());
-     }
-     this.paper.get().setImageableArea(r.getX(), r.getY(), r.getWidth(), r.getHeight());
-     }*/
-
-    /*public int print(Applet applet, BufferedImage bufferedImage) throws PrinterException {
-     this.bufferedImage.set(bufferedImage);
-     return print(applet.getGraphics(), this.pageFormat.get(), 0);
-     }*/
     /**
      * Implemented by Printable interface. Should not be called directly, see
      * print() instead
      *
-     * @param graphics
-     * @param pageFormat
-     * @param pageIndex
-     * @return
+     * @param graphics graphics class to pass
+     * @param pageFormat the page format
+     * @param pageIndex the page index
+     * @return success/error code
      * @throws PrinterException
      */
     public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
@@ -287,24 +238,25 @@ public class PrintPostScript implements Printable {
      }
     
      }*/
-    private int printPDFRenderer(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
-
+    private int printPDFRenderer(Graphics graphics, @SuppressWarnings("UnusedParameters") PageFormat pageFormat, int pageIndex) throws PrinterException {
+        //Suppressing unused parameter warning. Need to see if it should actually be passed/used or not.
+        //TOASK: Should we use pageFormat when printing PDFs?
         PDFFile pdf = getPDFFile();
 
-        int pg = pageIndex + 1;
+        int currentPage = pageIndex + 1;
 
         if (pdf == null) {
             throw new PrinterException("No PDF data specified");
         }
 
-        if (pg < 1 || pg > pdf.getNumPages()) {
+        if (currentPage < 1 || currentPage > pdf.getNumPages()) {
             return NO_SUCH_PAGE;
 
-        };
+        }
 
         // fit the PDFPage into the printing area
-        Graphics2D g2 = (Graphics2D) graphics;
-        PDFPage page = pdf.getPage(pg);
+        Graphics2D graphics2D = (Graphics2D) graphics;
+        PDFPage page = pdf.getPage(currentPage);
 
         //double pwidth = page.getWidth(); //pdf.getImageableWidth();
         //double pheight = page.getHeight(); //pdf.getImageableHeight();
@@ -332,14 +284,14 @@ public class PrintPostScript implements Printable {
          }*//**/
 
         // render the page
-        //Rectangle imgbounds = new Rectangle(pg, pg)
-        PDFRenderer pgs = new PDFRenderer(page, g2, page.getPageBox().getBounds(), page.getBBox(), null);
-        //PDFRenderer pgs = new PDFRenderer(page, g2, getImageableRectangle(pageFormat), page.getBBox(), null);
+        //Rectangle imgbounds = new Rectangle(currentPage, currentPage)
+        PDFRenderer pgs = new PDFRenderer(page, graphics2D, page.getPageBox().getBounds(), page.getBBox(), null);
+        //PDFRenderer pgs = new PDFRenderer(page, graphics2D, getImageableRectangle(pageFormat), page.getBBox(), null);
         try {
             page.waitForFinish();
 
             pgs.run();
-        } catch (InterruptedException ie) {
+        } catch (InterruptedException ignore) {
         }
 
         return PAGE_EXISTS;
@@ -353,7 +305,7 @@ public class PrintPostScript implements Printable {
          return NO_SUCH_PAGE;
          }
          // fit the PDFPage into the printing area
-         Graphics2D g2 = (Graphics2D) graphics;
+         Graphics2D graphics2D = (Graphics2D) graphics;
          PDFPage page = pdf.getPage(pageIndex);
          double pwidth = pageFormat.getImageableWidth();
          double pheight = pageFormat.getImageableHeight();
@@ -382,7 +334,7 @@ public class PrintPostScript implements Printable {
          }
 
          // render the page
-         PDFRenderer pgs = new PDFRenderer(page, g2, imgbounds, null, null);
+         PDFRenderer pgs = new PDFRenderer(page, graphics2D, imgbounds, null, null);
          try {
          page.waitForFinish();
          pgs.run();
@@ -396,12 +348,6 @@ public class PrintPostScript implements Printable {
 
     }
 
-
-    /*private Rectangle getImageableRectangle(PageFormat format) {
-     return new Rectangle(
-     (int) format.getImageableX(), (int) format.getImageableY(),
-     (int) format.getImageableWidth(), (int) format.getImageableHeight());
-     }*/
     private int printImage(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
         /* Graphics and pageFormat are required.  Page index is zero-based */
         if (graphics == null) {
@@ -422,23 +368,23 @@ public class PrintPostScript implements Printable {
         /* User (0,0) is typically outside the imageable area, so we must
          * translate by the X and Y values in the PageFormat to avoid clipping
          */
-        Graphics2D g2d = (Graphics2D) graphics;
+        Graphics2D graphics2D = (Graphics2D) graphics;
 
         // Sugested by Bahadir 8/23/2012
-        g2d.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g2d.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        g2d.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
+        graphics2D.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
         BufferedImage imgToPrint = bufferedImage.get();
         /* Now we perform our rendering */
-        g2d.drawImage(this.bufferedImage.get(), 0, 0, (int) pageFormat.getImageableWidth(), (int) pageFormat.getImageableHeight(), imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
+        graphics2D.drawImage(this.bufferedImage.get(), 0, 0, (int) pageFormat.getImageableWidth(), (int) pageFormat.getImageableHeight(), imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
 
         /* tell the caller that this page is part of the printed document */
         return PAGE_EXISTS;
     }
 
-    /**
+    /*
      * // Future image features (Thanks Anton) protected Rectangle
      * getDrawRect(PageFormat pageFormat) { Dimension imageSize =
      * getImageDpiSize();
@@ -491,16 +437,23 @@ public class PrintPostScript implements Printable {
      * private int getImageDpi() { return 150; }
      *
      */
-    // Returns pixels in 1 inch for the screen this is displaying on
+
+    /**
+     * Returns pixels in 1 inch for the screen this is displaying on
+     *
+     * @return the pixels in an inch on the screen
+     *
+     */
+    @SuppressWarnings("UnusedDeclaration")//TOASK: Unused, delete?
     public float getPixelsPerInch() {
         if (pixelsPerInch.get() == null) {
             try {
-                pixelsPerInch.set(new Float(Toolkit.getDefaultToolkit().getScreenResolution()));
+                pixelsPerInch.set((float) Toolkit.getDefaultToolkit().getScreenResolution());
             } catch (AWTError e) {
-                pixelsPerInch.set(new Float(DPI));
+                pixelsPerInch.set(DPI);
             }
         }
-        return pixelsPerInch.get().floatValue();
+        return pixelsPerInch.get();
     }
 
     /*
@@ -534,6 +487,8 @@ public class PrintPostScript implements Printable {
         this.bufferedPDF.set(bufferedPDF);
     }
 
+    //TOASK: Unused, delete?
+    @SuppressWarnings("UnusedDeclaration")
     public ByteBuffer getPDF() {
         return this.bufferedPDF.get();
     }
@@ -570,17 +525,19 @@ public class PrintPostScript implements Printable {
     }
 
     public void setPrintService(PrintService ps) {
-        this.ps.set(ps);
+        this.printServiceAtomicReference.set(ps);
     }
 
+    @SuppressWarnings("UnusedDeclaration")//TOASK: Unused, delete?
     public String getJobName() {
         return jobName.get();
     }
 
-    public void setLogPostScriptFeatures(boolean b) {
-        this.logPostScriptFeatures.set(b);
+    public void setLogPostScriptFeatures(boolean logPostScriptFeatures) {
+        this.logPostScriptFeatures.set(logPostScriptFeatures);
     }
 
+    @SuppressWarnings("UnusedDeclaration")//TOASK: Unused, delete?
     public boolean getLogPostScriptFeatures() {
         return logPostScriptFeatures.get();
     }
@@ -593,13 +550,13 @@ public class PrintPostScript implements Printable {
         }
     }
 
-    public static void logSizeCalculations(PaperFormat p, float w, float h) {
-        if (p != null) {
-            LogIt.log("Scaling image " + w + "px x " + h + "px to destination "
-                    + p.toString());
+    public static void logSizeCalculations(PaperFormat format, float width, float height) {
+        if (format != null) {
+            LogIt.log("Scaling image " + width + "px x " + height + "px to destination "
+                    + format.toString());
         } else {
-            LogIt.log("Using image at \"natural\" resolution  " + w + "px " + h
-                    + "px scaled to " + (int) (w / DPI) + "in x " + (int) (h / DPI)
+            LogIt.log("Using image at \"natural\" resolution  " + width + "px " + height
+                    + "px scaled to " + (int) (width / DPI) + "in x " + (int) (height / DPI)
                     + "in (assumes 72dpi)");
         }
     }
