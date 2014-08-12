@@ -23,15 +23,14 @@
  */
 package qz;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.image.BufferedImage;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
-
 import qz.common.LogIt;
 import qz.exception.InvalidRawImageException;
 import qz.utils.ByteUtilities;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 
 /**
  * Abstract wrapper for images to be printed with thermal printers.
@@ -50,6 +49,8 @@ import qz.utils.ByteUtilities;
  * classes, while leaving common functionality here.
  *
  */
+@SuppressWarnings("UnusedDeclaration")
+/*Library class*/
 public class ImageWrapper {
 
     /**
@@ -296,7 +297,7 @@ public class ImageWrapper {
 
     private void generateIntArray() {
         LogIt.log("Packing bits");
-        imageAsIntArray = new int[(int) (imageAsBooleanArray.length / 8)];
+        imageAsIntArray = new int[imageAsBooleanArray.length / 8];
         // Convert every eight zero's to a full byte, in decimal
         for (int i = 0; i < imageAsIntArray.length; i++) {
             for (int k = 0; k < 8; k++) {
@@ -344,7 +345,7 @@ public class ImageWrapper {
             case CPCL:
                 String cpclHexAsString = ByteUtilities.getHexString(getImageAsIntArray());
                 StringBuilder cpcl = new StringBuilder("EG ")
-                        .append((int)(getWidth()/8)).append(" ")
+                        .append(getWidth()/8).append(" ")
                         .append(getHeight()).append(" ")
                         .append(getxPos()).append(" ")
                         .append(getyPos()).append(" ")
@@ -407,7 +408,7 @@ public class ImageWrapper {
      * example, if you resize the image), it must be initialized again prior to
      * calling getImageCommand()
      */
-    private final void init() {
+    private void init() {
         LogIt.log("Initializing Image Fields");
         generateBlackPixels();
         generateIntArray();
@@ -444,9 +445,9 @@ public class ImageWrapper {
     
     /**
      * http://android-essential-devtopics.blogspot.com/2013/02/sending-bit-image-to-epson-printer.html
+     * @param builder the ByteArrayBuilder to use
      * @author Oleg Morozov 02/21/2013 (via public domain)
      * @author Tres Finocchiaro 10/01/2013
-     * @param b 
      */
     private void appendEpsonSlices(ByteArrayBuilder builder) {
 //        BitSet dots = data.getDots();
