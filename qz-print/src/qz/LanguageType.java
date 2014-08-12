@@ -33,29 +33,29 @@ public enum LanguageType {
     LanguageType() {
     }
 
-    public static LanguageType getType(String s) {
-        for (LanguageType lt : LanguageType.values()) {
-            if (s.equalsIgnoreCase(lt.name())) {
-                return lt;
+    public static LanguageType getType(String type) {
+        for (LanguageType languageType : LanguageType.values()) {
+            if (type.equalsIgnoreCase(languageType.name())) {
+                return languageType;
             }
         }
-        if (s.equalsIgnoreCase("ZEBRA")) {
+        if (type.equalsIgnoreCase("ZEBRA")) {
             return ZPLII;
-        } else if (s.equalsIgnoreCase("ZPL2")) {
+        } else if (type.equalsIgnoreCase("ZPL2")) {
             return ZPLII;
-        } else if (s.equalsIgnoreCase("EPLII")) {
+        } else if (type.equalsIgnoreCase("EPLII")) {
             return EPL2;
-        } else if (s.equalsIgnoreCase("ESC")) {
+        } else if (type.equalsIgnoreCase("ESC")) {
             return ESCP;
-        } else if (s.equalsIgnoreCase("ESC/P")) {
+        } else if (type.equalsIgnoreCase("ESC/P")) {
             return ESCP;
-        } else if (s.equalsIgnoreCase("ESC/POS")) {
+        } else if (type.equalsIgnoreCase("ESC/POS")) {
             return ESCP;
-        } else if (s.equalsIgnoreCase("ESC\\P")) {
+        } else if (type.equalsIgnoreCase("ESC\\P")) {
             return ESCP;
-        } else if (s.equalsIgnoreCase("ESC/P2")) {
+        } else if (type.equalsIgnoreCase("ESC/P2")) {
             return ESCP2;
-        } else if (s.equalsIgnoreCase("EPSON")) {
+        } else if (type.equalsIgnoreCase("EPSON")) {
             return ESCP;
         }
         return UNKNOWN;
