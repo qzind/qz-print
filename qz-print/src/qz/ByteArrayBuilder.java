@@ -41,6 +41,8 @@ import java.util.ArrayList;
  * @author Antoni Ten Monro's
  */
 
+@SuppressWarnings("UnusedDeclaration")
+/*Library class, may be used outside of project context*/
 public final class ByteArrayBuilder {
     private ArrayList<byte[]> buffer;
     
@@ -114,13 +116,13 @@ public final class ByteArrayBuilder {
      * Appends a new byte array to this <code>ByteArrayBuilder</code>. 
      * Returns this same object to allow chaining calls
      * 
-     * @param bs
+     * @param bytes the byte array to append
      * @return this <code>ByteArrayBuilder</code>
      */
-    public final ByteArrayBuilder append(byte[] bs){
+    public final ByteArrayBuilder append(byte[] bytes){
         this.resetContents();
-        length+=bs.length;
-        buffer.add(bs);
+        length+=bytes.length;
+        buffer.add(bytes);
         return this;
     }
     
@@ -128,26 +130,26 @@ public final class ByteArrayBuilder {
      * Convenience method for append(byte[]) combined with a StringBuffer of specified
      * charset
      * 
-     * @param s
-     * @param c
-     * @return
+     * @param string the String to append
+     * @param charset the Charset of the String
+     * @return this <code>ByteArrayBuilder</code>
      * @throws UnsupportedEncodingException 
      */
-    public final ByteArrayBuilder append(String s, Charset c ) throws UnsupportedEncodingException {
-        return append(s.getBytes(c.name()));
+    public final ByteArrayBuilder append(String string, Charset charset ) throws UnsupportedEncodingException {
+        return append(string.getBytes(charset.name()));
     }
     
     /**
      * Convenience method for append(byte[]) combined with a String of specified
      * charset
      * 
-     * @param s
-     * @param c
-     * @return
+     * @param stringBuilder the StringBuilder to append
+     * @param charset the Charset of the StringBuilder
+     * @return this <code>ByteArrayBuilder</code>
      * @throws UnsupportedEncodingException 
      */
-    public final ByteArrayBuilder append(StringBuilder s, Charset c) throws UnsupportedEncodingException {
-        return append(s.toString(), c);
+    public final ByteArrayBuilder append(StringBuilder stringBuilder, Charset charset) throws UnsupportedEncodingException {
+        return append(stringBuilder.toString(), charset);
     }
     
     /**
