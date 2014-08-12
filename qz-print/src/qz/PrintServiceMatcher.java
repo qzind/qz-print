@@ -26,13 +26,13 @@ package qz;
 
 import qz.common.LogIt;
 
-import java.util.logging.Level;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
+import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class PrintServiceMatcher {
 
@@ -44,23 +44,23 @@ public class PrintServiceMatcher {
      * PrintService.<p>  If a PrintService is supplied, the same PrintService is
      * returned.  If an Object is supplied, it calls the "toString()" method and
      * then does a standard name search.</p>
-     * @param o The object holding the name of the printer to search for.
+     * @param printerNameObject The object holding the name of the printer to search for.
      * @return PrintService ps for RawPrint(ps, cmds)
      */
-    public static PrintService findPrinter(Object o) {
+    public static PrintService findPrinter(Object printerNameObject) {
         PrintService exact = null;
         PrintService begins = null;
         PrintService partial = null;
         
         String printerName;
-        if (o == null) {
+        if (printerNameObject == null) {
             return null;
-        } else if (o instanceof String) {
-            printerName = "\\Q" + (String) o + "\\E";
-        } else if (o instanceof PrintService) {
-            return (PrintService) o;
+        } else if (printerNameObject instanceof String) {
+            printerName = "\\Q" + printerNameObject + "\\E";
+        } else if (printerNameObject instanceof PrintService) {
+            return (PrintService) printerNameObject;
         } else {
-            printerName = "\\Q" + o.toString() + "\\E";
+            printerName = "\\Q" + printerNameObject.toString() + "\\E";
         }
 
         // Get print service list
@@ -75,7 +75,7 @@ public class PrintServiceMatcher {
         
         // Search for best match by name
         for (PrintService ps : printers) {
-            String sysPrinter = ((PrinterName) ps.getAttribute(PrinterName.class)).getValue();
+            String sysPrinter = ps.getAttribute(PrinterName.class).getValue();
 
             Matcher m1 = p1.matcher(sysPrinter);
             Matcher m2 = p2.matcher(sysPrinter);
@@ -135,46 +135,9 @@ public class PrintServiceMatcher {
 
     /**
      * Returns a CSV format of printer names, convenient for JavaScript
-     * @return
+     * @return CSV listing of printer names
      */
     public static String getPrinterListing() {
         return printerListing;
     }
-
-    /*
-    public static boolean populateComponent(Object o) {
-    List<PrintService> printers = Arrays.asList(PrintServiceLookup.lookupPrintServices(null, null));
-    if (o instanceof JComboBox) {
-    for (PrintService p : printers) {
-    ((JComboBox)o).addItem(p);
-    }
-    }
-    else if (o instanceof JList) {
-    for (PrintService p : printers) {
-    ((DefaultListModel)((JList)o).getModel()).addElement(p);
-    }
-    }
-    else {
-    return false;
-    }
-    return true;
-    }*/
-    /*
-    public static boolean populateComponent(Object o) {
-    List<PrintService> printers = Arrays.asList(PrintServiceLookup.lookupPrintServices(null, null));
-    if (o instanceof JComboBox) {
-    for (PrintService p : printers) {
-    ((JComboBox)o).addItem(p);
-    }
-    }
-    else if (o instanceof JList) {
-    for (PrintService p : printers) {
-    ((DefaultListModel)((JList)o).getModel()).addElement(p);
-    }
-    }
-    else {
-    return false;
-    }
-    return true;
-    }*/
 }
