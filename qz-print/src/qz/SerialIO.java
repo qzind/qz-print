@@ -1,22 +1,19 @@
 package qz;
 
-import java.io.IOException;
-import java.util.logging.Level;
-import jssc.SerialPort;
-import jssc.SerialPortEvent;
-import jssc.SerialPortEventListener;
-import jssc.SerialPortException;
-import jssc.SerialPortList;
-import jssc.SerialPortTimeoutException;
+import jssc.*;
 import qz.common.LogIt;
 import qz.exception.SerialException;
 import qz.utils.ByteUtilities;
 import qz.utils.SerialUtilities;
 
+import java.io.IOException;
+import java.util.logging.Level;
+
 /**
  *
  * @author Tres
  */
+@SuppressWarnings("UnusedDeclaration")
 public class SerialIO {
     // Serial port attributes obtained from the system
     private int baudRate; // = -1; //SerialPort.BAUDRATE_9600;
@@ -60,7 +57,7 @@ public class SerialIO {
      * Closes the open serial port, if open.  If not, displays a warning message
      * in the console and  continues quietly.  If the port cannot close, a 
      * <code>SerialPortExcpetion</code> will be thrown.
-     * @return
+     * @return boolean indicating success
      * @throws SerialPortException 
      */
     public boolean close() throws SerialPortException {
@@ -105,8 +102,8 @@ public class SerialIO {
     /**
      * Open the specified port name.  i.e. <code>open("COM1");</code> or 
      * <code>open("/dev/tty0");</code>
-     * @param portName
-     * @return
+     * @param portName Port name to open
+     * @return boolean indicating success
      * @throws SerialPortException 
      */
     public boolean open(String portName) throws SerialPortException {
@@ -153,8 +150,8 @@ public class SerialIO {
     
     /**
      * Allow a port to be selected from array of returned ports.
-     * @param portID
-     * @return
+     * @param portID the port ID to select
+     * @return boolean indicting success
      * @throws SerialPortException
      * @throws SerialException 
      */
@@ -162,7 +159,7 @@ public class SerialIO {
         if (this.serialPorts == null) {
             this.getSerialPorts();
         }
-        if (this.serialPorts.equals("")) {
+        if ("".equals(this.serialPorts)) {
             throw new SerialException("No ports could be found on this system");
         }
         if (portID > -1 && this.portArray.length > 0 && this.portArray.length > portID) {
@@ -176,7 +173,7 @@ public class SerialIO {
     /**
      * Returns the cached version of the found serial ports on the system.
      * i.e. ["COM1","COM2","COM3"] or ["/dev/tty0","/dev/tty1"]
-     * @return 
+     * @return Cached version of serial ports
      */
     public String getSerialPorts() {
         return this.serialPorts;
@@ -190,7 +187,7 @@ public class SerialIO {
      * Caches a comma delimited list of ports found on this system.  Also caches
      * the array so that it can be referenced by index when opening the port
      * later.
-     * @return 
+     * @return List of ports
      */
     public String fetchSerialPorts() {
         StringBuilder sb = new StringBuilder();
@@ -203,7 +200,7 @@ public class SerialIO {
     
     /**
      * Timeout in milliseconds for the port.readBytes() function.
-     * @return 
+     * @return the timeout
      */
     public int getTimeout() {
         return this.timeout;
@@ -212,7 +209,7 @@ public class SerialIO {
     /**
      * Timeout in milliseconds for the port.readBytes() function.
      * Default is 1200 (1.2 seconds)
-     * @param timeout 
+     * @param timeout the timeout
      */
     public final void setTimeout(int timeout) {
         this.timeout = timeout;
@@ -279,10 +276,10 @@ public class SerialIO {
     
     /**
      * Return whether or not the serial port is open
-     * @return 
+     * @return boolean indicating if port is open
      */
     public boolean isOpen() {
-        return port == null ? false : port.isOpened();
+        return port != null && port.isOpened();
     }
     
     /**
