@@ -24,7 +24,6 @@
 
 package qz;
 
-import com.sun.istack.internal.NotNull;
 import qz.common.LogIt;
 
 import javax.print.attribute.standard.MediaSize;
@@ -71,7 +70,7 @@ public class PaperFormat {
      * Sets size based on given BufferedImage
      * @param bufferedImage the BufferedImage to use
      */
-    public void setAutoSize(@NotNull BufferedImage bufferedImage) {
+    public void setAutoSize(BufferedImage bufferedImage) {
         if (bufferedImage != null) {
             setAutoSize(bufferedImage.getWidth(), bufferedImage.getHeight(), this);
             autoSize = true;
@@ -86,7 +85,7 @@ public class PaperFormat {
      * @param orientation Must be either "LANDSCAPE", "PORTRAIT", "REVERSE-LANDSCAPE", "REVERSE-PORTRAIT"
      * @return the enumerated orientation
      */
-    public static int parseOrientation(@NotNull String orientation) {
+    public static int parseOrientation(String orientation) {
         if (orientation.equalsIgnoreCase("landscape")) {
            return PageFormat.LANDSCAPE;
         } else if (orientation.equalsIgnoreCase("portrait")) {
