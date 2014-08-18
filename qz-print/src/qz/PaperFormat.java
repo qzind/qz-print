@@ -26,17 +26,19 @@ package qz;
 
 import qz.common.LogIt;
 
+import javax.print.attribute.standard.MediaSize;
+import javax.print.attribute.standard.OrientationRequested;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.util.logging.Level;
-import javax.print.attribute.standard.MediaSize;
-import javax.print.attribute.standard.OrientationRequested;
 
 /**
  * Represents paper size in inches or millimeters with built in parsers.  Default
  * is 8.5 x 11.0 inches (US)
  * @author tfino
  */
+@SuppressWarnings("UnusedDeclaration")
+/*Suppressing all UnusedDeclaration warnings because they may be used outside of the project scope*/
 public class PaperFormat {
     private static final int REVERSE_PORTRAIT = 9238;
     
@@ -52,34 +54,25 @@ public class PaperFormat {
 
     private int units = MediaSize.INCH;
 
-    public PaperFormat() {
-    }
-
-    /*public PaperSize(String width, String height) {
-    setSize(width, height);
-    }*/
     public PaperFormat(float width, float height) {
         this.width = width;
         this.height = height;
         LogIt.log("Warning, a unit was not specified.  Defaulting to [" + this.getUnitDescription() + "]");
     }
 
-    /*public PaperSize(String width, String height, String units) {
-    setSize(width, height, units);
-    }*/
     public PaperFormat(float width, float height, int units) {
         this.units = units;
         this.width = width;
         this.height = height;
     }
 
-    /*public Float[] getSize() {
-        return size;
-    }*/
-    
-    public void setAutoSize(BufferedImage b) {
-        if (b != null) {
-            setAutoSize(b.getWidth(), b.getHeight(), this);
+    /**
+     * Sets size based on given BufferedImage
+     * @param bufferedImage the BufferedImage to use
+     */
+    public void setAutoSize(BufferedImage bufferedImage) {
+        if (bufferedImage != null) {
+            setAutoSize(bufferedImage.getWidth(), bufferedImage.getHeight(), this);
             autoSize = true;
         } else {
             LogIt.log(Level.WARNING, "Image specified is empty.");
@@ -90,7 +83,7 @@ public class PaperFormat {
      * Parses a human orientation such as <code>"landscape"</code> into an enumerated orientation
      * such as <code>PageFormat.LANDSCAPE</code>
      * @param orientation Must be either "LANDSCAPE", "PORTRAIT", "REVERSE-LANDSCAPE", "REVERSE-PORTRAIT"
-     * @return 
+     * @return the enumerated orientation
      */
     public static int parseOrientation(String orientation) {
         if (orientation.equalsIgnoreCase("landscape")) {
@@ -121,8 +114,8 @@ public class PaperFormat {
         }
     }
     
-   public void setOrientation(String s) {
-       this.orientation = parseOrientation(s);
+   public void setOrientation(String orientation) {
+       this.orientation = parseOrientation(orientation);
    }
    
    public void setOrientation(int orientation) {
@@ -149,34 +142,34 @@ public class PaperFormat {
     /**
      * Automatically calculates the best <code>PaperSize</code> based on the supplied 
      * image dimensions 
-     * @param imageWidth
-     * @param imageHeight
-     * @param p
-     * @return 
+     * @param imageWidth the width to use
+     * @param imageHeight the height to use
+     * @param paperFormat the paper format
      */
-    public static void setAutoSize(int imageWidth, int imageHeight, PaperFormat p) {
+    public static void setAutoSize(int imageWidth, int imageHeight, PaperFormat paperFormat) {
         // swap image dimensions
-        if (p.isLandscape()) {
+        if (paperFormat.isLandscape()) {
             int temp = imageWidth;
-            imageWidth = imageHeight;
+            //noinspection SuspiciousNameCombination
+            imageWidth = imageHeight;//It's a valid operation, we're moving from portrait to landscape
             imageHeight = temp;
         }
         
         float imageRatio = (float)imageWidth/(float)imageHeight;
-        float paperRatio = p.getWidth()/p.getHeight();
-        float wRatio = (float)imageWidth/p.getWidth();
-        float hRatio = (float)imageHeight/p.getHeight();
+        float paperRatio = paperFormat.getWidth()/paperFormat.getHeight();
+        float wRatio = (float)imageWidth/paperFormat.getWidth();
+        float hRatio = (float)imageHeight/paperFormat.getHeight();
         
         if (imageRatio >= paperRatio) {
             // use width to recalculate height
-            p.setAutoWidth(p.getWidth());
-            p.setAutoHeight((float)imageHeight / wRatio);
+            paperFormat.setAutoWidth(paperFormat.getWidth());
+            paperFormat.setAutoHeight((float)imageHeight / wRatio);
         } else {
             // use height to recalculate width
-            p.setAutoHeight(p.getHeight());
-            p.setAutoWidth((float)imageWidth / hRatio);
+            paperFormat.setAutoHeight(paperFormat.getHeight());
+            paperFormat.setAutoWidth((float)imageWidth / hRatio);
         }
-        p.setAutoSize(true);
+        paperFormat.setAutoSize(true);
     }
     
     public boolean isPortrait() {
@@ -241,10 +234,6 @@ public class PaperFormat {
         return autoHeight == null || !autoSize ? height : autoHeight;
     }
 
-    /*public final void setSize(float width, float height) {
-        size = new Float[]{width, height};
-    }*/
-
     public final void setUnits(int units) {
         this.units = units;
     }
@@ -264,9 +253,11 @@ public class PaperFormat {
     }
 
     /**
-     * Parses paper size (such as 8.5in x 11.0 in) and sets it
-     * @param width
-     * @param height 
+     * Creates PaperFormat object, parses paper size (such as 8.5in x 11.0 in) and sets it
+     * @param width the width parameter to parse
+     * @param height the height parameter to parse
+     * @return the PaperFormat object with paper size set
+     * @throws java.lang.NumberFormatException if the input to parse is not in a valid format
      */
     public static PaperFormat parseSize(String width, String height) throws NumberFormatException {
         if (width.toLowerCase().endsWith("in") && height.toLowerCase().endsWith("in")) {
@@ -279,10 +270,12 @@ public class PaperFormat {
     }
 
     /**
-     * Sets paper size and units, example:  8.5, 11.0, mm.
-     * @param width
-     * @param height
-     * @param unit 
+     * Creates PaperFormat object and sets paper size and units, example:  8.5, 11.0, mm.
+     * @param width the width
+     * @param height the height
+     * @param units the units to use
+     * @return the new PaperFormat object with the given size
+     * @throws java.lang.NumberFormatException if inputs are null or invalid
      */
     public static PaperFormat parseSize(String width, String height, String units) throws NumberFormatException {
         if (width == null || height == null) {
@@ -300,6 +293,11 @@ public class PaperFormat {
 
     }
 
+    /**
+     * Parses String unit into int value
+     * @param units the units to parse
+     * @return the int value of the given unit. -1 if invalid.
+     */
     public static int parseUnits(String units) {
         if (units == null) {
             return -1;

@@ -25,33 +25,6 @@
  */
 package qz;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
-import java.util.Locale;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
-import javax.print.DocFlavor;
-import javax.print.DocPrintJob;
-import javax.print.PrintException;
-import javax.print.PrintService;
-import javax.print.SimpleDoc;
-import javax.print.attribute.DocAttributeSet;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.PrintRequestAttributeSet;
-import javax.print.attribute.standard.JobName;
-import javax.print.event.PrintJobEvent;
-import javax.print.event.PrintJobListener;
-
 import qz.common.LogIt;
 import qz.exception.InvalidFileTypeException;
 import qz.exception.NullCommandException;
@@ -59,9 +32,25 @@ import qz.exception.NullPrintServiceException;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
 
+import javax.print.*;
+import javax.print.attribute.DocAttributeSet;
+import javax.print.attribute.HashPrintRequestAttributeSet;
+import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.JobName;
+import javax.print.event.PrintJobEvent;
+import javax.print.event.PrintJobListener;
+import java.io.*;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.nio.charset.Charset;
+import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.logging.Level;
+
 /**
  * Sends raw data to the printer, overriding your operating system's print
- * driver. Most usefull for printers such as zebra card or barcode printers.
+ * driver. Most useful for printers such as zebra card or barcode printers.
  *
  * @author A. Tres Finocchiaro
  */
@@ -71,8 +60,7 @@ public class PrintRaw {
     private final AtomicReference<DocFlavor> docFlavor = new AtomicReference<DocFlavor>(DocFlavor.BYTE_ARRAY.AUTOSENSE);
     private final AtomicReference<DocAttributeSet> docAttr = new AtomicReference<DocAttributeSet>(null);
     private final AtomicReference<PrintRequestAttributeSet> reqAttr = new AtomicReference<PrintRequestAttributeSet>(new HashPrintRequestAttributeSet());
-    private final AtomicReference<PrintService> ps = new AtomicReference<PrintService>(null);
-    //private final AtomicReference<String> rawCmds = new AtomicReference<String>(null);
+    private final AtomicReference<PrintService> printServiceAtomicReference = new AtomicReference<PrintService>(null);
     private final AtomicReference<ByteArrayBuilder> rawCmds = new AtomicReference<ByteArrayBuilder>(null);
     private final AtomicBoolean isFinished = new AtomicBoolean(false);
     private final AtomicReference<Charset> charset = new AtomicReference<Charset>(Charset.defaultCharset());
@@ -81,19 +69,20 @@ public class PrintRaw {
     private final AtomicReference<String> socketHost = new AtomicReference<String>(null);
     private final AtomicReference<Integer> socketPort = new AtomicReference<Integer>(null);
     private final AtomicBoolean alternatePrint = new AtomicBoolean(false);
-    //private final AtomicReference<Integer> copies = new AtomicReference<Integer>(null);
 
     public PrintRaw() {
     }
 
-    public PrintRaw(PrintService ps, String printString) throws UnsupportedEncodingException {
-        this.ps.set(ps);
+    public PrintRaw(PrintService printServiceAtomicReference, String printString) throws UnsupportedEncodingException {
+        this.printServiceAtomicReference.set(printServiceAtomicReference);
         this.rawCmds.set(new ByteArrayBuilder(printString.getBytes(charset.get().name())));
     }
 
-    public PrintRaw(PrintService ps, String printString, DocFlavor docFlavor,
+
+    @SuppressWarnings("UnusedDeclaration")//TOASK: Constructor never used, delete?
+    public PrintRaw(PrintService printServiceAtomicReference, String printString, DocFlavor docFlavor,
             DocAttributeSet docAttr, PrintRequestAttributeSet reqAttr, Charset charset) throws UnsupportedEncodingException {
-        this.ps.set(ps);
+        this.printServiceAtomicReference.set(printServiceAtomicReference);
         this.rawCmds.set(new ByteArrayBuilder(printString.getBytes(charset.name())));
         this.docFlavor.set(docFlavor);
         this.docAttr.set(docAttr);
@@ -101,16 +90,21 @@ public class PrintRaw {
         this.charset.set(charset);
     }
 
+    //TODO: Fix or remove JavaDoc
+    //TOASK: Unused, delete?
+    @SuppressWarnings({"JavaDoc", "UnusedDeclaration"})
     /**
      * Constructor added version 1.4.6 for lpr raw compatibility with Lion
      *
-     * @param ps
-     * @param rawCmds
+     * @param printServiceAtomicReference
+     * @param printString
      * @param charset
      * @param alternatePrint
+     * @throws UnsupportedEncodingException
      */
-    public PrintRaw(PrintService ps, String printString, Charset charset, boolean alternatePrint) throws UnsupportedEncodingException {
-        this.ps.set(ps);
+
+    public PrintRaw(PrintService printServiceAtomicReference, String printString, Charset charset, boolean alternatePrint) throws UnsupportedEncodingException {
+        this.printServiceAtomicReference.set(printServiceAtomicReference);
         this.rawCmds.set(new ByteArrayBuilder(printString.getBytes(charset.name())));
         this.charset.set(charset);
         this.alternatePrint.set(alternatePrint);
@@ -142,11 +136,6 @@ public class PrintRaw {
         this.socketHost.set(host);
         this.socketPort.set(port);
     }
-
-    /*public boolean print(String rawCmds) throws PrintException, InterruptedException, UnsupportedEncodingException {
-     this.set(rawCmds);
-     return print();
-     }*/
     
     /**
      * A brute-force, however surprisingly elegant way to send a file to a networked
@@ -159,7 +148,7 @@ public class PrintRaw {
      * @throws UnknownHostException
      * @throws IOException 
      */
-    private boolean printToSocket() throws UnknownHostException, IOException {
+    private boolean printToSocket() throws IOException {
         LogIt.log("Printing to host " + socketHost.get() + ":" + socketPort.get());
         Socket socket = new Socket(socketHost.get(), socketPort.get());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
@@ -181,12 +170,11 @@ public class PrintRaw {
      * <code>javax.print.SimpleDoc</code> with the previously defined byte
      * array.
      *
-     * @return True if print job created successfull
+     * @return True if print job created successfully
      * @throws PrintException
      * @throws InterruptedException
-     * @throws UnsupportedEncodingException
      */
-    public boolean print() throws IOException, InterruptedException, PrintException, UnsupportedEncodingException {
+    public boolean print() throws IOException, InterruptedException, PrintException {
         return print(null);
     }
 
@@ -198,15 +186,14 @@ public class PrintRaw {
      * <code>end</code> are specified, prints the subarray of the original byte
      * array.
      *
-     * @param offset
-     * @param end
-     * @return
+     * @param data Data to print
+     * @return boolean indicating success
+     * @throws IOException
      * @throws PrintException
      * @throws InterruptedException
-     * @throws UnsupportedEncodingException
      */
-    public boolean print(byte[] data) throws IOException, PrintException, InterruptedException, UnsupportedEncodingException {
-        if (ps.get() == null) {
+    public boolean print(byte[] data) throws IOException, PrintException, InterruptedException {
+        if (printServiceAtomicReference.get() == null) {
             throw new NullPrintServiceException(ERR);
         } else if (rawCmds.get() == null) {
             throw new NullCommandException(ERR);
@@ -218,23 +205,6 @@ public class PrintRaw {
             return alternatePrint();
         }
 
-
-        //byte[] orig = this.getByteArray().getByteArray();
-
-        //LogIt.log(new String(orig));
-
-        //System.arraycopy(end, end, end, end, end);
-        // For printing a specific range, only used for autospooling support
-        /*if (offset > 0 && end > 0 && end > offset) { 
-         //LogIt.log("Start: " + offset + ": " + orig[offset] + ", End: " + end + ": " + orig[end]);
-         byte[] printBytes = new byte[end - offset];
-         int counter = 0;
-         for (int i = offset; i < end; i++) {
-         printBytes[counter++] = orig[i];
-         }
-         doc = new SimpleDoc(printBytes, docFlavor.get(), docAttr.get());
-         }*/
-
         SimpleDoc doc;
         if (data != null) {
             doc = new SimpleDoc(data, docFlavor.get(), docAttr.get());
@@ -243,52 +213,52 @@ public class PrintRaw {
         }
 
         reqAttr.get().add(new JobName(jobName.get(), Locale.getDefault()));
-        DocPrintJob pj = ps.get().createPrintJob();
-        pj.addPrintJobListener(new PrintJobListener() {
+        DocPrintJob printJob = printServiceAtomicReference.get().createPrintJob();
+        printJob.addPrintJobListener(new PrintJobListener() {
             //@Override //JDK 1.6
-            public void printDataTransferCompleted(PrintJobEvent pje) {
-                LogIt.log(pje);
+            public void printDataTransferCompleted(PrintJobEvent printJobEvent) {
+                LogIt.log(printJobEvent);
                 isFinished.set(true);
             }
 
             //@Override //JDK 1.6
-            public void printJobCompleted(PrintJobEvent pje) {
-                LogIt.log(pje);
+            public void printJobCompleted(PrintJobEvent printJobEvent) {
+                LogIt.log(printJobEvent);
                 isFinished.set(true);
             }
 
             //@Override //JDK 1.6
-            public void printJobFailed(PrintJobEvent pje) {
-                LogIt.log(pje);
+            public void printJobFailed(PrintJobEvent printJobEvent) {
+                LogIt.log(printJobEvent);
                 isFinished.set(true);
             }
 
             //@Override //JDK 1.6
-            public void printJobCanceled(PrintJobEvent pje) {
-                LogIt.log(pje);
+            public void printJobCanceled(PrintJobEvent printJobEvent) {
+                LogIt.log(printJobEvent);
                 isFinished.set(true);
             }
 
             //@Override //JDK 1.6
-            public void printJobNoMoreEvents(PrintJobEvent pje) {
-                LogIt.log(pje);
+            public void printJobNoMoreEvents(PrintJobEvent printJobEvent) {
+                LogIt.log(printJobEvent);
                 isFinished.set(true);
             }
 
             //@Override //JDK 1.6
-            public void printJobRequiresAttention(PrintJobEvent pje) {
-                LogIt.log(pje);
+            public void printJobRequiresAttention(PrintJobEvent printJobEvent) {
+                LogIt.log(printJobEvent);
             }
         });
 
-        LogIt.log("Sending print job to printer: \"" + ps.get().getName() + "\"");
-        pj.print(doc, reqAttr.get());
+        LogIt.log("Sending print job to printer: \"" + printServiceAtomicReference.get().getName() + "\"");
+        printJob.print(doc, reqAttr.get());
 
         while (!isFinished.get()) {
             Thread.sleep(100);
         }
 
-        LogIt.log("Print job received by printer: \"" + ps.get().getName() + "\"");
+        LogIt.log("Print job received by printer: \"" + printServiceAtomicReference.get().getName() + "\"");
 
         //clear(); - Ver 1.0.8+ : Should be done from Applet instead now
         return true;
@@ -298,7 +268,7 @@ public class PrintRaw {
      * Alternate printing mode for CUPS capable OSs, issues lp via command line
      * on Linux, BSD, Solaris, OSX, etc. This will never work on windows.
      *
-     * @return
+     * @return boolean indicating success
      * @throws PrintException
      */
     public boolean alternatePrint() throws PrintException {
@@ -306,16 +276,17 @@ public class PrintRaw {
         try {
             outputPath.set(tmpFile.getAbsolutePath());
             if (printToFile()) {
-                String shellCmd = "/usr/bin/lp -d \"" + ps.get().getName()
+                String shellCmd = "/usr/bin/lp -d \"" + printServiceAtomicReference.get().getName()
                         + "\" -o raw \"" + tmpFile.getAbsolutePath() + "\";";
                 LogIt.log("Runtime Exec running: " + shellCmd);
-                Process pr = Runtime.getRuntime().exec(new String[]{"bash", "-c", shellCmd});
-                pr.waitFor();
-                processStream(pr);
+                Process process = Runtime.getRuntime().exec(new String[]{"bash", "-c", shellCmd});
+                process.waitFor();
+                processStream(process);
             }
         } catch (Throwable t) {
             throw new PrintException(t.getLocalizedMessage());
         } finally {
+            //noinspection ResultOfMethodCallIgnored
             tmpFile.delete();
             outputPath.set(null);
             //isFinished.set(true);
@@ -324,8 +295,8 @@ public class PrintRaw {
         return true;
     }
 
-    private void processStream(Process pr) throws Throwable {
-        BufferedReader buf = new BufferedReader(new InputStreamReader(pr.getInputStream()));
+    private void processStream(Process process) throws Throwable {
+        BufferedReader buf = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String tmp;
         String output = "";
         while ((tmp = buf.readLine()) != null) {
@@ -336,47 +307,61 @@ public class PrintRaw {
             }
         }
         LogIt.log("Runtime Exec returned: " + output);
-        if (pr.exitValue() != 0) {
-            throw new PrintException("Alternate printing returned a non-zero value (" + pr.exitValue() + "). " + output);
+        if (process.exitValue() != 0) {
+            throw new PrintException("Alternate printing returned a non-zero value (" + process.exitValue() + "). " + output);
         }
     }
 
     // public void reprint() throws PrintException, InterruptedException {
     //     print(reprint.get() == null ? rawCmds.get() : reprint.get());
     // }
+
     /**
      * Convenience method for RawPrint constructor and print method
-     *
-     * @param ps The PrintService object
-     * @param commands The RAW commands to be sent directly to the printer
-     * @return True if print job created successfull
-     * @throws javax.print.PrintException
+     * @param printService printService to set
+     * @param rawCmds commands to use
+     * @return success status
+     * @throws IOException
+     * @throws PrintException
+     * @throws InterruptedException
      */
-    public static boolean print(PrintService ps, String rawCmds) throws IOException, PrintException, InterruptedException, UnsupportedEncodingException {
-        PrintRaw p = new PrintRaw(ps, rawCmds);
-        return p.print();
+    public static boolean print(PrintService printService, String rawCmds) throws IOException, PrintException, InterruptedException {
+        PrintRaw printRaw = new PrintRaw(printService, rawCmds);
+        return printRaw.print();
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public DocAttributeSet getDocAttributeSet() {
         return docAttr.get();
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public void setDocAttributeSet(DocAttributeSet docAttr) {
         this.docAttr.set(docAttr);
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public DocFlavor getDocFlavor() {
         return docFlavor.get();
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public void setDocFlavor(DocFlavor docFlavor) {
         this.docFlavor.set(docFlavor);
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public PrintRequestAttributeSet getPrintRequestAttributeSet() {
         return reqAttr.get();
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public void setPrintRequestAttributeSet(PrintRequestAttributeSet reqAttr) {
         this.reqAttr.set(reqAttr);
     }
@@ -386,10 +371,12 @@ public class PrintRaw {
      * <code>PrintService</code> used internally to the
      * <code>PrintRaw</code> object.
      *
-     * @return
+     * @return printService to be used
      */
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public PrintService getPrintService() {
-        return ps.get();
+        return printServiceAtomicReference.get();
     }
 
     /**
@@ -397,20 +384,12 @@ public class PrintRaw {
      * <code>PrintService</code> used internally to the
      * <code>PrintRaw</code> object.
      *
-     * @param ps
+     * @param printService printService to set
      */
-    public void setPrintService(PrintService ps) {
-        this.ps.set(ps);
+    public void setPrintService(PrintService printService) {
+        this.printServiceAtomicReference.set(printService);
     }
 
-    /**
-     * Sets the raw print data, overriding any existing data
-     *
-     * @param s
-     *
-     * public void set(String s) { this.rawCmds.set(s);
-    }
-     */
     /**
      * Returns the raw print data as a
      * <code>String</code>
@@ -442,20 +421,20 @@ public class PrintRaw {
      * Append the specified
      * <code>String</code> data to the raw stream of data
      *
-     * @param s
+     * @param stringToAppend the string to append to the stream
      */
-    public void append(String s) throws UnsupportedEncodingException {
-        getRawCmds().append(s, charset.get());
+    public void append(String stringToAppend) throws UnsupportedEncodingException {
+        getRawCmds().append(stringToAppend, charset.get());
     }
 
     /**
      * Append the
      * <code>byte</code> array data to the raw stream of data
      *
-     * @param b
+     * @param bytesToAppend the bytes to append to stream
      */
-    public void append(byte[] b) {
-        this.getRawCmds().append(b);
+    public void append(byte[] bytesToAppend) {
+        this.getRawCmds().append(bytesToAppend);
     }
 
     /**
@@ -463,7 +442,7 @@ public class PrintRaw {
      * <code>Charset</code> (character set) to use, example "US-ASCII" for use
      * when decoding byte arrays. TODO: Test this parameter.
      *
-     * @param charset
+     * @param charset the Charset to use
      */
     public void setCharset(Charset charset) {
         this.charset.set(charset);
@@ -474,8 +453,10 @@ public class PrintRaw {
      * Return the character set, example "US-ASCII" for use when decoding byte
      * arrays. TODO: Test this parameter.
      *
-     * @return
+     * @return the Charset in use
      */
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public Charset getCharset() {
         return this.charset.get();
     }
@@ -485,7 +466,7 @@ public class PrintRaw {
      * shortly after a print, or when
      * <code>clear()</code> is explicitely called.
      *
-     * @return
+     * @return boolean indicating if print data is clear
      */
     public boolean isClear() {
         //try {
@@ -503,47 +484,40 @@ public class PrintRaw {
         this.alternatePrint.set(alternatePrint);
     }
 
-    public void setCopies(int copies) {
-        LogIt.log(Level.WARNING, "Copies is unsupported for print()", 
-                    new UnsupportedOperationException("Copies attribute for raw data has not yet been implemented"));
+    /*This warning is suppresed because this is a non-implemented method that *shouldn't* be used... */
+    public void setCopies(@SuppressWarnings("UnusedParameters") int copies) {
+        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
+                new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
     }
-    
+
     public int getCopies() {
-        LogIt.log(Level.WARNING, "Copies is unsupported for print()", 
-                    new UnsupportedOperationException("Copies attribute for raw data has not yet been implemented"));
+        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
+                new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
         return -1;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
+    //TOASK: Unused, delete?
     public String getJobName() {
         return this.jobName.get();
     }
 
-    public void setPrintParameters(PrintApplet rpa) {
-        this.setPrintService(rpa.getPrintService());
-        this.setJobName(rpa.getJobName().replace(" ___ ", " Raw "));
-        this.setCharset(rpa.getCharset());
-        this.setAlternatePrinting(rpa.isAlternatePrinting());
-        if (rpa.getCopies() > 0) {
-            setCopies(rpa.getCopies());
+    public void setPrintParameters(PrintApplet rawPrintApplet) {
+        this.setPrintService(rawPrintApplet.getPrintService());
+        this.setJobName(rawPrintApplet.getJobName().replace(" ___ ", " Raw "));
+        this.setCharset(rawPrintApplet.getCharset());
+        this.setAlternatePrinting(rawPrintApplet.isAlternatePrinting());
+        if (rawPrintApplet.getCopies() > 0) {
+            setCopies(rawPrintApplet.getCopies());
         }
         this.clear();
     }
 
-    /**
-     * Iterates through byte array finding matches of a sublist of bytes.
-     * Returns an array of positions. TODO: Make this natively Iterable.
-     *
-     * @param array
-     * @return
-     */
-    //public int[] indicesOfSublist(byte[] sublist) {
-    //    return ByteUtilities.indicesOfSublist(this.getRawCmds().getByteArray(), sublist);
-    //}
-    public boolean contains(String s) throws UnsupportedEncodingException {
-        return contains(s.getBytes(charset.get().name()));
+    public boolean contains(String searchString) throws UnsupportedEncodingException {
+        return contains(searchString.getBytes(charset.get().name()));
     }
 
-    public boolean contains(byte[] bytes) {
-        return ByteUtilities.indicesOfSublist(this.getByteArray(), bytes).length > 0;
+    public boolean contains(byte[] searchBytes) {
+        return ByteUtilities.indicesOfSublist(this.getByteArray(), searchBytes).length > 0;
     }
 }

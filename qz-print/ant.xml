@@ -81,7 +81,10 @@
 		<!-- Empty placeholder for easier customization. -->
 		<!-- You can override this target in the ../build.xml file. -->
 	</target>
-	<target name="copyJnlp">
+    <property name="src.dir" value="src"/>
+    <property name="build.classes.dir" value="bin/"/>
+    <property name="build.dir" value="bin/"/>
+    <target name="copyJnlp">
 		<mkdir dir="${build.classes.dir}/JNLP-INF" />
 		<copy todir="${build.classes.dir}">
 			<fileset dir="${src.dir}">
