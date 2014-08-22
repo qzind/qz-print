@@ -22,7 +22,7 @@
  * 
  */
 
-package qz;
+package qz.printer;
 
 import qz.common.LogIt;
 

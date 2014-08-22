@@ -27,7 +27,7 @@ import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
-import qz.ByteArrayBuilder;
+import qz.common.ByteArrayBuilder;
 import qz.common.LogIt;
 import qz.common.Constants;
 import qz.exception.NullCommandException;
@@ -105,9 +105,9 @@ public class FileUtilities {
      * Reads an XML file from URL, searches for the tag specified by 
      * <code>dataTag</code> tag name and returns the <code>String</code> value
      * of that tag.
-     * @param url
-     * @param dataTag
-     * @return
+     * @param url location of the xml file to be read
+     * @param dataTag tag in the file to be searched
+     * @return value of the tag if found
      * @throws DOMException
      * @throws IOException
      * @throws NullCommandException

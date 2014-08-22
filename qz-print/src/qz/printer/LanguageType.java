@@ -19,7 +19,7 @@
  * the LGPL 2.1 license be voided.
  *
  */
-package qz;
+package qz.printer;
 
 /**
  * Enum for print languages, such as ZPL, EPL, etc.
@@ -64,8 +64,8 @@ public enum LanguageType {
     /**
      * Returns whether or not the specified <code>LanguageType</code> flips 
      * inverts the black and white pixels before sending to the printer.
-     * @param languageType
-     * @return 
+     * @param languageType language type of the printer
+     * @return true if language type flips black and white pixels
      */
     public static boolean requiresImageOutputInverted(LanguageType languageType) {
         switch (languageType) {
@@ -80,7 +80,7 @@ public enum LanguageType {
     /**
      * Returns whether or not this <code>LanguageType</code> flips 
      * inverts the black and white pixels before sending to the printer.
-     * @return 
+     * @return true if language type flips black and white pixels
      */
     public boolean requiresImageOutputInverted() {
         return LanguageType.requiresImageOutputInverted(this);
@@ -91,8 +91,8 @@ public enum LanguageType {
      * the image width to be validated prior to processing output.  This
      * is required for image formats that normally require the image width to
      * be a multiple of 8
-     * @param languageType
-     * @return 
+     * @param languageType language type of the printer
+     * @return true if the printer requires image width validation
      */
     public static boolean requiresImageWidthValidated(LanguageType languageType) {
         switch (languageType) {

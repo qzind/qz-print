@@ -23,11 +23,14 @@ package qz;
 
 import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
-import qz.common.Constants;
-import qz.common.LogIt;
+import qz.common.*;
 import qz.exception.InvalidFileTypeException;
 import qz.exception.NullPrintServiceException;
 import qz.exception.SerialException;
+import qz.printer.ImageWrapper;
+import qz.printer.LanguageType;
+import qz.printer.PaperFormat;
+import qz.printer.PrintServiceMatcher;
 import qz.reflection.ReflectException;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
@@ -416,9 +419,9 @@ public class PrintApplet extends Applet implements Runnable {
      * <code>String</code> parameter. The functional equivalent of
      * notifyBrowser(String function, new Object[]{String s})
      *
-     * @param function
-     * @param s
-     * @return
+     * @param function JavaScript function to call with message
+     * @param s message to be sent
+     * @return true if successful
      */
     public boolean notifyBrowser(String function, String s) {
         return notifyBrowser(function, new Object[]{s});
@@ -433,7 +436,7 @@ public class PrintApplet extends Applet implements Runnable {
      * @param function The JavasScript function to call
      * @param o The parameter or array of parameters to send to the JavaScript
      * function
-     * @return
+     * @return true if successful
      */
     public boolean notifyBrowser(String function, Object[] o) {
         try {
@@ -490,8 +493,9 @@ public class PrintApplet extends Applet implements Runnable {
      * Overrides getParameter() to allow all upper or all lowercase parameter
      * names
      *
-     * @param name
-     * @return
+     * @param name name of parameter to retrieve
+     * @param defaultVal default value if parameter not found
+     * @return value of parameter
      */
     private String getParameter(String name, String defaultVal) {
         if (name != null) {
@@ -510,9 +514,9 @@ public class PrintApplet extends Applet implements Runnable {
      * Same as <code>getParameter(String, String)</code> except for a
      * <code>long</code> type.
      *
-     * @param name
-     * @param defaultVal
-     * @return
+     * @param name name of parameter
+     * @param defaultVal default value if not found
+     * @return value of parameter
      */
     private long getParameter(String name, long defaultVal) {
         return Long.parseLong(getParameter(name, "" + defaultVal));
@@ -525,8 +529,8 @@ public class PrintApplet extends Applet implements Runnable {
     /**
      * Returns true if given String is empty or null
      *
-     * @param s
-     * @return
+     * @param s string to be checked
+     * @return true if null or blank
      */
     private boolean isBlank(String s) {
         return s == null || s.trim().equals("");
@@ -563,8 +567,8 @@ public class PrintApplet extends Applet implements Runnable {
      * contents and appends it to the buffer. Assumes XML content is base64
      * formatted.
      *
-     * @param url
-     * @param xmlTag
+     * @param url URL reference to the xml file
+     * @param xmlTag xml tag to look for
      */
     public void appendXML(String url, String xmlTag) {
         appendFromThread(url, Constants.APPEND_XML);
@@ -574,7 +578,7 @@ public class PrintApplet extends Applet implements Runnable {
     /**
      * Appends the entire contents of the specified file to the buffer
      *
-     * @param url
+     * @param url URL location of the file
      */
     public void appendFile(String url) {
         appendFromThread(url, Constants.APPEND_RAW);
@@ -582,7 +586,7 @@ public class PrintApplet extends Applet implements Runnable {
 
     /**
      *
-     * @param url
+     * @param url URL location of the file
      */
     public void appendImage(String url) {
         appendFromThread(url, Constants.APPEND_IMAGE_PS);
@@ -666,10 +670,10 @@ public class PrintApplet extends Applet implements Runnable {
      * For CPCL and EPL, x and y coordinates should *always* be supplied. If
      * they are not supplied, they will default to position 0,0.
      *
-     * @param imageFile
-     * @param lang
-     * @param image_x
-     * @param image_y
+     * @param imageFile URL location of image file
+     * @param lang language of printer
+     * @param image_x x location to print image
+     * @param image_y y location to print image
      */
     public void appendImage(String imageFile, String lang, int image_x, int image_y) {
         this.imageX = image_x;
@@ -680,9 +684,8 @@ public class PrintApplet extends Applet implements Runnable {
     /**
      * Appends a file of the specified type
      *
-     * @param file
-     * @param appendType
-     * @param appendType
+     * @param file URL location of file to be printed
+     * @param appendType how to append the file
      */
     private void appendFromThread(String file, int appendType) {
         this.startAppending = true;
@@ -694,7 +697,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Returns the orientation as it has been recently defined. Default is null
      * which will allow the printer configuration to decide.
      *
-     * @return
+     * @return orientation of the printer
      */
     public String getOrientation() {
         return this.paperSize.getOrientationDescription();
@@ -784,7 +787,7 @@ public class PrintApplet extends Applet implements Runnable {
     /**
      * Appends raw hexadecimal bytes in the format "x1Bx00", etc.
      *
-     * @param s
+     * @param s string with hex byte codes such as x1Bx00 ...
      */
     public void appendHex(String s) {
         try {
@@ -862,8 +865,6 @@ public class PrintApplet extends Applet implements Runnable {
 
     /**
      * No need to paint, the applet is invisible
-     *
-     * @param g
      */
     @Override
     public void paint(Graphics g) {
@@ -916,8 +917,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Creates the print service by iterating through printers until finding
      * matching printer containing "printerName" in its description
      *
-     * @param printer
-     * @return
+     * @param printer name of printer
      */
     public void findPrinter(String printer) {
         this.startFindingPrinters = true;
@@ -926,7 +926,7 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     /**
-     * Uses the JSSC JNI library to retreive a comma separated list of serial
+     * Uses the JSSC JNI library to retrieve a comma separated list of serial
      * ports from the system, i.e. "COM1,COM2,COM3" or "/dev/tty0,/dev/tty1",
      * etc.
      */
@@ -1021,7 +1021,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Returns the PrintService's name (the printer name) associated with this
      * applet, if any. Returns null if none is set.
      *
-     * @return
+     * @return name of the printer
      */
     public String getPrinter() {
         return ps == null ? null : ps.getName();
@@ -1050,7 +1050,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Returns the PrintRaw object associated with this applet, if any. Returns
      * null if none is set.
      *
-     * @return
+     * @return raw print object
      */
     private PrintRaw getPrintRaw() {
         if (this.printRaw == null) {
@@ -1075,7 +1075,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Returns a comma separated <code>String</code> containing all MAC
      * Addresses found on the system, or <code>null</code> if none are found.
      *
-     * @return
+     * @return MAC addresses found on system
      */
 
     public String getMac() {
@@ -1092,7 +1092,7 @@ public class PrintApplet extends Applet implements Runnable {
      * such as filtering out the 127.0.0.1s, etc.
      * information. Returns <code>null</code> if no adapters are found.
      *
-     * @return
+     * @return first MAC address
      */
     public String getMacAddress() {
         try {
@@ -1115,7 +1115,7 @@ public class PrintApplet extends Applet implements Runnable {
      * such as filtering out the 127.0.0.1 addresses, etc.
      * information. Returns <code>null</code> if no adapters are found.
      *
-     * @return
+     * @return IP address of system
      */
     public String getIPAddress() {
          //return getNetworkHashMap().getLightestNetworkObject().getInetAddress();
@@ -1130,7 +1130,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Returns the PrintService object associated with this applet, if any.
      * Returns null if none is set.
      *
-     * @return
+     * @return PrintService object
      */
     public PrintService getPrintService() {
         return ps;
@@ -1262,7 +1262,7 @@ public class PrintApplet extends Applet implements Runnable {
     /**
      * Sets character encoding for raw printing only
      *
-     * @param charset
+     * @param charset character encoding to use for raw printing
      */
     public void setEncoding(String charset) {
         // Example:  Charset.forName("US-ASCII");

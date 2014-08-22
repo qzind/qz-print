@@ -23,14 +23,14 @@
  * 
  */
 
-package qz;
+package qz.common;
 
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
 /*
- * Provides a simple way and efficient for concatenating byte arrays, similar
+ * Provides a simple and efficient way for concatenating byte arrays, similar
  * in purpose to <code>StringBuilder</code>. Objects of this class are not 
  * thread safe and include no synchronization
  * 
