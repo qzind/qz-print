@@ -21,8 +21,9 @@
  * be voided.
  * 
  */
-package qz;
+package qz.printer;
 
+import qz.common.ByteArrayBuilder;
 import qz.common.LogIt;
 import qz.exception.InvalidRawImageException;
 import qz.utils.ByteUtilities;
@@ -48,6 +49,8 @@ import java.nio.charset.Charset;
  * actual implementation of the different ImageWrapper classes in derived
  * classes, while leaving common functionality here.
  *
+ * @author Oleg Morozov 02/21/2013 (via public domain)
+ * @author Tres Finocchiaro 10/01/2013
  */
 @SuppressWarnings("UnusedDeclaration")
 /*Library class*/
@@ -308,7 +311,7 @@ public class ImageWrapper {
 
     /**
      * Generates the EPL2 commands to print an image. One command is emitted per
-     * line of the image. This avoids issues with too long commands.
+     * line of the image. This avoids issues with commands being too long.
      *
      * @return The commands to print the image as an array of bytes, ready to be
      * sent to the printer
@@ -446,8 +449,6 @@ public class ImageWrapper {
     /**
      * http://android-essential-devtopics.blogspot.com/2013/02/sending-bit-image-to-epson-printer.html
      * @param builder the ByteArrayBuilder to use
-     * @author Oleg Morozov 02/21/2013 (via public domain)
-     * @author Tres Finocchiaro 10/01/2013
      */
     private void appendEpsonSlices(ByteArrayBuilder builder) {
 //        BitSet dots = data.getDots();

@@ -21,8 +21,8 @@
  */
 package qz.utils;
 
-import qz.Base64;
-import qz.ByteArrayBuilder;
+import qz.common.Base64;
+import qz.common.ByteArrayBuilder;
 import qz.common.LogIt;
 import qz.common.Constants;
 
@@ -52,8 +52,8 @@ public class ByteUtilities {
      * JavaScript, specifically the "\0" or <code>NUL</code> character, which
      * will early terminate a JavaScript <code>String</code>.
      *
-     * @param s
-     * @return
+     * @param s Base 16 String to covert to byte array
+     * @return byte array
      * @throws NumberFormatException
      */
     public static byte[] hexStringToByteArray(String s) throws NumberFormatException {
@@ -97,9 +97,9 @@ public class ByteUtilities {
      * Iterates through byte array finding matches of a sublist of bytes.
      * Returns an array of positions. TODO: Make this natively Iterable.
      *
-     * @param array
-     * @param sublist
-     * @return
+     * @param array byte array to search
+     * @param sublist sublist to search for
+     * @return indicies to found sublists
      */
     public static int[] indicesOfSublist(byte[] array, byte[] sublist) {
         LinkedList<Integer> indexes = new LinkedList<Integer>();
@@ -144,10 +144,10 @@ public class ByteUtilities {
      * automatically and would eliminate the need for a
      * <code>indicesOfSublist()</code> function.
      *
-     * @param src
-     * @param pattern
-     * @param count
-     * @return
+     * @param src array to split
+     * @param pattern pattern to determine where split should occur
+     * @param count number of arrays to split data into
+     * @return array of byte arrays
      */
     public static LinkedList<ByteArrayBuilder> splitByteArray(byte[] src, byte[] pattern, int count)
             throws NullPointerException, IndexOutOfBoundsException, ArrayStoreException {
@@ -193,11 +193,11 @@ public class ByteUtilities {
      * integers (<code>int[]</code>). These integers will likely be converted to
      * a byte array (<code>byte[]</code>) later.
      *
-     * @param black
-     * @return
+     * @param black boolean values to convert
+     * @return number array in base 10
      */
     public static int[] binaryArrayToIntArray(boolean[] black) {
-        int[] hex = new int[(int) (black.length / 8)];
+        int[] hex = new int[black.length / 8];
         // Convert every eight zero's to a full byte, in decimal
         for (int i = 0; i < hex.length; i++) {
             for (int k = 0; k < 8; k++) {
@@ -211,8 +211,8 @@ public class ByteUtilities {
      * Converts an integer array (<code>int[]</code>) to a String representation
      * of a hexadecimal array.
      * 
-     * @param raw
-     * @return 
+     * @param raw numbers to be converted to hex
+     * @return hex string representation
      */
     public static String getHexString(int[] raw) {
         if (raw == null) {
@@ -229,7 +229,7 @@ public class ByteUtilities {
         if (o instanceof byte[]) {
             return ((byte[]) o).length < 1;
         } else if (o instanceof String) {
-            return ((String) o) == null || ((String) o).equals("");
+            return "".equals(o);
         } else {
             LogIt.log(Level.WARNING, "Unchecked blank comparison.");
             return o == null;
@@ -248,9 +248,14 @@ public class ByteUtilities {
      * Reads a binary file (i.e. PDF) from URL to a ByteBuffer. This is later
      * appended to the applet, but needs a renderer capable of printing it to
      * PostScript
+<<<<<<< HEAD
      *
      * @param file
      * @return
+=======
+     * @param file URL string to location of file
+     * @return byte array containing file content
+>>>>>>> Moved some classes into a better organization and cleaned up some typos
      * @throws IOException
      * @throws MalformedURLException
      */

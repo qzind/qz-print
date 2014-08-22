@@ -25,6 +25,7 @@ import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
 import com.sun.pdfview.PDFRenderer;
 import qz.common.LogIt;
+import qz.printer.PaperFormat;
 
 import javax.imageio.ImageIO;
 import javax.print.PrintService;

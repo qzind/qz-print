@@ -25,6 +25,7 @@
  */
 package qz;
 
+import qz.common.ByteArrayBuilder;
 import qz.common.LogIt;
 import qz.exception.InvalidFileTypeException;
 import qz.exception.NullCommandException;

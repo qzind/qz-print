@@ -122,7 +122,7 @@ public class PrintHTML extends JLabel implements Printable {
         }
     }
 
-    /*This warning is suppresed because this is a non-implemented method that *shouldn't* be used... */
+    /*This warning is suppressed because this is a non-implemented method that *shouldn't* be used... */
     public void setCopies(@SuppressWarnings("UnusedParameters") int copies) {
         LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
                 new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));

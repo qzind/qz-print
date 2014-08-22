@@ -1,7 +1,6 @@
-package qz;
+package qz.common;
 
 import jssc.*;
-import qz.common.LogIt;
 import qz.exception.SerialException;
 import qz.utils.ByteUtilities;
 import qz.utils.SerialUtilities;
@@ -22,7 +21,7 @@ public class SerialIO {
     private int flowControl; // = -1; //SerialPort.FLOWCONTROL_NONE;
     private int parity; // = -1; //SerialPort.PARITY_NONE;
     
-    // Beggining and ending patterns that signify port has responded
+    // Beginning and ending patterns that signify port has responded
     private byte[] begin = { '\u0002' };
     private byte[] end = { '\r' };
     
@@ -32,7 +31,7 @@ public class SerialIO {
     // A buffer to hold data returned from the serial port
     private ByteArrayBuilder outputBuffer;
     
-    // The informaiton to be sent to the serial port
+    // The information to be sent to the serial port
     private ByteArrayBuilder inputBuffer;
     
     private byte[] output;
@@ -56,7 +55,7 @@ public class SerialIO {
     /**
      * Closes the open serial port, if open.  If not, displays a warning message
      * in the console and  continues quietly.  If the port cannot close, a 
-     * <code>SerialPortExcpetion</code> will be thrown.
+     * <code>SerialPortException</code> will be thrown.
      * @return boolean indicating success
      * @throws SerialPortException 
      */
