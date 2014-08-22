@@ -7,6 +7,7 @@ import qz.utils.SerialUtilities;
 
 import java.io.IOException;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -14,6 +15,9 @@ import java.util.logging.Level;
  */
 @SuppressWarnings("UnusedDeclaration")
 public class SerialIO {
+
+    private static final Logger log = Logger.getLogger(SerialIO.class.getName());
+
     // Serial port attributes obtained from the system
     private int baudRate; // = -1; //SerialPort.BAUDRATE_9600;
     private int dataBits; // = -1; //SerialPort.DATABITS_8;
@@ -61,14 +65,14 @@ public class SerialIO {
      */
     public boolean close() throws SerialPortException {
         if (port == null || !port.isOpened()) {
-            LogIt.log(Level.WARNING, "Serial Port [" + portName + "] does not appear to be open.");
+            log.warning("Serial Port [" + portName + "] does not appear to be open.");
             return false;
         }
         boolean closed = port.closePort();
         if (!closed) {
-            LogIt.log(Level.WARNING, "Serial Port [" + portName + "] was not closed properly.");
+            log.warning("Serial Port [" + portName + "] was not closed properly.");
         } else {
-            LogIt.log("Port [" + portName + "] closed successfully.");
+            log.info("Port [" + portName + "] closed successfully.");
         }
         port = null;
         portName = null;
@@ -120,7 +124,7 @@ public class SerialIO {
                 throw e;
             }
         } else {
-            LogIt.log(Level.WARNING, "Serial Port [" + this.portName + "] already appears to be open.");
+            log.warning("Serial Port [" + this.portName + "] already appears to be open.");
         }
         return port.isOpened();
     }
@@ -226,7 +230,7 @@ public class SerialIO {
                     int _begin = beginPos[beginPos.length -1];
                     int _end  = endPos[endPos.length -1];
                     // TODO:  Use specified charset in PrintApplet.
-                    LogIt.log(new String(getOutputBuffer().getByteArray(), _begin, _end - _begin));
+                    log.info(new String(getOutputBuffer().getByteArray(), _begin, _end - _begin));
                     output = new byte[_end - _begin];
                     System.arraycopy(getOutputBuffer().getByteArray(), _begin, output, 0, _end - _begin);
                     getOutputBuffer().clear();
@@ -234,13 +238,13 @@ public class SerialIO {
                 
             }
         } catch (SerialPortException e) {
-            LogIt.log(Level.SEVERE, "Exception occured while reading data from port.", e);
+            log.log(Level.SEVERE, "Exception occured while reading data from port.", e);
         } catch (SerialPortTimeoutException e) {
-            LogIt.log(Level.WARNING, "Timeout occured waiting for port to respond.  Timeout value: " + timeout, e);
+            log.log(Level.WARNING, "Timeout occured waiting for port to respond.  Timeout value: " + timeout, e);
         }
             /*if (event.isERR()) {
                 // TODO:  Make this exception visible from PrintApplet.
-                LogIt.log(Level.WARNING, "Error occured reading data from port "
+                log.log(Level.WARNING, "Error occured reading data from port "
                         + "[" + event.getPortName() + "].  You may want to close "
                         + "and reopen communications for this port.");
             }
@@ -288,7 +292,7 @@ public class SerialIO {
     public void send() throws SerialPortException {
         port.setParams(baudRate, dataBits, stopBits, parity);
         port.setFlowControlMode(flowControl);
-        LogIt.log("Sending data to [" + portName + "]:\r\n\r\n" + new String(getInputBuffer().getByteArray()) + "\r\n\r\n");
+        log.info("Sending data to [" + portName + "]:\r\n\r\n" + new String(getInputBuffer().getByteArray()) + "\r\n\r\n");
         port.writeBytes(getInputBuffer().getByteArray());
         getInputBuffer().clear();
     }

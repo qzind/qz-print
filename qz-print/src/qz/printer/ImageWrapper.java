@@ -24,7 +24,6 @@
 package qz.printer;
 
 import qz.common.ByteArrayBuilder;
-import qz.common.LogIt;
 import qz.exception.InvalidRawImageException;
 import qz.utils.ByteUtilities;
 
@@ -32,6 +31,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.util.logging.Logger;
 
 /**
  * Abstract wrapper for images to be printed with thermal printers.
@@ -55,6 +55,8 @@ import java.nio.charset.Charset;
 @SuppressWarnings("UnusedDeclaration")
 /*Library class*/
 public class ImageWrapper {
+
+    private static final Logger log = Logger.getLogger(ImageWrapper.class.getName());
 
     /**
      * Represents the CHECK_BLACK quantization method, where only fully black
@@ -98,8 +100,8 @@ public class ImageWrapper {
     public ImageWrapper(BufferedImage bufferedImage, LanguageType languageType) {
         this.bufferedImage = bufferedImage;
         this.languageType = languageType;
-        LogIt.log("Loading BufferedImage");
-        LogIt.log(
+        log.info("Loading BufferedImage");
+        log.info(
                 "Dimensions: " + bufferedImage.getWidth() + "x" + bufferedImage.getHeight());
         init();
         
@@ -261,7 +263,7 @@ public class ImageWrapper {
      *
      */
     private void generateBlackPixels() {
-        LogIt.log("Converting image to monochrome");
+        log.info("Converting image to monochrome");
         BufferedImage bi = bufferedImage;
         int h = bi.getHeight();
         int w = bi.getWidth();
@@ -289,7 +291,7 @@ public class ImageWrapper {
      * @return The raw bytes that compose the image
      */
     private byte[] getBytes() {
-        LogIt.log("Generating byte array");
+        log.info("Generating byte array");
         int[] ints = this.getImageAsIntArray();
         byte[] bytes = new byte[ints.length];
         for (int i = 0; i < ints.length; i++) {
@@ -299,7 +301,7 @@ public class ImageWrapper {
     }
 
     private void generateIntArray() {
-        LogIt.log("Packing bits");
+        log.info("Packing bits");
         imageAsIntArray = new int[imageAsBooleanArray.length / 8];
         // Convert every eight zero's to a full byte, in decimal
         for (int i = 0; i < imageAsIntArray.length; i++) {
@@ -412,7 +414,7 @@ public class ImageWrapper {
      * calling getImageCommand()
      */
     private void init() {
-        LogIt.log("Initializing Image Fields");
+        log.info("Initializing Image Fields");
         generateBlackPixels();
         generateIntArray();
     }

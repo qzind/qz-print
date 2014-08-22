@@ -21,18 +21,20 @@
  */
 package qz.utils;
 
-import qz.common.LogIt;
 import qz.reflection.Reflect;
 import qz.reflection.ReflectException;
 
 import java.io.IOException;
 import java.net.*;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Tres
  */
 public class NetworkUtilities {
+
+    private static final Logger log = Logger.getLogger(NetworkUtilities.class.getName());
 
     private String ipAddress;
     private String macAddress;
@@ -52,7 +54,7 @@ public class NetworkUtilities {
 
     public void gatherNetworkInfo() throws IOException, ReflectException {
         Socket socket = new Socket();
-        LogIt.log("Initiating a temporary connection to \"" + hostname + ":" +
+        log.info("Initiating a temporary connection to \"" + hostname + ":" +
                 port + "\" to determine main Network Interface");
         SocketAddress endpoint = new InetSocketAddress(hostname, port);
         socket.connect(endpoint);

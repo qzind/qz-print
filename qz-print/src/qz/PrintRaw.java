@@ -48,6 +48,7 @@ import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Sends raw data to the printer, overriding your operating system's print
@@ -56,6 +57,8 @@ import java.util.logging.Level;
  * @author A. Tres Finocchiaro
  */
 public class PrintRaw {
+
+    public static final Logger log = Logger.getLogger(PrintRaw.class.getName());
 
     private final static String ERR = "qz.PrintRaw.print() failed.";
     private final AtomicReference<DocFlavor> docFlavor = new AtomicReference<DocFlavor>(DocFlavor.BYTE_ARRAY.AUTOSENSE);
@@ -150,7 +153,7 @@ public class PrintRaw {
      * @throws IOException 
      */
     private boolean printToSocket() throws IOException {
-        LogIt.log("Printing to host " + socketHost.get() + ":" + socketPort.get());
+        log.info("Printing to host " + socketHost.get() + ":" + socketPort.get());
         Socket socket = new Socket(socketHost.get(), socketPort.get());
         DataOutputStream out = new DataOutputStream(socket.getOutputStream());
         out.write(getRawCmds().getByteArray());
@@ -159,7 +162,7 @@ public class PrintRaw {
     }
 
     public boolean printToFile() throws PrintException, IOException {
-        LogIt.log("Printing to file: " + outputPath.get());
+        log.info("Printing to file: " + outputPath.get());
         OutputStream out = new FileOutputStream(outputPath.get());
         out.write(this.getRawCmds().getByteArray());
         out.close();
@@ -252,14 +255,14 @@ public class PrintRaw {
             }
         });
 
-        LogIt.log("Sending print job to printer: \"" + printServiceAtomicReference.get().getName() + "\"");
+        log.info("Sending print job to printer: \"" + printServiceAtomicReference.get().getName() + "\"");
         printJob.print(doc, reqAttr.get());
 
         while (!isFinished.get()) {
             Thread.sleep(100);
         }
 
-        LogIt.log("Print job received by printer: \"" + printServiceAtomicReference.get().getName() + "\"");
+        log.info("Print job received by printer: \"" + printServiceAtomicReference.get().getName() + "\"");
 
         //clear(); - Ver 1.0.8+ : Should be done from Applet instead now
         return true;
@@ -279,7 +282,7 @@ public class PrintRaw {
             if (printToFile()) {
                 String shellCmd = "/usr/bin/lp -d \"" + printServiceAtomicReference.get().getName()
                         + "\" -o raw \"" + tmpFile.getAbsolutePath() + "\";";
-                LogIt.log("Runtime Exec running: " + shellCmd);
+                log.info("Runtime Exec running: " + shellCmd);
                 Process process = Runtime.getRuntime().exec(new String[]{"bash", "-c", shellCmd});
                 process.waitFor();
                 processStream(process);
@@ -307,7 +310,7 @@ public class PrintRaw {
                 output = output.concat("\n" + tmp);
             }
         }
-        LogIt.log("Runtime Exec returned: " + output);
+        log.info("Runtime Exec returned: " + output);
         if (process.exitValue() != 0) {
             throw new PrintException("Alternate printing returned a non-zero value (" + process.exitValue() + "). " + output);
         }
@@ -404,7 +407,7 @@ public class PrintRaw {
         try {
             return new String(this.getRawCmds().getByteArray(), charset.get().name());
         } catch (Exception e) {
-            LogIt.log(Level.WARNING, "Could not decode byte array into String for display. "
+            log.log(Level.WARNING, "Could not decode byte array into String for display. "
                     + "This may be normal for mixed or uncommon charsets.", e);
         }
         return null;
@@ -415,7 +418,7 @@ public class PrintRaw {
      */
     public void clear() {
         getRawCmds().clear();
-        LogIt.log(Level.INFO, "Print buffer has been cleared.");
+        log.info("Print buffer has been cleared.");
     }
 
     /**
@@ -447,7 +450,7 @@ public class PrintRaw {
      */
     public void setCharset(Charset charset) {
         this.charset.set(charset);
-        LogIt.log("Current printer charset encoding: " + charset.name());
+        log.info("Current printer charset encoding: " + charset.name());
     }
 
     /**
@@ -487,12 +490,12 @@ public class PrintRaw {
 
     /*This warning is suppresed because this is a non-implemented method that *shouldn't* be used... */
     public void setCopies(@SuppressWarnings("UnusedParameters") int copies) {
-        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
+        log.log(Level.WARNING, "Copies is unsupported for printHTML()",
                 new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
     }
 
     public int getCopies() {
-        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
+        log.log(Level.WARNING, "Copies is unsupported for printHTML()",
                 new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
         return -1;
     }

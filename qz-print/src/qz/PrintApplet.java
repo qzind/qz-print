@@ -59,6 +59,7 @@ import java.security.PrivilegedExceptionAction;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * An invisible web applet for use with JavaScript functions to send raw
@@ -68,6 +69,8 @@ import java.util.logging.Level;
  * @author A. Tres Finocchiaro
  */
 public class PrintApplet extends Applet implements Runnable {
+
+    private static final Logger log = Logger.getLogger(PrintApplet.class.getName());
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
     private static final long serialVersionUID = 2787955484074291340L;
@@ -129,7 +132,8 @@ public class PrintApplet extends Applet implements Runnable {
     public void run() {
         // TODO: RKC - Fix the import to make this work!
         // window = JSObject.getWindow(this);
-        LogIt.logStart();
+        log.info("QZ-PRINT " + Constants.VERSION);
+        log.info("===== JAVASCRIPT LISTENER THREAD STARTED =====");
         try {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                 //@Override
@@ -141,10 +145,10 @@ public class PrintApplet extends Applet implements Runnable {
                 }
             });
         } catch (PrivilegedActionException e) {
-            LogIt.log("Error starting main JavaScript thread.  All else will fail.", e);
+            log.log(Level.SEVERE, "Error starting main JavaScript thread.  All else will fail.", e);
             set(e);
         } finally {
-            LogIt.logStop();
+            log.info("===== JAVASCRIPT LISTENER THREAD STOPPED =====");
         }
     }
 
@@ -194,20 +198,20 @@ public class PrintApplet extends Applet implements Runnable {
                             default: // Do nothing
                         }
                     } catch (Throwable t) {
-                        LogIt.log("Error appending data", t);
+                        log.log(Level.SEVERE, "Error appending data", t);
                         set(t);
                     }
                     startAppending = false;
                     setDoneAppending(true);
                 }
                 if (startFindingPorts) {
-                    LogIt.logFindPorts();
+                    log.info("===== SEARCHING FOR SERIAL PORTS =====");
                     startFindingPorts = false;
                     getSerialIO().fetchSerialPorts();
                     setDoneFindingPorts(true);
                 }
                 if (startFindingNetwork) {
-                    LogIt.logFindingNetwork();
+                    log.info("===== GATHERING NETWORK INFORMATION =====");
                     startFindingNetwork = false;
                     //getNetworkHashMap().clear();
                     try {
@@ -219,7 +223,7 @@ public class PrintApplet extends Applet implements Runnable {
                     } catch (IOException e) {
                         set(e);
                     } catch (ReflectException e) {
-                        LogIt.log(Level.SEVERE, "getHardwareAddress not supported on Java 1.5", e);
+                        log.log(Level.SEVERE, "getHardwareAddress not supported on Java 1.5", e);
                         set(e);
                     }
 
@@ -227,7 +231,7 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneFindingNetwork(true);
                 }
                 if (startOpeningPort) {
-                    LogIt.logOpeningPort(serialPortName);
+                    log.info("===== OPENING SERIAL PORT " + serialPortName + " =====");
                     startOpeningPort = false;
                     try {
                         if (serialPortIndex != -1) {
@@ -246,7 +250,7 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneOpeningPort(true);
                 }
                 if (startClosingPort) {
-                    LogIt.logClosingPort(serialPortName);
+                    log.info("===== CLOSING SERIAL PORT " + serialPortName + " =====");
                     startClosingPort = false;
                     try {
                         getSerialIO().close();
@@ -256,7 +260,7 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneClosingPort(true);
                 }
                 if (startFindingPrinters) {
-                    LogIt.logFindPrinter();
+                    log.info("===== SEARCHING FOR PRINTER =====");
                     startFindingPrinters = false;
                     if (printer == null) {
                         PrintApplet.this.setPrintService(PrintServiceLookup.lookupDefaultPrintService());
@@ -286,7 +290,7 @@ public class PrintApplet extends Applet implements Runnable {
                     serialIO.clearOutput();
                 }
                 if (startPrinting) {
-                    LogIt.logPrint();
+                    log.info("===== SENDING DATA TO THE PRINTER =====");
                     try {
                         startPrinting = false;
 
@@ -300,8 +304,7 @@ public class PrintApplet extends Applet implements Runnable {
                                     endOfDocument.getBytes(charset.name()),
                                     documentsPerSpool);
                             //FIXME:  Remove this debug line
-                            LogIt.log(Level.INFO, "Automatically spooling to "
-                                    + pages.size() + " separate print job(s)");
+                            log.info("Automatically spooling to " + pages.size() + " separate print job(s)");
 
                             for (ByteArrayBuilder b : pages) {
                                 logAndPrint(getPrintRaw(), b.getByteArray());
@@ -382,7 +385,7 @@ public class PrintApplet extends Applet implements Runnable {
 
     public void setLogPostScriptFeatures(boolean logFeaturesPS) {
         this.logFeaturesPS = logFeaturesPS;
-        LogIt.log("Console logging of PostScript printing features set to \"" + logFeaturesPS + "\"");
+        log.info("Console logging of PostScript printing features set to \"" + logFeaturesPS + "\"");
     }
 
     public boolean getLogPostScriptFeatures() {
@@ -450,10 +453,10 @@ public class PrintApplet extends Applet implements Runnable {
             
             window.call(function, o);
             
-            LogIt.log(Level.INFO, "Successfully called JavaScript function \""
+            log.info("Successfully called JavaScript function \""
                     + function + "(...)\"...");
             if (function.startsWith("jzebra")) {
-                LogIt.log(Level.WARNING, "JavaScript function \"" + function
+                log.warning("JavaScript function \"" + function
                         + "(...)\" is deprecated and will be removed in future releases. "
                         + "Please use \"" + function.replaceFirst("jzebra", "qz")
                         + "(...)\" instead.");
@@ -472,7 +475,7 @@ public class PrintApplet extends Applet implements Runnable {
             }
             // Warn about the function missing only if it wasn't recovered using the old jzebra name
             if (!success && !function.startsWith("jzebra")) {
-                LogIt.log(Level.WARNING, "Tried calling JavaScript function \""
+                log.warning("Tried calling JavaScript function \""
                         + function + "(...)\" through web browser but it has not "
                         + "been implemented (" + e.getLocalizedMessage() + ")");
             }
@@ -658,7 +661,7 @@ public class PrintApplet extends Applet implements Runnable {
         } else if (dotDensity.equalsIgnoreCase("triple")) {
             this.dotDensity = 39;
         } else {
-            LogIt.log(Level.WARNING, "Cannot translate dotDensity value of '"
+            log.warning("Cannot translate dotDensity value of '"
                     + dotDensity + "'.  Using '" + this.dotDensity + "'.");
         }
         setLanguage(lang);
@@ -762,7 +765,7 @@ public class PrintApplet extends Applet implements Runnable {
                 getPrintPS().setImage(ImageIO.read(new URL(file)));
             }
         } catch (IOException ex) {
-            LogIt.log(Level.WARNING, "Error reading specified image", ex);
+            log.log(Level.WARNING, "Error reading specified image", ex);
         }
     }
 
@@ -850,12 +853,12 @@ public class PrintApplet extends Applet implements Runnable {
     @Override
     public void init() {
         if (!allowMultiple && thisThread.get() != null && thisThread.get().isAlive()) {
-            LogIt.log(Level.WARNING, "init() called, but applet already "
+            log.warning("init() called, but applet already "
                     + "seems to be running.  Ignoring.");
             return;
         }
         if (allowMultiple && thisThread.get() != null && thisThread.get().isAlive()) {
-            LogIt.log(Level.INFO, "init() called, but applet already "
+            log.info("init() called, but applet already "
                     + "seems to be running.  Allowing.");
         }
         resetVariables();
@@ -880,7 +883,7 @@ public class PrintApplet extends Applet implements Runnable {
             thisThread.get().start();
         } catch (JSException e) {
             set(e);
-            LogIt.log(Level.SEVERE, "Error setting applet object in JavaScript using LiveConnect.  "
+            log.severe("Error setting applet object in JavaScript using LiveConnect.  "
                     + "This is usally caused by Java Security Settings.  In Windows, enable the Java "
                     + "Console and hit 5 to show verbose messages.");
         } catch (Exception e) {
@@ -897,7 +900,7 @@ public class PrintApplet extends Applet implements Runnable {
             try {
                 serialIO.close();
             } catch (Throwable t) {
-                LogIt.log(Level.SEVERE, "Could not close port [" + serialIO.getPortName() + "].", t);
+                log.log(Level.SEVERE, "Could not close port [" + serialIO.getPortName() + "].", t);
             }
         }
         super.stop();
@@ -1154,7 +1157,7 @@ public class PrintApplet extends Applet implements Runnable {
 
     public void setPrinter(int index) {
         setPrintService(PrintServiceMatcher.getPrinterList()[index]);
-        LogIt.log("Printer set to index: " + index + ",  Name: " + ps.getName());
+        log.info("Printer set to index: " + index + ",  Name: " + ps.getName());
 
         //PrinterState state = (PrinterState)this.ps.getAttribute(PrinterState.class); 
         //return state == PrinterState.IDLE || state == PrinterState.PROCESSING;
@@ -1164,7 +1167,8 @@ public class PrintApplet extends Applet implements Runnable {
     private void setPrintService(PrintService ps) {
         this.ps = ps;
         if (ps == null) {
-            LogIt.log(Level.WARNING, "Setting null PrintService");
+            log.warning("Setting null PrintService");
+            log.warning("Setting null PrintService");
             return;
         }
         if (printHTML != null) {
@@ -1207,7 +1211,7 @@ public class PrintApplet extends Applet implements Runnable {
         try {
             logCommands(new String(commands, charset.name()));
         } catch (UnsupportedEncodingException ex) {
-            LogIt.log(Level.WARNING, "Cannot decode raw bytes for debug output. "
+            log.warning("Cannot decode raw bytes for debug output. "
                     + "This could be due to incompatible charset for this JVM "
                     + "or mixed charsets within one byte stream.  Ignore this message"
                     + " if printing seems fine.");
@@ -1215,7 +1219,7 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     private void logCommands(String commands) {
-        LogIt.log("\r\n\r\n" + commands + "\r\n\r\n");
+        log.info("\r\n\r\n" + commands + "\r\n\r\n");
     }
 
     private void logAndPrint(PrintRaw pr, byte[] data) throws IOException, InterruptedException, PrintException {
@@ -1270,9 +1274,9 @@ public class PrintApplet extends Applet implements Runnable {
         try {
             this.charset = Charset.forName(charset);
             getPrintRaw().setCharset(Charset.forName(charset));
-            LogIt.log("Current applet charset encoding: " + this.charset.name());
+            log.info("Current applet charset encoding: " + this.charset.name());
         } catch (IllegalCharsetNameException e) {
-            LogIt.log(Level.WARNING, "Could not find specified charset encoding: "
+            log.log(Level.WARNING, "Could not find specified charset encoding: "
                     + charset + ". Using default.", e);
         }
 
@@ -1288,12 +1292,12 @@ public class PrintApplet extends Applet implements Runnable {
 
     public void allowMultipleInstances(boolean allowMultiple) {
         this.allowMultiple = allowMultiple;
-        LogIt.log("Allow multiple applet instances set to \"" + allowMultiple + "\"");
+        log.info("Allow multiple applet instances set to \"" + allowMultiple + "\"");
     }
 
     public void setAutoSize(boolean autoSize) {
         if (this.paperSize == null) {
-            LogIt.log(Level.WARNING, "A paper size must be specified before setting auto-size!");
+            log.warning("A paper size must be specified before setting auto-size!");
         } else {
             this.paperSize.setAutoSize(autoSize);
         }
@@ -1311,7 +1315,7 @@ public class PrintApplet extends Applet implements Runnable {
         if (copies > 0) {
             this.copies = copies;
         } else {
-            LogIt.log(Level.WARNING, "Copies must be greater than zero", new UnsupportedOperationException("Copies must be greater than zero"));
+            log.log(Level.WARNING, "Copies must be greater than zero", new UnsupportedOperationException("Copies must be greater than zero"));
         }
     }
 
@@ -1321,21 +1325,21 @@ public class PrintApplet extends Applet implements Runnable {
 
     public void setPaperSize(String width, String height) {
         this.paperSize = PaperFormat.parseSize(width, height);
-        LogIt.log(Level.INFO, "Set paper size to " + paperSize.getWidth()
+        log.info("Set paper size to " + paperSize.getWidth()
                 + paperSize.getUnitDescription() + "x"
                 + paperSize.getHeight() + paperSize.getUnitDescription());
     }
 
     public void setPaperSize(float width, float height) {
         this.paperSize = new PaperFormat(width, height);
-        LogIt.log(Level.INFO, "Set paper size to " + paperSize.getWidth()
+        log.info("Set paper size to " + paperSize.getWidth()
                 + paperSize.getUnitDescription() + "x"
                 + paperSize.getHeight() + paperSize.getUnitDescription());
     }
 
     public void setPaperSize(float width, float height, String units) {
         this.paperSize = PaperFormat.parseSize("" + width, "" + height, units);
-        LogIt.log(Level.INFO, "Set paper size to " + paperSize.getWidth()
+        log.info("Set paper size to " + paperSize.getWidth()
                 + paperSize.getUnitDescription() + "x"
                 + paperSize.getHeight() + paperSize.getUnitDescription());
     }
