@@ -24,8 +24,6 @@
 
 package qz;
 
-import qz.common.LogIt;
-
 import javax.print.PrintService;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
@@ -38,8 +36,12 @@ import java.awt.print.PrinterJob;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PrintHTML extends JLabel implements Printable {
+
+    private static final Logger log = Logger.getLogger(PrintHTML.class.getName());
+
 
     private final AtomicReference<PrintService> ps = new AtomicReference<PrintService>(null);
     private final AtomicReference<String> jobName = new AtomicReference<String>("QZ-PRINT 2D Printing");
@@ -124,12 +126,12 @@ public class PrintHTML extends JLabel implements Printable {
 
     /*This warning is suppressed because this is a non-implemented method that *shouldn't* be used... */
     public void setCopies(@SuppressWarnings("UnusedParameters") int copies) {
-        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()",
+        log.log(Level.WARNING, "Copies is unsupported for printHTML()",
                 new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
     }
     
     public int getCopies() {
-        LogIt.log(Level.WARNING, "Copies is unsupported for printHTML()", 
+        log.log(Level.WARNING, "Copies is unsupported for printHTML()",
                     new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
         return -1;
     }

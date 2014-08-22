@@ -11,13 +11,16 @@ import qz.exception.SerialException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Tres
  */
 public class SerialUtilities {
+
+    private static final Logger log = Logger.getLogger(SerialUtilities.class.getName());
+
     private final static int WINDOWS = 1;
     private final static int LINUX = 2;
     private final static int OSX = 3;
@@ -46,7 +49,7 @@ public class SerialUtilities {
         String[] command = { "cmd.exe", "/c", winCmd.replace("?", portName)};
         Process p = Runtime.getRuntime().exec(command);
         String output = new BufferedReader(new InputStreamReader(p.getInputStream())).readLine();
-        LogIt.log("Found windows registry settings: " + output);
+        log.info("Found windows registry settings: " + output);
         String[] split = output.split("REG_SZ");
         if (split.length > 0) {
             int[] attr = {SerialPort.BAUDRATE_9600, 
@@ -89,16 +92,16 @@ public class SerialUtilities {
     public static int getOS() {
         String os = System.getProperty("os.name", "Windows 7").toLowerCase();
         if (os.startsWith("windows")) {
-            LogIt.log("OS Detected: Windows");
+            log.info("OS Detected: Windows");
             return WINDOWS;
         } else if (os.startsWith("linux")) {
-            LogIt.log("OS Detected: Linux");
+            log.info("OS Detected: Linux");
             return LINUX;
         } else if (os.startsWith("mac os") || os.startsWith("freebsd")) {
-            LogIt.log("OS Detected: OS X");
+            log.info("OS Detected: OS X");
             return OSX;
         } else {
-            LogIt.log("Unknown OS Detected.");
+            log.info("Unknown OS Detected.");
             return -1;
         }
     }
@@ -114,21 +117,21 @@ public class SerialUtilities {
     public static int parseDataBits(String s) {
         s = s.trim();
         if (s.equals("")) {
-            LogIt.log(Level.SEVERE, "Cannot parse empty data bits value.");
+            log.severe("Cannot parse empty data bits value.");
         } else if (s.equals("5")) {
-            LogIt.log("Parsed serial setting: " + s + "=DATABITS_" + s);
+            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
             return SerialPort.DATABITS_5;
         } else if (s.equals("6")) {
-            LogIt.log("Parsed serial setting: " + s + "=DATABITS_" + s);
+            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
             return SerialPort.DATABITS_6; 
         } else if (s.equals("7")) {
-            LogIt.log("Parsed serial setting: " + s + "=DATABITS_" + s);
+            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
             return SerialPort.DATABITS_7; 
         } else if (s.equals("8")) {
-            LogIt.log("Parsed serial setting: " + s + "=DATABITS_" + s);
+            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
             return SerialPort.DATABITS_8; 
         } else {
-            LogIt.log(Level.SEVERE, "Data bits value of " + s + " not supported");
+            log.severe("Data bits value of " + s + " not supported");
         }
         return -1;
     }
@@ -147,16 +150,16 @@ public class SerialUtilities {
     public static int parseStopBits(String s) {
         s = s.trim();
         if (s.equals("1") || s.equals("")) {
-            LogIt.log("Parsed serial setting: " + s + "=STOPBITS_" + s);
+            log.info("Parsed serial setting: " + s + "=STOPBITS_" + s);
             return SerialPort.STOPBITS_1;
         } else if (s.equals("2")) {
-            LogIt.log("Parsed serial setting: " + s + "=STOPBITS_" + s);
+            log.info("Parsed serial setting: " + s + "=STOPBITS_" + s);
             return SerialPort.STOPBITS_2;
         } else if (s.equals("1.5") || s.equals("1_5")) {
-            LogIt.log("Parsed serial setting: " + s + "=STOPBITS_" + s);
+            log.info("Parsed serial setting: " + s + "=STOPBITS_" + s);
             return SerialPort.STOPBITS_1_5;
         } else {
-            LogIt.log(Level.SEVERE, "Stop bits value of " + s + " could not be parsed");
+            log.severe("Stop bits value of " + s + " could not be parsed");
         }
         return -1;
     }
@@ -175,22 +178,22 @@ public class SerialUtilities {
     public static int parseFlowControl(String s) {
         s = s.trim();
         if (s.equals("n") || s.equals("none") || s.equals("")) {
-            LogIt.log("Parsed serial setting: " + s + "=FLOWCONTROL_NONE");
+            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_NONE");
             return SerialPort.FLOWCONTROL_NONE;
         } else if (s.equals("x") || s.equals("xonxoff") || s.equals("xonxoff_out")) {
-            LogIt.log("Parsed serial setting: " + s + "=FLOWCONTROL_XONXOFF_OUT");
+            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_XONXOFF_OUT");
             return SerialPort.FLOWCONTROL_XONXOFF_OUT;
         } else if (s.equals("xonxoff_in")) {
-            LogIt.log("Parsed serial setting: " + s + "=FLOWCONTROL_XONXOFF_IN");
+            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_XONXOFF_IN");
             return SerialPort.FLOWCONTROL_XONXOFF_IN;
         } else if (s.equals("p") || s.equals("rtscts") || s.equals("rtscts_out")) {
-            LogIt.log("Parsed serial setting: " + s + "=FLOWCONTROL_RTSCTS_OUT");
+            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_RTSCTS_OUT");
             return SerialPort.FLOWCONTROL_RTSCTS_OUT;
         } else if (s.equals("rtscts_in")) {
-            LogIt.log("Parsed serial setting: " + s + "=FLOWCONTROL_RTSCTS_IN");
+            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_RTSCTS_IN");
             return SerialPort.FLOWCONTROL_RTSCTS_IN;
         } else {
-            LogIt.log(Level.SEVERE, "Flow control value of " + s + " could not be parsed");
+            log.severe("Flow control value of " + s + " could not be parsed");
         }
         return -1;
     }
@@ -206,22 +209,22 @@ public class SerialUtilities {
     public static int parseParity(String s) {
         s = s.trim().toLowerCase();
         if (s.startsWith("n") || s.equals("")) {
-            LogIt.log("Parsed serial setting: " + s + "=PARITY_NONE");
+            log.info("Parsed serial setting: " + s + "=PARITY_NONE");
             return SerialPort.PARITY_NONE;
         } else if (s.startsWith("e")) {
-            LogIt.log("Parsed serial setting: " + s + "=PARITY_EVEN");
+            log.info("Parsed serial setting: " + s + "=PARITY_EVEN");
             return SerialPort.PARITY_EVEN;
         } else if (s.equals("o")) {
-            LogIt.log("Parsed serial setting: " + s + "=PARITY_ODD");
+            log.info("Parsed serial setting: " + s + "=PARITY_ODD");
             return SerialPort.PARITY_ODD;
         } else if (s.equals("m")) {
-            LogIt.log("Parsed serial setting: " + s + "=PARITY_MARK");
+            log.info("Parsed serial setting: " + s + "=PARITY_MARK");
             return SerialPort.PARITY_MARK; 
         } else if (s.equals("s")) {
-            LogIt.log("Parsed serial setting: " + s + "=PARITY_SPACE");
+            log.info("Parsed serial setting: " + s + "=PARITY_SPACE");
             return SerialPort.PARITY_SPACE; 
         } else {
-            LogIt.log(Level.SEVERE, "Data bits value of " + s + " not supported");
+            log.severe("Data bits value of " + s + " not supported");
         }
         return -1;
     }
@@ -240,7 +243,7 @@ public class SerialUtilities {
         try {
             baud = Integer.decode(s.trim());
         } catch (Exception ex) {
-            LogIt.log(Level.SEVERE, "Cannot parse baud rate value. " + ex.getMessage());
+            log.severe("Cannot parse baud rate value. " + ex.getMessage());
             return -1;
         }
 
@@ -259,10 +262,10 @@ public class SerialUtilities {
             case 115200:
             case 128000:
             case 256000:
-                LogIt.log(String.format("Parsed serial setting: %d=BAUDRATE_%d", baud, baud));
+                log.info(String.format("Parsed serial setting: %d=BAUDRATE_%d", baud, baud));
                 break;
             default:
-                LogIt.log(Level.SEVERE, "Baud rate of " + s + " not supported");
+                log.severe("Baud rate of " + s + " not supported");
                 baud = -1;
         }
 

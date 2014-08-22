@@ -28,9 +28,7 @@
 
 package qz;
 
-import qz.common.LogIt;
-
-import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Renamed to PrintApplet version 1.2.0+
@@ -41,7 +39,7 @@ public class RawPrintApplet extends PrintApplet {
     @Deprecated
     public RawPrintApplet() {
         super();
-        LogIt.log(Level.WARNING, "Since version 1.2.0, use of \"" +
+        Logger.getLogger(RawPrintApplet.class.getName()).warning("Since version 1.2.0, use of \"" +
                 this.getClass().getCanonicalName() + "\" has been renamed and " +
                 "is now deprecated and will be removed in future versions." +
                 "  Please use \"" + PrintApplet.class.getCanonicalName() + "\" instead. " +

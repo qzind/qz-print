@@ -23,7 +23,6 @@ package qz.utils;
 
 import qz.common.Base64;
 import qz.common.ByteArrayBuilder;
-import qz.common.LogIt;
 import qz.common.Constants;
 
 import java.io.ByteArrayOutputStream;
@@ -34,7 +33,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.text.StringCharacterIterator;
 import java.util.LinkedList;
-import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Place for all raw static byte conversion functions. Especially useful for
@@ -45,6 +44,8 @@ import java.util.logging.Level;
  * @author Tres Finocchiaro
  */
 public class ByteUtilities {
+
+    private static final Logger log = Logger.getLogger(ByteUtilities.class.getName());
 
     /**
      * Converts typed Hex (<code>String</code> base 16) to <code>byte[]</code>.
@@ -231,7 +232,7 @@ public class ByteUtilities {
         } else if (o instanceof String) {
             return "".equals(o);
         } else {
-            LogIt.log(Level.WARNING, "Unchecked blank comparison.");
+            log.warning("Unchecked blank comparison.");
             return o == null;
         }
     }

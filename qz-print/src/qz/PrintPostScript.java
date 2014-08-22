@@ -24,7 +24,6 @@ package qz;
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
 import com.sun.pdfview.PDFRenderer;
-import qz.common.LogIt;
 import qz.printer.PaperFormat;
 
 import javax.imageio.ImageIO;
@@ -41,7 +40,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
+import java.util.logging.Logger;
 
 
 /**
@@ -49,6 +48,8 @@ import java.util.logging.Level;
  * @author Tres Finocchiaro, Anton Mezerny
  */
 public class PrintPostScript implements Printable {
+
+    public static final Logger log = Logger.getLogger(PrintPostScript.class.getName());
 
     private final AtomicReference<BufferedImage> bufferedImage = new AtomicReference<BufferedImage>(null);
     private final AtomicReference<ByteBuffer> bufferedPDF = new AtomicReference<ByteBuffer>(null);
@@ -101,7 +102,7 @@ public class PrintPostScript implements Printable {
         // *Note:  Computer screen dpi's can change, but print consistancy 
         // cross-platform is more important than accuracy, so we'll always assume 72dpi
         if (paperSize.get() != null) {
-            LogIt.log("A custom paper size was supplied.");
+            log.info("A custom paper size was supplied.");
             attr.add(paperSize.get().getOrientationRequested());
             if (paperSize.get().isAutoSize()) {
                 paperSize.get().setAutoSize(bufferedImage.get());
@@ -110,7 +111,7 @@ public class PrintPostScript implements Printable {
                     paperSize.get().getAutoHeight(), paperSize.get().getUnits()));
 
         } else {
-            LogIt.log("A custom paper size was not supplied.");
+            log.warning("A custom paper size was not supplied.");
             attr.add(new MediaPrintableArea(0f, 0f, width / DPI, height / DPI, MediaSize.INCH));
         }
 
@@ -122,7 +123,7 @@ public class PrintPostScript implements Printable {
         
         // If copies are specified, handle them prior to printing
         if (copies.get() != null && copies.get() > 1) {
-            LogIt.log("Copies specified: " + copies.get());
+            log.info("Copies specified: " + copies.get());
             // Does the DocFlavor and Printer support "Copies" (this lies)
             //if (printServiceAtomicReference.get().isAttributeCategorySupported(Copies.class)) {
             //    LogIt.log("Printer supports copies");
@@ -188,7 +189,7 @@ public class PrintPostScript implements Printable {
         }
         try {
             Class.forName(className);
-            LogIt.log("Using PDF renderer: " + className);
+            log.info("Using PDF renderer: " + className);
             pdfClass = className;
             return true;
         } catch (Exception e) {
@@ -545,18 +546,18 @@ public class PrintPostScript implements Printable {
 
     @SuppressWarnings("unchecked")
     private void logSupportedPrinterFeatures(PrinterJob job) {
-        LogIt.log(Level.INFO, "Supported Printing Attributes:");
+        log.info("Supported Printing Attributes:");
         for (Class<?> cl : job.getPrintService().getSupportedAttributeCategories()) {
-            LogIt.log(Level.INFO, "   Attr type = " + cl + "=" + job.getPrintService().getDefaultAttributeValue((Class<? extends Attribute>) cl));
+            log.info("   Attr type = " + cl + "=" + job.getPrintService().getDefaultAttributeValue((Class<? extends Attribute>) cl));
         }
     }
 
     public static void logSizeCalculations(PaperFormat format, float width, float height) {
         if (format != null) {
-            LogIt.log("Scaling image " + width + "px x " + height + "px to destination "
+            log.info("Scaling image " + width + "px x " + height + "px to destination "
                     + format.toString());
         } else {
-            LogIt.log("Using image at \"natural\" resolution  " + width + "px " + height
+            log.info("Using image at \"natural\" resolution  " + width + "px " + height
                     + "px scaled to " + (int) (width / DPI) + "in x " + (int) (height / DPI)
                     + "in (assumes 72dpi)");
         }

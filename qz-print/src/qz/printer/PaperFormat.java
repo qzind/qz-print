@@ -24,13 +24,11 @@
 
 package qz.printer;
 
-import qz.common.LogIt;
-
 import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.OrientationRequested;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
-import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Represents paper size in inches or millimeters with built in parsers.  Default
@@ -40,6 +38,9 @@ import java.util.logging.Level;
 @SuppressWarnings("UnusedDeclaration")
 /*Suppressing all UnusedDeclaration warnings because they may be used outside of the project scope*/
 public class PaperFormat {
+
+    private static final Logger log = Logger.getLogger(PaperFormat.class.getName());
+
     private static final int REVERSE_PORTRAIT = 9238;
     
     private float width = 8.5f;
@@ -57,7 +58,7 @@ public class PaperFormat {
     public PaperFormat(float width, float height) {
         this.width = width;
         this.height = height;
-        LogIt.log("Warning, a unit was not specified.  Defaulting to [" + this.getUnitDescription() + "]");
+        log.warning("A unit was not specified.  Defaulting to [" + this.getUnitDescription() + "]");
     }
 
     public PaperFormat(float width, float height, int units) {
@@ -75,7 +76,7 @@ public class PaperFormat {
             setAutoSize(bufferedImage.getWidth(), bufferedImage.getHeight(), this);
             autoSize = true;
         } else {
-            LogIt.log(Level.WARNING, "Image specified is empty.");
+            log.warning("Image specified is empty.");
         }
     }
     
@@ -95,7 +96,7 @@ public class PaperFormat {
         } else if (orientation.equalsIgnoreCase("reverse-portrait") || orientation.equalsIgnoreCase("reverse_portrait") || orientation.equalsIgnoreCase("reverse portrait")) {
             return PaperFormat.REVERSE_PORTRAIT;
         } else {
-            LogIt.log(Level.WARNING, "Orientation specified \"" + orientation + "\" not recognized.");
+            log.warning("Orientation specified \"" + orientation + "\" not recognized.");
             return -1;
         }
     }

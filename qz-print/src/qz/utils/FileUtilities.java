@@ -28,7 +28,6 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import qz.common.ByteArrayBuilder;
-import qz.common.LogIt;
 import qz.common.Constants;
 import qz.exception.NullCommandException;
 
@@ -38,6 +37,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.util.logging.Logger;
 
 
 /**
@@ -45,6 +45,9 @@ import java.net.URL;
  * @author Tres Finocchiaro
  */
 public class FileUtilities {
+
+    private static final Logger log = Logger.getLogger(FileUtilities.class.getName());
+
     public static final String[] badExtensions = new String[]{
         "exe", "pif", "paf", "application", "msi", "com", "cmd", "bat", "lnk", // Windows Executable program or script
         "gadget", // Windows desktop gadget
@@ -122,7 +125,7 @@ public class FileUtilities {
             db = dbf.newDocumentBuilder();
             doc = db.parse(url);
             doc.getDocumentElement().normalize();
-            LogIt.log("Root element " + doc.getDocumentElement().getNodeName());
+            log.info("Root element " + doc.getDocumentElement().getNodeName());
             NodeList nodeList = doc.getElementsByTagName(dataTag);
             if (nodeList.getLength() > 0) {
                 return nodeList.item(0).getTextContent();

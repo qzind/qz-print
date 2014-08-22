@@ -24,17 +24,17 @@
 
 package qz.printer;
 
-import qz.common.LogIt;
-
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.PrintServiceAttributeSet;
 import javax.print.attribute.standard.PrinterName;
-import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PrintServiceMatcher {
+
+    private static final Logger log = Logger.getLogger(PrintServiceMatcher.class.getName());
 
     private static PrintService[] printers = null;
     private static String printerListing = "";
@@ -66,8 +66,8 @@ public class PrintServiceMatcher {
         // Get print service list
         getPrinterList();
 
-        LogIt.log(Level.INFO, "Found " + printers.length + " attached printers.");
-        LogIt.log(Level.INFO, "Printer specified: " + printerName);
+        log.info("Found " + printers.length + " attached printers.");
+        log.info("Printer specified: " + printerName);
 
         Pattern p1 = Pattern.compile("\\b" + printerName + "\\b", Pattern.CASE_INSENSITIVE);
         Pattern p2 = Pattern.compile("\\b" + printerName, Pattern.CASE_INSENSITIVE);
@@ -83,30 +83,30 @@ public class PrintServiceMatcher {
 
             if (m1.find()) {
                 exact = ps;
-                LogIt.log("Printer name match: " + sysPrinter);
+                log.info("Printer name match: " + sysPrinter);
             } else if (m2.find()) {
                 begins = ps;
-                LogIt.log("Printer name beginning match: " + sysPrinter);
+                log.info("Printer name beginning match: " + sysPrinter);
             } else if (m3.find()) {
                 partial = ps;
-                LogIt.log("Printer name partial match: " + sysPrinter);
+                log.info("Printer name partial match: " + sysPrinter);
             }
         }
         
         // Return closest match
         if (exact != null) {
-            LogIt.log("Using best match: " + exact.getName());
+            log.info("Using best match: " + exact.getName());
             return exact;
         } else if (begins != null) {
-            LogIt.log("Using best match: " + begins.getName());
+            log.info("Using best match: " + begins.getName());
             return begins;
         } else if (partial != null) {
-            LogIt.log("Using best match: " + partial.getName());
+            log.info("Using best match: " + partial.getName());
             return partial;
         }
 
         // Couldn't find printer
-        LogIt.log(Level.WARNING, "Printer not found: " + printerName);
+        log.warning("Printer not found: " + printerName);
         return null;
     }
 
