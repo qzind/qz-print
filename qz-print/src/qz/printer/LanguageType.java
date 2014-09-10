@@ -67,7 +67,7 @@ public enum LanguageType {
      * @param languageType language type of the printer
      * @return true if language type flips black and white pixels
      */
-    public static boolean requiresImageOutputInverted(LanguageType languageType) {
+    private static boolean requiresImageOutputInverted(LanguageType languageType) {
         switch (languageType) {
             case EPL:
             case EPL2:
@@ -94,7 +94,7 @@ public enum LanguageType {
      * @param languageType language type of the printer
      * @return true if the printer requires image width validation
      */
-    public static boolean requiresImageWidthValidated(LanguageType languageType) {
+    private static boolean requiresImageWidthValidated(LanguageType languageType) {
         switch (languageType) {
             case CPCL:
             case EPL:

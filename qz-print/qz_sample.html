@@ -44,7 +44,7 @@
 			if (listAllPrinters) {
 				var printersCSV = qz.getPrinters();
 				var printers = printersCSV.split(",");
-				for (p in printers) {
+				for (var p in printers) {
 					alert(printers[p]);
 				}
 				listAllPrinters = false;
@@ -332,7 +332,7 @@
                // Sample only: If a PDF printer isn't installed, try the Microsoft XPS Document
                // Writer.  Replace this with your printer name.
                var printers = applet.getPrinters().split(",");
-               for (i in printers) {
+               for (var i in printers) {
 		    if (printers[i].indexOf("Microsoft XPS") != -1 || 
 			printers[i].indexOf("PDF") != -1) {
 			   applet.setPrinter(i);      
@@ -380,7 +380,7 @@
                // Sample only: If a PDF printer isn't installed, try the Microsoft XPS Document
                // Writer.  Replace this with your printer name.
                var printers = applet.getPrinters().split(",");
-               for (i in printers) {
+               for (var i in printers) {
 		    if (printers[i].indexOf("Microsoft XPS") != -1 || 
 			printers[i].indexOf("PDF") != -1) {
 			   applet.setPrinter(i);      
@@ -422,7 +422,7 @@
                // Sample only: If a PDF printer isn't installed, try the Microsoft XPS Document
                // Writer.  Replace this with your printer name.
                var printers = applet.getPrinters().split(",");
-               for (i in printers) {
+               for (var i in printers) {
 		    if (printers[i].indexOf("Microsoft XPS") != -1 || 
 			printers[i].indexOf("PDF") != -1) {
 			   applet.setPrinter(i);      
@@ -646,7 +646,7 @@
                }
 
                var printers = applet.getPrinters().split(",");
-               for (i in printers) {
+               for (var i in printers) {
 		    if (printers[i].indexOf("Microsoft XPS") != -1 || 
 			printers[i].indexOf("PDF") != -1) {
 			   applet.setPrinter(i);      
@@ -696,7 +696,7 @@
    <script type="text/javascript" src="js/html2canvas.js"></script>
    <script type="text/javascript" src="js/jquery.plugin.html2canvas.js"></script>
    </head>
-   <body id="body" style="font-family: calibri, Garamond, 'Comic Sans'; background: url(img/logo_orange.png); background-repeat: no-repeat;">
+   <body id="body" style="font-family: calibri, Garamond, 'Comic Sans', cursive; background: url(img/logo_orange.png) no-repeat;">
    <p align="right">
    <applet style="border: none;" name="jzebra" code="jzebra.PrintApplet.class" archive="./qz-print.jar" width="100px" height="100px"></applet>
    </p>
@@ -755,7 +755,7 @@
    -->
    
    </ul>
-   <h3>Misc</h2>
+   <h3>Misc</h3>
    <ul><li><a href="javascript:allowMultiple();">Allow Multiple Applets</a></li></ul>
    </td></tr></table>
    </body>

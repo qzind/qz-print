@@ -48,7 +48,7 @@ public class FileUtilities {
 
     private static final Logger log = Logger.getLogger(FileUtilities.class.getName());
 
-    public static final String[] badExtensions = new String[]{
+    private static final String[] badExtensions = new String[]{
         "exe", "pif", "paf", "application", "msi", "com", "cmd", "bat", "lnk", // Windows Executable program or script
         "gadget", // Windows desktop gadget
         "msp", "mst", // Microsoft installer patch/transform file

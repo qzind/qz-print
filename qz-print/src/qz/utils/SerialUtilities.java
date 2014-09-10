@@ -25,7 +25,7 @@ public class SerialUtilities {
     private final static int LINUX = 2;
     private final static int OSX = 3;
     
-    public static String winCmd = "%windir%\\System32\\reg.exe "
+    public static final String winCmd = "%windir%\\System32\\reg.exe "
             + "query \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Ports\" |find \"?\"";
     
     public static int[] getSystemAttributes(String portName) throws IOException, SerialException {
