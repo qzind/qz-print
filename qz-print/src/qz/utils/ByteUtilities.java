@@ -240,7 +240,7 @@ public class ByteUtilities {
         return path.startsWith("data:image/") && path.contains(";base64,");
     }
 
-    public static boolean isBase64PDF(String path) {
+    private static boolean isBase64PDF(String path) {
         return path.startsWith("data:application/pdf;base64,");
     }
     

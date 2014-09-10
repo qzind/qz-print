@@ -239,7 +239,7 @@
 			window['qzDoneFinding'] = function() {
 				// Get the CSV listing of attached printers
 				var printers = qz.getPrinters().split(',');
-				for (i in printers) {
+				for (var i in printers) {
 					alert(printers[i] ? printers[i] : 'Unknown');      
 				}
 				
@@ -805,7 +805,7 @@
 			// Automatically called when "qz.findPorts()" is finished
 			window['qzDoneFindingPorts'] = function() {
 				var ports = qz.getPorts().split(",");
-				for (p in ports) {
+				for (var p in ports) {
 					if (p == 0) {
 							document.getElementById("port_name").value = ports[p];
 					}

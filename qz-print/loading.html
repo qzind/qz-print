@@ -7,7 +7,7 @@
 // Applet constants.  These shouldn't ever change unless you recompile qz-print.jar
 var JAVA_MIN_VER = '1.5';
 var APPLET_NAME = 'QZ Print Plugin';
-var APPLET_ID = 'qz'
+var APPLET_ID = 'qz';
 var APPLET_URL = './qz-print.jar';
 var APPLET_CLASS = 'qz.PrintApplet.class';
 
@@ -88,5 +88,5 @@ function setStatus(text) {
 </script>
 <h1 id="heading">QZ Print Plugin</h1>
 <a id="status"><img src="img/loading_red.gif"><br>Please wait... (Loading is slow on some browsers)...</a>
-<br><button type="button" id="button" disabled="disabled" onClick="javascript:qz.print()">Print</button>
+<br><button type="button" id="button" disabled="disabled" onClick="qz.print()">Print</button>
 <div id="applet"></div></body></html>
