@@ -60,7 +60,6 @@ public class PrintRaw {
 
     public static final Logger log = Logger.getLogger(PrintRaw.class.getName());
 
-    private final static String ERR = "qz.PrintRaw.print() failed.";
     private final AtomicReference<DocFlavor> docFlavor = new AtomicReference<DocFlavor>(DocFlavor.BYTE_ARRAY.AUTOSENSE);
     private final AtomicReference<DocAttributeSet> docAttr = new AtomicReference<DocAttributeSet>(null);
     private final AtomicReference<PrintRequestAttributeSet> reqAttr = new AtomicReference<PrintRequestAttributeSet>(new HashPrintRequestAttributeSet());
@@ -198,9 +197,9 @@ public class PrintRaw {
      */
     public boolean print(byte[] data) throws IOException, PrintException, InterruptedException {
         if (printServiceAtomicReference.get() == null) {
-            throw new NullPrintServiceException(ERR);
+            throw new NullPrintServiceException("qz.PrintRaw.print() failed.");
         } else if (rawCmds.get() == null) {
-            throw new NullCommandException(ERR);
+            throw new NullCommandException("qz.PrintRaw.print() failed.");
         } else if (outputPath.get() != null) {
             return printToFile();
         } else if (socketHost.get() != null) {

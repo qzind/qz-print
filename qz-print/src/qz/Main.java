@@ -24,7 +24,7 @@
 
 package qz;
 
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 /**
  * Cannot be run interactively.  Display error and exit.
