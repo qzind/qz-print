@@ -25,38 +25,16 @@
     <autoscroll-to-editor value="false" />
     <autoscroll-from-editor value="true" />
     <show-object-properties value="true" />
+    <loaded-nodes />
   </component>
   <component name="DBNavigator.Project.MethodExecutionManager">
     <method-browser />
     <execution-history>
-      <group-entries value="false" />
+      <group-entries value="true" />
       <execution-inputs />
     </execution-history>
   </component>
   <component name="DBNavigator.Project.Settings">
-    <general-settings>
-      <regional-settings>
-        <date-format value="MEDIUM" />
-        <number-format value="UNGROUPED" />
-        <locale value="SYSTEM_DEFAULT" />
-        <use-custom-formats value="false" />
-      </regional-settings>
-      <environment>
-        <environment-types>
-          <environment-type id="development" name="Development" description="Development environment" color="-2430209/-12296320" />
-          <environment-type id="integration" name="Integration" description="Integration environment" color="-2621494/-12163514" />
-          <environment-type id="production" name="Production" description="Productive environment" color="-11574/-10271420" />
-          <environment-type id="other" name="Other" description="" color="-1576/-10724543" />
-        </environment-types>
-        <visibility-settings>
-          <connection-tabs value="true" />
-          <dialog-headers value="true" />
-          <object-editor-tabs value="true" />
-          <script-editor-tabs value="false" />
-          <execution-result-tabs value="true" />
-        </visibility-settings>
-      </environment>
-    </general-settings>
     <browser-settings>
       <general>
         <display-mode value="TABBED" />
@@ -131,6 +109,10 @@
         <visible value="true" />
         <editable value="false" />
       </tracking-columns>
+      <sorting>
+        <nulls-first value="true" />
+        <max-sorting-columns value="4" />
+      </sorting>
     </dataset-grid-settings>
     <dataset-editor-settings>
       <text-editor-popup>
@@ -335,6 +317,10 @@
         <execution-timeout value="20" />
         <focus-result value="false" />
       </statement-execution>
+      <statement-execution>
+        <execution-timeout value="20" />
+        <debug-execution-timeout value="600" />
+      </statement-execution>
       <compiler>
         <compile-type value="KEEP" />
         <always-show-controls value="false" />
@@ -357,8 +343,33 @@
         <statement-postfix value="/" />
         <lookup-ddl-files value="true" />
         <create-ddl-files value="false" />
+        <use-qualified-names value="false" />
+        <make-scripts-rerunnable value="true" />
       </general>
     </ddl-file-settings>
+    <general-settings>
+      <regional-settings>
+        <date-format value="MEDIUM" />
+        <number-format value="UNGROUPED" />
+        <locale value="SYSTEM_DEFAULT" />
+        <use-custom-formats value="false" />
+      </regional-settings>
+      <environment>
+        <environment-types>
+          <environment-type id="development" name="Development" description="Development environment" color="-2430209/-12296320" />
+          <environment-type id="integration" name="Integration" description="Integration environment" color="-2621494/-12163514" />
+          <environment-type id="production" name="Production" description="Productive environment" color="-11574/-10271420" />
+          <environment-type id="other" name="Other" description="" color="-1576/-10724543" />
+        </environment-types>
+        <visibility-settings>
+          <connection-tabs value="true" />
+          <dialog-headers value="true" />
+          <object-editor-tabs value="true" />
+          <script-editor-tabs value="false" />
+          <execution-result-tabs value="true" />
+        </visibility-settings>
+      </environment>
+    </general-settings>
   </component>
 </project>
 
