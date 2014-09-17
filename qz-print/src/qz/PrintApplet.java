@@ -426,7 +426,7 @@ public class PrintApplet extends Applet implements Runnable {
      * @param s message to be sent
      * @return true if successful
      */
-    public boolean notifyBrowser(String function, String s) {
+    private boolean notifyBrowser(String function, String s) {
         return notifyBrowser(function, new Object[]{s});
     }
 
@@ -441,7 +441,7 @@ public class PrintApplet extends Applet implements Runnable {
      * function
      * @return true if successful
      */
-    public boolean notifyBrowser(String function, Object[] o) {
+    private boolean notifyBrowser(String function, Object[] o) {
         try {
             String type = (String)window.eval("typeof(" + function + ")");
             // Ubuntu doesn't properly raise exceptions when calling invalid
@@ -539,10 +539,18 @@ public class PrintApplet extends Applet implements Runnable {
         return s == null || s.trim().equals("");
     }
 
+    /**
+     * Returns a comma separated list of printer names.
+     * @return
+     */
     public String getPrinters() {
         return PrintServiceMatcher.getPrinterListing();
     }
 
+    /**
+     * Returns a comma separated list of serial ports.
+     * @return
+     */
     public String getPorts() {
         return getSerialIO().getSerialPorts();
     }
@@ -1063,7 +1071,7 @@ public class PrintApplet extends Applet implements Runnable {
         return printRaw;
     }
     
-    public NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
+    private NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
         if (this.networkUtilities == null) {
             this.networkUtilities = new NetworkUtilities();
         }
@@ -1135,7 +1143,7 @@ public class PrintApplet extends Applet implements Runnable {
      *
      * @return PrintService object
      */
-    public PrintService getPrintService() {
+    private PrintService getPrintService() {
         return ps;
     }
 
@@ -1286,7 +1294,7 @@ public class PrintApplet extends Applet implements Runnable {
         return this.charset.displayName();
     }
 
-    public Charset getCharset() {
+    private Charset getCharset() {
         return this.charset;
     }
 
@@ -1319,7 +1327,7 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
 
-    public PaperFormat getPaperSize() {
+    private PaperFormat getPaperSize() {
         return paperSize;
     }
 
