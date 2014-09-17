@@ -249,6 +249,7 @@ public class ByteUtilities {
      * Reads a binary file (i.e. PDF) from URL to a ByteBuffer. This is later
      * appended to the applet, but needs a renderer capable of printing it to
      * PostScript
+<<<<<<< HEAD:qz-print/src/qz/utils/ByteUtilities.java
 <<<<<<< HEAD
      *
      * @param file
@@ -257,6 +258,10 @@ public class ByteUtilities {
      * @param file URL string to location of file
      * @return byte array containing file content
 >>>>>>> Moved some classes into a better organization and cleaned up some typos
+=======
+     * @param file URL string to location of file
+     * @return byte array containing file content
+>>>>>>> 33075ade54fb230071c450ef41e37dfbe2368e95:qz-print/src/qz/utils/ByteUtilities.java
      * @throws IOException
      * @throws MalformedURLException
      */
