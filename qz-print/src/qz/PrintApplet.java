@@ -427,20 +427,17 @@ public class PrintApplet extends Applet implements Runnable {
      * @param s message to be sent
      * @return true if successful
      */
-    public boolean notifyBrowser(String function, String s) {
+    private boolean notifyBrowser(String function, String s) {
         return notifyBrowser(function, new Object[]{s});
     }
 
     /**
-     * Pass an async JavaScript call to <code>window.setTimout()</code> to fix
-     * Google Chrome 36.0, GitHub Bug #33 by calling JavaScript function 
-	 * (i.e. "qzReady()" from the web browser For a period of time, will call 
-	 * "jzebraReady()" as well as "qzReady()" but fail silently on the old 
-	 * "jzebra" prefixed functions. If the "jzebra"
-     * equivalent is used, it will display a deprecation warning.
+     * Override for <code>window.call(String, Object[])</code>
+	 * Passes an async JavaScript call to <code>window.setTimout()</code> to fix
+     * Google Chrome 36.0 (GitHub Bug #33)
      *
      * @param function The JavasScript function to call
-     * @param o The parameter or array of parameters to send to the JavaScript
+     * @param params The parameter or array of parameters to send to the JavaScript
      * function
      * @return true if successful
      */
@@ -462,23 +459,23 @@ public class PrintApplet extends Applet implements Runnable {
         Object[] p = new Object[]{escapedString, 0};
         window.call("setTimeout", p);
         
-         LogIt.log(Level.INFO, "Successfully called JavaScript function\n" +
-                 "    setTimeout(" + escapedString + ", 0)"); 
+        log.info("Successfully called JavaScript function \""
+                    + function + "(...)\"...");
     }
 
 
-/**
- * Calls JavaScript function (i.e. "qzReady()" from the web browser For a period
- * of time, will call "jzebraReady()" as well as "qzReady()" but fail silently
- * on the old "jzebra" prefixed functions. If the "jzebra" equivalent is used,
- * it will display a deprecation warning.
- *
- * @param function The JavasScript function to call
- * @param o The parameter or array of parameters to send to the JavaScript
- * function
- * @return
- */
-public boolean notifyBrowser(String function, Object[] o) {
+	/**
+	 * Calls JavaScript function (i.e. "qzReady()" from the web browser For a period
+	 * of time, will call "jzebraReady()" as well as "qzReady()" but fail silently
+	 * on the old "jzebra" prefixed functions. If the "jzebra" equivalent is used,
+	 * it will display a deprecation warning.
+	 *
+	 * @param function The JavasScript function to call
+	 * @param params The parameter or array of parameters to send to the JavaScript
+	 * function
+	 * @return
+	 */
+    private boolean notifyBrowser(String function, Object[] params) {
         try {
             String type = (String)window.eval("typeof(" + function + ")");
             // Ubuntu doesn't properly raise exceptions when calling invalid
@@ -488,16 +485,10 @@ public boolean notifyBrowser(String function, Object[] o) {
                         + "exist or is not a function.");
             }
             
-            call(function, o);
-            //window.call(function, o);
-            
-<<<<<<< HEAD
-            //LogIt.log(Level.INFO, "Successfully called JavaScript function \""
-            //        + function + "(...)\"...");
-=======
+            call(function, params);
+
             log.info("Successfully called JavaScript function \""
                     + function + "(...)\"...");
->>>>>>> Changed logging to use local final class instead of LogIt class.
             if (function.startsWith("jzebra")) {
                 log.warning("JavaScript function \"" + function
                         + "(...)\" is deprecated and will be removed in future releases. "
@@ -506,15 +497,14 @@ public boolean notifyBrowser(String function, Object[] o) {
             }
             return true;
         } catch (Throwable e) {
-        //} catch (Throwable t) {
             boolean success = false;
             if (function.startsWith("qz")) {
                 // Try to call the old jzebra function
-                success = notifyBrowser(function.replaceFirst("qz", "jzebra"), o);
+                success = notifyBrowser(function.replaceFirst("qz", "jzebra"), params);
             }
             if (function.equals("jebraDoneFinding")) {
                 // Try to call yet another deprecated jzebra function
-                success = notifyBrowser("jzebraDoneFindingPrinters", o);
+                success = notifyBrowser("jzebraDoneFindingPrinters", params);
             }
             // Warn about the function missing only if it wasn't recovered using the old jzebra name
             if (!success && !function.startsWith("jzebra")) {
@@ -582,10 +572,18 @@ public boolean notifyBrowser(String function, Object[] o) {
         return s == null || s.trim().equals("");
     }
 
+    /**
+     * Returns a comma separated list of printer names.
+     * @return
+     */
     public String getPrinters() {
         return PrintServiceMatcher.getPrinterListing();
     }
 
+    /**
+     * Returns a comma separated list of serial ports.
+     * @return
+     */
     public String getPorts() {
         return getSerialIO().getSerialPorts();
     }
@@ -1106,7 +1104,7 @@ public boolean notifyBrowser(String function, Object[] o) {
         return printRaw;
     }
     
-    public NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
+    private NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
         if (this.networkUtilities == null) {
             this.networkUtilities = new NetworkUtilities();
         }
@@ -1178,7 +1176,7 @@ public boolean notifyBrowser(String function, Object[] o) {
      *
      * @return PrintService object
      */
-    public PrintService getPrintService() {
+    private PrintService getPrintService() {
         return ps;
     }
 
@@ -1329,7 +1327,7 @@ public boolean notifyBrowser(String function, Object[] o) {
         return this.charset.displayName();
     }
 
-    public Charset getCharset() {
+    private Charset getCharset() {
         return this.charset;
     }
 
@@ -1362,7 +1360,7 @@ public boolean notifyBrowser(String function, Object[] o) {
         }
     }
 
-    public PaperFormat getPaperSize() {
+    private PaperFormat getPaperSize() {
         return paperSize;
     }
 
