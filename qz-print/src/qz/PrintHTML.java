@@ -117,7 +117,7 @@ public class PrintHTML extends JLabel implements Printable {
     }
     
     public void setPrintParameters(PrintApplet applet) {
-        this.ps.set(applet.getPrintService());
+        // RKC: PROBLEM >>> this.ps.set(applet.getPrintService());
         this.jobName.set(applet.getJobName().replace(" ___ ", " HTML "));
         if (applet.getCopies() > 1) {
             setCopies(applet.getCopies());

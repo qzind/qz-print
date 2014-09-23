@@ -506,9 +506,9 @@ public class PrintRaw {
     }
 
     public void setPrintParameters(PrintApplet rawPrintApplet) {
-        this.setPrintService(rawPrintApplet.getPrintService());
+        // RKC: PROBLEM >>> this.setPrintService(rawPrintApplet.getPrintService());
         this.setJobName(rawPrintApplet.getJobName().replace(" ___ ", " Raw "));
-        this.setCharset(rawPrintApplet.getCharset());
+        // RKC: PROBLEM >>> this.setCharset(rawPrintApplet.getCharset());
         this.setAlternatePrinting(rawPrintApplet.isAlternatePrinting());
         if (rawPrintApplet.getCopies() > 0) {
             setCopies(rawPrintApplet.getCopies());

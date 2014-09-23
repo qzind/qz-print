@@ -1,10 +1,14 @@
 package qz.ws;
 
+import com.sun.deploy.util.StringUtils;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
 import qz.PrintApplet;
 
+import java.lang.reflect.Method;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Created by robert on 9/9/2014.
@@ -34,77 +38,120 @@ public class PrintSocket {
         System.out.println("Server frame: " + frame.toString());
     }
 
+    private static Set<String> methods = null;
+
     @OnWebSocketMessage
-    public void onMessage(Session session, String text) {
-        if (qz == null) qz = new PrintApplet();
+    public String onMessage(Session session, String text) {
+        if (text == null) return "ERROR:Invalid Message";
+        if (qz == null) { qz = new PrintApplet(); qz.init(); qz.start(); }
         System.out.println("Server message: " + text);
 
-        // Look for space. Text before the space is the command. The rest is data.
-        int space = text.indexOf(' ');
-        if (space > 0) {
-            String command = text.substring(0, space);
-            if ("qzReady".equals(command)) {
-                qz.isActive();
-            } else if ("notReady".equals(command)) {
-                // !qz.isActive();
-            } else if ("isLoaded".equals(command)) {
-                qz.isActive();
-            } else if ("qzDonePrinting".equals(command)) {
-
-            } else if ("useDefaultPrinter".equals(command)) {
-
-            } else if ("printToFile".equals(command)) {
-
-            } else if ("printToHost".equals(command)) {
-
-            } else if ("findPrinter(name)".equals(command)) {
-
-            } else if ("findPrinters".equals(command)) {
-
-            } else if ("printEPL".equals(command)) {
-
-            } else if ("printESCP".equals(command)) {
-
-            } else if ("printZPL".equals(command)) {
-
-            } else if ("printEPCL".equals(command)) {
-
-            } else if ("appendEPCL".equals(command)) {
-
-            } else if ("print64".equals(command)) {
-
-            } else if ("printPages".equals(command)) {
-
-            } else if ("printXML".equals(command)) {
-
-            } else if ("printHex".equals(command)) {
-
-            } else if ("printFile".equals(command)) {
-
-            } else if ("printImage(scaleImage)".equals(command)) {
-
-            } else if ("printPDF".equals(command)) {
-
-            } else if ("printHTML".equals(command)) {
-
-            } else if ("listNetworkInfo".equals(command)) {
-
-            } else if ("printHTML5Page".equals(command)) {
-
-            } else if ("logFeatures".equals(command)) {
-
-            } else if ("useAlternatePrinting".equals(command)) {
-
-            } else if ("listSerialPorts".equals(command)) {
-
-            } else if ("".equals(command)) {
-
-            } else if ("closeSerialPort".equals(command)) {
-
-            } else if ("sendSerialData".equals(command)) {
-
+        // Using Reflection, call correct method on PrintApplet.
+        // Except for listMessages which is not part of PrintApplet
+        if (text.startsWith("listMessages")) {
+            if (methods == null) { methods = new TreeSet<String>(); }
+            try {
+                Class c = PrintApplet.class;
+                Method[] m = c.getDeclaredMethods();
+                for (Method method : m) {
+                    if (method.getModifiers() == 1 &&
+                        method.getDeclaringClass() == PrintApplet.class) {
+                        String name = method.getName();
+                        if (!name.equals("run") &&               // Some methods must not be included
+                            !name.equals("stop") &&
+                            !name.equals("start") &&
+                            !name.equals("call") &&
+                            !name.equals("init") &&
+                            !name.equals("destroy") &&
+                            !name.equals("paint")) {
+                            methods.add(method.getName() + "," +
+                                        method.getReturnType() + "," +
+                                        method.getParameterTypes().length);
+                        }
+                    }
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            if (methods == null) return "ERROR:Unable to list messages";
+            return StringUtils.join(methods, "\t");
+        } else {        // Figure out which method is being called and call it returning any values
+            String [] parts = text.split("\\t");
+            String name = parts[0];
+            int params = Integer.valueOf(parts.length-1);
+            try {
+                Method [] m = PrintApplet.class.getMethods();
+                Method method = null;
+                for (Method mm : m) {
+                    System.out.println(name + ":" + params + "  -  " + mm.getName() + ":" + mm.getParameterTypes().length);
+                    if (mm.getName().equals(name) &&
+                        params == mm.getParameterTypes().length) {
+                            method = mm;
+                    }
+                }
+                String result = "";     // default for void
+                if (method != null) { // We found one that will work. Now call it
+                    // Create array of objects based on number of parameters and their types
+                    Object [] obj = new Object[params];
+                    // We must get the parameter object types correct based on what the method wants
+                    for (int x = 1; x < params + 1; x++) {
+                        obj[x-1] = covertType(parts[x], method.getParameterTypes()[x-1]);
+                    }
+                    // Invoke the method with all the parameters
+                    switch(params) {
+                        case 0:
+                            result = String.valueOf(method.invoke(qz));
+                            break;
+                        case 1:
+                            result = String.valueOf(method.invoke(qz, obj[0]));
+                            break;
+                        case 2:
+                            result = String.valueOf(method.invoke(qz, obj[0], obj[1]));
+                            break;
+                        case 3:
+                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2]));
+                            break;
+                        case 4:
+                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2], obj[3]));
+                            break;
+                        case 5:
+                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2], obj[3], obj[5]));
+                            break;
+                        default:
+                            result = "ERROR:Invalid parameters";
+                    }
+                } else {
+                    return "ERROR:Message not found";
+                }
+                return "RESULT:" + result;
+            } catch (Exception ex) {
+                ex.printStackTrace();
             }
         }
+        return "ERROR:Unknown Message";
     }
 
+    private Object covertType(String data, Object type) {
+        System.out.println(data + " to type " + type);
+        if (type instanceof String) return data;
+        if (type instanceof Integer) return Integer.decode(data);
+        if (type instanceof Float) return Float.parseFloat(data);
+        if (type instanceof Double) return Double.parseDouble(data);
+        String name = String.valueOf(type);
+        if ("int".equals(name)) return Integer.decode(data);
+        if ("float".equals(name)) return Float.parseFloat(data);
+        if ("double".equals(name)) return Double.parseDouble(data);
+        return data;
+    }
+
+    public static void main(String[] args) {
+        PrintSocket ps = new PrintSocket();
+        try { Thread.sleep(2000); } catch (Exception ignore) {}
+        System.out.println(ps.onMessage(null, "listMessages"));
+//        try { Thread.sleep(2000); } catch (Exception ignore) {}
+//        System.out.println(ps.onMessage(null, "getPrinters"));
+        try { Thread.sleep(2000); } catch (Exception ignore) {}
+        System.out.println(ps.onMessage(null, "setPrinter\t1"));
+        System.exit(0);
+    }
 }

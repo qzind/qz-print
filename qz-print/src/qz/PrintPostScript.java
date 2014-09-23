@@ -504,9 +504,9 @@ public class PrintPostScript implements Printable {
     }
 
     public void setPrintParameters(PrintApplet a) {
-        setPrintService(a.getPrintService());
+        // RKC: PROBLEM >>> setPrintService(a.getPrintService());
 //        setMargin(rpa.getPSMargin());
-        setPaperSize(a.getPaperSize());
+        // RKC: PROBLEM >>> setPaperSize(a.getPaperSize());
         setCopies(a.getCopies());
         setJobName(a.getJobName().replace(" ___ ", " PostScript "));
         setLogPostScriptFeatures(a.getLogPostScriptFeatures());
