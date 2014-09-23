@@ -56,6 +56,7 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
+import java.text.StringCharacterIterator;
 import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
@@ -426,33 +427,66 @@ public class PrintApplet extends Applet implements Runnable {
      * @param s message to be sent
      * @return true if successful
      */
-    public boolean notifyBrowser(String function, String s) {
+    private boolean notifyBrowser(String function, String s) {
         return notifyBrowser(function, new Object[]{s});
     }
 
     /**
-     * Calls JavaScript function (i.e. "qzReady()" from the web browser For a
-     * period of time, will call "jzebraReady()" as well as "qzReady()" but fail
-     * silently on the old "jzebra" prefixed functions. If the "jzebra"
-     * equivalent is used, it will display a deprecation warning.
+     * Override for <code>window.call(String, Object[])</code>
+	 * Passes an async JavaScript call to <code>window.setTimout()</code> to fix
+     * Google Chrome 36.0 (GitHub Bug #33)
      *
      * @param function The JavasScript function to call
-     * @param o The parameter or array of parameters to send to the JavaScript
+     * @param params The parameter or array of parameters to send to the JavaScript
      * function
      * @return true if successful
      */
-    public boolean notifyBrowser(String function, Object[] o) {
+    public void call(String function, Object[] params) throws JSException {
+        String escapedString = function + "(";
+        for (Object o : params) {
+            if (o instanceof Integer) {
+                escapedString += ((Integer)o).intValue() + ",";
+            } else if (o instanceof String) {
+                escapedString += "'" + ((String)o) + "'" + ",";
+            }
+        }
+        if (escapedString.endsWith(",")) {
+            escapedString = escapedString.substring(0, escapedString.indexOf(","));
+        }
+
+        escapedString += ")";
+        
+        Object[] p = new Object[]{escapedString, 0};
+        window.call("setTimeout", p);
+        
+        log.info("Successfully called JavaScript function \""
+                    + function + "(...)\"...");
+    }
+
+
+	/**
+	 * Calls JavaScript function (i.e. "qzReady()" from the web browser For a period
+	 * of time, will call "jzebraReady()" as well as "qzReady()" but fail silently
+	 * on the old "jzebra" prefixed functions. If the "jzebra" equivalent is used,
+	 * it will display a deprecation warning.
+	 *
+	 * @param function The JavasScript function to call
+	 * @param params The parameter or array of parameters to send to the JavaScript
+	 * function
+	 * @return
+	 */
+    private boolean notifyBrowser(String function, Object[] params) {
         try {
             String type = (String)window.eval("typeof(" + function + ")");
             // Ubuntu doesn't properly raise exceptions when calling invalid
             // functions, so this is the work-around
             if (!type.equals("function")) {
-                throw new JSException("Object \"" + function + "\" does not "
+                throw new Exception("Object \"" + function + "\" does not "
                         + "exist or is not a function.");
             }
             
-            window.call(function, o);
-            
+            call(function, params);
+
             log.info("Successfully called JavaScript function \""
                     + function + "(...)\"...");
             if (function.startsWith("jzebra")) {
@@ -462,16 +496,15 @@ public class PrintApplet extends Applet implements Runnable {
                         + "(...)\" instead.");
             }
             return true;
-        } catch (JSException e) {
-        //} catch (Throwable t) {
+        } catch (Throwable e) {
             boolean success = false;
             if (function.startsWith("qz")) {
                 // Try to call the old jzebra function
-                success = notifyBrowser(function.replaceFirst("qz", "jzebra"), o);
+                success = notifyBrowser(function.replaceFirst("qz", "jzebra"), params);
             }
             if (function.equals("jebraDoneFinding")) {
                 // Try to call yet another deprecated jzebra function
-                success = notifyBrowser("jzebraDoneFindingPrinters", o);
+                success = notifyBrowser("jzebraDoneFindingPrinters", params);
             }
             // Warn about the function missing only if it wasn't recovered using the old jzebra name
             if (!success && !function.startsWith("jzebra")) {
@@ -539,10 +572,18 @@ public class PrintApplet extends Applet implements Runnable {
         return s == null || s.trim().equals("");
     }
 
+    /**
+     * Returns a comma separated list of printer names.
+     * @return
+     */
     public String getPrinters() {
         return PrintServiceMatcher.getPrinterListing();
     }
 
+    /**
+     * Returns a comma separated list of serial ports.
+     * @return
+     */
     public String getPorts() {
         return getSerialIO().getSerialPorts();
     }
@@ -851,7 +892,7 @@ public class PrintApplet extends Applet implements Runnable {
      * has been called.
      */
     @Override
-    public void init() {
+        public void init() {
         if (!allowMultiple && thisThread.get() != null && thisThread.get().isAlive()) {
             log.warning("init() called, but applet already "
                     + "seems to be running.  Ignoring.");
@@ -870,7 +911,7 @@ public class PrintApplet extends Applet implements Runnable {
      * No need to paint, the applet is invisible
      */
     @Override
-    public void paint(Graphics g) {
+        public void paint(Graphics g) {
         // Do nothing
     }
 
@@ -878,7 +919,7 @@ public class PrintApplet extends Applet implements Runnable {
      * Start our main thread
      */
     @Override
-    public void start() {
+        public void start() {
         try {
             thisThread.get().start();
         } catch (JSException e) {
@@ -893,7 +934,7 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     @Override
-    public void stop() {
+        public void stop() {
         running = false;
         thisThread.set(null);
         if (serialIO != null) {
@@ -907,7 +948,7 @@ public class PrintApplet extends Applet implements Runnable {
     }
 
     @Override
-    public void destroy() {
+        public void destroy() {
         this.stop();
         super.destroy();
     }
@@ -1063,7 +1104,7 @@ public class PrintApplet extends Applet implements Runnable {
         return printRaw;
     }
     
-    public NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
+    private NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
         if (this.networkUtilities == null) {
             this.networkUtilities = new NetworkUtilities();
         }
@@ -1135,7 +1176,7 @@ public class PrintApplet extends Applet implements Runnable {
      *
      * @return PrintService object
      */
-    public PrintService getPrintService() {
+    private PrintService getPrintService() {
         return ps;
     }
 
@@ -1286,7 +1327,7 @@ public class PrintApplet extends Applet implements Runnable {
         return this.charset.displayName();
     }
 
-    public Charset getCharset() {
+    private Charset getCharset() {
         return this.charset;
     }
 
@@ -1319,7 +1360,7 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
 
-    public PaperFormat getPaperSize() {
+    private PaperFormat getPaperSize() {
         return paperSize;
     }
 

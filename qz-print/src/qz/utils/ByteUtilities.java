@@ -31,6 +31,7 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.text.StringCharacterIterator;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 
@@ -73,7 +74,7 @@ public class ByteUtilities {
                 for (int i = 0; i < split.length; i++) {
                     //data[i] = Byte.parseByte(split[i], 16);
                     Integer signedByte = Integer.parseInt(split[i], 16);
-                    data[i] = (byte)(signedByte & 0xFF);
+                    data[i] = (byte) (signedByte & 0xFF);
                 }
             } else if (s.length() == 2) {
                 data = new byte[]{Byte.parseByte(s)};
@@ -235,7 +236,7 @@ public class ByteUtilities {
             return o == null;
         }
     }
-    
+
     public static boolean isBase64Image(String path) {
         return path.startsWith("data:image/") && path.contains(";base64,");
     }
@@ -243,7 +244,7 @@ public class ByteUtilities {
     private static boolean isBase64PDF(String path) {
         return path.startsWith("data:application/pdf;base64,");
     }
-    
+
     /**
      * Reads a binary file (i.e. PDF) from URL to a ByteBuffer. This is later
      * appended to the applet, but needs a renderer capable of printing it to
@@ -251,7 +252,6 @@ public class ByteUtilities {
      * @param file URL string to location of file
      * @return byte array containing file content
      * @throws IOException
-     * @throws MalformedURLException 
      */
     public static byte[] readBinaryFile(String file) throws IOException {
         if (isBase64PDF(file)) {

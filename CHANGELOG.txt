@@ -1,3 +1,5 @@
+Changes 1.8.7 (7/22/2014)
+- Fixes lockup introduced with Chrome 36.0 (GitHub issue #33)
 Changes 1.8.5 (6/24/2014)
 - Fixes qz.setCopies() function for PostScript printing
 Changes 1.8.2 (4/23/2014)
