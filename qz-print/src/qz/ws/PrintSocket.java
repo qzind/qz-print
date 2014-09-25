@@ -4,6 +4,7 @@ import com.sun.deploy.util.StringUtils;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
+import org.joor.Reflect;
 import qz.PrintApplet;
 
 import java.lang.reflect.Method;
@@ -89,7 +90,7 @@ public class PrintSocket {
                             method = mm;
                     }
                 }
-                String result = "";     // default for void
+                Object result = "";     // default for void
                 if (method != null) { // We found one that will work. Now call it
                     // Create array of objects based on number of parameters and their types
                     Object [] obj = new Object[params];
@@ -97,25 +98,33 @@ public class PrintSocket {
                     for (int x = 1; x < params + 1; x++) {
                         obj[x-1] = covertType(parts[x], method.getParameterTypes()[x-1]);
                     }
+
+                    // Using jOOR to call method since primitives are involved
                     // Invoke the method with all the parameters
                     switch(params) {
                         case 0:
-                            result = String.valueOf(method.invoke(qz));
+                            result = Reflect.on(qz).call(name).get();
+//                            result = String.valueOf(method.invoke(qz));
                             break;
                         case 1:
-                            result = String.valueOf(method.invoke(qz, obj[0]));
+                            result = Reflect.on(qz).call(name, obj[0]).get();
+//                            result = String.valueOf(method.invoke(qz, obj[0]));
                             break;
                         case 2:
-                            result = String.valueOf(method.invoke(qz, obj[0], obj[1]));
+                            result = Reflect.on(qz).call(name, obj[0], obj[1]).get();
+//                            result = String.valueOf(method.invoke(qz, obj[0], obj[1]));
                             break;
                         case 3:
-                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2]));
+                            result = Reflect.on(qz).call(name, obj[0], obj[1], obj[2]).get();
+//                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2]));
                             break;
                         case 4:
-                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2], obj[3]));
+                            result = Reflect.on(qz).call(name, obj[0], obj[1], obj[2], obj[3]).get();
+//                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2], obj[3]));
                             break;
                         case 5:
-                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2], obj[3], obj[5]));
+                            result = Reflect.on(qz).call(name, obj[0], obj[1], obj[2], obj[3], obj[4]).get();
+//                            result = String.valueOf(method.invoke(qz, obj[0], obj[1], obj[2], obj[3], obj[5]));
                             break;
                         default:
                             result = "ERROR:Invalid parameters";
