@@ -42,6 +42,11 @@ public class NetworkUtilities {
     private int port = 80;
 
     public NetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
+        try {
+            gatherNetworkInfo();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
     
     public void setHostname(String hostname) {
