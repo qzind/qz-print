@@ -158,14 +158,14 @@ public class PrintSocket {
         try { Thread.sleep(2000); } catch (Exception ignore) {}
         System.out.println(ps.onMessage(null, "getIP"));
         try { Thread.sleep(2000); } catch (Exception ignore) {}
-        System.out.println(ps.onMessage(null, "setPrinter\t1"));
-        try { Thread.sleep(2000); } catch (Exception ignore) {}
-        System.out.println(ps.onMessage(null, "findPrinter\tAdobe"));
+        System.out.println(ps.onMessage(null, "getPrinters"));
         while ("false".equals(ps.onMessage(null, "doneFindingPrinters"))) {
             System.out.println("Looking again ...");
             try { Thread.sleep(1000); } catch (Exception ignore) {}
         }
-        System.out.println(ps.onMessage(null, "getPrinters"));
+        System.out.println(ps.onMessage(null, "findPrinter\tAdobe"));
+        try { Thread.sleep(2000); } catch (Exception ignore) {}
+        System.out.println(ps.onMessage(null, "setPrinter\t1"));
         System.exit(0);
     }
 }
