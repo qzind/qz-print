@@ -125,10 +125,15 @@ public class PrintSocket {
                         default:
                             result = "ERROR:Invalid parameters";
                     }
+                    if (result instanceof PrintApplet) {
+                        result = "SUCCESS:void";    // set since the return value is void
+                    } else {
+                        result = "SUCCESS:" + result;
+                    }
                 } else {
                     return "ERROR:Message not found";
                 }
-                return "RESULT:" + result;
+                return "" + result;
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -157,13 +162,13 @@ public class PrintSocket {
         System.out.println(ps.onMessage(null, "isAlternatePrinting"));
         try { Thread.sleep(2000); } catch (Exception ignore) {}
         System.out.println(ps.onMessage(null, "getIP"));
+        System.out.println(ps.onMessage(null, "findPrinter\tAdobe"));
         try { Thread.sleep(2000); } catch (Exception ignore) {}
-        System.out.println(ps.onMessage(null, "getPrinters"));
         while ("false".equals(ps.onMessage(null, "doneFindingPrinters"))) {
             System.out.println("Looking again ...");
             try { Thread.sleep(1000); } catch (Exception ignore) {}
         }
-        System.out.println(ps.onMessage(null, "findPrinter\tAdobe"));
+        System.out.println(ps.onMessage(null, "getPrinters"));
         try { Thread.sleep(2000); } catch (Exception ignore) {}
         System.out.println(ps.onMessage(null, "setPrinter\t1"));
         System.exit(0);
