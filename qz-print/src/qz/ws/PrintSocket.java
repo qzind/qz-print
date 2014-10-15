@@ -44,8 +44,8 @@ public class PrintSocket {
     private static Set<String> methods = null;
 
     @OnWebSocketMessage
-    public String onMessage(Session session, String text) {
-        if (text == null) return "ERROR:Invalid Message";
+    public void onMessage(Session session, String text) {
+        if (text == null) { sendString(session, "ERROR:Invalid Message"); return; }
         if (qz == null) { qz = new PrintApplet(); qz.init(); qz.start(); }
         log.info("Server message: " + text);
 
@@ -76,8 +76,8 @@ public class PrintSocket {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
-            if (methods == null) return "ERROR:Unable to list messages";
-            return "listMessages\t" + StringUtils.join(methods, "\t");
+            if (methods == null) { sendString(session, "ERROR:Unable to list messages"); return; }
+            sendString(session, "listMessages\t" + StringUtils.join(methods, "\t")); return;
         } else {        // Figure out which method is being called and call it returning any values
             String [] parts = text.split("\\t");
             String name = parts[0];
@@ -129,14 +129,24 @@ public class PrintSocket {
                         result = "void";    // set since the return value is void
                     }
                 } else {
-                    return "ERROR:Message not found";
+                    sendString(session, "ERROR:Message not found");
+                    return;
                 }
-                return name + "\t" + result;
+                sendString(session, name + "\t" + result);
+                return;
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         }
-        return "ERROR:Unknown Message";
+        sendString(session, "ERROR:Unknown Message");
+    }
+
+    private void sendString(Session session, String message) {
+        try {
+            session.getRemote().sendString("ERROR:Unknown Message");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
     private Object convertType(String data, Object type) {
@@ -152,23 +162,27 @@ public class PrintSocket {
         return data;
     }
 
+    /**
+     * Hacking way to test the PrintSocket. It returns values from a
+     * request using the session. So a true websocket is really needed
+     * to test. This gets the print statements to the console though.
+     *
+     * @param args
+     */
     public static void main(String[] args) {
         PrintSocket ps = new PrintSocket();
         try { Thread.sleep(2000); } catch (Exception ignore) {}
-        System.out.println(ps.onMessage(null, "listMessages"));
+        ps.onMessage(null, "listMessages");
         try { Thread.sleep(2000); } catch (Exception ignore) {}
-        System.out.println(ps.onMessage(null, "isAlternatePrinting"));
+        ps.onMessage(null, "isAlternatePrinting");
         try { Thread.sleep(2000); } catch (Exception ignore) {}
-        System.out.println(ps.onMessage(null, "getIP"));
-        System.out.println(ps.onMessage(null, "findPrinter\tAdobe"));
+        ps.onMessage(null, "getIP");
+        ps.onMessage(null, "findPrinter\tAdobe");
         try { Thread.sleep(2000); } catch (Exception ignore) {}
-        while ("false".equals(ps.onMessage(null, "doneFindingPrinters"))) {
-            System.out.println("Looking again ...");
-            try { Thread.sleep(1000); } catch (Exception ignore) {}
-        }
-        System.out.println(ps.onMessage(null, "getPrinters"));
+        ps.onMessage(null, "doneFindingPrinters");
+        ps.onMessage(null, "getPrinters");
         try { Thread.sleep(2000); } catch (Exception ignore) {}
-        System.out.println(ps.onMessage(null, "setPrinter\t1"));
+        ps.onMessage(null, "setPrinter\t1");
         System.exit(0);
     }
 }
