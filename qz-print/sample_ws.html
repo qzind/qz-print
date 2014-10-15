@@ -3,6 +3,20 @@
 <head><title>QZ Print Plugin</title>
 <script type="text/javascript" src="js/deployJava.js"></script>
 <script type="text/javascript">
+
+// polyfill startsWith method
+if (!String.prototype.startsWith) {
+    Object.defineProperty(String.prototype, 'startsWith', {
+        enumerable: false,
+        configurable: false,
+        writable: false,
+        value: function (searchString, position) {
+            position = position || 0;
+            return this.lastIndexOf(searchString, position) === position;
+        }
+    });
+}
+
 /**
  * Optionally used to deploy multiple versions of the applet for mixed
  * environments.  Oracle uses document.write(), which puts the applet at the
@@ -17,16 +31,89 @@ deployQZ();
  * MANIFEST.MF TrustedLibrary=true discrepency between JRE6 and JRE7.
  */
 function deployQZ() {
-    var attributes = {id: "qz", code:'qz.PrintApplet.class',
-        archive:'qz-print.jar', width:1, height:1};
-    var parameters = {jnlp_href: 'qz-print_jnlp.jnlp',
-        cache_option:'plugin', disable_logging:'false',
-        initial_focus:'false'};
-    if (deployJava.versionCheck("1.7+") == true) {}
-    else if (deployJava.versionCheck("1.6+") == true) {
-        delete parameters['jnlp_href'];
+    console.log('Starting deploy of qz');
+    var ports = [ 8181, 8282, 8383, 8484 ];     // Ports to try
+    var wsUri = "ws://localhost:";              // Base URL to server
+    var websocket = null;
+    var port = 0;
+    while ((websocket == null) && (port < ports.length)) {
+        console.log('Attempting connection on port ' + ports[port]);
+        websocket = new WebSocket(wsUri + ports[port++]);
     }
-    deployJava.runApplet(attributes, parameters, '1.5');
+    if (websocket != null) {
+        console.log('Websocket connection successful');
+        websocket.onopen = function (evt) {
+            console.log('open: ' + evt);
+        };
+        websocket.onclose = function (evt) {
+            console.log('close: ' + evt);
+        };
+        websocket.onmessage = function (evt) {
+            // After we ask for the list, the value will come back as a message.
+            // That means we have to deal with the listMessages separately from everything else.
+            if (evt.startsWith('listMessages')) {
+                // Take the list of messages and add them to the qz object
+                var qz = window["qz"];
+                var methods = evt.split('\t');
+                console.log('Adding ' + methods.length + ' methods to qz object');
+                for (var x = 1; x < methods.length; x++) {
+                    var info = methods[x].split(',');
+                    var name = info[0];
+                    var params = info[2];
+
+                    // Determine how many parameters there are and create method with that many
+                    if (params == 0) {
+                        qz[name] = function () {
+                            websocket.send(name);
+                        }
+                    } else if (params == 1) {
+                        qz[name] = function (var1) {
+                            websocket.send(name + '\t' + var1);
+                        }
+                    } else if (params == 2) {
+                        qz[name] = function (var1, var2) {
+                            websocket.send(name + '\t' + var1 + '\t' + var2);
+                        }
+                    } else if (params == 3) {
+                        qz[name] = function (var1, var2, var3) {
+                            websocket.send(name + '\t' + var1 + '\t' + var2 + '\t' + var3);
+                        }
+                    } else if (params == 4) {
+                        qz[name] = function (var1, var2, var3, var4) {
+                            websocket.send(name + '\t' + var1 + '\t' + var2 + '\t' + var3 + '\t' + var4);
+                        }
+                    } else if (params == 5) {
+                        qz[name] = function (var1, var2, var3, var4, var5) {
+                            websocket.send(name + '\t' + var1 + '\t' + var2 + '\t' + var3 + '\t' + var4 + '\t' + var5);
+                        }
+                    }
+                }
+
+                // Fire ready method when everything on the QZ object has been added
+                qzReady();
+            } else {
+                // Got a return value from a call. Question is, what to do with it
+                console.log('message: ' + evt);
+            }
+        };
+        websocket.onerror = function (evt) {
+            console.log('error: ' + evt);
+        };
+
+        // Create the QZ object
+        window["qz"] = createQZ(websocket);
+    } else {
+        console.log('Websocket connection failed');
+    }
+}
+
+function createQZ(websocket) {
+    var o = {};
+    // Get list of methods from websocket
+    var list = websocket.send("listMessages");
+    // Create methods on the object
+
+    return o;
 }
 
 /**
@@ -34,7 +121,7 @@ function deployQZ() {
  */
 function qzReady() {
     // Setup our global qz object
-    window["qz"] = document.getElementById('qz');
+//    window["qz"] = document.getElementById('qz');
     var title = document.getElementById("title");
     if (qz) {
         try {

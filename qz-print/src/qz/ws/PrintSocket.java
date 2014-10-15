@@ -77,7 +77,7 @@ public class PrintSocket {
                 ex.printStackTrace();
             }
             if (methods == null) return "ERROR:Unable to list messages";
-            return StringUtils.join(methods, "\t");
+            return "listMessages\t" + StringUtils.join(methods, "\t");
         } else {        // Figure out which method is being called and call it returning any values
             String [] parts = text.split("\\t");
             String name = parts[0];
@@ -126,14 +126,12 @@ public class PrintSocket {
                             result = "ERROR:Invalid parameters";
                     }
                     if (result instanceof PrintApplet) {
-                        result = "SUCCESS:void";    // set since the return value is void
-                    } else {
-                        result = "SUCCESS:" + result;
+                        result = "void";    // set since the return value is void
                     }
                 } else {
                     return "ERROR:Message not found";
                 }
-                return "" + result;
+                return name + "\t" + result;
             } catch (Exception ex) {
                 ex.printStackTrace();
             }

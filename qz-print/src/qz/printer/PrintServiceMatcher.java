@@ -118,13 +118,13 @@ public class PrintServiceMatcher {
         if (forceSearch || printers == null || printers.length == 0) {
             printerListing = "";
             PrintService[] services = PrintServiceLookup.lookupPrintServices(null, null);
-                   
+            log.info("Found " + services.length + " printers");
             for (int i = 0; i < services.length; i++) {
                 PrintServiceAttributeSet psa = services[i].getAttributes();
-                printerListing  = printerListing  + psa.get(PrinterName.class);
-                if (i != (services.length - 1)) {
-                    printerListing  = printerListing  + ",";
+                if(printerListing.length() > 0) {
+                    printerListing += ",";
                 }
+                printerListing  += psa.get(PrinterName.class);
             }
 
             printers = services;
