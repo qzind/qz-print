@@ -85,35 +85,42 @@ public class PrintHTML extends JLabel implements Printable {
     //public String get() {
     //    return super.getText();
     //}
-
     public void print() throws PrinterException {
-        JFrame jFrame = new JFrame(jobName.get());
-        jFrame.setUndecorated(true);
-        jFrame.setLayout(new FlowLayout());
+        JFrame j = new JFrame(jobName.get());
+        j.setUndecorated(true);
+        j.setLayout(new FlowLayout());
         this.setBorder(null);
 
-        for (String s : getHTMLDataArray()) {
-            this.setText(s + "</html>");
-            jFrame.add(this);
+        try{
+            for (String s : getHTMLDataArray()) {
+                this.setText(s + "</html>");
+                j.add(this);
 
 
-            jFrame.pack();
-            jFrame.setExtendedState(Frame.ICONIFIED);
-            jFrame.setVisible(true);
+                j.pack();
+                j.setExtendedState(Frame.ICONIFIED);
+                j.setVisible(true);
 
-            // Elimate any margins
-            HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
-            attr.add(new MediaPrintableArea(0f, 0f, getWidth()/PrintPostScript.DPI, getHeight()/PrintPostScript.DPI, MediaPrintableArea.INCH));
+                // Eliminate any margins
+                HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+                attr.add(new MediaPrintableArea(0f, 0f, getWidth()/PrintPostScript.DPI, getHeight()/PrintPostScript.DPI, MediaPrintableArea.INCH));
 
-            PrinterJob job = PrinterJob.getPrinterJob();
-            job.setPrintService(ps.get());
-            job.setPrintable(this);
-            job.setJobName(jobName.get());
-            job.print(attr);
-            jFrame.setVisible(false);
+                PrinterJob job = PrinterJob.getPrinterJob();
+                job.setPrintService(ps.get());
+                job.setPrintable(this);
+                job.setJobName(jobName.get());
+                job.print(attr);
+                j.setVisible(false);
+            }
+            j.dispose();
+            clear();
+            }
+        catch(Exception e){
+            j.dispose();
+            clear();
+
+            throw new PrinterException(e.toString());
         }
-        jFrame.dispose();
-        clear();
     }
 
     public void setPrintParameters(PrintApplet applet) {
