@@ -1,21 +1,9 @@
 <html>
 <!-- License:  LGPL 2.1 or QZ INDUSTRIES SOURCE CODE LICENSE -->
 <head><title>QZ Print Plugin</title>
+
 <script type="text/javascript" src="js/deployJava.js"></script>
 <script type="text/javascript">
-
-// polyfill startsWith method
-if (!String.prototype.startsWith) {
-    Object.defineProperty(String.prototype, 'startsWith', {
-        enumerable: false,
-        configurable: false,
-        writable: false,
-        value: function (searchString, position) {
-            position = position || 0;
-            return this.lastIndexOf(searchString, position) === position;
-        }
-    });
-}
 
 /**
  * Optionally used to deploy multiple versions of the applet for mixed
@@ -28,7 +16,7 @@ deployQZ();
  * Deploys different versions of the applet depending on Java version.
  * Useful for removing warning dialogs for Java 6.  This function is optional
  * however, if used, should replace the <applet> method.  Needed to address
- * MANIFEST.MF TrustedLibrary=true discrepency between JRE6 and JRE7.
+ * MANIFEST.MF TrustedLibrary=true discrepancy between JRE6 and JRE7.
  */
 function deployQZ() {
     console.log('Starting deploy of qz');
@@ -36,84 +24,150 @@ function deployQZ() {
     var wsUri = "ws://localhost:";              // Base URL to server
     var websocket = null;
     var port = 0;
+
     while ((websocket == null) && (port < ports.length)) {
         console.log('Attempting connection on port ' + ports[port]);
         websocket = new WebSocket(wsUri + ports[port++]);
     }
+
     if (websocket != null) {
         console.log('Websocket connection successful');
+
+        websocket.sendObj = function (objMsg) {
+            console.log("Sending "+ JSON.stringify(objMsg));
+            return this.send(JSON.stringify(objMsg));
+        };
+
         websocket.onopen = function (evt) {
-            console.log('open: ' + evt);
+            console.log('Open:');
+            console.log(evt);
+
+            // Create the QZ object
+            createQZ(websocket);
         };
+
         websocket.onclose = function (evt) {
-            console.log('close: ' + evt);
+            document.getElementById("content").style.background = "#A0A0A0";
+            console.log('Close:');
+            console.log(evt);
         };
+
         websocket.onmessage = function (evt) {
+            var message = JSON.parse(evt.data);
+
+            if (message.error != undefined) {
+                console.log(message.error);
+                return;
+            }
+
             // After we ask for the list, the value will come back as a message.
             // That means we have to deal with the listMessages separately from everything else.
-            if (evt.startsWith('listMessages')) {
+            if (message.method == 'listMessages') {
                 // Take the list of messages and add them to the qz object
-                var qz = window["qz"];
-                var methods = evt.split('\t');
-                console.log('Adding ' + methods.length + ' methods to qz object');
-                for (var x = 1; x < methods.length; x++) {
-                    var info = methods[x].split(',');
-                    var name = info[0];
-                    var params = info[2];
+                mapMethods(websocket, message.result);
 
-                    // Determine how many parameters there are and create method with that many
-                    if (params == 0) {
-                        qz[name] = function () {
-                            websocket.send(name);
-                        }
-                    } else if (params == 1) {
-                        qz[name] = function (var1) {
-                            websocket.send(name + '\t' + var1);
-                        }
-                    } else if (params == 2) {
-                        qz[name] = function (var1, var2) {
-                            websocket.send(name + '\t' + var1 + '\t' + var2);
-                        }
-                    } else if (params == 3) {
-                        qz[name] = function (var1, var2, var3) {
-                            websocket.send(name + '\t' + var1 + '\t' + var2 + '\t' + var3);
-                        }
-                    } else if (params == 4) {
-                        qz[name] = function (var1, var2, var3, var4) {
-                            websocket.send(name + '\t' + var1 + '\t' + var2 + '\t' + var3 + '\t' + var4);
-                        }
-                    } else if (params == 5) {
-                        qz[name] = function (var1, var2, var3, var4, var5) {
-                            websocket.send(name + '\t' + var1 + '\t' + var2 + '\t' + var3 + '\t' + var4 + '\t' + var5);
-                        }
+            } else {
+                // Got a return value from a call
+                console.log('Message:');
+                console.log(message);
+
+                if (message.callback == 'setupMethods'){
+                    console.log("Resetting function call");
+                    qz[message.method] = function(){
+                        return message.result;
                     }
                 }
 
-                // Fire ready method when everything on the QZ object has been added
-                qzReady();
-            } else {
-                // Got a return value from a call. Question is, what to do with it
-                console.log('message: ' + evt);
+                try {
+                    console.log("Callbacking: " + message.callback);
+                    window[message.callback](message.init? message.method : message.result);
+                    window[message.callback] = null; // Remove reference to this function
+                }
+                catch(err){
+                    console.error(err);
+                }
             }
-        };
-        websocket.onerror = function (evt) {
-            console.log('error: ' + evt);
+
+            console.log("Finished processing message");
         };
 
-        // Create the QZ object
-        window["qz"] = createQZ(websocket);
+        websocket.onerror = function (evt) {
+            document.getElementById("content").style.background = "#F5A9A9";
+            console.log('Error:');
+            console.log(evt);
+        };
+
     } else {
         console.log('Websocket connection failed');
     }
 }
 
 function createQZ(websocket) {
-    var o = {};
     // Get list of methods from websocket
-    var list = websocket.send("listMessages");
-    // Create methods on the object
+    websocket.sendObj({method: 'listMessages'});
+    window["qz"] = {};
+}
 
-    return o;
+function mapMethods(websocket, methods){
+    console.log('Adding ' + methods.length + ' methods to qz object');
+    for (var x = 0; x < methods.length; x++) {
+        var name = methods[x].name;
+        var numParams = methods[x].parameters; // TODO - last param should be callback function
+
+        // Determine how many parameters there are and create method with that many
+        (function(_name, _numParams){
+            //create function to map function name to parameter counted function
+            window["qz"][_name] = function () {
+                if (window["qz"][_name+'_'+(arguments.length-1)] == undefined){
+                    console.error("ERROR | No mapping for method "+ (_name+'_'+(arguments.length-1)));
+                }
+
+                window["qz"][_name+'_'+(arguments.length-1)].apply(this, arguments);
+            };
+
+            //create parameter counted function to include overloaded java methods in javascript object
+            window["qz"][_name+'_'+_numParams] = function () {
+                var args = [];
+                for(var i=0; i<_numParams; i++){
+                    args.push(arguments[i]);
+                }
+
+                var cb = arguments[arguments.length-1];
+                var cbName = _name +'_callback';
+
+                if ($.isFunction(cb)){
+                    if (cb.name == 'setupMethods'){
+                        cbName = cb.name;
+                    }
+
+                    window[cbName] = cb;
+                } else {
+                    cbName = null;
+                }
+
+                console.log("Calling "+ _name +"("+ args +") --> CB: "+ cbName +"()");
+                websocket.sendObj({method: _name, params: args, callback: cbName, init: (cbName=='setupMethods')});
+            }
+        })(name, numParams);
+    }
+
+    // Re-setup all functions with static returns
+    qz.getVersion(setupMethods);
+
+    console.log("Sent methods off to get rehabilitated");
+}
+
+var preemptive = {'getVersion':''}; //TODO - list all methods with static returns
+function setupMethods(methodName){
+    console.log("Reset "+ methodName);
+    delete preemptive[methodName];
+
+    console.log("Methods left to return: "+ $.param(preemptive).length);
+
+    // Fire ready method when everything on the QZ object has been added
+    if ($.param(preemptive).length == 0){
+        qzReady();
+    }
 }
 
 /**
@@ -126,8 +180,10 @@ function qzReady() {
     if (qz) {
         try {
             title.innerHTML = title.innerHTML + " " + qz.getVersion();
+            qz["isActive"] = function(){ return true; }; // custom set isActive to return true when ready since it's not defined elsewhere
+
             document.getElementById("content").style.background = "#F0F0F0";
-        } catch(err) { // LiveConnect error, display a detailed meesage
+        } catch(err) { // LiveConnect error, display a detailed message
             document.getElementById("content").style.background = "#F5A9A9";
             alert("ERROR:  \nThe applet did not load correctly.  Communication to the " +
                     "applet has failed, likely caused by Java Security Settings.  \n\n" +
@@ -150,7 +206,7 @@ function notReady() {
         return true;
     }
     // If a printer hasn't been selected, display a message.
-    else if (!qz.getPrinter()) {
+    else if (!qz.getPrinter()) { //TODO - find some async / sync way to hold this method variable
         alert('Please select a printer first by using the "Detect Printer" button.');
         return true;
     }
@@ -166,7 +222,7 @@ function isLoaded() {
         return false;
     } else {
         try {
-            if (!qz.isActive()) {
+            if (!qz.isActive()) { //TODO -- WHAT IS THIS SUPPOSE TO POINT TO ??? WAS IT EVER POINTING ?? I CANT FIND IT IN HISTORY ...
                 alert('Error:\n\n\tPrint plugin is loaded but NOT active!');
                 return false;
             }
@@ -202,18 +258,15 @@ function qzDonePrinting() {
 function useDefaultPrinter() {
     if (isLoaded()) {
         // Searches for default printer
-        qz.findPrinter();
-
-        // Automatically gets called when "qz.findPrinter()" is finished.
-        window['qzDoneFinding'] = function() {
-            // Alert the printer name to user
-            var printer = qz.getPrinter();
-            alert(printer !== null ? 'Default printer found: "' + printer + '"':
-                    'Default printer ' + 'not found');
-
-            // Remove reference to this function
-            window['qzDoneFinding'] = null;
-        };
+        qz.findPrinter(
+                function() {
+                    // Alert the printer name to user
+                    qz.getPrinter(function(printer){
+                        alert(printer !== null ? 'Default printer found: "' + printer + '"':
+                                'Default printer ' + 'not found');
+                    });
+                }
+        );
     }
 }
 
@@ -292,21 +345,21 @@ function findPrinter(name) {
 
     if (isLoaded()) {
         // Searches for locally installed printer with specified name
-        qz.findPrinter(p.value);
+        qz.findPrinter(p.value, //FIXME - search lags by 1
+                function () {
+                    var p = document.getElementById('printer');
+                    qz.getPrinter(function (printer){
+                        // Alert the printer name to user
+                        alert(printer !== null ? 'Printer found: "' + printer +
+                                '" after searching for "' + p.value + '"' : 'Printer "' +
+                                p.value + '" not found.');
+                    });
 
-        // Automatically gets called when "qz.findPrinter()" is finished.
-        window['qzDoneFinding'] = function() {
-            var p = document.getElementById('printer');
-            var printer = qz.getPrinter();
+                    // Remove reference to this function
+//                    window['qzDoneFinding'] = null;
+                }
+        );
 
-            // Alert the printer name to user
-            alert(printer !== null ? 'Printer found: "' + printer +
-                    '" after searching for "' + p.value + '"' : 'Printer "' +
-                    p.value + '" not found.');
-
-            // Remove reference to this function
-            window['qzDoneFinding'] = null;
-        };
     }
 }
 
@@ -319,19 +372,18 @@ function findPrinter(name) {
 function findPrinters() {
     if (isLoaded()) {
         // Searches for a locally installed printer with a bogus name
-        qz.findPrinter('\\{bogus_printer\\}');
+        qz.findPrinter('\\{bogus_printer\\}',
+                function () {
+                    // Get the CSV listing of attached printers
+                    qz.getPrinters(function (printers){
+                        printers = printers.split(",");
 
-        // Automatically gets called when "qz.findPrinter()" is finished.
-        window['qzDoneFinding'] = function() {
-            // Get the CSV listing of attached printers
-            var printers = qz.getPrinters().split(',');
-            for (var i in printers) {
-                alert(printers[i] ? printers[i] : 'Unknown');
-            }
-
-            // Remove reference to this function
-            window['qzDoneFinding'] = null;
-        };
+                        for (var i in printers) {
+                            alert(printers[i] ? printers[i] : 'Unknown');
+                        }
+                    });
+                }
+        );
     }
 }
 
@@ -347,28 +399,27 @@ function printEPL() {
     // Send characters/raw commands to qz using "append"
     // This example is for EPL.  Please adapt to your printer language
     // Hint:  Carriage Return = \r, New Line = \n, Escape Double Quotes= \"
-    qz.append('\nN\n');
-    qz.append('q609\n');
-    qz.append('Q203,26\n');
-    qz.append('B5,26,0,1A,3,7,152,B,"1234"\n');
-    qz.append('A310,26,0,3,1,1,N,"SKU 00000 MFG 0000"\n');
-    qz.append('A310,56,0,3,1,1,N,"QZ PRINT APPLET"\n');
-    qz.append('A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n');
-    qz.append('A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n');
-    qz.append('A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n');
-    qz.appendImage(getPath() + 'img/image_sample_bw.png', 'EPL', 150, 300);
+    qz.append('\nN\n' +
+              'q609\n' +
+              'Q203,26\n' +
+              'B5,26,0,1A,3,7,152,B,"1234"\n' +
+              'A310,26,0,3,1,1,N,"SKU 00000 MFG 0000"\n' +
+              'A310,56,0,3,1,1,N,"QZ PRINT APPLET"\n' +
+              'A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n' +
+              'A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n' +
+              'A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n',
+            function() {
+                qz.appendImage(getPath() + 'img/image_sample_bw.png', 'EPL', 150, 300,
+                        function() {
+                            // Append the rest of our commands
+                            qz.append('\nP1,1\n');
 
-    // Automatically gets called when "qz.appendImage()" is finished.
-    window['qzDoneAppending'] = function() {
-        // Append the rest of our commands
-        qz.append('\nP1,1\n');
-
-        // Tell the applet to print.
-        qz.print();
-
-        // Remove reference to this function
-        window['qzDoneAppending'] = null;
-    };
+                            // Tell the applet to print.
+                            qz.print();
+                        }
+                );
+            }
+    );
 }
 
 /***************************************************************************
@@ -381,19 +432,15 @@ function printESCP() {
     if (notReady()) { return; }
 
     // Append a png in ESCP format with single pixel density
-    qz.appendImage(getPath() + "img/image_sample_bw.png", "ESCP", "single");
+    qz.appendImage(getPath() + "img/image_sample_bw.png", "ESCP", "single",
+            function() {
+                // Append the rest of our commands
+                qz.append('\nPrinted using qz-print plugin.\n\n\n\n\n\n');
 
-    // Automatically gets called when "qz.appendImage()" is finished.
-    window["qzDoneAppending"] = function() {
-        // Append the rest of our commands
-        qz.append('\nPrinted using qz-print plugin.\n\n\n\n\n\n');
-
-        // Tell the apple to print.
-        qz.print();
-
-        // Remove any reference to this function
-        window['qzDoneAppending'] = null;
-    };
+                // Tell the apple to print.
+                qz.print();
+            }
+    );
 }
 
 
@@ -409,27 +456,28 @@ function printZPL() {
     // Send characters/raw commands to qz using "append"
     // This example is for ZPL.  Please adapt to your printer language
     // Hint:  Carriage Return = \r, New Line = \n, Escape Double Quotes= \"
-    qz.append('^XA\n');
-    qz.append('^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n');
-    qz.appendImage(getPath() + 'img/image_sample_bw.png', 'ZPLII');
-
-    // Automatically gets called when "qz.appendImage()" is finished.
-    window['qzDoneAppending'] = function() {
-        // Append the rest of our commands
-        qz.append('^FS\n');
-        qz.append('^XZ\n');
-
-        // Tell the apple to print.
-        qz.print();
-
-        // Remove any reference to this function
-        window['qzDoneAppending'] = null;
-    };
+    qz.append('^XA\n' +
+              '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n',
+            function() {
+                qz.appendImage(getPath() + 'img/image_sample_bw.png', 'ZPLII',
+                        function() {
+                            // Append the rest of our commands
+                            qz.append('^FS\n' +
+                                      '^XZ\n',
+                                    function() {
+                                        // Tell the apple to print.
+                                        qz.print();
+                                    }
+                            );
+                        }
+                );
+            }
+    );
 }
 
 
 /***************************************************************************
- * Prototype function for printing syntatically proper raw commands directly
+ * Prototype function for printing syntactically proper raw commands directly
  * to a EPCL capable card printer, such as the Zebra P330i.  Uses helper
  * appendEPCL() to add the proper NUL, data length, escape character and
  * newline per spec:  https://km.zebra.com/kb/index?page=content&id=SO8390
@@ -460,7 +508,7 @@ function printEPCL()  {
 /**
  * EPCL helper function that appends a single line of EPCL data, taking into
  * account special EPCL NUL characters, data length, escape character and
- * carraige return
+ * carriage return
  */
 function appendEPCL(data) {
     if (data == null || data.length == 0) {
@@ -770,15 +818,19 @@ function printHTML() {
     var colB = '<img src="' + getPath() + 'img/image_sample.png">';
 
     //qz.setCopies(3);
-    qz.setCopies(parseInt(document.getElementById("copies").value));
-
-    // Append our image (only one image can be appended per print)
-    qz.appendHTML('<html><table face="monospace" border="1px"><tr height="6cm">' +
-            '<td valign="top">' + colA + '</td>' +
-            '<td valign="top">' + colB + '</td>' +
-            '</tr></table></html>');
-
-    qz.printHTML();
+    qz.setCopies(parseInt(document.getElementById("copies").value),
+            function(){
+                // Append our image (only one image can be appended per print)
+                qz.appendHTML('<html><table face="monospace" border="1px"><tr height="6cm">' +
+                        '<td valign="top">' + colA + '</td>' +
+                        '<td valign="top">' + colB + '</td>' +
+                        '</tr></table></html>',
+                        function(){
+                            qz.printHTML();
+                        }
+                );
+            }
+    );
 }
 
 /***************************************************************************
@@ -840,7 +892,7 @@ function printHTML5Page() {
 }
 
 /***************************************************************************
- * Prototype function for logging a PostScript printer's capabilites to the
+ * Prototype function for logging a PostScript printer's capabilities to the
  * java console to expose potentially  new applet features/enhancements.
  * Warning, this has been known to trigger some PC firewalls
  * when it scans ports for certain printer capabilities.
@@ -877,7 +929,7 @@ function useAlternatePrinting() {
 
 
 /***************************************************************************
- * Prototype function to list all available com ports availabe to this PC
+ * Prototype function to list all available com ports available to this PC
  * used for RS232 communication.  Relies on jssc_qz.jar signed and in the
  * /dist/ folder.
  *    qz.findPorts();
@@ -961,7 +1013,7 @@ function closeSerialPort() {
  ***************************************************************************/
 function sendSerialData() {
     if (isLoaded()) {
-        // Beggining and ending patterns that signify port has responded
+        // Beginning and ending patterns that signify port has responded
         // chr(2) and chr(13) surround data on a Mettler Toledo Scale
         qz.setSerialBegin(chr(2));
         qz.setSerialEnd(chr(13));

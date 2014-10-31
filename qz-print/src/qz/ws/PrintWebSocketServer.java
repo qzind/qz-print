@@ -8,7 +8,6 @@ import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
  * Created by robert on 9/9/2014.
  */
 
-
 public class PrintWebSocketServer {
 
     public static void main(String[] args) {
@@ -17,6 +16,7 @@ public class PrintWebSocketServer {
 
     public static void runServer() {
         try {
+            //TODO - loop through ports for open in list  [ 8181, 8282, 8383, 8484 ]
             Server server = new Server(8181);
             WebSocketHandler wsHandler = new WebSocketHandler() {
                 @Override
@@ -30,7 +30,7 @@ public class PrintWebSocketServer {
             System.out.println("Server started");
             server.join();
         } catch (Exception ex) {
-            System.err.println(ex);
+            ex.printStackTrace();
         }
     }
 }

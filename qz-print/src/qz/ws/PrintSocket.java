@@ -1,15 +1,18 @@
 package qz.ws;
 
-import com.sun.deploy.util.StringUtils;
+import org.codehaus.jettison.json.JSONArray;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.joor.Reflect;
+import org.joor.ReflectException;
 import qz.PrintApplet;
 
 import java.lang.reflect.Method;
-import java.util.Set;
-import java.util.TreeSet;
+import java.lang.reflect.Modifier;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -18,14 +21,19 @@ import java.util.logging.Logger;
 @WebSocket
 public class PrintSocket {
 
-    private PrintApplet qz = null;
+    private static PrintApplet qz = null;
     private final Logger log = Logger.getLogger(PrintApplet.class.getName());
+
+    private final List<String> restrictedMethodNames = Arrays.asList("run", "stop", "start", "call", "init", "destroy", "paint");
+
+    private static JSONArray methods = null;
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
         log.info("Server connect: " + session.getRemoteAddress());
     }
 
+    //TODO - is idle timeout going to cause issues ??      - yes
     @OnWebSocketClose
     public void onClose(Session session, int statusCode, String reason) {
         log.info("WebSocket close: " + statusCode + " - " + reason);
@@ -41,109 +49,120 @@ public class PrintSocket {
         log.info("Server frame: " + frame.toString());
     }
 
-    private static Set<String> methods = null;
-
     @OnWebSocketMessage
-    public void onMessage(Session session, String text) {
-        if (text == null) { sendString(session, "ERROR:Invalid Message"); return; }
+    public void onMessage(Session session, String json) {
+        if (json == null) {
+            sendResponse(session, "{'error': 'Invalid Message'}");
+        } else {
+            try {
+                System.out.println("Request: "+ json);
+                processMessage(session, new JSONObject(json));
+            }
+            catch(JSONException e) {
+                sendResponse(session, "{'error': 'Invalid JSON'}");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void processMessage(Session session, JSONObject message) throws JSONException {
         if (qz == null) { qz = new PrintApplet(); qz.init(); qz.start(); }
-        log.info("Server message: " + text);
+        log.info("Server message: " + message);
 
         // Using Reflection, call correct method on PrintApplet.
         // Except for listMessages which is not part of PrintApplet
-        if (text.startsWith("listMessages")) {
-            if (methods == null) { methods = new TreeSet<String>(); }
-            try {
-                Class c = PrintApplet.class;
-                Method[] m = c.getDeclaredMethods();
-                for (Method method : m) {
-                    if (method.getModifiers() == 1 &&
-                        method.getDeclaringClass() == PrintApplet.class) {
-                        String name = method.getName();
-                        if (!name.equals("run") &&               // Some methods must not be included
-                            !name.equals("stop") &&
-                            !name.equals("start") &&
-                            !name.equals("call") &&
-                            !name.equals("init") &&
-                            !name.equals("destroy") &&
-                            !name.equals("paint")) {
-                            methods.add(method.getName() + "," +
-                                        method.getReturnType() + "," +
-                                        method.getParameterTypes().length);
+        if (message.getString("method").equals("listMessages")) {
+            if (methods == null) {
+                methods = new JSONArray();
+
+                try {
+                    Class c = PrintApplet.class;
+                    Method[] m = c.getDeclaredMethods();
+                    for(Method method : m) {
+                        if (method.getModifiers() == Modifier.PUBLIC && method.getDeclaringClass() == PrintApplet.class) {
+                            String name = method.getName();
+
+                            // Add only if not in restricted method names list
+                            if (!restrictedMethodNames.contains(name)) {
+                                JSONObject jMethod = new JSONObject();
+                                jMethod.put("name", name);
+                                jMethod.put("returns", method.getReturnType());
+                                jMethod.put("parameters", method.getParameterCount());
+
+                                methods.put(jMethod);
+                            }
                         }
                     }
                 }
-            } catch (Exception ex) {
-                ex.printStackTrace();
+                catch(Exception ex) {
+                    ex.printStackTrace();
+                }
             }
-            if (methods == null) { sendString(session, "ERROR:Unable to list messages"); return; }
-            sendString(session, "listMessages\t" + StringUtils.join(methods, "\t")); return;
+
+            message.put("result", methods);
+            sendResponse(session, message);
+
+            return;
         } else {        // Figure out which method is being called and call it returning any values
-            String [] parts = text.split("\\t");
-            String name = parts[0];
-            int params = Integer.valueOf(parts.length-1);
+            JSONArray parts = message.optJSONArray("params");
+            if (parts == null) parts = new JSONArray();
+            String name = message.getString("method");
+
             try {
-                Method [] m = PrintApplet.class.getMethods();
+                Method [] methods = PrintApplet.class.getMethods();
                 Method method = null;
-                for (Method mm : m) {
+                for (Method m : methods) {
 //                    log.info(name + ":" + params + "  -  " + mm.getName() + ":" + mm.getParameterTypes().length);
-                    if (mm.getName().equals(name) &&
-                        params == mm.getParameterTypes().length) {
-                            method = mm;
+                    if (m.getName().equals(name) && parts.length() == m.getParameterTypes().length) {
+                        method = m;
+                        break;
                     }
                 }
-                Object result = "";     // default for void
+
+                Object result;     // default for void
+
                 if (method != null) { // We found one that will work. Now call it
                     // Create array of objects based on number of parameters and their types
-                    Object [] obj = new Object[params];
+                    Object [] obj = new Object[parts.length()];
                     // We must get the parameter object types correct based on what the method wants
-                    for (int x = 0; x < params; x++) {
-                        obj[x] = convertType(parts[x + 1], method.getParameterTypes()[x]);
+                    for (int i = 0; i < parts.length(); i++) {
+                        obj[i] = convertType(parts.getString(i), method.getParameterTypes()[i]);
                     }
 
                     // Using jOOR to call method since primitives are involved
                     // Invoke the method with all the parameters
-                    switch(params) {
-                        case 0:
-                            result = Reflect.on(qz).call(name).get();
-                            break;
-                        case 1:
-                            result = Reflect.on(qz).call(name, obj[0]).get();
-                            break;
-                        case 2:
-                            result = Reflect.on(qz).call(name, obj[0], obj[1]).get();
-                            break;
-                        case 3:
-                            result = Reflect.on(qz).call(name, obj[0], obj[1], obj[2]).get();
-                            break;
-                        case 4:
-                            result = Reflect.on(qz).call(name, obj[0], obj[1], obj[2], obj[3]).get();
-                            break;
-                        case 5:
-                            result = Reflect.on(qz).call(name, obj[0], obj[1], obj[2], obj[3], obj[4]).get();
-                            break;
-                        default:
-                            result = "ERROR:Invalid parameters";
-                    }
+                    result = Reflect.on(qz).call(name, obj).get();
+
                     if (result instanceof PrintApplet) {
                         result = "void";    // set since the return value is void
                     }
                 } else {
-                    sendString(session, "ERROR:Message not found");
+                    message.put("error", "Method not found");
+                    sendResponse(session, message);
                     return;
                 }
-                sendString(session, name + "\t" + result);
+
+                message.put("result", result);
+                sendResponse(session, message);
                 return;
-            } catch (Exception ex) {
+
+            } catch (ReflectException ex) {
                 ex.printStackTrace();
             }
         }
-        sendString(session, "ERROR:Unknown Message");
+
+        message.put("error", "Unknown Message");
+        sendResponse(session, message);
     }
 
-    private void sendString(Session session, String message) {
+    private void sendResponse(Session session, JSONObject message){
+        sendResponse(session, message.toString());
+    }
+
+    private void sendResponse(Session session, String jsonMsg) {
         try {
-            session.getRemote().sendString("ERROR:Unknown Message");
+            System.out.println("Response: "+ jsonMsg);
+            session.getRemote().sendString(jsonMsg);
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -162,27 +181,4 @@ public class PrintSocket {
         return data;
     }
 
-    /**
-     * Hacking way to test the PrintSocket. It returns values from a
-     * request using the session. So a true websocket is really needed
-     * to test. This gets the print statements to the console though.
-     *
-     * @param args
-     */
-    public static void main(String[] args) {
-        PrintSocket ps = new PrintSocket();
-        try { Thread.sleep(2000); } catch (Exception ignore) {}
-        ps.onMessage(null, "listMessages");
-        try { Thread.sleep(2000); } catch (Exception ignore) {}
-        ps.onMessage(null, "isAlternatePrinting");
-        try { Thread.sleep(2000); } catch (Exception ignore) {}
-        ps.onMessage(null, "getIP");
-        ps.onMessage(null, "findPrinter\tAdobe");
-        try { Thread.sleep(2000); } catch (Exception ignore) {}
-        ps.onMessage(null, "doneFindingPrinters");
-        ps.onMessage(null, "getPrinters");
-        try { Thread.sleep(2000); } catch (Exception ignore) {}
-        ps.onMessage(null, "setPrinter\t1");
-        System.exit(0);
-    }
 }
