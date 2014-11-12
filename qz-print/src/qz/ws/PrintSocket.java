@@ -88,7 +88,7 @@ public class PrintSocket {
                                 JSONObject jMethod = new JSONObject();
                                 jMethod.put("name", name);
                                 jMethod.put("returns", method.getReturnType());
-                                jMethod.put("parameters", method.getParameterCount());
+                                jMethod.put("parameters", method.getParameterTypes().length);
 
                                 methods.put(jMethod);
                             }
