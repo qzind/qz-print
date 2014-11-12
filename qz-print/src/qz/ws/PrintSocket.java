@@ -9,6 +9,7 @@ import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.joor.Reflect;
 import org.joor.ReflectException;
 import qz.PrintApplet;
+import qz.PrintFunction;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -21,7 +22,7 @@ import java.util.logging.Logger;
 @WebSocket
 public class PrintSocket {
 
-    private static PrintApplet qz = null;
+    private static PrintFunction qz = null;
     private final Logger log = Logger.getLogger(PrintApplet.class.getName());
 
     private final List<String> restrictedMethodNames = Arrays.asList("run", "stop", "start", "call", "init", "destroy", "paint");
@@ -55,7 +56,7 @@ public class PrintSocket {
             sendResponse(session, "{'error': 'Invalid Message'}");
         } else {
             try {
-                System.out.println("Request: "+ json);
+                log.info("Request: "+ json);
                 processMessage(session, new JSONObject(json));
             }
             catch(JSONException e) {
@@ -66,7 +67,7 @@ public class PrintSocket {
     }
 
     private void processMessage(Session session, JSONObject message) throws JSONException {
-        if (qz == null) { qz = new PrintApplet(); qz.init(); qz.start(); }
+        if (qz == null) { qz = new PrintFunction(); qz.init(); qz.start(); }
         log.info("Server message: " + message);
 
         // Using Reflection, call correct method on PrintApplet.
@@ -76,10 +77,10 @@ public class PrintSocket {
                 methods = new JSONArray();
 
                 try {
-                    Class c = PrintApplet.class;
+                    Class c = PrintFunction.class;
                     Method[] m = c.getDeclaredMethods();
                     for(Method method : m) {
-                        if (method.getModifiers() == Modifier.PUBLIC && method.getDeclaringClass() == PrintApplet.class) {
+                        if (method.getModifiers() == Modifier.PUBLIC) {
                             String name = method.getName();
 
                             // Add only if not in restricted method names list
@@ -96,6 +97,7 @@ public class PrintSocket {
                 }
                 catch(Exception ex) {
                     ex.printStackTrace();
+                    message.put("error", ex.getMessage());
                 }
             }
 
@@ -109,7 +111,7 @@ public class PrintSocket {
             String name = message.getString("method");
 
             try {
-                Method [] methods = PrintApplet.class.getMethods();
+                Method [] methods = PrintFunction.class.getMethods();
                 Method method = null;
                 for (Method m : methods) {
 //                    log.info(name + ":" + params + "  -  " + mm.getName() + ":" + mm.getParameterTypes().length);
@@ -122,20 +124,30 @@ public class PrintSocket {
                 Object result;     // default for void
 
                 if (method != null) { // We found one that will work. Now call it
+                    String selectedPrinter = qz.getPrinter();
+
                     // Create array of objects based on number of parameters and their types
-                    Object [] obj = new Object[parts.length()];
+                    Object [] params = new Object[parts.length()];
                     // We must get the parameter object types correct based on what the method wants
                     for (int i = 0; i < parts.length(); i++) {
-                        obj[i] = convertType(parts.getString(i), method.getParameterTypes()[i]);
+                        params[i] = convertType(parts.getString(i), method.getParameterTypes()[i]);
                     }
 
                     // Using jOOR to call method since primitives are involved
                     // Invoke the method with all the parameters
-                    result = Reflect.on(qz).call(name, obj).get();
+                    log.info("Calling: "+ name + Arrays.toString(params));
+                    result = Reflect.on(qz).call(name, params).get();
 
-                    if (result instanceof PrintApplet) {
+                    if (result instanceof PrintFunction) {
                         result = "void";    // set since the return value is void
                     }
+
+                    // Send new return value for getPrinter when selected printer changes
+                    if ((selectedPrinter == null && qz.getPrinter() != null) || (selectedPrinter != null && !selectedPrinter.equals(qz.getPrinter()))){
+                        log.info("Selected New Printer");
+                        sendResponse(session, "{\"method\":\"getPrinter\",\"params\":[],\"callback\":\"setupMethods\",\"init\":true,\"result\":\""+ qz.getPrinter() +"\"}");
+                    }
+
                 } else {
                     message.put("error", "Method not found");
                     sendResponse(session, message);
@@ -148,10 +160,13 @@ public class PrintSocket {
 
             } catch (ReflectException ex) {
                 ex.printStackTrace();
+                message.put("error", ex.getMessage());
             }
         }
 
-        message.put("error", "Unknown Message");
+        if (message.get("error") != null) {
+            message.put("error", "Unknown Message");
+        }
         sendResponse(session, message);
     }
 
@@ -161,7 +176,7 @@ public class PrintSocket {
 
     private void sendResponse(Session session, String jsonMsg) {
         try {
-            System.out.println("Response: "+ jsonMsg);
+            log.info("Response: "+ jsonMsg);
             session.getRemote().sendString(jsonMsg);
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -174,10 +189,14 @@ public class PrintSocket {
         if (type instanceof Integer) return Integer.decode(data);
         if (type instanceof Float) return Float.parseFloat(data);
         if (type instanceof Double) return Double.parseDouble(data);
+        if (type instanceof Boolean) return Boolean.parseBoolean(data);
+
         String name = String.valueOf(type);
         if ("int".equals(name)) return Integer.decode(data);
         if ("float".equals(name)) return Float.parseFloat(data);
         if ("double".equals(name)) return Double.parseDouble(data);
+        if ("boolean".equals(name)) return Boolean.parseBoolean(data);
+
         return data;
     }
 

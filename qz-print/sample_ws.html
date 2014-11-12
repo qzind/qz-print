@@ -78,13 +78,17 @@ function deployQZ() {
                     }
                 }
 
-                try {
-                    console.log("Callbacking: " + message.callback);
-                    window[message.callback](message.init? message.method : message.result);
-                    window[message.callback] = null; // Remove reference to this function
-                }
-                catch(err){
-                    console.error(err);
+                if (message.callback != null) {
+                    try {
+                        console.log("Callbacking: " + message.callback);
+                        window["qz"][message.callback](message.init? message.method : message.result);
+                        if (message.callback != 'setupMethods') {
+                            window["qz"][message.callback] = null; // Remove reference to this function
+                        }
+                    }
+                    catch(err) {
+                        console.error(err);
+                    }
                 }
             }
 
@@ -106,27 +110,73 @@ function createQZ(websocket) {
     // Get list of methods from websocket
     websocket.sendObj({method: 'listMessages'});
     window["qz"] = {};
+
+    window["qz"].startQueue = function(){
+        /*
+         TODO :
+             -intercept all method calls from start call to finish call
+             -hold reference to first method
+             -place each additional call into previous callback
+        */
+
+        qz._queueFirst = 'init';
+        qz._queueLast = null;
+    };
+
+    window["qz"]._addQueue = function(method){
+        if (qz._queueFirst == 'init') {
+            qz._queueFirst = method;
+        }
+        if (qz._queueLast != undefined){
+            qz._queueLast.callback = method;
+        }
+
+        qz._queueLast = method;
+    };
+
+    window["qz"].finishQueue = function(fnComplete){
+        /*
+         TODO :
+            -set final callback to fnComplete
+            -call first method in callback chain
+        */
+
+        qz._queueLast.callback = fnComplete;
+
+        qz._queueFirst();
+
+        qz._queueFirst = null;
+    };
+
 }
 
 function mapMethods(websocket, methods){
     console.log('Adding ' + methods.length + ' methods to qz object');
-    for (var x = 0; x < methods.length; x++) {
+    for(var x = 0; x < methods.length; x++) {
         var name = methods[x].name;
-        var numParams = methods[x].parameters; // TODO - last param should be callback function
+        var returnType = methods[x].returns;
+        var numParams = methods[x].parameters;
 
         // Determine how many parameters there are and create method with that many
-        (function(_name, _numParams){
+        (function(_name, _numParams, _returnType){
             //create function to map function name to parameter counted function
-            window["qz"][_name] = function () {
-                if (window["qz"][_name+'_'+(arguments.length-1)] == undefined){
-                    console.error("ERROR | No mapping for method "+ (_name+'_'+(arguments.length-1)));
+            window["qz"][_name] = function() {
+                var func = window["qz"][_name +'_'+ (arguments.length-1)];
+
+                if (func == undefined) {
+                    console.warn("WARNING | No callback defined for method " + _name);
+                    func = window["qz"][_name +'_'+ arguments.length];
                 }
 
-                window["qz"][_name+'_'+(arguments.length-1)].apply(this, arguments);
+                if (qz._queueFirst == null) {
+                    func.apply(this, arguments);
+                } else {
+                    qz._addQueue(func); // TODO - include parameters !!!
+                }
             };
 
             //create parameter counted function to include overloaded java methods in javascript object
-            window["qz"][_name+'_'+_numParams] = function () {
+            window["qz"][_name+'_'+_numParams] = function() {
                 var args = [];
                 for(var i=0; i<_numParams; i++){
                     args.push(arguments[i]);
@@ -140,7 +190,7 @@ function mapMethods(websocket, methods){
                         cbName = cb.name;
                     }
 
-                    window[cbName] = cb;
+                    window["qz"][cbName] = cb;
                 } else {
                     cbName = null;
                 }
@@ -148,25 +198,29 @@ function mapMethods(websocket, methods){
                 console.log("Calling "+ _name +"("+ args +") --> CB: "+ cbName +"()");
                 websocket.sendObj({method: _name, params: args, callback: cbName, init: (cbName=='setupMethods')});
             }
-        })(name, numParams);
+        })(name, numParams, returnType);
     }
 
     // Re-setup all functions with static returns
-    qz.getVersion(setupMethods);
+    for(var key in preemptive){
+        window["qz"][key](setupMethods);
+    }
 
     console.log("Sent methods off to get rehabilitated");
 }
 
-var preemptive = {'getVersion':''}; //TODO - list all methods with static returns
+var preemptive = {isActive:'', getVersion:'', getPrinter:'', getIP:'', getMac:''}; //TODO - list all methods with static returns
 function setupMethods(methodName){
-    console.log("Reset "+ methodName);
-    delete preemptive[methodName];
+    if ($.param(preemptive).length > 0) {
+        console.log("Reset " + methodName);
+        delete preemptive[methodName];
 
-    console.log("Methods left to return: "+ $.param(preemptive).length);
+        console.log("Methods left to return: " + $.param(preemptive).length);
 
-    // Fire ready method when everything on the QZ object has been added
-    if ($.param(preemptive).length == 0){
-        qzReady();
+        // Fire ready method when everything on the QZ object has been added
+        if ($.param(preemptive).length == 0) {
+            qzReady();
+        }
     }
 }
 
@@ -175,12 +229,11 @@ function setupMethods(methodName){
  */
 function qzReady() {
     // Setup our global qz object
-//    window["qz"] = document.getElementById('qz');
     var title = document.getElementById("title");
     if (qz) {
         try {
             title.innerHTML = title.innerHTML + " " + qz.getVersion();
-            qz["isActive"] = function(){ return true; }; // custom set isActive to return true when ready since it's not defined elsewhere
+//            qz["isActive"] = function(){ return true; }; // custom set isActive to return true when ready since it's not defined elsewhere
 
             document.getElementById("content").style.background = "#F0F0F0";
         } catch(err) { // LiveConnect error, display a detailed message
@@ -206,7 +259,7 @@ function notReady() {
         return true;
     }
     // If a printer hasn't been selected, display a message.
-    else if (!qz.getPrinter()) { //TODO - find some async / sync way to hold this method variable
+    else if (!qz.getPrinter()) {
         alert('Please select a printer first by using the "Detect Printer" button.');
         return true;
     }
@@ -222,7 +275,7 @@ function isLoaded() {
         return false;
     } else {
         try {
-            if (!qz.isActive()) { //TODO -- WHAT IS THIS SUPPOSE TO POINT TO ??? WAS IT EVER POINTING ?? I CANT FIND IT IN HISTORY ...
+            if (!qz.isActive()) {
                 alert('Error:\n\n\tPrint plugin is loaded but NOT active!');
                 return false;
             }
@@ -258,15 +311,13 @@ function qzDonePrinting() {
 function useDefaultPrinter() {
     if (isLoaded()) {
         // Searches for default printer
-        qz.findPrinter(
-                function() {
-                    // Alert the printer name to user
-                    qz.getPrinter(function(printer){
-                        alert(printer !== null ? 'Default printer found: "' + printer + '"':
-                                'Default printer ' + 'not found');
-                    });
-                }
-        );
+        qz.findPrinter(function() {
+            var printer = qz.getPrinter();
+
+            // Alert the printer name to user
+            alert(printer !== null ? 'Default printer found: "' + printer + '"':
+            'Default printer ' + 'not found');
+        });
     }
 }
 
@@ -345,20 +396,15 @@ function findPrinter(name) {
 
     if (isLoaded()) {
         // Searches for locally installed printer with specified name
-        qz.findPrinter(p.value, //FIXME - search lags by 1
-                function () {
-                    var p = document.getElementById('printer');
-                    qz.getPrinter(function (printer){
-                        // Alert the printer name to user
-                        alert(printer !== null ? 'Printer found: "' + printer +
-                                '" after searching for "' + p.value + '"' : 'Printer "' +
-                                p.value + '" not found.');
-                    });
+        qz.findPrinter(p.value, function () {
+            var p = document.getElementById('printer');
+            var printer = qz.getPrinter();
 
-                    // Remove reference to this function
-//                    window['qzDoneFinding'] = null;
-                }
-        );
+            // Alert the printer name to user
+            alert(printer !== null ? 'Printer found: "' + printer +
+            '" after searching for "' + p.value + '"' : 'Printer "' +
+            p.value + '" not found.');
+        });
 
     }
 }
@@ -372,18 +418,16 @@ function findPrinter(name) {
 function findPrinters() {
     if (isLoaded()) {
         // Searches for a locally installed printer with a bogus name
-        qz.findPrinter('\\{bogus_printer\\}',
-                function () {
-                    // Get the CSV listing of attached printers
-                    qz.getPrinters(function (printers){
-                        printers = printers.split(",");
+        qz.findPrinter('\\{bogus_printer\\}', function () {
+            // Get the CSV listing of attached printers
+            qz.getPrinters(function (printers){
+                printers = printers.split(",");
 
-                        for (var i in printers) {
-                            alert(printers[i] ? printers[i] : 'Unknown');
-                        }
-                    });
+                for (var i in printers) {
+                    alert(printers[i] ? printers[i] : 'Unknown');
                 }
-        );
+            });
+        });
     }
 }
 
@@ -432,15 +476,13 @@ function printESCP() {
     if (notReady()) { return; }
 
     // Append a png in ESCP format with single pixel density
-    qz.appendImage(getPath() + "img/image_sample_bw.png", "ESCP", "single",
-            function() {
-                // Append the rest of our commands
-                qz.append('\nPrinted using qz-print plugin.\n\n\n\n\n\n');
+    qz.appendImage(getPath() + "img/image_sample_bw.png", "ESCP", "single", function() {
+        // Append the rest of our commands
+        qz.append('\nPrinted using qz-print plugin.\n\n\n\n\n\n');
 
-                // Tell the apple to print.
-                qz.print();
-            }
-    );
+        // Tell the apple to print.
+        qz.print();
+    });
 }
 
 
@@ -456,23 +498,16 @@ function printZPL() {
     // Send characters/raw commands to qz using "append"
     // This example is for ZPL.  Please adapt to your printer language
     // Hint:  Carriage Return = \r, New Line = \n, Escape Double Quotes= \"
-    qz.append('^XA\n' +
-              '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n',
-            function() {
-                qz.appendImage(getPath() + 'img/image_sample_bw.png', 'ZPLII',
-                        function() {
-                            // Append the rest of our commands
-                            qz.append('^FS\n' +
-                                      '^XZ\n',
-                                    function() {
-                                        // Tell the apple to print.
-                                        qz.print();
-                                    }
-                            );
-                        }
-                );
-            }
-    );
+    qz.append('^XA\n');
+    qz.append('^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n');
+
+    qz.appendImage(getPath() + 'img/image_sample_bw.png', 'ZPLII');
+
+    // Append the rest of our commands
+    qz.append('^FS\n');
+    qz.append('^XZ\n');
+
+    qz.print();
 }
 
 
@@ -699,6 +734,8 @@ function printHex() {
     // Since 1.5.4, No backslashes needed (fixes \x00 NUL JavaScript bug)
     // Can be in format "1B00" or "x1Bx00"
     // EPL Sample Provided
+
+    //todo     qz.startSetup();
     qz.appendHex("4e0d0a713630390d0a513230332c32360d0a42352c32362c");
     qz.appendHex("302c31412c332c372c3135322c422c2231323334220d0a41");
     qz.appendHex("3331302c32362c302c332c312c312c4e2c22534b55203030");
@@ -710,6 +747,7 @@ function printHex() {
     qz.appendHex("73616d706c652e68746d6c220d0a413331302c3134362c30");
     qz.appendHex("2c332c312c312c4e2c227072696e7448657828292066756e");
     qz.appendHex("6374696f6e2e220d0a50312c310d0a");
+    //todo     qz.finishSetup();
 
     // Send characters/raw commands to printer
     qz.print();
@@ -783,20 +821,22 @@ function printImage(scaleImage) {
  ***************************************************************************/
 function printPDF() {
     if (notReady()) { return; }
-    // Append our pdf (only one pdf can be appended per print)
-    qz.appendPDF(getPath() + "misc/pdf_sample.pdf");
 
-    //qz.setCopies(3);
+    // Append our pdf (only one pdf can be appended per print)
+//    qz.appendPDF(getPath() + "misc/pdf_sample.pdf", function(){
+//        qz.setCopies(parseInt(document.getElementById("copies").value), function(){
+//            qz.printPS();
+//        });
+//    });
+
+    qz.startQueue();
+
+    qz.appendPDF(getPath() + "misc/pdf_sample.pdf");
     qz.setCopies(parseInt(document.getElementById("copies").value));
 
-    // Automatically gets called when "qz.appendPDF()" is finished.
-    window['qzDoneAppending'] = function() {
-        // Tell the applet to print PostScript.
+    qz.finishQueue(function() {
         qz.printPS();
-
-        // Remove reference to this function
-        window['qzDoneAppending'] = null;
-    };
+    });
 }
 
 /***************************************************************************
@@ -818,19 +858,22 @@ function printHTML() {
     var colB = '<img src="' + getPath() + 'img/image_sample.png">';
 
     //qz.setCopies(3);
-    qz.setCopies(parseInt(document.getElementById("copies").value),
-            function(){
-                // Append our image (only one image can be appended per print)
-                qz.appendHTML('<html><table face="monospace" border="1px"><tr height="6cm">' +
-                        '<td valign="top">' + colA + '</td>' +
-                        '<td valign="top">' + colB + '</td>' +
-                        '</tr></table></html>',
-                        function(){
-                            qz.printHTML();
-                        }
-                );
-            }
-    );
+    qz.setCopies(parseInt(document.getElementById("copies").value), function(){
+        // Append our image (only one image can be appended per print)
+        qz.appendHTML(
+                '<html>' +
+                '<table face="monospace" border="1px">' +
+                '<tr height="6cm">' +
+                '<td valign="top">' + colA + '</td>' +
+                '<td valign="top">' + colB + '</td>' +
+                '</tr>' +
+                '</table>' +
+                '</html>',
+                function(){
+                    qz.printHTML();
+                }
+        );
+    });
 }
 
 /***************************************************************************
@@ -846,15 +889,10 @@ function listNetworkInfo() {
         // Note, if you don't wish to use google.com, you can customize the host and port
         // qz.getNetworkUtilities().setHostname("qzindustries.com");
         // qz.getNetworkUtilities().setPort(80);
-        qz.findNetworkInfo();
 
-        // Automatically gets called when "qz.findPrinter()" is finished.
-        window['qzDoneFindingNetwork'] = function() {
+        qz.findNetworkInfo(function() {
             alert("Primary adapter found: " + qz.getMac() + ", IP: " + qz.getIP());
-
-            // Remove reference to this function
-            window['qzDoneFindingNetwork'] = null;
-        };
+        });
     }
 }
 
@@ -870,23 +908,19 @@ function printHTML5Page() {
         canvas: hidden_screenshot,
         onrendered: function() {
             if (notReady()) { return; }
+
             // Optional, set up custom page size.  These only work for PostScript printing.
             // setPaperSize() must be called before setAutoSize(), setOrientation(), etc.
             qz.setPaperSize("8.5in", "11.0in");  // US Letter
             qz.setAutoSize(true);
-            qz.appendImage($("canvas")[0].toDataURL('image/png'));
 
             //qz.setCopies(3);
             qz.setCopies(parseInt(document.getElementById("copies").value));
 
-            // Automatically gets called when "qz.appendFile()" is finished.
-            window['qzDoneAppending'] = function() {
+            qz.appendImage($("canvas")[0].toDataURL('image/png'), function() {
                 // Tell the applet to print.
                 qz.printPS();
-
-                // Remove reference to this function
-                window['qzDoneAppending'] = null;
-            };
+            });
         }
     });
 }
@@ -903,9 +937,10 @@ function printHTML5Page() {
  ***************************************************************************/
 function logFeatures() {
     if (isLoaded()) {
-        var logging = qz.getLogPostScriptFeatures();
-        qz.setLogPostScriptFeatures(!logging);
-        alert('Logging of PostScript printer capabilities to console set to "' + !logging + '"');
+        qz.getLogPostScriptFeatures(function(logging) {
+            qz.setLogPostScriptFeatures(!logging);
+            alert('Logging of PostScript printer capabilities to console set to "' + !logging + '"');
+        });
     }
 }
 
@@ -938,20 +973,16 @@ function useAlternatePrinting() {
 function listSerialPorts() {
     if (isLoaded()) {
         // Search the PC for communication (RS232, COM, tty) ports
-        qz.findPorts();
-
-        // Automatically called when "qz.findPorts()" is finished
-        window['qzDoneFindingPorts'] = function() {
-            var ports = qz.getPorts().split(",");
-            for (var p in ports) {
-                if (p == 0) {
-                    document.getElementById("port_name").value = ports[p];
+        qz.findPorts(function() {
+            qz.getPorts(function(ports){
+                for (var p in ports) {
+                    if (p == 0) {
+                        document.getElementById("port_name").value = ports[p];
+                    }
+                    alert(ports[p]);
                 }
-                alert(ports[p]);
-            }
-            // Remove reference to this function
-            window['qzDoneFindingPorts'] = null;
-        };
+            });
+        });
     }
 }
 
@@ -965,18 +996,16 @@ function listSerialPorts() {
  ***************************************************************************/
 function openSerialPort() {
     if (isLoaded()) {
-        qz.openPort(document.getElementById("port_name").value);
-
-        // Automatically called when "qz.openPort()" is finished (even if it fails to open)
-        window['qzDoneOpeningPort'] = function(portName) {
+        qz.openPort(document.getElementById("port_name").value, function(){
+            //FIXME ...
             if (qz.getException()) {
                 alert("Could not open port [" + portName + "] \n\t" +
-                        qz.getException().getLocalizedMessage());
+                qz.getException().getLocalizedMessage());
                 qz.clearException();
             } else {
                 alert("Port [" + portName +  "] is open!");
             }
-        };
+        });
     }
 }
 
@@ -988,18 +1017,16 @@ function openSerialPort() {
  ***************************************************************************/
 function closeSerialPort() {
     if (isLoaded()) {
-        qz.closePort(document.getElementById("port_name").value);
-
-        // Automatically called when "qz.closePort() is finished (even if it fails to close)
-        window['qzDoneClosingPort'] = function(portName) {
+        qz.closePort(document.getElementById("port_name").value, function(){
+            //FIXME ...
             if (qz.getException()) {
                 alert("Could not close port [" + portName + "] \n\t" +
-                        qz.getException().getLocalizedMessage());
+                qz.getException().getLocalizedMessage());
                 qz.clearException();
             } else {
                 alert("Port [" + portName +  "] closed!");
             }
-        };
+        });
     }
 }
 
@@ -1077,34 +1104,23 @@ function chr(i) {
     return String.fromCharCode(i);
 }
 
-/***************************************************************************
- * Prototype function for allowing the applet to run multiple instances.
- * IE and Firefox may benefit from this setting if using heavy AJAX to
- * rewrite the page.  Use with care;
- * Usage:
- *    qz.allowMultipleInstances(true);
- ***************************************************************************/
-function allowMultiple() {
-    if (isLoaded()) {
-        var multiple = qz.getAllowMultipleInstances();
-        qz.allowMultipleInstances(!multiple);
-        alert('Allowing of multiple applet instances set to "' + !multiple + '"');
-    }
-}
 </script>
 <script type="text/javascript" src="js/jquery-1.10.2.js"></script>
 <script type="text/javascript" src="js/html2canvas.js"></script>
 <script type="text/javascript" src="js/jquery.plugin.html2canvas.js"></script>
 </head>
-<body id="content" bgcolor="#FFF380">
-<div style="position:absolute;top:0;left:5;"><h1 id="title">QZ Print Plugin</h1></div><br /><br /><br />
-<table border="1px" cellpadding="5px" cellspacing="0px"><tr>
 
+<body id="content" bgcolor="#FFF380">
+<div style="margin: 0 1em;"><h1 id="title" style="margin:0;">QZ Print Plugin</h1></div>
+
+<table border="1px" cellpadding="5px" cellspacing="0px">
+<tr>
     <td valign="top"><h2>All Printers</h2>
-        <input type="button" onClick="findPrinter()" value="Detect Printer"><br />
+        +<input type="button" onClick="findPrinter()" value="Detect Printer"><br />
         <input id="printer" type="text" value="zebra" size="15"><br />
-        <input type="button" onClick="findPrinters()" value="List All Printers"><br />
-        <input type="button" onClick="useDefaultPrinter()" value="Use Default Printer"><br /><br />
+        +<input type="button" onClick="findPrinters()" value="List All Printers"><br />
+        +<input type="button" onClick="useDefaultPrinter()" value="Use Default Printer"><br /><br />
+
         <!-- NEW QZ APPLET TAG USAGE -- RECOMMENDED -->
         <!--
         <applet id="qz" archive="./qz-print.jar" name="QZ Print Plugin" code="qz.PrintApplet.class" width="55" height="55">
@@ -1125,49 +1141,61 @@ function allowMultiple() {
         <param name="printer" value="zebra">
         </applet><br />
         -->
+    </td>
 
-    </td><td valign="top"><h2>Raw Printers Only</h2>
-    <a href="http://qzindustries.com/WhatIsRawPrinting" target="new">What is Raw Printing?</a><br /><br />
-    <input type="button" onClick="printEPL()" value="Print EPL" /><br />
-    <input type="button" onClick="printZPL()" value="Print ZPL" /><br /><br />
-    <input type="button" onClick="printESCP()" value="Print ESCP" /><br />
-    <a href="javascript:findPrinter('Epson');">Epson</a>&nbsp;
-    <a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp;
-    <a href="javascript:findPrinter('Star');">Star</a> <br /><br />
-    <input type="button" onClick="printEPCL()" value="Print EPCL" /><br />
-    (Zebra Card Printer)<br /><br />
-    <input type="button" onClick="print64()" value="Print Base64" /><br />
-    <input type="button" onClick="printPages()" value="Print Spooling Every 2" /><br />
-    <input type="button" onClick="printXML()" value="Print XML" /><br />
-    <input type="button" onClick="printHex()" value="Print Hex" /><br /><br />
-    <input type="button" onClick="printFile('zpl_sample.txt')" value="zpl_sample.txt" /><br />
-    <input type="button" onClick="printFile('fgl_sample.txt')" value="fgl_sample.txt" /><br />
-    <input type="button" onClick="printFile('epl_sample.txt')" value="epl_sample.txt" /><br /><br />
+    <td valign="top"><h2>Raw Printers Only</h2>
+        <a href="http://qzindustries.com/WhatIsRawPrinting" target="new">What is Raw Printing?</a><br /><br />
+        <input type="button" onClick="printEPL()" value="Print EPL" /><br />
+        <input type="button" onClick="printZPL()" value="Print ZPL" /><br /><br />
 
-    <input type="button" onClick="printToFile()" value="Print To File" /><br />
-    <input type="button" onClick="printToHost()" value="Print To Host" /><br />
-    <input type="button" onClick="useAlternatePrinting()" value="Use Alternate Printing" /><br />
+        <input type="button" onClick="printESCP()" value="Print ESCP" /><br />
+        <a href="javascript:findPrinter('Epson');">Epson</a>&nbsp;
+        <a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp;
+        <a href="javascript:findPrinter('Star');">Star</a> <br /><br />
 
-</td><td valign="top"><h2>PostScript Printers Only</h2>
-    <a href="http://qzindustries.com/WhatIsPostScriptPrinting" target="new">What is PostScript Printing?</a><br />
-    <p>First find <a href="javascript:findPrinter('XPS');">Microsoft XPS</a> or <a href="javascript:findPrinter('PDF');">PDF</a> printer</p>
-    <input type="button" onClick="printHTML()" value="Print HTML" /><br />
-    <input type="button" onClick="printPDF()" value="Print PDF" /><br />
-    <input type="button" onClick="printImage(false)" value="Print PostScript Image" /><br />
-    <input type="button" onClick="printImage(true)" value="Print Scaled PostScript Image" /><br />
-    <input type="button" onClick="printHTML5Page()" value="Print Current Page" /><br />
-    <input type="button" onClick="logFeatures()" value="Log Printer Features on Print" /><br />
-    <p>Copies<p>
-        <input type="text" id="copies" size="8" value="1" />
+        <input type="button" onClick="printEPCL()" value="Print EPCL" /><br />
+        (Zebra Card Printer)<br /><br />
 
-</td><td valign="top"><h2>Serial</h2>
-    <input type="button" id="list_ports" onClick="listSerialPorts()" value="List Serial Ports" /><br />
-    <input type="text" id="port_name" size="8" />
-    <input type="button" id="open_port"  onClick="openSerialPort()" value="Open Port" /><br />
-    <input type="button" id="send_data" onClick="sendSerialData()" value="Send Port Cmd" /><br />
-    <input type="button" id="close_port"  onClick="closeSerialPort()" value="Close Port" /><br />
-    <hr /><h2>Misc</h2>
-    <input type="button" onClick="listNetworkInfo()" value="List Network Info" /><br />
-    <input type="button" onClick="allowMultiple()" value="Allow Multiple Applets" /><br /></td></tr></table>
-</body><canvas id="hidden_screenshot" style="display:none;"></canvas>
+        <input type="button" onClick="print64()" value="Print Base64" /><br />
+        <input type="button" onClick="printPages()" value="Print Spooling Every 2" /><br />
+        <input type="button" onClick="printXML()" value="Print XML" /><br />
+        <input type="button" onClick="printHex()" value="Print Hex" /><br /><br />
+
+        <input type="button" onClick="printFile('zpl_sample.txt')" value="zpl_sample.txt" /><br />
+        <input type="button" onClick="printFile('fgl_sample.txt')" value="fgl_sample.txt" /><br />
+        <input type="button" onClick="printFile('epl_sample.txt')" value="epl_sample.txt" /><br /><br />
+
+        <input type="button" onClick="printToFile()" value="Print To File" /><br />
+        <input type="button" onClick="printToHost()" value="Print To Host" /><br />
+        <input type="button" onClick="useAlternatePrinting()" value="Use Alternate Printing" /><br />
+    </td>
+
+    <td valign="top"><h2>PostScript Printers Only</h2>
+        <a href="http://qzindustries.com/WhatIsPostScriptPrinting" target="new">What is PostScript Printing?</a><br />
+        <p>First find <a href="javascript:findPrinter('XPS');">Microsoft XPS</a> or <a href="javascript:findPrinter('PDF');">PDF</a> printer</p>
+        +<input type="button" onClick="printHTML()" value="Print HTML" /><br />
+        +<input type="button" onClick="printPDF()" value="Print PDF" /><br />
+        <input type="button" onClick="printImage(false)" value="Print PostScript Image" /><br />
+        <input type="button" onClick="printImage(true)" value="Print Scaled PostScript Image" /><br />
+        <input type="button" onClick="printHTML5Page()" value="Print Current Page" /><br />
+        +<input type="button" onClick="logFeatures()" value="Log Printer Features on Print" /><br />
+        <p>Copies<p><input type="text" id="copies" size="8" value="1" />
+    </td>
+
+    <td valign="top"><h2>Serial</h2>
+        |<input type="button" id="list_ports" onClick="listSerialPorts()" value="List Serial Ports" /><br />
+        <input type="text" id="port_name" size="8" /><br />
+        /<input type="button" id="open_port"  onClick="openSerialPort()" value="Open Port" /><br />
+        /<input type="button" id="send_data" onClick="sendSerialData()" value="Send Port Cmd" /><br />
+        /<input type="button" id="close_port"  onClick="closeSerialPort()" value="Close Port" /><br />
+        <hr /><h2>Misc</h2>
+        +<input type="button" onClick="listNetworkInfo()" value="List Network Info" /><br />
+        <!--<input type="button" onClick="allowMultiple()" value="Allow Multiple Applets" /><br />-->
+    </td>
+</tr>
+</table>
+
+</body>
+<canvas id="hidden_screenshot" style="display:none;"></canvas>
+
 </html>

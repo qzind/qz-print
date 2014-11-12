@@ -97,9 +97,9 @@ public class PrintPostScript implements Printable {
         // Fixes 1" white border problem - May need tweaking
         HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
 
-        // If paper size and units are specified, use them, if not, assume the area is 
+        // If paper size and units are specified, use them, if not, assume the area is
         // the image's natural size on the computer screen and use the old method
-        // *Note:  Computer screen dpi's can change, but print consistancy 
+        // *Note:  Computer screen dpi's can change, but print consistancy
         // cross-platform is more important than accuracy, so we'll always assume 72dpi
         if (paperSize.get() != null) {
             log.info("A custom paper size was supplied.");
@@ -116,11 +116,11 @@ public class PrintPostScript implements Printable {
         }
 
         logSizeCalculations(paperSize.get(), width, height);
-        
+
         job.setPrintService(printServiceAtomicReference.get());
         job.setPrintable(this);
         job.setJobName(jobName.get());
-        
+
         // If copies are specified, handle them prior to printing
         if (copies.get() != null && copies.get() > 1) {
             log.info("Copies specified: " + copies.get());
@@ -135,13 +135,13 @@ public class PrintPostScript implements Printable {
                     job.print(attr);
                 }
             //}
-        } 
+        }
         // No copies specified, just print
         else {
             job.print(attr);
         }
-        
-        
+
+
 
         bufferedImage.set(null);
         bufferedPDF.set(null);
@@ -199,12 +199,12 @@ public class PrintPostScript implements Printable {
 
     /*private int printJPedalNonFree(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
      PdfDecoder pdf = getPDFDecoder();
-    
+
      pdf.setPrintAutoRotateAndCenter(false);
      pdf.setPrintPageScalingMode(PrinterOptions.PAGE_SCALING_NONE);
      PdfBook pdfBook = new PdfBook(pdf, , attributes);
      pdfBook.setChooseSourceByPdfPageSize(false);
-    
+
      return 0;
      }*/
     /**
@@ -224,21 +224,21 @@ public class PrintPostScript implements Printable {
      *
      */
     /*int pg = pageIndex + 1;
-    
+
      if (pdf == null) {
      throw new PrinterException("No PDF data specified");
      }
-    
+
      if (pg < 1 || pg > pdf.getNumberOfPages()) {
      return NO_SUCH_PAGE;
-     }; 
-    
+     };
+
      pdf.setPrintAutoRotateAndCenter(false);
      try {
-    
+
      printImage(graphics, pageFormat, pageIndex);
      }
-    
+
      }*/
     private int printPDFRenderer(Graphics graphics, @SuppressWarnings("UnusedParameters") PageFormat pageFormat, int pageIndex) throws PrinterException {
         //Suppressing unused parameter warning. Need to see if it should actually be passed/used or not.
@@ -266,7 +266,7 @@ public class PrintPostScript implements Printable {
         //double paperaspect = pwidth / pheight;
         /*
          Rectangle imgbounds;
-        
+
          if (aspect > paperaspect) {
          // paper is too tall / pdfpage is too wide
          int height = (int) (pwidth / aspect);
@@ -298,7 +298,7 @@ public class PrintPostScript implements Printable {
 
         return PAGE_EXISTS;
         /*
-         
+
          // TODO: Proper resizing code... needs work
 
          PDFFile pdf = getPDFFile();
@@ -344,8 +344,8 @@ public class PrintPostScript implements Printable {
          }
 
          return PAGE_EXISTS;
-         * 
-         * 
+         *
+         *
          */
 
     }
@@ -462,7 +462,7 @@ public class PrintPostScript implements Printable {
      private BufferedImage getResizedImage(BufferedImage imageToResize){
      return null;
      }
-    
+
      */
     private PDFFile getPDFFile() throws PrinterException {
 
@@ -504,12 +504,16 @@ public class PrintPostScript implements Printable {
     }
 
     public void setPrintParameters(PrintApplet a) {
+        setPrintParameters(a.getJobName(), a.getCopies(), a.getLogPostScriptFeatures());
+    }
+
+    public void setPrintParameters(String jobName, int copies, boolean logPostScriptFeatures) {
         // RKC: PROBLEM >>> setPrintService(a.getPrintService());
 //        setMargin(rpa.getPSMargin());
         // RKC: PROBLEM >>> setPaperSize(a.getPaperSize());
-        setCopies(a.getCopies());
-        setJobName(a.getJobName().replace(" ___ ", " PostScript "));
-        setLogPostScriptFeatures(a.getLogPostScriptFeatures());
+        setCopies(copies);
+        setJobName(jobName.replace(" ___ ", " PostScript "));
+        setLogPostScriptFeatures(logPostScriptFeatures);
     }
 
     /*public void setAutoSize(Boolean autoSize) {

@@ -24,40 +24,14 @@ package qz;
 import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
 import qz.common.*;
-import qz.exception.InvalidFileTypeException;
-import qz.exception.NullPrintServiceException;
 import qz.exception.SerialException;
-import qz.printer.ImageWrapper;
-import qz.printer.LanguageType;
-import qz.printer.PaperFormat;
-import qz.printer.PrintServiceMatcher;
-import qz.reflection.ReflectException;
-import qz.utils.ByteUtilities;
-import qz.utils.FileUtilities;
-import qz.utils.NetworkUtilities;
 
-import javax.imageio.ImageIO;
-import javax.print.PrintException;
 import javax.print.PrintService;
-import javax.print.PrintServiceLookup;
-import java.applet.Applet;
 import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.awt.print.PrinterException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.net.SocketException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
-import java.nio.charset.IllegalCharsetNameException;
 import java.security.AccessController;
 import java.security.PrivilegedActionException;
 import java.security.PrivilegedExceptionAction;
-import java.text.StringCharacterIterator;
-import java.util.LinkedList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -69,25 +43,18 @@ import java.util.logging.Logger;
  *
  * @author A. Tres Finocchiaro
  */
-public class PrintApplet extends Applet implements Runnable {
+public class PrintApplet extends PrintFunction implements Runnable {
 
     private static final Logger log = Logger.getLogger(PrintApplet.class.getName());
 
     private static final AtomicReference<Thread> thisThread = new AtomicReference<Thread>(null);
     private static final long serialVersionUID = 2787955484074291340L;
-    private JSObject window = null;
-    private LanguageType lang;
-    private int appendType;
+    private boolean running;
     private long sleep;
-    private PrintService ps;
-    private PrintRaw printRaw;
-    private SerialIO serialIO;
-    private PrintPostScript printPS;
-    private PrintHTML printHTML;
-    //private NetworkHashMap networkHashMap;
-    private NetworkUtilities networkUtilities;
-    private Throwable t;
-    private PaperFormat paperSize;
+
+    private JSObject window = null;
+
+    private int appendType;
     private boolean startFindingPrinters;
     private boolean doneFindingPrinters;
     private boolean startPrinting;
@@ -95,34 +62,17 @@ public class PrintApplet extends Applet implements Runnable {
     private boolean startAppending;
     private boolean startFindingPorts;
     private boolean startSending;
-    private boolean autoSetSerialProperties = false;
     private boolean startOpeningPort;
     private boolean startClosingPort;
+
+    private boolean autoSetSerialProperties = false;
     private String serialPortName;
     private int serialPortIndex = -1;
-    private boolean running;
-    private boolean reprint;
-    private boolean psPrint;
-    private boolean htmlPrint;
-    private boolean alternatePrint;
-    private boolean logFeaturesPS;
-    private int imageX = 0;
-    private int imageY = 0;
-    private int dotDensity = 32;
 
     private boolean allowMultiple;
-    private String jobName;
-    private String file;
     private String xmlTag;
     private String printer;
-    //private String orientation;
-    //private Boolean maintainAspect;
-    private int copies = -1;
-    private Charset charset = Charset.defaultCharset();
-    //private String pageBreak; // For spooling pages one at a time
-    private int documentsPerSpool = 0;
-    private String endOfDocument;
-//    private String manualBreak = "%/SPOOL/%";
+
 
     /**
      * Create a privileged thread that will listen for JavaScript events
@@ -165,38 +115,24 @@ public class PrintApplet extends Applet implements Runnable {
                     try {
                         switch (appendType) {
                             case Constants.APPEND_HTML:
-                                appendHTML(new String(FileUtilities.readRawFile(file), charset.name()));
+                                super.appendHTMLFile(file);
                             case Constants.APPEND_XML:
-                                append64(FileUtilities.readXMLFile(file, xmlTag));
+                                super.appendXML(file, xmlTag);
                                 break;
                             case Constants.APPEND_RAW:
-                                getPrintRaw().append(FileUtilities.readRawFile(file));
+                                super.appendFile(file);
                                 break;
                             case Constants.APPEND_IMAGE_PS:
-                                readImage();
+                                super.appendImage(file);
                                 break;
                             case Constants.APPEND_IMAGE:
-                                BufferedImage bi;
-                                ImageWrapper iw;
-                                if (ByteUtilities.isBase64Image(file)) {
-                                    byte[] imageData = Base64.decode(file.split(",")[1]);
-                                    bi = ImageIO.read(new ByteArrayInputStream(imageData));
-                                } else {
-                                    bi = ImageIO.read(new URL(file));
-                                }
-                                iw = new ImageWrapper(bi, lang);
-                                iw.setCharset(charset);
-                                // Image density setting (ESCP only)
-                                iw.setDotDensity(dotDensity);
-                                // Image coordinates, (EPL only)
-                                iw.setxPos(imageX);
-                                iw.setyPos(imageY);
-                                getPrintRaw().append(iw.getImageCommand());
+                                super.finishAppendImage(file);
                                 break;
                             case Constants.APPEND_PDF:
-                                getPrintPS().setPDF(ByteBuffer.wrap(ByteUtilities.readBinaryFile(file)));
+                                super.appendPDF(file);
                                 break;
-                            default: // Do nothing
+                            default:
+                                break; // Do nothing
                         }
                     } catch (Throwable t) {
                         log.log(Level.SEVERE, "Error appending data", t);
@@ -206,68 +142,33 @@ public class PrintApplet extends Applet implements Runnable {
                     setDoneAppending(true);
                 }
                 if (startFindingPorts) {
-                    log.info("===== SEARCHING FOR SERIAL PORTS =====");
+                    super.findPorts();
+
                     startFindingPorts = false;
-                    getSerialIO().fetchSerialPorts();
                     setDoneFindingPorts(true);
                 }
                 if (startFindingNetwork) {
-                    log.info("===== GATHERING NETWORK INFORMATION =====");
-                    startFindingNetwork = false;
-                    //getNetworkHashMap().clear();
-                    try {
-                        // Gather the network information and store in a custom HashMap
-                        //for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-                        //    getNetworkHashMap().put(en.nextElement());
-                        //}
-                        getNetworkUtilities().gatherNetworkInfo();
-                    } catch (IOException e) {
-                        set(e);
-                    } catch (ReflectException e) {
-                        log.log(Level.SEVERE, "getHardwareAddress not supported on Java 1.5", e);
-                        set(e);
-                    }
+                    super.findNetworkInfo();
 
-                    //getNetworkUtilities().fetchNetworkInfo();
+                    startFindingNetwork = false;
                     setDoneFindingNetwork(true);
                 }
                 if (startOpeningPort) {
-                    log.info("===== OPENING SERIAL PORT " + serialPortName + " =====");
+                    super.openPort(serialPortName, serialPortIndex, autoSetSerialProperties);
+
                     startOpeningPort = false;
-                    try {
-                        if (serialPortIndex != -1) {
-                            getSerialIO().open(serialPortIndex);
-                        } else {
-                            getSerialIO().open(serialPortName);
-                        }
-                        // Currently a Windows-only feature
-                        if (autoSetSerialProperties) {
-                            getSerialIO().autoSetProperties();
-                        }
-                    } catch (Throwable t) {
-                        //notifyBrowser("qzPortNotOpened", getSerialIO().getPortName());
-                        set(t);
-                    }
                     setDoneOpeningPort(true);
                 }
                 if (startClosingPort) {
-                    log.info("===== CLOSING SERIAL PORT " + serialPortName + " =====");
+                    super.finishClosePort(serialPortName);
+
                     startClosingPort = false;
-                    try {
-                        getSerialIO().close();
-                    } catch (Throwable t) {
-                        this.set(t);
-                    }
                     setDoneClosingPort(true);
                 }
                 if (startFindingPrinters) {
-                    log.info("===== SEARCHING FOR PRINTER =====");
+                    super.findPrinter(printer);
+
                     startFindingPrinters = false;
-                    if (printer == null) {
-                        PrintApplet.this.setPrintService(PrintServiceLookup.lookupDefaultPrintService());
-                    } else {
-                        PrintApplet.this.setPrintService(PrintServiceMatcher.findPrinter(printer));
-                    }
                     setDoneFindingPrinters(true);
                 }
                 // Serial Port Stuff
@@ -283,75 +184,22 @@ public class PrintApplet extends Applet implements Runnable {
                 if (serialIO != null && serialIO.getOutput() != null) {
                     try {
                         notifyBrowser("qzSerialReturned",
-                                new Object[]{serialIO.getPortName(),
-                                    new String(serialIO.getOutput(), charset.name())});
+                                      new Object[]{serialIO.getPortName(), new String(serialIO.getOutput(), charset.name())});
                     } catch (UnsupportedEncodingException ex) {
                         this.set(ex);
                     }
                     serialIO.clearOutput();
                 }
                 if (startPrinting) {
-                    log.info("===== SENDING DATA TO THE PRINTER =====");
-                    try {
-                        startPrinting = false;
+                    super.print();
 
-                        if (htmlPrint) {
-                            logAndPrint(getPrintHTML());
-                        } else if (psPrint) {
-                            logAndPrint(getPrintPS());
-                        } else if (isRawAutoSpooling()) {
-                            LinkedList<ByteArrayBuilder> pages = ByteUtilities.splitByteArray(
-                                    getPrintRaw().getByteArray(),
-                                    endOfDocument.getBytes(charset.name()),
-                                    documentsPerSpool);
-                            //FIXME:  Remove this debug line
-                            log.info("Automatically spooling to " + pages.size() + " separate print job(s)");
-
-                            for (ByteArrayBuilder b : pages) {
-                                logAndPrint(getPrintRaw(), b.getByteArray());
-                            }
-
-                            if (!reprint) {
-                                getPrintRaw().clear();
-                            }
-                        } else {
-                            logAndPrint(getPrintRaw());
-                        }
-                    } catch (PrintException e) {
-                        set(e);
-                    } catch (PrinterException e) {
-                        set(e);
-                    } catch (UnsupportedEncodingException e) {
-                        set(e);
-                    } catch (IOException e) {
-                        set(e);
-                    } finally {
-                        setDonePrinting(true);
-                        if (this.printRaw != null) {
-                            getPrintRaw().clear();
-                        }
-                    }
+                    startPrinting = false;
+                    setDonePrinting(true);
                 }
             } catch (InterruptedException e) {
                 set(e);
             }
         }
-    }
-
-    public void useAlternatePrinting() {
-        this.useAlternatePrinting(true);
-    }
-
-    public void useAlternatePrinting(boolean alternatePrint) {
-        this.alternatePrint = alternatePrint;
-    }
-
-    public boolean isAlternatePrinting() {
-        return this.alternatePrint;
-    }
-
-    private boolean isRawAutoSpooling() throws UnsupportedEncodingException {
-        return documentsPerSpool > 0 && endOfDocument != null && !getPrintRaw().isClear() && getPrintRaw().contains(endOfDocument);
     }
 
     private void setDonePrinting(boolean donePrinting) {
@@ -393,8 +241,9 @@ public class PrintApplet extends Applet implements Runnable {
         return this.logFeaturesPS;
     }
 
-    private void resetVariables() {
-        jobName = "QZ-PRINT ___ Printing";
+    protected void resetVariables() {
+        super.resetVariables();
+
         running = true;
         startPrinting = false;
         startFindingPrinters = false;
@@ -406,11 +255,8 @@ public class PrintApplet extends Applet implements Runnable {
         startFindingNetwork = false;
         startAppending = false;
         sleep = getParameter("sleep", 100);
-        psPrint = false;
         appendType = 0;
         allowMultiple = false;
-        logFeaturesPS = false;
-        alternatePrint = false;
         String printer = getParameter("printer", null);
         LogIt.disableLogging = getParameter("disable_logging", false);
         if (printer != null) {
@@ -439,15 +285,14 @@ public class PrintApplet extends Applet implements Runnable {
      * @param function The JavasScript function to call
      * @param params The parameter or array of parameters to send to the JavaScript
      * function
-     * @return true if successful
      */
     public void call(String function, Object[] params) throws JSException {
         String escapedString = function + "(";
         for (Object o : params) {
             if (o instanceof Integer) {
-                escapedString += ((Integer)o).intValue() + ",";
+                escapedString += o + ",";
             } else if (o instanceof String) {
-                escapedString += "'" + ((String)o) + "'" + ",";
+                escapedString += "'" + o + "'" + ",";
             }
         }
         if (escapedString.endsWith(",")) {
@@ -455,10 +300,10 @@ public class PrintApplet extends Applet implements Runnable {
         }
 
         escapedString += ")";
-        
+
         Object[] p = new Object[]{escapedString, 0};
         window.call("setTimeout", p);
-        
+
         log.info("Successfully called JavaScript function \""
                     + function + "(...)\"...");
     }
@@ -473,7 +318,7 @@ public class PrintApplet extends Applet implements Runnable {
 	 * @param function The JavasScript function to call
 	 * @param params The parameter or array of parameters to send to the JavaScript
 	 * function
-	 * @return
+	 * @return true if successful
 	 */
     private boolean notifyBrowser(String function, Object[] params) {
         try {
@@ -484,7 +329,7 @@ public class PrintApplet extends Applet implements Runnable {
                 throw new Exception("Object \"" + function + "\" does not "
                         + "exist or is not a function.");
             }
-            
+
             call(function, params);
 
             log.info("Successfully called JavaScript function \""
@@ -557,7 +402,7 @@ public class PrintApplet extends Applet implements Runnable {
     private long getParameter(String name, long defaultVal) {
         return Long.parseLong(getParameter(name, "" + defaultVal));
     }
-    
+
     private boolean getParameter(String name, boolean defaultVal) {
         return Boolean.parseBoolean(getParameter(name, Boolean.toString(defaultVal)));
     }
@@ -572,38 +417,10 @@ public class PrintApplet extends Applet implements Runnable {
         return s == null || s.trim().equals("");
     }
 
-    /**
-     * Returns a comma separated list of printer names.
-     * @return
-     */
-    public String getPrinters() {
-        return PrintServiceMatcher.getPrinterListing();
-    }
-
-    /**
-     * Returns a comma separated list of serial ports.
-     * @return
-     */
-    public String getPorts() {
-        return getSerialIO().getSerialPorts();
-    }
-
-    public void append64(String base64) {
-        try {
-            getPrintRaw().append(Base64.decode(base64));
-        } catch (IOException e) {
-            set(e);
-        }
-    }
-
     public void appendHTMLFile(String url) {
         this.appendType = Constants.APPEND_HTML;
         this.appendFromThread(url, appendType);
         //throw new UnsupportedOperationException("Sorry, not yet supported.");
-    }
-
-    public void appendHTML(String html) {
-        getPrintHTML().append(html);
     }
 
     /**
@@ -638,10 +455,6 @@ public class PrintApplet extends Applet implements Runnable {
 
     public void appendPDF(String url) {
         appendFromThread(url, Constants.APPEND_PDF);
-    }
-
-    public void setLanguage(String lang) {
-        this.lang = LanguageType.getType(lang);
     }
 
     /**
@@ -737,82 +550,9 @@ public class PrintApplet extends Applet implements Runnable {
         this.file = file;
     }
 
-    /**
-     * Returns the orientation as it has been recently defined. Default is null
-     * which will allow the printer configuration to decide.
-     *
-     * @return orientation of the printer
-     */
-    public String getOrientation() {
-        return this.paperSize.getOrientationDescription();
-    }
-
-    public void printToFile() {
-        printToFile(null);
-    }
-
-    public void printToHost(String host) {
-        printToHost(host, 9100);
-    }
-
-    public void printToHost(String host, String port) {
-        try {
-            printToHost(host, Integer.parseInt(host));
-        } catch (Throwable t) {
-            this.set(t);
-        }
-    }
-
-    public void printToHost(String host, int port) {
-        if (!ByteUtilities.isBlank(host) && port > 0) {
-            getPrintRaw().setOutputSocket(host, port);
-        } else {
-            this.set(new NullPrintServiceException("Invalid port or host specified.  "
-                    + "Port values must be non-zero posistive integers.  "
-                    + "Host values must not be empty"));
-            this.clear();
-            this.setDonePrinting(true);
-            return;
-        }
-        this.print();
-    }
-
-    public void printToFile(String outputPath) {
-        if (!ByteUtilities.isBlank(outputPath)) {
-            try {
-                getPrintRaw().setOutputPath(outputPath);
-            } catch (InvalidFileTypeException e) {
-                this.set(e);
-                this.clear();
-                this.setDonePrinting(true);
-                return;
-            }
-        } else {
-            this.set(new NullPrintServiceException("Blank output path supplied"));
-            this.clear();
-            this.setDonePrinting(true);
-            return;
-        }
-        this.print();
-    }
-
-    // Due to applet security, can only be invoked by run() thread
-    private void readImage() {
-        try {
-            // Use the in-line base64 content as our image
-            if (ByteUtilities.isBase64Image(file)) {
-                getPrintPS().setImage(Base64.decode(file.split(",")[1]));
-            } else {
-                getPrintPS().setImage(ImageIO.read(new URL(file)));
-            }
-        } catch (IOException ex) {
-            log.log(Level.WARNING, "Error reading specified image", ex);
-        }
-    }
-
     // Use this instead of calling p2d directly.  This will allow 2d graphics
     // to only be used when absolutely needed
-    private PrintPostScript getPrintPS() {
+    protected PrintPostScript getPrintPS() {
         if (this.printPS == null) {
             this.printPS = new PrintPostScript();
             this.printPS.setPrintParameters(this);
@@ -820,51 +560,12 @@ public class PrintApplet extends Applet implements Runnable {
         return printPS;
     }
 
-    private PrintHTML getPrintHTML() {
+    protected PrintHTML getPrintHTML() {
         if (this.printHTML == null) {
             this.printHTML = new PrintHTML();
             this.printHTML.setPrintParameters(this);
         }
         return printHTML;
-    }
-
-    /**
-     * Appends raw hexadecimal bytes in the format "x1Bx00", etc.
-     *
-     * @param s string with hex byte codes such as x1Bx00 ...
-     */
-    public void appendHex(String s) {
-        try {
-            getPrintRaw().append(ByteUtilities.hexStringToByteArray(s));
-        } catch (NumberFormatException e) {
-            this.set(e);
-        }
-    }
-
-
-    public void append(String s) {
-        try {
-            getPrintRaw().append(s.getBytes(charset.name()));
-        } catch (UnsupportedEncodingException ex) {
-            this.set(ex);
-        }
-    }
-
-    /*
-     * Makes appending the unicode null character possible by appending 
-     * the equivelant of <code>\x00</code> in JavaScript, which is syntatically
-     * invalid in JavaScript (no errors will be thrown, but Strings will be 
-     * terminated prematurely
-     */
-    public void appendNull() {
-        getPrintRaw().append(new byte[]{'\0'});
-    }
-
-    /**
-     * Clears the cached raw commands. PrintRaw only.
-     */
-    public void clear() {
-        getPrintRaw().clear();
     }
 
     /**
@@ -877,22 +578,12 @@ public class PrintApplet extends Applet implements Runnable {
         reprint = false;
     }
 
-    public void printHTML() {
-        htmlPrint = true;
-        print();
-    }
-
-    public void printPS() {
-        psPrint = true;
-        print();
-    }
-
     /**
      * Get our main thread ready, but don't start it until <code>start()</code>
      * has been called.
      */
     @Override
-        public void init() {
+    public void init() {
         if (!allowMultiple && thisThread.get() != null && thisThread.get().isAlive()) {
             log.warning("init() called, but applet already "
                     + "seems to be running.  Ignoring.");
@@ -905,6 +596,10 @@ public class PrintApplet extends Applet implements Runnable {
         resetVariables();
         thisThread.set(new Thread(this));
         super.init();
+    }
+
+    public boolean isActive(){
+        return isActive(true);
     }
 
     /**
@@ -925,7 +620,7 @@ public class PrintApplet extends Applet implements Runnable {
         } catch (JSException e) {
             set(e);
             log.severe("Error setting applet object in JavaScript using LiveConnect.  "
-                    + "This is usally caused by Java Security Settings.  In Windows, enable the Java "
+                    + "This is usually caused by Java Security Settings.  In Windows, enable the Java "
                     + "Console and hit 5 to show verbose messages.");
         } catch (Exception e) {
             set(e);
@@ -953,10 +648,6 @@ public class PrintApplet extends Applet implements Runnable {
         super.destroy();
     }
 
-    public void findPrinter() {
-        findPrinter(null);
-    }
-
     /**
      * Creates the print service by iterating through printers until finding
      * matching printer containing "printerName" in its description
@@ -978,57 +669,6 @@ public class PrintApplet extends Applet implements Runnable {
         this.startFindingPorts = true;
     }
 
-    public void setSerialBegin(String begin) {
-        try {
-            getSerialIO().setBegin(begin.getBytes(charset.name()));
-        } catch (UnsupportedEncodingException ex) {
-            this.set(ex);
-        }
-    }
-
-    public void setSerialEnd(String end) {
-        try {
-            getSerialIO().setEnd(end.getBytes(charset.name()));
-        } catch (UnsupportedEncodingException ex) {
-            this.set(ex);
-        }
-    }
-
-    public void send(String portName, String data) {
-        try {
-            if (!getSerialIO().isOpen()) {
-                throw new SerialException("A port has not yet been opened.");
-            } else if (getSerialIO().getPortName().equals(portName)) {
-                getSerialIO().append(data.getBytes(charset.name()));
-                this.startSending = true;
-            } else {
-                throw new SerialException("Port specified [" + portName + "] "
-                        + "differs from previously opened port "
-                        + "[" + getSerialIO().getPortName() + "].  Applet currently "
-                        + "supports only one open port at a time.  Data not sent.");
-            }
-        } catch (Throwable t) {
-            this.set(t);
-        }
-    }
-
-    public void setSerialProperties(int baud, int dataBits, String stopBits, int parity, String flowControl) {
-        setSerialProperties(Integer.toString(baud), Integer.toString(dataBits),
-                stopBits, Integer.toString(parity), flowControl);
-    }
-
-    public void setSerialProperties(String baud, String dataBits, String stopBits, String parity, String flowControl) {
-        try {
-            getSerialIO().setProperties(baud, dataBits, stopBits, parity, flowControl);
-        } catch (Throwable t) {
-            this.set(t);
-        }
-    }
-
-    public void openPort(String serialPortName) {
-        this.openPort(serialPortName, false);
-    }
-
     public void closePort(String portName) {
         if (getSerialIO().getPortName().equals(portName)) {
             this.startClosingPort = true;
@@ -1038,6 +678,10 @@ public class PrintApplet extends Applet implements Runnable {
                     + "[" + getSerialIO().getPortName() + "] instead. "
                     + "Applet currently supports only one open port at a time."));
         }
+    }
+
+    public void openPort(String serialPortName) {
+        this.openPort(serialPortName, false);
     }
 
     public void openPort(String serialPortName, boolean autoSetSerialProperties) {
@@ -1059,17 +703,6 @@ public class PrintApplet extends Applet implements Runnable {
 
     public boolean isDoneFinding() {
         return doneFindingPrinters;
-    }
-
-    /**
-     * Returns the PrintService's name (the printer name) associated with this
-     * applet, if any. Returns null if none is set.
-     *
-     * @return name of the printer
-     */
-    public String getPrinter() {
-        return ps == null ? null : ps.getName();
-        //return ps.getName();
     }
 
     public SerialIO getSerialIO() {
@@ -1096,116 +729,16 @@ public class PrintApplet extends Applet implements Runnable {
      *
      * @return raw print object
      */
-    private PrintRaw getPrintRaw() {
+    protected PrintRaw getPrintRaw() {
         if (this.printRaw == null) {
             this.printRaw = new PrintRaw();
             this.printRaw.setPrintParameters(this);
         }
         return printRaw;
     }
-    
-    private NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
-        if (this.networkUtilities == null) {
-            this.networkUtilities = new NetworkUtilities();
-        }
-        return this.networkUtilities;
-    }
-
-    public String getIP() {
-        return this.getIPAddress();
-    }
-
-    /**
-     * Returns a comma separated <code>String</code> containing all MAC
-     * Addresses found on the system, or <code>null</code> if none are found.
-     *
-     * @return MAC addresses found on system
-     */
-
-    public String getMac() {
-        return this.getMacAddress();
-    }
-
-    /**
-     * Retrieves a <code>String</code> containing a single MAC address. i.e.
-     * 0A1B2C3D4E5F. This attempts to get the quickest and most appropriate
-     * match for systems with a single adapter by attempting to choose an
-     * enabled and non-loopback adapter first if possible.
-     * <strong>Note:</strong> If running JRE 1.5, Java won't be able to
-     * determine "enabled" or "loopback", so it will attempt to use other methods
-     * such as filtering out the 127.0.0.1s, etc.
-     * information. Returns <code>null</code> if no adapters are found.
-     *
-     * @return first MAC address
-     */
-    public String getMacAddress() {
-        try {
-            return getNetworkUtilities().getHardwareAddress();
-        } catch (Throwable t) {
-            return null;
-        }
-        //return getNetworkHashMap().getLightestNetworkObject().getMacAddress();
-    }
-    
-     /**
-     * Retrieves a <code>String</code> containing a single IP address. i.e.
-     * 192.168.1.101 or fe80::81ca:bcae:d6c4:9a16%25 (formatted IPv4 or IPv6)
-     * This attempts to get the most appropriate match for 
-     * systems with a single adapter by attempting to choose an enabled and 
-     * non-loopback adapter first if possible, however if multiple IPs exist,
-     * it will return the first found, regardless of protocol or use.
-     * <strong>Note:</strong> If running JRE 1.5, Java won't be able to
-     * determine "enabled" or "loopback", so it will attempt to use other methods
-     * such as filtering out the 127.0.0.1 addresses, etc.
-     * information. Returns <code>null</code> if no adapters are found.
-     *
-     * @return IP address of system
-     */
-    public String getIPAddress() {
-         //return getNetworkHashMap().getLightestNetworkObject().getInetAddress();
-        try {
-            return getNetworkUtilities().getInetAddress();
-        } catch (Throwable t) {
-            return null;
-        }
-    }
-    
-    /**
-     * Returns the PrintService object associated with this applet, if any.
-     * Returns null if none is set.
-     *
-     * @return PrintService object
-     */
-    private PrintService getPrintService() {
-        return ps;
-    }
-
-    public Throwable getError() {
-        return getException();
-    }
-
-    public Throwable getException() {
-        return t;
-    }
-
-    public String getVersion() {
-        return Constants.VERSION;
-    }
-
-    public void setEndOfDocument(String endOfPage) {
-        this.endOfDocument = endOfPage;
-    }
-
-    public void setPrinter(int index) {
-        setPrintService(PrintServiceMatcher.getPrinterList()[index]);
-        log.info("Printer set to index: " + index + ",  Name: " + ps.getName());
-
-        //PrinterState state = (PrinterState)this.ps.getAttribute(PrinterState.class); 
-        //return state == PrinterState.IDLE || state == PrinterState.PROCESSING;
-    }
 
     // Generally called internally only after a printer is found.
-    private void setPrintService(PrintService ps) {
+    protected void setPrintService(PrintService ps) {
         this.ps = ps;
         if (ps == null) {
             log.warning("Setting null PrintService");
@@ -1223,166 +756,9 @@ public class PrintApplet extends Applet implements Runnable {
         }
     }
 
-    public void setDocumentsPerSpool(int pagesPer) {
-        this.documentsPerSpool = pagesPer;
-    }
-
-    public String getJobName() {
-        return jobName;
-    }
-
     public void findNetworkInfo() {
         this.startFindingNetwork = true;
     }
 
-    private void set(Throwable t) {
-        this.t = t;
-        LogIt.log(t);
-    }
-
-    private void logCommands(PrintHTML ph) {
-        logCommands(ph.get());
-    }
-
-    private void logCommands(PrintRaw pr) {
-        logCommands(pr.getOutput());
-    }
-
-    private void logCommands(byte[] commands) {
-        try {
-            logCommands(new String(commands, charset.name()));
-        } catch (UnsupportedEncodingException ex) {
-            log.warning("Cannot decode raw bytes for debug output. "
-                    + "This could be due to incompatible charset for this JVM "
-                    + "or mixed charsets within one byte stream.  Ignore this message"
-                    + " if printing seems fine.");
-        }
-    }
-
-    private void logCommands(String commands) {
-        log.info("\r\n\r\n" + commands + "\r\n\r\n");
-    }
-
-    private void logAndPrint(PrintRaw pr, byte[] data) throws IOException, InterruptedException, PrintException {
-        logCommands(data);
-        pr.print(data);
-    }
-
-    private void logAndPrint(PrintRaw pr) throws IOException, PrintException, InterruptedException {
-        logCommands(pr);
-        if (reprint) {
-            pr.print();
-        } else {
-            pr.print();
-            pr.clear();
-        }
-    }
-
-    private void logAndPrint(PrintPostScript printPS) throws PrinterException {
-        logCommands("    <<" + file + ">>");
-        // Fix GitHub Bug #24
-        if (paperSize != null) {
-            printPS.setPaperSize(paperSize);
-        }
-        // Fix GitHub Bug #30, #31
-        if (copies > 0) {
-            printPS.setCopies(copies);
-        } else {
-            printPS.setCopies(1);
-        }
-        printPS.print();
-        psPrint = false;
-    }
-
-    private void logAndPrint(PrintHTML printHTML) throws PrinterException {
-        if (file != null) {
-            logCommands("    <<" + file + ">>");
-        }
-        logCommands(printHTML);
-
-        printHTML.print();
-        htmlPrint = false;
-    }
-
-    /**
-     * Sets character encoding for raw printing only
-     *
-     * @param charset character encoding to use for raw printing
-     */
-    public void setEncoding(String charset) {
-        // Example:  Charset.forName("US-ASCII");
-        System.out.println("Default charset encoding: " + Charset.defaultCharset().name());
-        try {
-            this.charset = Charset.forName(charset);
-            getPrintRaw().setCharset(Charset.forName(charset));
-            log.info("Current applet charset encoding: " + this.charset.name());
-        } catch (IllegalCharsetNameException e) {
-            log.log(Level.WARNING, "Could not find specified charset encoding: "
-                    + charset + ". Using default.", e);
-        }
-
-    }
-
-    public String getEncoding() {
-        return this.charset.displayName();
-    }
-
-    private Charset getCharset() {
-        return this.charset;
-    }
-
-    public void allowMultipleInstances(boolean allowMultiple) {
-        this.allowMultiple = allowMultiple;
-        log.info("Allow multiple applet instances set to \"" + allowMultiple + "\"");
-    }
-
-    public void setAutoSize(boolean autoSize) {
-        if (this.paperSize == null) {
-            log.warning("A paper size must be specified before setting auto-size!");
-        } else {
-            this.paperSize.setAutoSize(autoSize);
-        }
-    }
-
-    public int getCopies() {
-        if (copies > 0) {
-            return copies;
-        } else {
-            return 1;
-        }
-    }
-
-    public void setCopies(int copies) {
-        if (copies > 0) {
-            this.copies = copies;
-        } else {
-            log.log(Level.WARNING, "Copies must be greater than zero", new UnsupportedOperationException("Copies must be greater than zero"));
-        }
-    }
-
-    private PaperFormat getPaperSize() {
-        return paperSize;
-    }
-
-    public void setPaperSize(String width, String height) {
-        this.paperSize = PaperFormat.parseSize(width, height);
-        log.info("Set paper size to " + paperSize.getWidth()
-                + paperSize.getUnitDescription() + "x"
-                + paperSize.getHeight() + paperSize.getUnitDescription());
-    }
-
-    public void setPaperSize(float width, float height) {
-        this.paperSize = new PaperFormat(width, height);
-        log.info("Set paper size to " + paperSize.getWidth()
-                + paperSize.getUnitDescription() + "x"
-                + paperSize.getHeight() + paperSize.getUnitDescription());
-    }
-
-    public void setPaperSize(float width, float height, String units) {
-        this.paperSize = PaperFormat.parseSize("" + width, "" + height, units);
-        log.info("Set paper size to " + paperSize.getWidth()
-                + paperSize.getUnitDescription() + "x"
-                + paperSize.getHeight() + paperSize.getUnitDescription());
-    }
 
 }

@@ -127,7 +127,7 @@ public class PrintRaw {
     public void setOutputPath(String outputPath) throws InvalidFileTypeException {
         // Check for vulnerable file extensions, such as "exe" or "bat", etc.
         if (FileUtilities.isBadExtension(outputPath)) {
-            throw new InvalidFileTypeException("Writing file \"" + 
+            throw new InvalidFileTypeException("Writing file \"" +
                     outputPath + "\" is prohibited for security reason: "
                     + "Prohibited file extension.");
         } else {
@@ -139,17 +139,17 @@ public class PrintRaw {
         this.socketHost.set(host);
         this.socketPort.set(port);
     }
-    
+
     /**
      * A brute-force, however surprisingly elegant way to send a file to a networked
      * printer. The socket host can be an IP Address or Host Name.  The port
      * 9100 is a standard HP/JetDirect and may work well.
-     * 
-     * Please note that this will completely bypass the Print Spooler, so the 
+     *
+     * Please note that this will completely bypass the Print Spooler, so the
      * Operating System will have absolutely no printer information.  This is
      * printing "blind".
      * @throws UnknownHostException
-     * @throws IOException 
+     * @throws IOException
      */
     private boolean printToSocket() throws IOException {
         log.info("Printing to host " + socketHost.get() + ":" + socketPort.get());
@@ -506,13 +506,22 @@ public class PrintRaw {
     }
 
     public void setPrintParameters(PrintApplet rawPrintApplet) {
+        setPrintParameters(rawPrintApplet.getJobName(), rawPrintApplet.isAlternatePrinting(), rawPrintApplet.getCopies());
+    }
+
+    public void setPrintParameters(String jobName, boolean alternatePrinting, int copies){
         // RKC: PROBLEM >>> this.setPrintService(rawPrintApplet.getPrintService());
-        this.setJobName(rawPrintApplet.getJobName().replace(" ___ ", " Raw "));
+        this.setJobName(jobName.replace(" ___ ", " Raw "));
         // RKC: PROBLEM >>> this.setCharset(rawPrintApplet.getCharset());
-        this.setAlternatePrinting(rawPrintApplet.isAlternatePrinting());
-        if (rawPrintApplet.getCopies() > 0) {
-            setCopies(rawPrintApplet.getCopies());
+        this.setAlternatePrinting(alternatePrinting);
+
+        // Copies not implemented yet, so don't call
+        /*
+        if (copies > 0) {
+            setCopies(copies);
         }
+        */
+
         this.clear();
     }
 

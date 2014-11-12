@@ -1,25 +1,25 @@
 /**
  * @author Tres Finocchiaro
- * 
+ *
  * Copyright (C) 2013 Tres Finocchiaro, QZ Industries
  *
  * IMPORTANT:  This software is dual-licensed
- * 
+ *
  * LGPL 2.1
- * This is free software.  This software and source code are released under 
- * the "LGPL 2.1 License".  A copy of this license should be distributed with 
+ * This is free software.  This software and source code are released under
+ * the "LGPL 2.1 License".  A copy of this license should be distributed with
  * this software. http://www.gnu.org/licenses/lgpl-2.1.html
- * 
+ *
  * QZ INDUSTRIES SOURCE CODE LICENSE
- * This software and source code *may* instead be distributed under the 
- * "QZ Industries Source Code License", available by request ONLY.  If source 
+ * This software and source code *may* instead be distributed under the
+ * "QZ Industries Source Code License", available by request ONLY.  If source
  * code for this project is to be made proprietary for an individual and/or a
  * commercial entity, written permission via a copy of the "QZ Industries Source
- * Code License" must be obtained first.  If you've obtained a copy of the 
- * proprietary license, the terms and conditions of the license apply only to 
+ * Code License" must be obtained first.  If you've obtained a copy of the
+ * proprietary license, the terms and conditions of the license apply only to
  * the licensee identified in the agreement.  Only THEN may the LGPL 2.1 license
  * be voided.
- * 
+ *
  */
 
 package qz;
@@ -49,7 +49,7 @@ public class PrintHTML extends JLabel implements Printable {
     private final AtomicReference<String> htmlData = new AtomicReference<String>(null);
     //private final AtomicReference<Paper> paper = new AtomicReference<Paper>(null);
     //private JLabel label;
-    
+
     public PrintHTML() {
         super();
         //add(label = new JLabel());
@@ -57,9 +57,9 @@ public class PrintHTML extends JLabel implements Printable {
         super.setBackground(Color.WHITE);
         //label.setBackground(Color.WHITE);
     }
-    
+
     public void append(String html) {
-          htmlData.set(htmlData.get() == null ? html : htmlData.get() + html);  
+          htmlData.set(htmlData.get() == null ? html : htmlData.get() + html);
     }
 
     //public void append(String html) {
@@ -69,29 +69,29 @@ public class PrintHTML extends JLabel implements Printable {
    // public void clear() {
    //     super.setText(null);
    // }
-    
+
     public void clear() {
         htmlData.set(null);
     }
-    
+
     public String get() {
         return htmlData.get();
     }
-    
+
     private String[] getHTMLDataArray() {
         return htmlData.get().split("(?i)</html>");
     }
-    
+
     //public String get() {
     //    return super.getText();
     //}
-    
+
     public void print() throws PrinterException {
         JFrame jFrame = new JFrame(jobName.get());
         jFrame.setUndecorated(true);
         jFrame.setLayout(new FlowLayout());
         this.setBorder(null);
-        
+
         for (String s : getHTMLDataArray()) {
             this.setText(s + "</html>");
             jFrame.add(this);
@@ -102,10 +102,10 @@ public class PrintHTML extends JLabel implements Printable {
             jFrame.setVisible(true);
 
             // Elimate any margins
-            HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();             
-            attr.add(new MediaPrintableArea(0f, 0f, getWidth()/PrintPostScript.DPI, getHeight()/PrintPostScript.DPI, MediaPrintableArea.INCH));               
+            HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+            attr.add(new MediaPrintableArea(0f, 0f, getWidth()/PrintPostScript.DPI, getHeight()/PrintPostScript.DPI, MediaPrintableArea.INCH));
 
-            PrinterJob job = PrinterJob.getPrinterJob();    
+            PrinterJob job = PrinterJob.getPrinterJob();
             job.setPrintService(ps.get());
             job.setPrintable(this);
             job.setJobName(jobName.get());
@@ -115,12 +115,16 @@ public class PrintHTML extends JLabel implements Printable {
         jFrame.dispose();
         clear();
     }
-    
+
     public void setPrintParameters(PrintApplet applet) {
+        setPrintParameters(applet.getJobName(), applet.getCopies());
+    }
+
+    public void setPrintParameters(String jobName, int copies) {
         // RKC: PROBLEM >>> this.ps.set(applet.getPrintService());
-        this.jobName.set(applet.getJobName().replace(" ___ ", " HTML "));
-        if (applet.getCopies() > 1) {
-            setCopies(applet.getCopies());
+        this.jobName.set(jobName.replace(" ___ ", " HTML "));
+        if (copies > 1) {
+            setCopies(copies);
         }
     }
 
@@ -129,13 +133,13 @@ public class PrintHTML extends JLabel implements Printable {
         log.log(Level.WARNING, "Copies is unsupported for printHTML()",
                 new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
     }
-    
+
     public int getCopies() {
         log.log(Level.WARNING, "Copies is unsupported for printHTML()",
                     new UnsupportedOperationException("Copies attribute for HTML 1.0 data has not yet been implemented"));
         return -1;
     }
-    
+
     public void setPrintService(PrintService ps) {
         this.ps.set(ps);
     }
@@ -150,12 +154,12 @@ public class PrintHTML extends JLabel implements Printable {
         if (pageIndex > 0) {
             return (NO_SUCH_PAGE);
         }
-        
+
         boolean doubleBuffered = super.isDoubleBuffered();
         super.setDoubleBuffered(false);
-        
+
         format.setOrientation(orientation.get());
-        
+
         //Paper paper = new Paper();
         //paper.setSize(8.5 * 72, 11 * 72);
         //paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
@@ -163,11 +167,11 @@ public class PrintHTML extends JLabel implements Printable {
         //Paper paper = format.getPaper();
         //paper.setImageableArea(0, 0, paper.getWidth(), paper.getHeight());
         //format.getPaper().setImageableArea(0, 0, paper.getWidth() + 200, paper.getHeight() + 200);
-        
+
         //format.getPaper().setImageableArea(-100, -100, 200, 200);
-        
-        
-        
+
+
+
         Graphics2D graphics2D = (Graphics2D) graphics;
         graphics2D.translate(format.getImageableX(), format.getImageableY());
         //g2d.translate(paper.getImageableX(), paper.getImageableY());
