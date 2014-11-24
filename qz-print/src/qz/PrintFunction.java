@@ -125,6 +125,8 @@ public class PrintFunction extends Applet {
     }
 
     public void appendHTMLFile(String file) {
+        this.file = file;
+
         try{
             appendHTML(new String(FileUtilities.readRawFile(file), charset.name()));
         } catch (Exception e) {
@@ -146,6 +148,8 @@ public class PrintFunction extends Applet {
      * @param xmlTag xml tag to look for
      */
     public void appendXML(String file, String xmlTag) {
+        this.file = file;
+
         try{
             append64(FileUtilities.readXMLFile(file, xmlTag));
         } catch (Exception e) {
@@ -160,6 +164,8 @@ public class PrintFunction extends Applet {
      * @param file URL location of the file
      */
     public void appendFile(String file) {
+        this.file = file;
+
         try{
             getPrintRaw().append(FileUtilities.readRawFile(file));
         } catch (Exception e) {
@@ -173,6 +179,8 @@ public class PrintFunction extends Applet {
      * @param file URL location of the file
      */
     public void appendImage(String file) {
+        this.file = file;
+
         try{
             readImage();
         } catch (Exception e) {
@@ -182,6 +190,8 @@ public class PrintFunction extends Applet {
     }
 
     public void appendPDF(String file) {
+        this.file = file;
+
         try{
             getPrintPS().setPDF(ByteBuffer.wrap(ByteUtilities.readBinaryFile(file)));
         } catch (Exception e) {
@@ -276,6 +286,8 @@ public class PrintFunction extends Applet {
     }
 
     protected void finishAppendImage(String imageFile) {
+        file = imageFile;
+
         try{
             BufferedImage bi;
             ImageWrapper iw;
@@ -435,11 +447,7 @@ public class PrintFunction extends Applet {
         log.info("===== SENDING DATA TO THE PRINTER =====");
 
         try {
-            if (htmlPrint) {
-                logAndPrint(getPrintHTML());
-            } else if (psPrint) {
-                logAndPrint(getPrintPS());
-            } else if (isRawAutoSpooling()) {
+            if (isRawAutoSpooling()) {
                 LinkedList<ByteArrayBuilder> pages = ByteUtilities.splitByteArray(
                         getPrintRaw().getByteArray(),
                         endOfDocument.getBytes(charset.name()),
@@ -458,15 +466,7 @@ public class PrintFunction extends Applet {
             } else {
                 logAndPrint(getPrintRaw());
             }
-        } catch (PrintException e) {
-            set(e);
-        } catch (PrinterException e) {
-            set(e);
-        } catch (UnsupportedEncodingException e) {
-            set(e);
-        } catch (IOException e) {
-            set(e);
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             set(e);
         } finally {
             if (this.printRaw != null) {
@@ -489,13 +489,31 @@ public class PrintFunction extends Applet {
     }
 
     public void printHTML() {
-        htmlPrint = true;
-        print();
+        try {
+            logAndPrint(getPrintHTML());
+        }
+        catch(Exception e){
+            set(e);
+        }
+        finally {
+            if (this.printRaw != null) {
+                getPrintRaw().clear();
+            }
+        }
     }
 
     public void printPS() {
-        psPrint = true;
-        print();
+        try {
+            logAndPrint(getPrintPS());
+        }
+        catch(Exception e){
+            set(e);
+        }
+        finally {
+            if (this.printRaw != null) {
+                getPrintRaw().clear();
+            }
+        }
     }
 
 
@@ -762,6 +780,10 @@ public class PrintFunction extends Applet {
         return t;
     }
 
+    public void clearException() {
+        t = null;
+    }
+
     public String getVersion() {
         return Constants.VERSION;
     }
@@ -917,7 +939,7 @@ public class PrintFunction extends Applet {
         return this.charset.displayName();
     }
 
-    protected Charset getCharset() {
+    public Charset getCharset() {
         return this.charset;
     }
 
@@ -951,13 +973,6 @@ public class PrintFunction extends Applet {
 
     public void setPaperSize(String width, String height) {
         this.paperSize = PaperFormat.parseSize(width, height);
-        log.info("Set paper size to " + paperSize.getWidth()
-                + paperSize.getUnitDescription() + "x"
-                + paperSize.getHeight() + paperSize.getUnitDescription());
-    }
-
-    public void setPaperSize(float width, float height) {
-        this.paperSize = new PaperFormat(width, height);
         log.info("Set paper size to " + paperSize.getWidth()
                 + paperSize.getUnitDescription() + "x"
                 + paperSize.getHeight() + paperSize.getUnitDescription());

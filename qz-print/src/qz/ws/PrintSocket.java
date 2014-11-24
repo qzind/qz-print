@@ -8,7 +8,6 @@ import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.joor.Reflect;
 import org.joor.ReflectException;
-import qz.PrintApplet;
 import qz.PrintFunction;
 
 import java.lang.reflect.Method;
@@ -23,11 +22,13 @@ import java.util.logging.Logger;
 public class PrintSocket {
 
     private static PrintFunction qz = null;
-    private final Logger log = Logger.getLogger(PrintApplet.class.getName());
+    private final Logger log = Logger.getLogger(PrintSocket.class.getName());
 
     private final List<String> restrictedMethodNames = Arrays.asList("run", "stop", "start", "call", "init", "destroy", "paint");
 
     private static JSONArray methods = null;
+
+    private static Throwable lastError = null;
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
@@ -109,49 +110,86 @@ public class PrintSocket {
             JSONArray parts = message.optJSONArray("params");
             if (parts == null) parts = new JSONArray();
             String name = message.getString("method");
+            Vector<Method> possibleMethods = new Vector<Method>();
 
             try {
                 Method [] methods = PrintFunction.class.getMethods();
-                Method method = null;
                 for (Method m : methods) {
 //                    log.info(name + ":" + params + "  -  " + mm.getName() + ":" + mm.getParameterTypes().length);
                     if (m.getName().equals(name) && parts.length() == m.getParameterTypes().length) {
-                        method = m;
-                        break;
+                        possibleMethods.add(m);
                     }
                 }
 
-                Object result;     // default for void
+                Object result = null;     // default for void
 
-                if (method != null) { // We found one that will work. Now call it
-                    String selectedPrinter = qz.getPrinter();
-
-                    // Create array of objects based on number of parameters and their types
-                    Object [] params = new Object[parts.length()];
-                    // We must get the parameter object types correct based on what the method wants
-                    for (int i = 0; i < parts.length(); i++) {
-                        params[i] = convertType(parts.getString(i), method.getParameterTypes()[i]);
-                    }
-
-                    // Using jOOR to call method since primitives are involved
-                    // Invoke the method with all the parameters
-                    log.info("Calling: "+ name + Arrays.toString(params));
-                    result = Reflect.on(qz).call(name, params).get();
-
-                    if (result instanceof PrintFunction) {
-                        result = "void";    // set since the return value is void
-                    }
-
-                    // Send new return value for getPrinter when selected printer changes
-                    if ((selectedPrinter == null && qz.getPrinter() != null) || (selectedPrinter != null && !selectedPrinter.equals(qz.getPrinter()))){
-                        log.info("Selected New Printer");
-                        sendResponse(session, "{\"method\":\"getPrinter\",\"params\":[],\"callback\":\"setupMethods\",\"init\":true,\"result\":\""+ qz.getPrinter() +"\"}");
-                    }
-
-                } else {
-                    message.put("error", "Method not found");
+                if (possibleMethods.size() == 0) {
+                    message.put("error", "No methods found");
                     sendResponse(session, message);
                     return;
+                } else {
+                    for (Method method : possibleMethods) { // We found methods that may work. Now call them
+                        try {
+                            // Create array of objects based on number of parameters and their types
+                            Object[] params = new Object[parts.length()];
+                            // We must get the parameter object types correct based on what the method wants
+                            for (int i = 0; i < parts.length(); i++) {
+                                params[i] = convertType(parts.getString(i), method.getParameterTypes()[i]);
+                            }
+
+                            // Using jOOR to call method since primitives are involved
+                            // Invoke the method with all the parameters
+                            log.info("Calling: " + name + Arrays.toString(params));
+                            result = Reflect.on(qz).call(name, params).get();
+
+
+                            if (result instanceof PrintFunction) {
+                                result = "void";    // set since the return value is void
+                            }
+
+                            if ("openPort".equals(name)){
+                                result = (qz.getSerialIO() == null ? null : qz.getSerialIO().getPortName());
+                            }
+                            if ("closePort".equals(name)){
+                                result = (qz.getSerialIO() == null ? null : qz.getSerialIO().getPortName());
+                            }
+                            if ("send".equals(name)){
+                                String data = new String(qz.getSerialIO().getOutput() == null? "".getBytes():qz.getSerialIO().getOutput(), qz.getCharset().name());
+
+                                result = (qz.getSerialIO() == null ? null : "[\""+ qz.getSerialIO().getPortName() +"\",\""+ data +"\"]");
+                            }
+
+                            // Send new return value for getPrinter when selected printer changes
+                            if ("findPrinter".equals(name)) {
+                                log.info("Selected New Printer");
+                                sendNewMethod(session, "getPrinter", qz.getPrinter());
+                                sendNewMethod(session, "getPrinters", qz.getPrinters().replaceAll("\\\\", "%5C")); //escape all backslashes
+                            }
+
+                            // Pass method results to simulate APPLET's synchronous calls
+                            if ("findPorts".equals(name)) {
+                                sendNewMethod(session, "getPorts", qz.getPorts());
+                            }
+
+                            if ("setLogPostScriptFeatures".equals(name)) {
+                                sendNewMethod(session, "getLogPostScriptFeatures", qz.getLogPostScriptFeatures());
+                            }
+
+                            if ("useAlternatePrinting".equals(name)) {
+                                sendNewMethod(session, "isAlternatePrinting", qz.isAlternatePrinting());
+                            }
+
+                            if (qz.getException() != lastError){
+                                sendNewMethod(session, "getException", qz.getException()==null? null:qz.getException().getLocalizedMessage());
+                                lastError = qz.getException();
+                            }
+
+                            break; //method worked, don't try others
+                        } catch (Exception e) {
+                            log.warning("Method "+ method.getName() +" failed: "+ e.getMessage() +", will try overloaded method if one exists");
+                            e.printStackTrace();
+                        }
+                    }
                 }
 
                 message.put("result", result);
@@ -170,6 +208,10 @@ public class PrintSocket {
         sendResponse(session, message);
     }
 
+    private void sendNewMethod(Session session, String methodName, Object result) {
+        sendResponse(session, "{\"method\":\"" + methodName + "\",\"params\":[],\"callback\":\"setupMethods\",\"init\":true,\"result\":\"" + result + "\"}");
+    }
+
     private void sendResponse(Session session, JSONObject message){
         sendResponse(session, message.toString());
     }
@@ -184,7 +226,8 @@ public class PrintSocket {
     }
 
     private Object convertType(String data, Object type) {
-        System.out.println(data + " to type " + type);
+        log.info("CONVERTING " + data + " --> " + type);
+
         if (type instanceof String) return data;
         if (type instanceof Integer) return Integer.decode(data);
         if (type instanceof Float) return Float.parseFloat(data);

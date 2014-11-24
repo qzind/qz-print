@@ -25,6 +25,7 @@ import netscape.javascript.JSException;
 import netscape.javascript.JSObject;
 import qz.common.*;
 import qz.exception.SerialException;
+import qz.printer.PaperFormat;
 
 import javax.print.PrintService;
 import java.awt.*;
@@ -578,6 +579,16 @@ public class PrintApplet extends PrintFunction implements Runnable {
         reprint = false;
     }
 
+    public void printHTML() {
+        htmlPrint = true;
+        print();
+    }
+
+    public void printPS() {
+        psPrint = true;
+        print();
+    }
+
     /**
      * Get our main thread ready, but don't start it until <code>start()</code>
      * has been called.
@@ -758,6 +769,13 @@ public class PrintApplet extends PrintFunction implements Runnable {
 
     public void findNetworkInfo() {
         this.startFindingNetwork = true;
+    }
+
+    public void setPaperSize(float width, float height) {
+        this.paperSize = new PaperFormat(width, height);
+        log.info("Set paper size to " + paperSize.getWidth()
+                         + paperSize.getUnitDescription() + "x"
+                         + paperSize.getHeight() + paperSize.getUnitDescription());
     }
 
 
