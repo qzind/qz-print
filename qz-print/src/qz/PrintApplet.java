@@ -184,8 +184,7 @@ public class PrintApplet extends PrintFunction implements Runnable {
                 }
                 if (serialIO != null && serialIO.getOutput() != null) {
                     try {
-                        notifyBrowser("qzSerialReturned",
-                                      new Object[]{serialIO.getPortName(), new String(serialIO.getOutput(), charset.name())});
+                        notifyBrowser("qzSerialReturned", new Object[]{serialIO.getPortName(), new String(serialIO.getOutput(), charset.name())});
                     } catch (UnsupportedEncodingException ex) {
                         this.set(ex);
                     }

@@ -55,7 +55,7 @@ public class PrintSocket {
     public void onMessage(Session session, String json) {
         if (json == null) {
             sendResponse(session, "{'error': 'Invalid Message'}");
-        } else {
+        } else if (!"ping".equals(json)){
             try {
                 log.info("Request: "+ json);
                 processMessage(session, new JSONObject(json));
@@ -149,12 +149,45 @@ public class PrintSocket {
 
                             if ("openPort".equals(name)){
                                 result = (qz.getSerialIO() == null ? null : qz.getSerialIO().getPortName());
+
+                                // Watch serial port for any received data so we can send it to the browser
+                                if (qz.getSerialIO() != null && qz.getSerialIO().isOpen()) {
+                                    new Thread(){
+                                        public void run(){
+                                            while(qz.getSerialIO() != null) {
+                                                if (qz.getSerialIO().getOutput() != null) {
+                                                    try {
+                                                        JSONObject portMsg = new JSONObject();
+                                                        portMsg.put("init", false);
+                                                        portMsg.put("callback", "qzSerialReturned");
+                                                        portMsg.put("result", "[\""+ qz.getSerialIO().getPortName() +"\",\""+ new String(qz.getSerialIO().getOutput(), qz.getCharset()) +"\"]");
+
+                                                        sendResponse(session, portMsg);
+                                                        qz.getSerialIO().clearOutput();
+                                                    }
+                                                    catch (JSONException e){
+                                                        log.warning("Issue sending data received from serial port - "+ e.getMessage());
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        private Session session;
+                                        private PrintFunction qz;
+                                        public Thread setup(Session session, PrintFunction qz){
+                                            this.session = session;
+                                            this.qz = qz;
+                                            return this;
+                                        }
+                                    }.setup(session, qz).start();
+                                }
                             }
                             if ("closePort".equals(name)){
                                 result = (qz.getSerialIO() == null ? null : qz.getSerialIO().getPortName());
                             }
                             if ("send".equals(name)){
-                                String data = new String(qz.getSerialIO().getOutput() == null? "".getBytes():qz.getSerialIO().getOutput(), qz.getCharset().name());
+                                String data = new String(qz.getSerialIO().getOutput() == null? "".getBytes():qz.getSerialIO().getOutput(), qz.getCharset());
+                                qz.getSerialIO().clearOutput();
 
                                 result = (qz.getSerialIO() == null ? null : "[\""+ qz.getSerialIO().getPortName() +"\",\""+ data +"\"]");
                             }

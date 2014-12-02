@@ -15,7 +15,8 @@ var qzConfig = {
     },
     wsUri: "ws://localhost:",              // Base URL to server
     ports: [ 8181, 8282, 8383, 8484 ],     // Ports to try
-    portIndex: 0
+    portIndex: 0,                          // Used to track which value in 'ports' array is being used
+    keepAlive: (60 * 1000)                 // Interval in millis to send pings to server
 };
 
 
@@ -42,6 +43,12 @@ function connectWebsocket(port) {
 
             // Create the QZ object
             createQZ(websocket);
+
+            // Send keep-alive to the websocket so connection does not timeout
+            // keep-alive over reconnecting so server is always able to send to client
+            window.setInterval(function(){
+                websocket.send("ping");
+            }, qzConfig.keepAlive);
         };
 
         websocket.onclose = function (evt) {
