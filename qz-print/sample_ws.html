@@ -166,7 +166,7 @@ function printToHost() {
 
             // qz.printToHost(String hostName, int portNumber);
             // qz.printToHost("192.168.254.254");   // Defaults to 9100
-            qz.printToHost("127.0.0.1", 9100);
+            qz.printToHost("192.168.1.254", 9100);
 
             // Remove reference to this function
             window['qzDoneFinding'] = null;
@@ -938,7 +938,7 @@ function chr(i) {
 <div style="margin: 0 1em;"><h1 id="title" style="margin:0;">QZ Print Plugin</h1></div>
 
 <!-- REMOVE WHEN DONE IMPLEMENTING -->
-<div>(NONE) Not working, (|) Implemented/untested, (+) Working</div>
+<div>(-) Not working, (|) Implemented/untested, (+) Working</div>
 <!-- -->
 <table border="1px" cellpadding="5px" cellspacing="0px">
 <tr>
@@ -983,8 +983,8 @@ function chr(i) {
         +<input type="button" onClick="printEPCL()" value="Print EPCL" /><br />
         (Zebra Card Printer)<br /><br />
 
-        |<input type="button" onClick="print64()" value="Print Base64" /><br />
-        |<input type="button" onClick="printPages()" value="Print Spooling Every 2" /><br />
+        +<input type="button" onClick="print64()" value="Print Base64" /><br />
+        +<input type="button" onClick="printPages()" value="Print Spooling Every 2" /><br />
         |<input type="button" onClick="printXML()" value="Print XML" /><br />
         +<input type="button" onClick="printHex()" value="Print Hex" /><br /><br />
 
@@ -993,7 +993,7 @@ function chr(i) {
         +<input type="button" onClick="printFile('epl_sample.txt')" value="epl_sample.txt" /><br /><br />
 
         +<input type="button" onClick="printToFile()" value="Print To File" /><br />
-        |<input type="button" onClick="printToHost()" value="Print To Host" /><br />
+        +<input type="button" onClick="printToHost()" value="Print To Host" /><br />
         +<input type="button" onClick="useAlternatePrinting()" value="Use Alternate Printing" /><br />
     </td>
 
@@ -1010,11 +1010,11 @@ function chr(i) {
     </td>
 
     <td valign="top"><h2>Serial</h2>
-        |<input type="button" id="list_ports" onClick="listSerialPorts()" value="List Serial Ports" /><br />
+        +<input type="button" id="list_ports" onClick="listSerialPorts()" value="List Serial Ports" /><br />
         <input type="text" id="port_name" size="8" /><br />
-        |<input type="button" id="open_port"  onClick="openSerialPort()" value="Open Port" /><br />
-        |<input type="button" id="send_data" onClick="sendSerialData()" value="Send Port Cmd" /><br />
-        |<input type="button" id="close_port"  onClick="closeSerialPort()" value="Close Port" /><br />
+        +<input type="button" id="open_port"  onClick="openSerialPort()" value="Open Port" /><br />
+        -<input type="button" id="send_data" onClick="sendSerialData()" value="Send Port Cmd" /><br />
+        -<input type="button" id="close_port"  onClick="closeSerialPort()" value="Close Port" /><br />
         <hr /><h2>Misc</h2>
         +<input type="button" onClick="listNetworkInfo()" value="List Network Info" /><br />
         <!--<input type="button" onClick="allowMultiple()" value="Allow Multiple Applets" /><br />-->
