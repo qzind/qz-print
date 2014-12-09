@@ -183,7 +183,7 @@ public class PrintSocket {
                                 }
                             }
                             if ("closePort".equals(name)){
-                                result = (qz.getSerialIO() == null ? null : qz.getSerialIO().getPortName());
+                                result = params[0];
                             }
                             if ("send".equals(name)){
                                 String data = new String(qz.getSerialIO().getOutput() == null? "".getBytes():qz.getSerialIO().getOutput(), qz.getCharset());
@@ -219,7 +219,7 @@ public class PrintSocket {
 
                             break; //method worked, don't try others
                         } catch (Exception e) {
-                            log.warning("Method "+ method.getName() +" failed: "+ e.getMessage() +", will try overloaded method if one exists");
+                            log.warning("Method "+ method.getName() +" failed: '"+ e.getMessage() +"', will try overloaded method if one exists");
                             e.printStackTrace();
                         }
                     }

@@ -10,7 +10,6 @@ var qzConfig = {
         findPorts:       'qzDoneFindingPorts',
         openPort:        'qzDoneOpeningPort',
         closePort:       'qzDoneClosingPort',
-        send:            'qzSerialReturned',
         findNetworkInfo: 'qzDoneFindingNetwork'
     },
     wsUri: "ws://localhost:",              // Base URL to server
