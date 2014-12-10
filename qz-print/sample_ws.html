@@ -2,7 +2,7 @@
 <!-- License:  LGPL 2.1 or QZ INDUSTRIES SOURCE CODE LICENSE -->
 <head><title>QZ Print Plugin</title>
 
-<script type="text/javascript" src="js/deployJava.js"></script>
+<script type="text/javascript" src="js/3rdparty/deployJava.js"></script>
 <script type="text/javascript" src="js/qz-websocket.js"></script>
 <script type="text/javascript">
 
@@ -252,7 +252,7 @@ function printEPL() {
     qz.append('A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n');
     qz.append('A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n');
     qz.append('A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n');
-    qz.appendImage(getPath() + 'img/image_sample_bw.png', 'EPL', 150, 300);
+    qz.appendImage(getPath() + 'assets/img/image_sample_bw.png', 'EPL', 150, 300);
 
     // Automatically gets called when "qz.appendImage()" is finished.
     window['qzDoneAppending'] = function() {
@@ -277,7 +277,7 @@ function printESCP() {
     if (notReady()) { return; }
 
     // Append a png in ESCP format with single pixel density
-    qz.appendImage(getPath() + "img/image_sample_bw.png", "ESCP", "single");
+    qz.appendImage(getPath() + "assets/img/image_sample_bw.png", "ESCP", "single");
 
     // Automatically gets called when "qz.appendImage()" is finished.
     window["qzDoneAppending"] = function() {
@@ -307,7 +307,7 @@ function printZPL() {
     // Hint:  Carriage Return = \r, New Line = \n, Escape Double Quotes= \"
     qz.append('^XA\n');
     qz.append('^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n');
-    qz.appendImage(getPath() + 'img/image_sample_bw.png', 'ZPLII');
+    qz.appendImage(getPath() + 'assets/img/image_sample_bw.png', 'ZPLII');
 
     // Automatically gets called when "qz.appendImage()" is finished.
     window['qzDoneAppending'] = function() {
@@ -494,7 +494,7 @@ function printPages() {
     // over.
     qz.setDocumentsPerSpool("2");
 
-    qz.appendFile(getPath() + "misc/epl_multiples.txt");
+    qz.appendFile(getPath() + "assets/epl_multiples.txt");
 
     // Automatically gets called when "qz.appendFile()" is finished.
     window['qzDoneAppending'] = function() {
@@ -522,7 +522,7 @@ function printXML() {
     //    base64 encoded data, i.e. <node_1>aGVsbG8gd29ybGQ=</node_1>
     // Example:
     //    qz.appendXML("http://yoursite.com/zpl.xml", "node_1");
-    qz.appendXML(getPath() + "misc/zpl_sample.xml", "v7:Image");
+    qz.appendXML(getPath() + "assets/zpl_sample.xml", "v7:Image");
 
     // Automatically gets called when "qz.appendXML()" is finished.
     window['qzDoneAppending'] = function() {
@@ -574,7 +574,7 @@ function printFile(file) {
     if (notReady()) { return; }
 
     // Append raw or binary text file containing raw print commands
-    qz.appendFile(getPath() + "misc/" + file);
+    qz.appendFile(getPath() + "assets/" + file);
 
     // Automatically gets called when "qz.appendFile()" is finished.
     window['qzDoneAppending'] = function() {
@@ -610,7 +610,7 @@ function printImage(scaleImage) {
     qz.setCopies(parseInt(document.getElementById("copies").value));
 
     // Append our image (only one image can be appended per print)
-    qz.appendImage(getPath() + "img/image_sample.png");
+    qz.appendImage(getPath() + "assets/img/image_sample.png");
 
     // Automatically gets called when "qz.appendImage()" is finished.
     window['qzDoneAppending'] = function() {
@@ -632,7 +632,7 @@ function printImage(scaleImage) {
 function printPDF() {
     if (notReady()) { return; }
     // Append our pdf (only one pdf can be appended per print)
-    qz.appendPDF(getPath() + "misc/pdf_sample.pdf");
+    qz.appendPDF(getPath() + "assets/pdf_sample.pdf");
 
     //qz.setCopies(3);
     qz.setCopies(parseInt(document.getElementById("copies").value));
@@ -663,7 +663,7 @@ function printHTML() {
     colA = colA + '<color=red>Visit:</color> http://code.google.com/p/jzebra';
 
     // HTML image
-    var colB = '<img src="' + getPath() + 'img/image_sample.png">';
+    var colB = '<img src="' + getPath() + 'assets/img/image_sample.png">';
 
     //qz.setCopies(3);
     qz.setCopies(parseInt(document.getElementById("copies").value));
@@ -929,9 +929,9 @@ function chr(i) {
 }
 
 </script>
-<script type="text/javascript" src="js/jquery-1.10.2.js"></script>
-<script type="text/javascript" src="js/html2canvas.js"></script>
-<script type="text/javascript" src="js/jquery.plugin.html2canvas.js"></script>
+<script type="text/javascript" src="js/3rdparty/jquery-1.10.2.js"></script>
+<script type="text/javascript" src="js/3rdparty/html2canvas.js"></script>
+<script type="text/javascript" src="js/3rdparty/jquery.plugin.html2canvas.js"></script>
 </head>
 
 <body id="content" bgcolor="#FFF380">

@@ -1,93 +1,198 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Some custom compilation rules to add or override build-impl.xml. -->
-<!-- You may freely change this file. -->
-<project name="qz" default="default" basedir=".">
-    <description>Builds, tests, and runs the project qz-print.</description>
-    <import file="nbproject/build-impl.xml"/>
-    
-    <!-- Custom Code Signing -->
-    <target depends="-pre-init" name="-init-private">
-        <echo message="Using custom private.properties file via build.xml..."/>
-        <property file="nbproject/private/config.properties"/>
-        <property file="nbproject/private/configs/${config}.properties"/>
+
+<project name="qz" default="distribute" basedir=".">
+
+    <target depends="init,sign-jar,include-assets" name="distribute" >
+        <zip destfile="${zip.file}" basedir="${dist.dir}"/>
+
+        <echo message="Process complete" />
+    </target>
+
+    <target name="init">
+        <property file="ant/project.properties"/>
+
         <!-- Your custom code signing properties here. Feel free to change. -->
         <!-- The project will default to qz.ks if it doesn't exist -->
         <property file="${user.home}/Desktop/Code Signing/private.properties"/>
+
         <!-- The default code signing properties which uses qz.ks. -->
         <!-- Please leave this value the netbeans default as a fallback. -->
-        <property file="nbproject/private/private.properties"/>
+        <property file="ant/private/private.properties"/>
     </target>
-    
-    <!-- Custom Code Timestamping using Ant's signjar instead of NetBeans -->
-    <!-- Note:  We can't timestamp the self-signed version, tsaurl omitted -->
-    <target name="sign-jars" depends="-jnlp-init-keystore,-check-signing-possible" if="jnlp.signed.true+signjars.task.available" unless="jnlp.signing.tsaurl">
-        <echo message="Self-signing code using Ant signjar via build.xml..."/>
-        <signjar jar="${dist.jar}"
-               signedjar="${dist.jar}"
-               alias="${jnlp.signjar.alias}"
-               storepass="${jnlp.signjar.storepass}"
-               keystore="${jnlp.signjar.keystore}"
-               keypass="${jnlp.signjar.keypass}"/>
+
+    <target name="compile">
+        <mkdir dir="${build.dir}"/>
+        <javac destdir="${build.dir}" source="${javac.source}" target="${javac.target}">
+            <src path="${src.dir}"/>
+            <classpath>
+                <fileset dir="${lib.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="build-jar" depends="compile">
+        <echo>Building Jar for Applet use</echo>
+        <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.applet.jar}" duplicate="preserve">
+            <fileset dir="${build.dir}" excludes="org/joor/*.*,qz/ws/*.*"/>
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*"/>
+            <manifest>
+                <attribute name="Main-Class" value="${main.applet.class}"/>
+            </manifest>
+        </jar>
+
+        <echo>Building Jar for Socket use</echo>
+        <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.socket.jar}" duplicate="preserve">
+            <fileset dir="${build.dir}"/>
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar"/>
+            <manifest>
+                <attribute name="Main-Class" value="${main.socket.class}"/>
+            </manifest>
+        </jar>
+    </target>
+
+
+    <target name="sign-jar" depends="build-jar,sign-jar-tsa">
         <path>
-            <fileset dir="dist/lib" includes="*.jar" />
+            <fileset dir="${dist.dir}/${lib.dir}" includes="${lib.dir}/**/*.jar" />
         </path>
     </target>
-    
-    <!-- We don't need NetBeans to generate jnlp file for us, but we'll
-         reuse the task for the premium version signature + timestamp    -->
-    <target name="generate-jnlp" depends="sign-jars,-test-generate-task-available,-unavailable-generate-task" if="jnlp.signing.tsaurl">
-        <echo message="Timestamping and signing code using Ant signjar via build.xml..."/>
-        <signjar jar="${dist.jar}"
-               signedjar="${dist.jar}"
-               alias="${jnlp.signjar.alias}"
-               storepass="${jnlp.signjar.storepass}"
-               keystore="${jnlp.signjar.keystore}"
-               keypass="${jnlp.signjar.keypass}"
-               tsaurl="${jnlp.signing.tsaurl}"/>
-        <path>
-            <fileset dir="dist/lib" includes="*.jar" />
-        </path>
+
+    <!-- tsaurl attribute cannot be empty, so separate methods are needed to sign both jars -->
+    <target name="sign-jar-self" depends="jnlp-init-keystore,security-props-check" if="jnlp.signed.true" unless="jnlp.signing.tsaurl">
+        <echo>Self-signing Applet jar</echo>
+        <signjar jar="${dist.applet.jar}"
+                 signedjar="${dist.applet.jar}"
+                 alias="${jnlp.signing.alias}"
+                 storepass="${jnlp.signing.storepass}"
+                 keystore="${jnlp.signing.keystore}"
+                 keypass="${jnlp.signing.keypass}"
+                />
+
+        <echo>Self-signing Socket jar</echo>
+        <signjar jar="${dist.socket.jar}"
+                 signedjar="${dist.socket.jar}"
+                 alias="${jnlp.signing.alias}"
+                 storepass="${jnlp.signing.storepass}"
+                 keystore="${jnlp.signing.keystore}"
+                 keypass="${jnlp.signing.keypass}"
+                />
     </target>
-    
-    <!-- Perform some cleanup and copying at the generate-html-preview stage -->
-    <target name="generate-html-preview" depends="-jnlp-init-keystore,-check-signing-possible">
-        
-        <echo message="Using custom copy/delete tasks via build.xml..."/>
-        <!-- We're aren't using JWS, no JNLP file needed -->
-        <delete file="${basedir}/dist/jnlpcomponent1.jnlp" failonerror="false"/>
-        
-        <!-- Delete some default NetBeans Applet stuff that's not needed -->
-        <delete file="${basedir}/dist/README.TXT" failonerror="false"/>
 
-        <!-- Used by netscape.javascript.JSObject, which is part of the --> 
-        <!-- standard JRE. Required for build but not needed for dist -->
-        <delete file="${basedir}/dist/lib/plugin.jar" failonerror="false"/>
-        
-        <!-- Copy some project specific files -->
-        <copy file="${basedir}/sample.html" tofile="${basedir}/dist/sample.html" overwrite="true" encoding="UTF-8" />
-        <!-- <copy file="${basedir}/qz-run.jnlp" tofile="${basedir}/dist/qz-run.jnlp" overwrite="true" encoding="UTF-8" /> -->
-        <!-- <copy file="${basedir}/loading.html" tofile="${basedir}/dist/loading.html" overwrite="true" encoding="UTF-8" /> -->
-        
-        <!-- A copy of the Java Web Start file must reside inside the jar as well as next to sample.html -->
-        <copy file="${basedir}/src/JNLP-INF/APPLICATION.JNLP" tofile="${basedir}/dist/qz-print_jnlp.jnlp" overwrite="true" encoding="UTF-8" />
+    <target name="sign-jar-tsa" depends="sign-jar-self" if="jnlp.signing.tsaurl">
+        <echo>Signing Applet jar with timestamp</echo>
+        <signjar jar="${dist.applet.jar}"
+                 signedjar="${dist.applet.jar}"
+                 alias="${jnlp.signing.alias}"
+                 storepass="${jnlp.signing.storepass}"
+                 keystore="${jnlp.signing.keystore}"
+                 keypass="${jnlp.signing.keypass}"
+                 tsaurl="${jnlp.signing.tsaurl}"
+                />
 
-        <copy file="${basedir}/misc/zpl_sample.txt" tofile="${basedir}/dist/misc/zpl_sample.txt" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/misc/epl_sample.txt" tofile="${basedir}/dist/misc/epl_sample.txt" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/misc/epl_multiples.txt" tofile="${basedir}/dist/misc/epl_multiples.txt" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/misc/fgl_sample.txt" tofile="${basedir}/dist/misc/fgl_sample.txt" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/misc/zpl_sample.xml" tofile="${basedir}/dist/misc/zpl_sample.xml" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/misc/pdf_sample.pdf" tofile="${basedir}/dist/misc/pdf_sample.pdf" overwrite="true" encoding="UTF-8" />
-
-        <copy file="${basedir}/js/jquery-1.10.2.js" tofile="${basedir}/dist/js/jquery-1.10.2.js" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/js/jquery.plugin.html2canvas.js" tofile="${basedir}/dist/js/jquery.plugin.html2canvas.js" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/js/html2canvas.js" tofile="${basedir}/dist/js/html2canvas.js" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/js/PluginDetect.js" tofile="${basedir}/dist/js/PluginDetect.js" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/js/deployJava.js" tofile="${basedir}/dist/js/deployJava.js" overwrite="true" encoding="UTF-8" />
-
-        <!-- <copy file="${basedir}/img/loading_green.gif" tofile="${basedir}/dist/img/loading_green.gif" overwrite="true" encoding="UTF-8" /> -->
-        <!-- <copy file="${basedir}/img/loading_red.gif" tofile="${basedir}/dist/img/loading_red.gif" overwrite="true" encoding="UTF-8" /> -->
-        <!-- <copy file="${basedir}/img/loading_yellow.gif" tofile="${basedir}/dist/img/loading_yellow.gif" overwrite="true" encoding="UTF-8" /> -->
-        <copy file="${basedir}/img/image_sample_bw.png" tofile="${basedir}/dist/img/image_sample_bw.png" overwrite="true" encoding="UTF-8" />
-        <copy file="${basedir}/img/image_sample.png" tofile="${basedir}/dist/img/image_sample.png" overwrite="true" encoding="UTF-8" />
+        <echo>Signing Socket jar with timestamp</echo>
+        <signjar jar="${dist.socket.jar}"
+                 signedjar="${dist.socket.jar}"
+                 alias="${jnlp.signing.alias}"
+                 storepass="${jnlp.signing.storepass}"
+                 keystore="${jnlp.signing.keystore}"
+                 keypass="${jnlp.signing.keypass}"
+                 tsaurl="${jnlp.signing.tsaurl}"
+                />
     </target>
+
+
+    <target name="security-props-check">
+        <condition property="jnlp.signed.true">
+            <istrue value="${jnlp.signed}"/>
+        </condition>
+    </target>
+
+    <property name="helper.file" location="helper.txt"/>
+    <target name="jnlp-init-keystore" depends="jnlp-init-signing,jnlp-init-keystore1,jnlp-init-keystore2,check-keystore-exists" if="do.init.keystore">
+        <echo message="${application.vendor}" file="${helper.file}"/>
+        <loadfile property="application.vendor.filtered" srcfile="${helper.file}">
+            <filterchain>
+                <deletecharacters chars=","/>
+            </filterchain>
+        </loadfile>
+        <delete file="${helper.file}"/>
+
+        <property name="jnlp.signjar.vendor" value="CN=${application.vendor.filtered}"/>
+        <echo message="Going to create default keystore in ${jnlp.signjar.keystore}"/>
+        <genkey dname="${jnlp.signjar.vendor}" alias="${jnlp.signjar.alias}" keystore="${jnlp.signjar.keystore}"
+                storepass="${jnlp.signjar.storepass}" keypass="${jnlp.signjar.keypass}"/>
+    </target>
+
+    <target name="check-keystore-exists" depends="security-props-check">
+        <available property="jnlp.signjar.keystore.exists" file="${jnlp.signjar.keystore}"/>
+        <condition property="do.init.keystore">
+            <and>
+                <isset property="jnlp.signed.true"/>
+                <not><isset property="jnlp.signjar.keystore.exists"/></not>
+            </and>
+        </condition>
+    </target>
+
+    <target name="jnlp-init-signing">
+        <condition property="generated.key.signing">
+            <equals arg1="${jnlp.signing}" arg2="generated" trim="true"/>
+        </condition>
+    </target>
+
+    <target name="jnlp-init-keystore1" if="generated.key.signing">
+        <local name="generated.signing.alias"/>
+        <condition property="generated.signing.alias" value="${jnlp.signing.alias}" else="nb-jws">
+            <isset property="jnlp.signing.alias"/>
+        </condition>
+        <property name="jnlp.signjar.keystore" value="${basedir}/build/${generated.signing.alias}.ks" />
+        <property name="jnlp.signjar.storepass" value="storepass"/>
+        <property name="jnlp.signjar.keypass" value="keypass"/>
+        <property name="jnlp.signjar.alias" value="${generated.signing.alias}"/>
+    </target>
+
+    <target name="jnlp-init-keystore2" unless="generated.key.signing">
+        <property name="jnlp.signjar.keystore" value="${jnlp.signing.keystore}" />
+        <property name="jnlp.signjar.storepass" value="${jnlp.signing.storepass}"/>
+        <property name="jnlp.signjar.keypass" value="${jnlp.signing.keypass}"/>
+        <property name="jnlp.signjar.alias" value="${jnlp.signing.alias}"/>
+    </target>
+
+
+    <target name="include-assets">
+        <echo>Copying resource files to output</echo>
+
+        <copy todir="${dist.applet.dir}/${asset.dir}">
+            <fileset dir="${asset.dir}"/>
+        </copy>
+        <copy todir="${dist.socket.dir}/${asset.dir}">
+            <fileset dir="${asset.dir}"/>
+        </copy>
+
+        <copy todir="${dist.applet.dir}/${js.dir}">
+            <fileset dir="${js.dir}" excludes="qz-websocket.js"/>
+        </copy>
+        <copy todir="${dist.socket.dir}/${js.dir}">
+            <fileset dir="${js.dir}"/>
+        </copy>
+
+        <copy todir="${dist.applet.dir}">
+            <fileset file="sample.html"/>
+        </copy>
+        <copy todir="${dist.socket.dir}">
+            <fileset file="sample_ws.html"/>
+        </copy>
+
+        <copy todir="${dist.applet.dir}" file="${jnlp.inf.dir}/APPLICATION.JNLP"/>
+        <copy todir="${dist.socket.dir}" file="${jnlp.inf.dir}/APPLICATION.JNLP"/>
+
+        <copy todir="${dist.dir}">
+            <fileset file="readme.txt"/>
+            <filterset>
+                <filter token="VERSION" value="${build.version}"/>
+            </filterset>
+        </copy>
+    </target>
+
 </project>
