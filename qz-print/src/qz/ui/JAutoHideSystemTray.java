@@ -75,7 +75,7 @@ public class JAutoHideSystemTray extends JSystemTray {
     
     /**
      * Sets a flag indicating whether or not the mouse is currently over the menu
-     * @param mouseOver 
+     * @param mouseOver whether or not the mouse is currently over the menu
      */
     private void setMouseOver(boolean mouseOver) {
         this.mouseOver = mouseOver;
@@ -83,7 +83,7 @@ public class JAutoHideSystemTray extends JSystemTray {
     
     /**
      * Returns whether or not the mouse is currently over the menu
-     * @return 
+     * @return whether or not the mouse is currently over the menu
      */
     private boolean getMouseOver() {
         return mouseOver;

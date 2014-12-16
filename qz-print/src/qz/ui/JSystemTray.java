@@ -38,7 +38,6 @@ import qz.utils.SystemUtilities;
 public class JSystemTray extends JPopupMenu {
     private final SystemTray systemTray;
     private final TrayIcon trayIcon;
-    private boolean systemTrayAvailable;
     
     /**
      * Constructs a JPopupMenu attached to the system's SystemTray with
@@ -107,7 +106,7 @@ public class JSystemTray extends JPopupMenu {
     /**
      * Sets the toolTipText for the underlying TrayIcon instance, rather than
      * that of the JPopupMenu
-     * @param toolTipText 
+     * @param toolTipText tool text to set
      */
     @Override
     public final void setToolTipText(String toolTipText) {
@@ -150,7 +149,7 @@ public class JSystemTray extends JPopupMenu {
     
     /**
      * Creates a custom tray icon with this JPopupMenu attached
-     * @return 
+     * @return The AWT TrayIcon associated with this JPopupMenu
      */
     private TrayIcon createTrayIcon() {
         // Create an empty tray icon
@@ -197,7 +196,7 @@ public class JSystemTray extends JPopupMenu {
     
     /**
      * Attaches the specified TrayIcon to the SystemTray
-     * @param icon The TrayIcon to attach
+     * @param trayIcon The TrayIcon to attach
      */
     private void attachSystemTray(TrayIcon trayIcon) {
         try {
@@ -232,31 +231,4 @@ public class JSystemTray extends JPopupMenu {
             return null;
         }
     }
-    
-    /**
-     * Flag to tell the TrayManager that the JPopupMenu failed to attach
-     * to the system tray
-     * @return 
-     */
-    public boolean systemTrayAvailable() {
-        return systemTrayAvailable;
-    }
-
-    
-    /**
-     * A custom UI which doesn't hide the pop-up menu when a checkbox is clicked
-     *
-    public static class PersistentCheckBoxUI extends BasicCheckBoxMenuItemUI {
-       @Override
-       protected void doClick(MenuSelectionManager msm) {
-          menuItem.doClick(0);
-       }
-
-       public static ComponentUI createUI(JComponent c) {
-          return new PersistentCheckBoxUI();
-       }
-    }
-    
-    UIManager.put("CheckBoxMenuItemUI", PersistentCheckBoxUI.class.getName());
-    */
 }
