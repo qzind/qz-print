@@ -24,16 +24,19 @@ package qz.common;
 
 import java.awt.Desktop;
 
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import qz.ui.IconCache;
 import qz.ui.JAutoHideSystemTray;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import javax.swing.*;
 import qz.deploy.ShortcutUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
-import qz.ws.PrintSocket;
 
 /**
  * Manages the icons and actions associated with the TrayIcon
@@ -56,13 +59,18 @@ public class TrayManager {
     // The shortcut and startup helper
     private final ShortcutUtilities shortcutCreator;
 
+    // Action to run when reload is triggered
+    private Thread reloadThread;
+
+    // Port that the socket is listening on
+    private int port ;
+
     /**
      * Create a AutoHideJSystemTray with the specified name/text
-     *
-     * @param name The name this UI component will use
      */
-    public TrayManager(String name) {
-        this.name = name;
+    public TrayManager() {
+        this.name = "QZ Print " + Constants.VERSION;
+        this.port = -1;
         // Setup the shortcut name so that the UI components can use it
         shortcutCreator = ShortcutUtilities.getSystemShortcutCreator();
         shortcutCreator.setShortcutName("QZ Print Service");
@@ -73,28 +81,16 @@ public class TrayManager {
 
         // Iterates over all images denoted by IconCache.getTypes() and caches them
         iconCache = new IconCache(tray.getTrayIcon().getSize());
-        tray.setImage(iconCache.getImage(IconCache.Icon.DEFAULT_ICON));
+        tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
 
         // Use some native system tricks to fix the tray icon to look proper on Ubuntu
         if (SystemUtilities.isLinux()) {
             UbuntuUtilities.fixTrayIcons(iconCache);
         }
 
-
         addMenuItems(tray);
-        tray.displayMessage(name, name + " is running.", TrayIcon.MessageType.INFO);
+        //tray.displayMessage(name, name + " is running.", TrayIcon.MessageType.INFO);
     }
-
-    /**
-     * Attach the PrintWebSocketServer to this TrayManager instance
-     * FIXME:  This is just a theoretical placeholder.
-    */
-    public void attachSocket(PrintSocket socket) {
-        // Attach the socket back to this TrayManager instance
-        // socket.attachTrayManager(this);
-        throw new UnsupportedOperationException("Not yet implemented");
-    }
-
 
     /**
      * Stand-alone invocation of TrayManager
@@ -104,7 +100,7 @@ public class TrayManager {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                new TrayManager("QZ Print 1.9.0");
+                new TrayManager();
             }
         });
     }
@@ -124,27 +120,6 @@ public class TrayManager {
         
         advancedMenu.add(openItem);
         advancedMenu.add(desktopItem);
-        
-        
-        
-        //######################################################################
-        //#                      FIXME SAMPLE MENU ITEMS                       #
-        //######################################################################
-        JMenuItem redItem = new JMenuItem("Change Icon to Red");
-        redItem.addActionListener(colorListener);
-        
-        JMenuItem yellowItem = new JMenuItem("Change Icon to Yellow");
-        yellowItem.addActionListener(colorListener);
-        
-        JMenuItem greenItem = new JMenuItem("Change Icon to Green");
-        greenItem.addActionListener(colorListener);
-        
-        advancedMenu.add(new JSeparator());
-        advancedMenu.add(redItem);
-        advancedMenu.add(yellowItem);
-        advancedMenu.add(greenItem);
-       
-        
 
         JMenuItem reloadItem = new JMenuItem("Reload", iconCache.getIcon(IconCache.Icon.RELOAD_ICON));
         reloadItem.addActionListener(reloadListener);
@@ -194,26 +169,20 @@ public class TrayManager {
         }
     };
 
-    private final ActionListener reloadListener = new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-            showError("Sorry, Reload has not yet been implimented.");
-        }
-    };
-
     /**
-     * FIXME:  This is a sample for changing the icon colors and should be removed
+     * Overrides the default reload action listener
+     * @param reloadThread The Thread to call when reload is clicked
      */
-    private final ActionListener colorListener = new ActionListener() {
+    public void setReloadThread(Thread reloadThread) {
+        this.reloadThread = reloadThread;
+    }
+
+    private ActionListener reloadListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            if (e.getSource() instanceof JMenuItem) {
-                JMenuItem caller = (JMenuItem)e.getSource();
-                if (caller.getText().toLowerCase().contains("red")) {
-                    setDangerIcon();
-                } else if (caller.getText().toLowerCase().contains("yellow")) {
-                    setWarningIcon();
-                } else {
-                    setDefaultIcon();
-                }
+            if (reloadThread == null) {
+                showError("Sorry, Reload has not yet been implimented.");
+            } else {
+                reloadThread.start();
             }
         }
     };
@@ -313,6 +282,7 @@ public class TrayManager {
             new JLabel(iconCache.getIcon(IconCache.Icon.LOGO_ICON)),
             "<html><hr><table>"
             + row("Software:", name)
+            + row("Port Number:", port < 0 ? "None" : "" + port)
             + row("Publisher:", "http://qzindustries.com")
             + row("Description:<br>&nbsp;", "QZ Print is a print plugin for your web browser, <br>"
             + "used to print barcodes, receipts and more.")
@@ -326,10 +296,63 @@ public class TrayManager {
     }
 
     /**
+     * Sets the WebSocket Server instance for displaying port information and restarting the server
+     * @param server The Server instance contain to bind the reload action to
+     * @param running Object used to notify PrintSocket to reiterate its main while loop
+     * @param portIndex Object used to notify PrintSocket to reset its port array counter
+     */
+    public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger portIndex) {
+        if (server != null && server.getConnectors().length > 0) {
+            port = ((ServerConnector)server.getConnectors()[0]).getLocalPort();
+            displayInfoMessage("Server started on port " + port);
+            setDefaultIcon();
+
+            setReloadThread(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        setDangerIcon();
+                        setPort(-1);
+                        server.stop();
+                        running.set(false);
+                        portIndex.set(-1);
+                    } catch (Exception e) {
+                        displayErrorMessage("Error stopping print socket: " + e.getLocalizedMessage());
+                    }
+                }
+            }));
+        } else {
+            displayErrorMessage("Invalid server");
+        }
+    }
+
+    /**
+     * Sets the port number in use for display purposes only
+     * @param port The port to display in the About dialog
+     */
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    /**
+     * Thread safe method for setting the warning status message
+     */
+    public void displayInfoMessage(String text) {
+        displayMessage(name, text, TrayIcon.MessageType.INFO);
+    }
+
+    /**
      * Thread safe method for setting the default icon
      */
     public void setDefaultIcon() {
         setIcon(IconCache.Icon.DEFAULT_ICON);
+    }
+
+    /**
+     * Thread safe method for setting the error status message
+     */
+    public void displayErrorMessage(String text) {
+        displayMessage(name, text, TrayIcon.MessageType.ERROR);
     }
 
     /**
@@ -338,6 +361,14 @@ public class TrayManager {
     public void setDangerIcon() {
         setIcon(IconCache.Icon.DANGER_ICON);
     }
+
+    /**
+     * Thread safe method for setting the warning status message
+     */
+    public void displayWarningMessage(String text) {
+        displayMessage(name, text, TrayIcon.MessageType.WARNING);
+    }
+
 
     /**
      * Thread safe method for setting the warning icon
@@ -352,11 +383,26 @@ public class TrayManager {
     private void setIcon(final IconCache.Icon i) {
         if (tray != null) {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
-                public void run() { tray.setIcon(iconCache.getIcon(i)); }
+                @Override
+                public void run() { tray.setIcon(iconCache.getIcon(i));}
             }));
         }
     }
 
-
-
+    /**
+     * Thread safe method for setting the specified status message
+     * @param caption The title of the tray message
+     * @param text The text body of the tray message
+     * @param messageType The message type: TrayIcon.MessageType.INFO, .WARN, .ERROR
+     */
+    private void displayMessage(final String caption, final String text, final TrayIcon.MessageType messageType) {
+        if (tray != null) {
+            SwingUtilities.invokeLater(new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    tray.displayMessage(caption, text, messageType);
+                }
+            }));
+        }
+    }
 }

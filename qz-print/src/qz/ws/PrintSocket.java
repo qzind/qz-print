@@ -1,3 +1,25 @@
+/**
+ * @author Robert Casto
+ *
+ * Copyright (C) 2013 Tres Finocchiaro, QZ Industries
+ *
+ * IMPORTANT: This software is dual-licensed
+ *
+ * LGPL 2.1 This is free software. This software and source code are released
+ * under the "LGPL 2.1 License". A copy of this license should be distributed
+ * with this software. http://www.gnu.org/licenses/lgpl-2.1.html
+ *
+ * QZ INDUSTRIES SOURCE CODE LICENSE This software and source code *may* instead
+ * be distributed under the "QZ Industries Source Code License", available by
+ * request ONLY. If source code for this project is to be made proprietary for
+ * an individual and/or a commercial entity, written permission via a copy of
+ * the "QZ Industries Source Code License" must be obtained first. If you've
+ * obtained a copy of the proprietary license, the terms and conditions of the
+ * license apply only to the licensee identified in the agreement. Only THEN may
+ * the LGPL 2.1 license be voided.
+ *
+ */
+
 package qz.ws;
 
 import org.codehaus.jettison.json.JSONArray;
@@ -9,6 +31,7 @@ import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.joor.Reflect;
 import org.joor.ReflectException;
 import qz.PrintFunction;
+import qz.common.TrayManager;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -26,6 +49,8 @@ public class PrintSocket {
 
     private final List<String> restrictedMethodNames = Arrays.asList("run", "stop", "start", "call", "init", "destroy", "paint");
 
+    private final TrayManager trayManager = PrintWebSocketServer.getTrayManager();
+
     private static JSONArray methods = null;
 
     private static Throwable lastError = null;
@@ -33,17 +58,20 @@ public class PrintSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         log.info("Server connect: " + session.getRemoteAddress());
+        trayManager.displayInfoMessage("Client connected");
     }
 
     //TODO - is idle timeout going to cause issues ??      - yes
     @OnWebSocketClose
     public void onClose(Session session, int statusCode, String reason) {
         log.info("WebSocket close: " + statusCode + " - " + reason);
+        trayManager.displayWarningMessage("Client disconnected");
     }
 
     @OnWebSocketError
     public void onError(Session session, Throwable error) {
         log.severe("Server error: " + error.getMessage());
+        trayManager.displayErrorMessage("Server error: " + error.getMessage());
     }
 
     @OnWebSocketFrame
