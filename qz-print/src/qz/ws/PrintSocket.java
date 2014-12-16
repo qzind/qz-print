@@ -180,6 +180,8 @@ public class PrintSocket {
 
                                 // Watch serial port for any received data so we can send it to the browser
                                 if (qz.getSerialIO() != null && qz.getSerialIO().isOpen()) {
+                                    qz.getSerialIO().clearOutput();
+
                                     new Thread(){
                                         public void run(){
                                             while(qz.getSerialIO() != null) {
@@ -188,7 +190,10 @@ public class PrintSocket {
                                                         JSONObject portMsg = new JSONObject();
                                                         portMsg.put("init", false);
                                                         portMsg.put("callback", "qzSerialReturned");
-                                                        portMsg.put("result", "[\""+ qz.getSerialIO().getPortName() +"\",\""+ new String(qz.getSerialIO().getOutput(), qz.getCharset()) +"\"]");
+                                                        JSONArray res = new JSONArray();
+                                                        res.put(qz.getSerialIO().getPortName());
+                                                        res.put(new String(qz.getSerialIO().getOutput(), qz.getCharset()));
+                                                        portMsg.put("result", res);
 
                                                         sendResponse(session, portMsg);
                                                         qz.getSerialIO().clearOutput();
