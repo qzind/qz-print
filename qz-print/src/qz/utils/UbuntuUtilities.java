@@ -23,13 +23,9 @@
 package qz.utils;
 
 import java.awt.Color;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 import java.util.logging.Logger;
-import javax.swing.ImageIcon;
 import qz.deploy.ShortcutUtilities;
 import qz.ui.IconCache;
-import sun.swing.ImageCache;
 
 /**
  * Utility class for Ubuntu OS specific functions.
