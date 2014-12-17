@@ -72,6 +72,8 @@ public class PrintWebSocketServer {
                 trayManager.setServer(server, running, portIndex);
 
                 server.join();
+
+                // Don't remove this next line or while loop will seize on restart
                 log.info("Shutting down server");
             }
             catch (BindException e) {

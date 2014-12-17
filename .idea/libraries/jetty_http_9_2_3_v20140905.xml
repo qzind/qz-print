@@ -1,7 +1,18 @@
 <component name="libraryTable">
   <library name="jetty-http-9.2.3.v20140905">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/qz-print/lib/jetty-http-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/javax-websocket-server-impl-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/javax.websocket-api-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/jetty-http-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/jetty-io-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/jetty-server-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/jetty-servlet-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/jetty-util-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/servlet-api-3.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/websocket-api-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/websocket-common-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/websocket-server-9.2.3.v20140905.jar!/" />
+      <root url="jar://$PROJECT_DIR$/qz-print/lib/ws/websocket-servlet-9.2.3.v20140905.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

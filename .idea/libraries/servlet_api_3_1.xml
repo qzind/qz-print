@@ -1,8 +1,6 @@
 <component name="libraryTable">
   <library name="servlet-api-3.1">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/qz-print/lib/servlet-api-3.1.jar!/" />
-    </CLASSES>
+    <CLASSES />
     <JAVADOC />
     <SOURCES />
   </library>

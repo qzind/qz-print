@@ -1,8 +1,6 @@
 <component name="libraryTable">
   <library name="jetty-server-9.2.3.v20140905">
-    <CLASSES>
-      <root url="jar://$PROJECT_DIR$/qz-print/src/qz/ws/jetty-server-9.2.3.v20140905.jar!/" />
-    </CLASSES>
+    <CLASSES />
     <JAVADOC />
     <SOURCES />
   </library>
