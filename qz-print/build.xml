@@ -30,6 +30,11 @@
                 </fileset>
             </classpath>
         </javac>
+
+        <!-- Include non-class files from src in build directory -->
+        <copy todir="${build.dir}">
+            <fileset dir="${src.dir}" excludes="**/*.java"/>
+        </copy>
     </target>
 
     <target name="build-jar" depends="compile">
