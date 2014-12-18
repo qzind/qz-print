@@ -65,6 +65,7 @@ function connectWebsocket(port) {
                 console.log(evt);
             }
 
+            // Move on to the next port
             if (!websocket.valid){
                 connectWebsocket(qzConfig.ports[++qzConfig.portIndex]);
             }
