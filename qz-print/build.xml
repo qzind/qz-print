@@ -2,7 +2,7 @@
 
 <project name="qz" default="distribute" basedir=".">
 
-    <target depends="init,sign-jar,include-assets" name="distribute" >
+    <target depends="init,clean,sign-jar,include-assets" name="distribute" >
         <zip destfile="${zip.file}" basedir="${dist.dir}"/>
 
         <echo message="Process complete" />
@@ -20,7 +20,11 @@
         <property file="ant/private/private.properties"/>
     </target>
 
-    <target name="compile">
+    <target depends="init" name="clean">
+        <delete dir="${out.dir}"/>
+    </target>
+
+    <target depends="init" name="compile">
         <mkdir dir="${build.dir}"/>
         <javac destdir="${build.dir}" source="${javac.source}" target="${javac.target}">
             <src path="${src.dir}"/>
@@ -46,7 +50,11 @@
             <fileset dir="${build.dir}" excludes="org/joor/*.*,qz/ws/*.*"/>
             <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*"/>
             <manifest>
-                <attribute name="Main-Class" value="${main.applet.class}"/>
+                <attribute name="Main-Class" value="${manifest.main.applet.class}"/>
+                <attribute name="Permissions" value="${manifest.permissions}"/>
+                <attribute name="Codebase" value="${manifest.codebase}"/>
+                <attribute name="Caller-Allowable-Codebase" value="${manifest.caller.allowable.codebase}"/>
+                <attribute name="Application-Library-Allowable-Codebase" value="${manifest.application.allowable.codebase}"/>
             </manifest>
         </jar>
 
@@ -55,7 +63,11 @@
             <fileset dir="${build.dir}"/>
             <zipgroupfileset dir="${lib.dir}" includes="**/*.jar"/>
             <manifest>
-                <attribute name="Main-Class" value="${main.socket.class}"/>
+                <attribute name="Main-Class" value="${manifest.main.socket.class}"/>
+                <attribute name="Permissions" value="${manifest.permissions}"/>
+                <attribute name="Codebase" value="${manifest.codebase}"/>
+                <attribute name="Caller-Allowable-Codebase" value="${manifest.caller.allowable.codebase}"/>
+                <attribute name="Application-Library-Allowable-Codebase" value="${manifest.application.allowable.codebase}"/>
             </manifest>
         </jar>
     </target>
@@ -168,7 +180,7 @@
     </target>
 
 
-    <target name="include-assets">
+    <target depends="init" name="include-assets">
         <echo>Copying resource files to output</echo>
 
         <copy todir="${dist.applet.dir}/${asset.dir}">
