@@ -192,8 +192,7 @@
             <fileset file="sample_ws.html"/>
         </copy>
 
-        <copy todir="${dist.applet.dir}" file="${jnlp.inf.dir}/APPLICATION.JNLP"/>
-        <copy todir="${dist.socket.dir}" file="${jnlp.inf.dir}/APPLICATION.JNLP"/>
+        <copy file="${jnlp.inf.dir}/APPLICATION.JNLP" tofile="${dist.applet.jnlp}" />
 
         <copy todir="${dist.dir}">
             <fileset file="readme.txt"/>
