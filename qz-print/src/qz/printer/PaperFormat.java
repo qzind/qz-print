@@ -52,6 +52,8 @@ public class PaperFormat {
     private boolean autoSize;
     
     private int orientation = PageFormat.PORTRAIT;
+    
+    private int angle = 0;
 
     private int units = MediaSize.INCH;
 
@@ -80,6 +82,14 @@ public class PaperFormat {
         }
     }
     
+    public void setRotation(int angle) {
+        this.angle = angle;
+    }
+    
+    public int getRotation() {
+        return angle;
+    }
+
     /**
      * Parses a human orientation such as <code>"landscape"</code> into an enumerated orientation
      * such as <code>PageFormat.LANDSCAPE</code>

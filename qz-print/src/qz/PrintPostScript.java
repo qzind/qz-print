@@ -24,6 +24,7 @@ package qz;
 import com.sun.pdfview.PDFFile;
 import com.sun.pdfview.PDFPage;
 import com.sun.pdfview.PDFRenderer;
+import qz.common.LogIt;
 import qz.printer.PaperFormat;
 
 import javax.imageio.ImageIO;
@@ -68,6 +69,29 @@ public class PrintPostScript implements Printable {
 
     public PrintPostScript() {
     }
+    
+    /**
+     * Rotates a buffered image by the specified angle in radians.
+     * Note:  To rotate in degrees convert to radians first using:
+     * <code>Math.toRadians(degree);</code>
+     * @param image BufferedImage to rotate
+     * @param angle in radians
+     * @return 
+     */
+    public static BufferedImage rotate(BufferedImage image, double angle) {
+        LogIt.log("Rotating image " + angle);
+        double sin = Math.abs(Math.sin(angle)), cos = Math.abs(Math.cos(angle));
+        int w = image.getWidth(), h = image.getHeight();
+        int neww = (int)Math.floor(w*cos+h*sin), newh = (int)Math.floor(h*cos+w*sin);
+        GraphicsConfiguration gc = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices()[0].getDefaultConfiguration();
+        BufferedImage result = gc.createCompatibleImage(neww, newh, Transparency.TRANSLUCENT);
+        Graphics2D g = result.createGraphics();
+        g.translate((neww-w)/2, (newh-h)/2);
+        g.rotate(angle, w/2, h/2);
+        g.drawRenderedImage(image, null);
+        g.dispose();
+        return result;
+    }
 
     /**
      * Can be called directly
@@ -76,8 +100,17 @@ public class PrintPostScript implements Printable {
      */
     public void print() throws PrinterException {
         PrinterJob job = PrinterJob.getPrinterJob();
+
         int width;
         int height;
+        
+        if (this.paperSize.get() != null && this.paperSize.get().getRotation() > 0) {
+            this.bufferedImage.set(rotate(this.bufferedImage.get(), Math.toRadians(this.paperSize.get().getRotation())));
+            if (paperSize.get() != null) {
+                // Readjust our paperSize after rotation
+                 paperSize.get().setAutoSize(this.bufferedImage.get());
+            }
+        }
 
         if (this.bufferedImage.get() != null) {
             width = bufferedImage.get().getWidth();

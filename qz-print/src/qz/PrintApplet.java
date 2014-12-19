@@ -549,6 +549,27 @@ public class PrintApplet extends PrintFunction implements Runnable {
         this.file = file;
     }
 
+    /**
+     * Returns the rotation as it has been recently defined
+     *
+     * @return
+     */
+    public String getRotation() {
+        return "" + getPaperSize().getRotation();
+    }
+
+    /**
+     * Sets the rotation in degrees of the image being appended (PS only)
+     * @param rotation
+     */
+    public void setRotation(String rotation) {
+        if (paperSize != null) {
+            paperSize.setRotation(Integer.parseInt(rotation));
+        } else {
+            LogIt.log(Level.WARNING, "Cannot set rotation until after setting paper size using setPaperSize(...)");
+        }
+    }
+
     // Use this instead of calling p2d directly.  This will allow 2d graphics
     // to only be used when absolutely needed
     protected PrintPostScript getPrintPS() {
