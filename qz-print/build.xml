@@ -2,7 +2,7 @@
 
 <project name="qz" default="distribute" basedir=".">
 
-    <target depends="init,clean,sign-jar,include-assets" name="distribute" >
+    <target name="distribute" depends="init,clean,sign-jar,include-assets">
         <zip destfile="${zip.file}" basedir="${dist.dir}"/>
 
         <echo message="Process complete" />
@@ -18,13 +18,15 @@
         <!-- The default code signing properties which uses qz.ks. -->
         <!-- Please leave this value the netbeans default as a fallback. -->
         <property file="ant/private/private.properties"/>
+
+        <echo message="Building ${build.name} ${build.version} using JDK ${ant.java.version}" />
     </target>
 
-    <target depends="init" name="clean">
+    <target name="clean" depends="init">
         <delete dir="${out.dir}"/>
     </target>
 
-    <target depends="init" name="compile">
+    <target name="compile" depends="init">
         <mkdir dir="${build.dir}"/>
         <javac destdir="${build.dir}" source="${javac.source}" target="${javac.target}">
             <src path="${src.dir}"/>
@@ -50,6 +52,7 @@
             <fileset dir="${build.dir}" excludes="org/joor/*.*,qz/ws/*.*"/>
             <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*"/>
             <manifest>
+                <attribute name="Application-Name" value="${manifest.application.name}"/>
                 <attribute name="Main-Class" value="${manifest.main.applet.class}"/>
                 <attribute name="Permissions" value="${manifest.permissions}"/>
                 <attribute name="Codebase" value="${manifest.codebase}"/>
@@ -63,6 +66,7 @@
             <fileset dir="${build.dir}"/>
             <zipgroupfileset dir="${lib.dir}" includes="**/*.jar"/>
             <manifest>
+                <attribute name="Application-Name" value="${manifest.application.name}"/>
                 <attribute name="Main-Class" value="${manifest.main.socket.class}"/>
                 <attribute name="Permissions" value="${manifest.permissions}"/>
                 <attribute name="Codebase" value="${manifest.codebase}"/>
@@ -73,121 +77,63 @@
     </target>
 
 
-    <target name="sign-jar" depends="build-jar,sign-jar-tsa">
+    <target name="sign-jar" depends="build-jar,sign-jar-self,sign-jar-tsa">
         <path>
             <fileset dir="${dist.dir}/${lib.dir}" includes="${lib.dir}/**/*.jar" />
         </path>
     </target>
 
     <!-- tsaurl attribute cannot be empty, so separate methods are needed to sign both jars -->
-    <target name="sign-jar-self" depends="jnlp-init-keystore,security-props-check" if="jnlp.signed.true" unless="jnlp.signing.tsaurl">
+    <target name="sign-jar-self" unless="signing.tsaurl">
         <echo>Self-signing Applet jar</echo>
         <signjar jar="${dist.applet.jar}"
                  signedjar="${dist.applet.jar}"
-                 alias="${jnlp.signing.alias}"
-                 storepass="${jnlp.signing.storepass}"
-                 keystore="${jnlp.signing.keystore}"
-                 keypass="${jnlp.signing.keypass}"
+                 alias="${signing.alias}"
+                 storepass="${signing.storepass}"
+                 keystore="${signing.keystore}"
+                 keypass="${signing.keypass}"
                 />
 
         <echo>Self-signing Socket jar</echo>
         <signjar jar="${dist.socket.jar}"
                  signedjar="${dist.socket.jar}"
-                 alias="${jnlp.signing.alias}"
-                 storepass="${jnlp.signing.storepass}"
-                 keystore="${jnlp.signing.keystore}"
-                 keypass="${jnlp.signing.keypass}"
+                 alias="${signing.alias}"
+                 storepass="${signing.storepass}"
+                 keystore="${signing.keystore}"
+                 keypass="${signing.keypass}"
                 />
     </target>
 
-    <target name="sign-jar-tsa" depends="sign-jar-self" if="jnlp.signing.tsaurl">
+    <target name="sign-jar-tsa" if="signing.tsaurl">
         <echo>Signing Applet jar with timestamp</echo>
         <signjar jar="${dist.applet.jar}"
                  signedjar="${dist.applet.jar}"
-                 alias="${jnlp.signing.alias}"
-                 storepass="${jnlp.signing.storepass}"
-                 keystore="${jnlp.signing.keystore}"
-                 keypass="${jnlp.signing.keypass}"
-                 tsaurl="${jnlp.signing.tsaurl}"
+                 alias="${signing.alias}"
+                 storepass="${signing.storepass}"
+                 keystore="${signing.keystore}"
+                 keypass="${signing.keypass}"
+                 tsaurl="${signing.tsaurl}"
                 />
 
         <echo>Signing Socket jar with timestamp</echo>
         <signjar jar="${dist.socket.jar}"
                  signedjar="${dist.socket.jar}"
-                 alias="${jnlp.signing.alias}"
-                 storepass="${jnlp.signing.storepass}"
-                 keystore="${jnlp.signing.keystore}"
-                 keypass="${jnlp.signing.keypass}"
-                 tsaurl="${jnlp.signing.tsaurl}"
+                 alias="${signing.alias}"
+                 storepass="${signing.storepass}"
+                 keystore="${signing.keystore}"
+                 keypass="${signing.keypass}"
+                 tsaurl="${signing.tsaurl}"
                 />
     </target>
 
-
-    <target name="security-props-check">
-        <condition property="jnlp.signed.true">
-            <istrue value="${jnlp.signed}"/>
-        </condition>
-    </target>
-
-    <property name="helper.file" location="helper.txt"/>
-    <target name="jnlp-init-keystore" depends="jnlp-init-signing,jnlp-init-keystore1,jnlp-init-keystore2,check-keystore-exists" if="do.init.keystore">
-        <echo message="${application.vendor}" file="${helper.file}"/>
-        <loadfile property="application.vendor.filtered" srcfile="${helper.file}">
-            <filterchain>
-                <deletecharacters chars=","/>
-            </filterchain>
-        </loadfile>
-        <delete file="${helper.file}"/>
-
-        <property name="jnlp.signjar.vendor" value="CN=${application.vendor.filtered}"/>
-        <echo message="Going to create default keystore in ${jnlp.signjar.keystore}"/>
-        <genkey dname="${jnlp.signjar.vendor}" alias="${jnlp.signjar.alias}" keystore="${jnlp.signjar.keystore}"
-                storepass="${jnlp.signjar.storepass}" keypass="${jnlp.signjar.keypass}"/>
-    </target>
-
-    <target name="check-keystore-exists" depends="security-props-check">
-        <available property="jnlp.signjar.keystore.exists" file="${jnlp.signjar.keystore}"/>
-        <condition property="do.init.keystore">
-            <and>
-                <isset property="jnlp.signed.true"/>
-                <not><isset property="jnlp.signjar.keystore.exists"/></not>
-            </and>
-        </condition>
-    </target>
-
-    <target name="jnlp-init-signing">
-        <condition property="generated.key.signing">
-            <equals arg1="${jnlp.signing}" arg2="generated" trim="true"/>
-        </condition>
-    </target>
-
-    <target name="jnlp-init-keystore1" if="generated.key.signing">
-        <local name="generated.signing.alias"/>
-        <condition property="generated.signing.alias" value="${jnlp.signing.alias}" else="nb-jws">
-            <isset property="jnlp.signing.alias"/>
-        </condition>
-        <property name="jnlp.signjar.keystore" value="${basedir}/build/${generated.signing.alias}.ks" />
-        <property name="jnlp.signjar.storepass" value="storepass"/>
-        <property name="jnlp.signjar.keypass" value="keypass"/>
-        <property name="jnlp.signjar.alias" value="${generated.signing.alias}"/>
-    </target>
-
-    <target name="jnlp-init-keystore2" unless="generated.key.signing">
-        <property name="jnlp.signjar.keystore" value="${jnlp.signing.keystore}" />
-        <property name="jnlp.signjar.storepass" value="${jnlp.signing.storepass}"/>
-        <property name="jnlp.signjar.keypass" value="${jnlp.signing.keypass}"/>
-        <property name="jnlp.signjar.alias" value="${jnlp.signing.alias}"/>
-    </target>
-
-
-    <target depends="init" name="include-assets">
+    <target name="include-assets" depends="init" >
         <echo>Copying resource files to output</echo>
 
         <copy todir="${dist.applet.dir}/${asset.dir}">
-            <fileset dir="${asset.dir}"/>
+            <fileset dir="${asset.dir}" excludes="**/*.properties"/>
         </copy>
         <copy todir="${dist.socket.dir}/${asset.dir}">
-            <fileset dir="${asset.dir}"/>
+            <fileset dir="${asset.dir}" excludes="**/*.properties"/>
         </copy>
 
         <copy todir="${dist.applet.dir}/${js.dir}">
