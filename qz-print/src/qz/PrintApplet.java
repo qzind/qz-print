@@ -22,7 +22,6 @@
 package qz;
 
 import netscape.javascript.JSException;
-import netscape.javascript.JSObject;
 import qz.common.*;
 import qz.exception.SerialException;
 import qz.printer.PaperFormat;
@@ -53,7 +52,8 @@ public class PrintApplet extends PrintFunction implements Runnable {
     private boolean running;
     private long sleep;
 
-    private JSObject window = null;
+    // Keep this fully qualified due to javafx namespace conflict
+    private netscape.javascript.JSObject window = null;
 
     private int appendType;
     private boolean startFindingPrinters;
@@ -82,8 +82,7 @@ public class PrintApplet extends PrintFunction implements Runnable {
      */
     //@Override
     public void run() {
-        // TODO: RKC - Fix the import to make this work!
-        // window = JSObject.getWindow(this);
+        window = netscape.javascript.JSObject.getWindow(this);
         log.info("QZ-PRINT " + Constants.VERSION);
         log.info("===== JAVASCRIPT LISTENER THREAD STARTED =====");
         try {
@@ -606,10 +605,6 @@ public class PrintApplet extends PrintFunction implements Runnable {
         resetVariables();
         thisThread.set(new Thread(this));
         super.init();
-    }
-
-    public boolean isActive(){
-        return isActive(true);
     }
 
     /**
