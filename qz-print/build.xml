@@ -50,7 +50,6 @@
         <echo>Building Jar for Applet use</echo>
         <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.applet.jar}" duplicate="preserve">
             <fileset dir="${build.dir}" excludes="org/joor/*.*,qz/ws/*.*"/>
-            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*"/>
             <manifest>
                 <attribute name="Application-Name" value="${manifest.application.name}"/>
                 <attribute name="Main-Class" value="${manifest.main.applet.class}"/>
@@ -60,6 +59,9 @@
                 <attribute name="Application-Library-Allowable-Codebase" value="${manifest.application.allowable.codebase}"/>
             </manifest>
         </jar>
+        <copy todir="${dist.applet.dir}/${lib.dir}">
+            <fileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*"/>
+        </copy>
 
         <echo>Building Jar for Socket use</echo>
         <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.socket.jar}" duplicate="preserve">
