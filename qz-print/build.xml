@@ -60,7 +60,7 @@
             </manifest>
         </jar>
         <copy todir="${dist.applet.dir}/${lib.dir}">
-            <fileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*"/>
+            <fileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*,plugin.jar"/>
         </copy>
 
         <echo>Building Jar for Socket use</echo>
