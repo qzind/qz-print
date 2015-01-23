@@ -21,7 +21,7 @@
 			archive:'qz-print.jar', width:1, height:1};
 		var parameters = {jnlp_href: 'qz-print_jnlp.jnlp',
 			cache_option:'plugin', disable_logging:'false',
-			initial_focus:'false'};
+			initial_focus:'false', separate_jvm:'true'};
 		if (deployJava.versionCheck("1.7+") == true) {}
 		else if (deployJava.versionCheck("1.6+") == true) {
 			delete parameters['jnlp_href'];
@@ -973,6 +973,7 @@
 	<param name="cache_option" value="plugin">
 	<param name="disable_logging" value="false">
 	<param name="initial_focus" value="false">
+	<param name="separate_jvm" value="true">
 	</applet><br />
 	-->
 
@@ -984,6 +985,7 @@
 	<param name="disable_logging" value="false">
 	<param name="initial_focus" value="false">
 	<param name="printer" value="zebra">
+	<param name="separate_jvm" value="true">
 	</applet><br />
 	-->
 

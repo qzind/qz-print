@@ -1,3 +1,8 @@
+Changes 1.8.11 (1/23/2015)
+ - Added separate_jvm applet parameter
+Changes 1.8.10 (1/5/2015)
+ - Added rotation support via qz.setRotation(angle);
+ - Remove hanging window on printPS() error (GitHub issue #40)
 Changes 1.8.7 (7/22/2014)
 - Fixes lockup introduced with Chrome 36.0 (GitHub issue #33)
 Changes 1.8.5 (6/24/2014)
