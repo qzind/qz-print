@@ -8,6 +8,8 @@ import sun.security.provider.X509Factory;
 import javax.security.cert.CertificateParsingException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -68,8 +70,6 @@ public class Certificate {
             //Setup X.509
 
             String[] split = in.split("--START INTERMEDIATE CERT--");
-            if(split.length!=2)
-                throw new CertificateParsingException("Bad certificate format!");
 
             byte[] serverCertificate = Base64.decode(split[0].replaceAll(X509Factory.BEGIN_CERT, "").replaceAll(X509Factory.END_CERT, ""));
             //Strip beginning and end
@@ -77,8 +77,12 @@ public class Certificate {
             theCertificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(serverCertificate));
             //Generate cert
 
-            byte[] intermediateCertificate = Base64.decode(split[1].replaceAll(X509Factory.BEGIN_CERT, "").replaceAll(X509Factory.END_CERT, ""));
-            theIntermediateCertificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(intermediateCertificate));
+            if(split.length==2){
+                byte[] intermediateCertificate = Base64.decode(split[1].replaceAll(X509Factory.BEGIN_CERT, "").replaceAll(X509Factory.END_CERT, ""));
+                theIntermediateCertificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(intermediateCertificate));
+            }
+            else
+                theIntermediateCertificate=null;//Self-signed
         } catch (CertificateException e) {
             e.printStackTrace();
             CertificateParsingException certificateParsingException=new CertificateParsingException();
@@ -113,11 +117,15 @@ public class Certificate {
      */
     public boolean isValidQZCert()
     {
-        return true;
+        if(theIntermediateCertificate==null)
+            return false;
+        else{
+            return true;
+        }
     }
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchAlgorithmException, CertificateEncodingException {
         try {
             Certificate test = new Certificate("-----BEGIN CERTIFICATE-----\n" +
                     "MIIGtjCCBZ6gAwIBAgIDAhtyMA0GCSqGSIb3DQEBBQUAMIGMMQswCQYDVQQGEwJJ\n" +
@@ -157,9 +165,37 @@ public class Certificate {
                     "fgyZwA4RFH7SJOqpXWbeqeRPIbXuKjcfEoFqRaFz352l2wyiUV+GPJ1IJSOWeTvU\n" +
                     "cPCawAyufX4ul0CEty4cmhG8uKJPZrnn5r23cfkmlKTt1JNkai1bWhj0\n" +
                     "-----END CERTIFICATE-----");
-            System.out.println(test.getCN());
+            System.out.println(test.getThumbPrint());
         } catch (CertificateParsingException e) {
             e.printStackTrace();
         }
+    }
+
+    public String getThumbPrint() throws CertificateEncodingException, NoSuchAlgorithmException {
+        return makeThumbPrint(theCertificate);
+    }
+
+    public static String makeThumbPrint(X509Certificate cert)
+            throws NoSuchAlgorithmException, CertificateEncodingException {
+        MessageDigest md = MessageDigest.getInstance("SHA-1");
+        byte[] der = cert.getEncoded();
+        md.update(der);
+        byte[] digest = md.digest();
+        return hexify(digest);
+    }
+
+    private static String hexify (byte bytes[]) {
+
+        char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7',
+                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+
+        StringBuffer buf = new StringBuffer(bytes.length * 2);
+
+        for (int i = 0; i < bytes.length; ++i) {
+            buf.append(hexDigits[(bytes[i] & 0xf0) >> 4]);
+            buf.append(hexDigits[bytes[i] & 0x0f]);
+        }
+
+        return buf.toString();
     }
 }
