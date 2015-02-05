@@ -15,41 +15,49 @@ public class CRL {
     /**
      * The URL to the QZ CRL. Should not be changed except for dev tests
      */
-    public static final String CRL_URL="https://hosted.kd8rho.net/crl-temp.txt";
+    public static final String CRL_URL = "https://hosted.kd8rho.net/crl-temp.txt";
 
-    ArrayList<String> revokedHashes=new ArrayList<String>();
+    ArrayList<String> revokedHashes = new ArrayList<String>();
 
 
     public static CRL getQzCrl() throws IOException {
-        ArrayList<String> httpResult=new ArrayList<String>();
+        ArrayList<String> httpResult = new ArrayList<String>();
+        BufferedReader theReader = null;
+
         try {
-            URL qzCRL=new URL(CRL_URL);
-            BufferedReader theReader=new BufferedReader(new InputStreamReader(qzCRL.openStream()));
+            URL qzCRL = new URL(CRL_URL);
             String line;
-            while((line=theReader.readLine())!=null)
-            {
+            theReader = new BufferedReader(new InputStreamReader(qzCRL.openStream()));
+            while((line = theReader.readLine()) != null) {
                 //Ignore 0 length lines, more efficient memory usage.
-                if(line.length()!=0)
-                {
+                if (line.length() != 0) {
                     //Ignore comments
-                    if(line.charAt(0)!='#')
-                    {
+                    if (line.charAt(0) != '#') {
                         httpResult.add(line);
                     }
                 }
             }
-            CRL theNewCRL=new CRL();
-            theNewCRL.revokedHashes=httpResult;
-        } catch (MalformedURLException e) {
+
+            CRL theNewCRL = new CRL();
+            theNewCRL.revokedHashes = httpResult;
+        }
+        catch(MalformedURLException e) {
             e.printStackTrace();
         }
+        finally {
+            if (theReader != null) {
+                try { theReader.close(); } catch(Exception ignore) {}
+            }
+        }
+
         return null;
     }
 
     public static void main(String[] args) {
         try {
             CRL crl = getQzCrl();
-        } catch (IOException e) {
+        }
+        catch(IOException e) {
             e.printStackTrace();
         }
     }

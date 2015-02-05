@@ -3,62 +3,43 @@ package qz.auth;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
 import qz.common.Base64;
+import qz.utils.FileUtilities;
 import sun.security.provider.X509Factory;
 
 import javax.security.cert.CertificateParsingException;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.util.HashMap;
 
 /**
  * Created by Steven on 1/27/2015. Package: qz.auth Project: qz-print
  * Wrapper to store certificate objects from
  */
 public class Certificate {
+
     X509Certificate theCertificate;
     X509Certificate theIntermediateCertificate;
 
-    /**
-     * Checks if the certificate has been added to the local trusted store
-     * @return
-     */
-    public boolean isSaved()
-    {
-        return false;
-    }
+    //TODO - defaults ?
+    private String fingerprint;
+    private String commonName;
+    private String organization;
+    private String validFrom;
+    private String validTo;
+    //TODO - other info available ?
 
-    /**
-     * Checks if the certificate has been added to the local trusted store
-     * @return
-     */
-    public boolean isBlocked()
-    {
-        return false;
-    }
+    private boolean valid = false;
 
-    /**
-     * Saves certificate to the local trusted store
-     */
-    public void saveCertificateTrusted()
-    {
-
-    }
-
-    /**
-     * Saves certificate to the local blocked store
-     */
-    public void saveCertificateBlocked()
-    {
-
-    }
+    public static final String[] saveFields = new String[] {"fingerprint", "commonName", "organization", "validFrom", "validTo", "valid"};
 
     /**
      * Decodes a certificate and intermediate certificate from the given string
+     *
      * @param in
      * @throws IOException
      * @throws CertificateException
@@ -77,51 +58,149 @@ public class Certificate {
             theCertificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(serverCertificate));
             //Generate cert
 
-            if(split.length==2){
+            if (split.length == 2) {
                 byte[] intermediateCertificate = Base64.decode(split[1].replaceAll(X509Factory.BEGIN_CERT, "").replaceAll(X509Factory.END_CERT, ""));
                 theIntermediateCertificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(intermediateCertificate));
+            } else {
+                theIntermediateCertificate = null; //Self-signed
             }
-            else
-                theIntermediateCertificate=null;//Self-signed
-        } catch (CertificateException e) {
+
+            commonName = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.CN).get(0));
+            //TODO - assign variables
+
+            valid = theIntermediateCertificate != null;
+        }
+        catch(CertificateException e) {
             e.printStackTrace();
-            CertificateParsingException certificateParsingException=new CertificateParsingException();
+            CertificateParsingException certificateParsingException = new CertificateParsingException();
             certificateParsingException.initCause(e);
             throw certificateParsingException;
-        } catch (IOException e) {
+        }
+        catch(IOException e) {
             e.printStackTrace();
-            CertificateParsingException certificateParsingException=new CertificateParsingException();
+            CertificateParsingException certificateParsingException = new CertificateParsingException();
             certificateParsingException.initCause(e);
             throw certificateParsingException;
         }
     }
 
+    private Certificate() {}
 
     /**
-     * Get the common name from the certificate
-     * @return certificate's common name. Null if exception
+     * Used to rebuild a certificate for the 'Saved Sites' screen without having to decrypt the certificates again
      */
-    public String getCN() {
+    public static Certificate loadCertificate(HashMap<String, String> data) {
+        Certificate cert = new Certificate();
+
+        cert.fingerprint = data.get("fingerprint");
+        cert.commonName = data.get("commonName");
+        cert.organization = data.get("organization");
+        cert.validFrom = data.get("validFrom");
+        cert.validTo = data.get("validTo");
+
+        cert.valid = Boolean.parseBoolean(data.get("valid"));
+
+        return cert;
+    }
+
+    /**
+     * Used to find the associated certificate for a print request
+     */
+    public static Certificate findCertificateForRequest(String request) {
+        // TODO - something ?
+
+        return new Certificate(); //not this
+    }
+
+    /**
+     * Checks if the certificate has been added to the local trusted store
+     *
+     * @return
+     */
+    public boolean isSaved() {
+        File blocks = FileUtilities.getFile("allowed");
+
+        BufferedReader br = null;
         try {
-            return String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.CN).get(0));
-        } catch (CertificateEncodingException e) {
+            String line;
+            br = new BufferedReader(new FileReader(blocks));
+            while((line = br.readLine()) != null) {
+                String print = line.substring(0, line.indexOf("\t"));
+                if (print.equals(getFingerprint())) {
+                    return true;
+                }
+            }
+        }
+        catch(IOException e) {
             e.printStackTrace();
-            return null;
+        }
+        finally {
+            if (br != null) {
+                try { br.close(); } catch(Exception ignore) {}
+            }
         }
 
+        return false;
+    }
+
+    /**
+     * Checks if the certificate has been added to the local blocked store
+     *
+     * @return
+     */
+    public boolean isBlocked() {
+        File blocks = FileUtilities.getFile("blocked");
+
+        BufferedReader br = null;
+        try {
+            String line;
+            br = new BufferedReader(new FileReader(blocks));
+            while((line = br.readLine()) != null) {
+                String print = line.substring(0, line.indexOf("\t"));
+                if (print.equals(getFingerprint())) {
+                    return true;
+                }
+            }
+        }
+        catch(IOException e) {
+            e.printStackTrace();
+        }
+        finally {
+            if (br != null) {
+                try { br.close(); } catch(Exception ignore) {}
+            }
+        }
+
+        return false;
+    }
+
+    public String getFingerprint() {
+        return fingerprint;
+    }
+
+    public String getCommonName() {
+        return commonName;
+    }
+
+    public String getOrganization() {
+        return organization;
+    }
+
+    public String getValidFrom() {
+        return validFrom;
+    }
+
+    public String getValidTo() {
+        return validTo;
     }
 
     /**
      * Validates certificate against QZ cacert.
+     *
      * @return
      */
-    public boolean isValidQZCert()
-    {
-        if(theIntermediateCertificate==null)
-            return false;
-        else{
-            return true;
-        }
+    public boolean isValidQZCert() {
+        return valid;
     }
 
 
@@ -166,7 +245,8 @@ public class Certificate {
                     "cPCawAyufX4ul0CEty4cmhG8uKJPZrnn5r23cfkmlKTt1JNkai1bWhj0\n" +
                     "-----END CERTIFICATE-----");
             System.out.println(test.getThumbPrint());
-        } catch (CertificateParsingException e) {
+        }
+        catch(CertificateParsingException e) {
             e.printStackTrace();
         }
     }
@@ -175,8 +255,7 @@ public class Certificate {
         return makeThumbPrint(theCertificate);
     }
 
-    public static String makeThumbPrint(X509Certificate cert)
-            throws NoSuchAlgorithmException, CertificateEncodingException {
+    public static String makeThumbPrint(X509Certificate cert) throws NoSuchAlgorithmException, CertificateEncodingException {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
         byte[] der = cert.getEncoded();
         md.update(der);
@@ -184,18 +263,27 @@ public class Certificate {
         return hexify(digest);
     }
 
-    private static String hexify (byte bytes[]) {
-
+    private static String hexify(byte bytes[]) {
         char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7',
-                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
-        StringBuffer buf = new StringBuffer(bytes.length * 2);
+        StringBuilder buf = new StringBuilder(bytes.length * 2);
 
-        for (int i = 0; i < bytes.length; ++i) {
-            buf.append(hexDigits[(bytes[i] & 0xf0) >> 4]);
-            buf.append(hexDigits[bytes[i] & 0x0f]);
+        for(byte aByte : bytes) {
+            buf.append(hexDigits[(aByte & 0xf0) >> 4]);
+            buf.append(hexDigits[aByte & 0x0f]);
         }
 
         return buf.toString();
     }
+
+    public String toString() {
+        return getFingerprint() +"\t"+
+                getCommonName() +"\t"+
+                getOrganization() +"\t" +
+                getValidFrom() +"\t"+
+                getValidTo() +"\t"+
+                isValidQZCert();
+    }
+
 }
