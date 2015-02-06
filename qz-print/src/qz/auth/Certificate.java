@@ -8,8 +8,7 @@ import sun.security.provider.X509Factory;
 
 import javax.security.cert.CertificateParsingException;
 import java.io.*;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -66,9 +65,11 @@ public class Certificate {
             }
 
             commonName = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.CN).get(0));
-            //TODO - assign variables
-
-            valid = theIntermediateCertificate != null;
+            fingerprint=makeThumbPrint(theCertificate);
+            organization = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.O).get(0));
+            validFrom = theCertificate.getNotBefore().toString();
+            validTo = theCertificate.getNotAfter().toString();
+            valid = isValidQZCert();
         }
         catch(CertificateException e) {
             e.printStackTrace();
@@ -81,6 +82,11 @@ public class Certificate {
             CertificateParsingException certificateParsingException = new CertificateParsingException();
             certificateParsingException.initCause(e);
             throw certificateParsingException;
+        } catch (NoSuchAlgorithmException e) {
+            //Shouldn't happen, indicates failure to do x.509 stuff.
+            e.printStackTrace();
+            CertificateParsingException certificateParsingException = new CertificateParsingException();
+            certificateParsingException.initCause(e);
         }
     }
 
@@ -103,13 +109,36 @@ public class Certificate {
         return cert;
     }
 
+
     /**
-     * Used to find the associated certificate for a print request
+     * Checks given signature for given data against this certificate,
+     * ensuring it is properly signed
+     * @param signature the signature appended to the data
+     * @param data the data to check
+     * @return true if signature valid, false if not
      */
-    public boolean isSignatureValid(String signature, String request){
-        //TODO - validation here
-        return true;
+    public boolean isSignatureValid(String signature, String data)
+    {
+        Signature sig;
+        try {
+            sig = Signature.getInstance("SHA1withDSA", "SUN");
+            sig.initVerify(theCertificate);
+            sig.update(data.getBytes());
+            return sig.verify(signature.getBytes());
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (SignatureException e) {
+            e.printStackTrace();
+        }
+
+        //On errors, assume failure.
+        return false;
     }
+
 
     /**
      * Checks if the certificate has been added to the local trusted store
@@ -117,12 +146,12 @@ public class Certificate {
      * @return
      */
     public boolean isSaved() {
-        File blocks = FileUtilities.getFile("allowed");
+        File allowed = FileUtilities.getFile("allowed");
 
         BufferedReader br = null;
         try {
             String line;
-            br = new BufferedReader(new FileReader(blocks));
+            br = new BufferedReader(new FileReader(allowed));
             while((line = br.readLine()) != null) {
                 String print = line.substring(0, line.indexOf("\t"));
                 if (print.equals(getFingerprint())) {
@@ -199,7 +228,8 @@ public class Certificate {
      * @return
      */
     public boolean isValidQZCert() {
-        return valid;
+        return false;
+        //TODO: Finish
     }
 
 
@@ -243,15 +273,10 @@ public class Certificate {
                     "fgyZwA4RFH7SJOqpXWbeqeRPIbXuKjcfEoFqRaFz352l2wyiUV+GPJ1IJSOWeTvU\n" +
                     "cPCawAyufX4ul0CEty4cmhG8uKJPZrnn5r23cfkmlKTt1JNkai1bWhj0\n" +
                     "-----END CERTIFICATE-----");
-            System.out.println(test.getThumbPrint());
         }
         catch(CertificateParsingException e) {
             e.printStackTrace();
         }
-    }
-
-    public String getThumbPrint() throws CertificateEncodingException, NoSuchAlgorithmException {
-        return makeThumbPrint(theCertificate);
     }
 
     public static String makeThumbPrint(X509Certificate cert) throws NoSuchAlgorithmException, CertificateEncodingException {
