@@ -31,11 +31,15 @@ import org.eclipse.jetty.websocket.api.extensions.Frame;
 import org.joor.Reflect;
 import org.joor.ReflectException;
 import qz.PrintFunction;
+import qz.auth.Certificate;
 import qz.common.TrayManager;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Vector;
 import java.util.logging.Logger;
 
 /**
@@ -44,10 +48,16 @@ import java.util.logging.Logger;
 @WebSocket
 public class PrintSocket {
 
-    private static PrintFunction qz = null;
     private final Logger log = Logger.getLogger(PrintSocket.class.getName());
 
+    // Each connection to the websocket has its own instance of QZ to avoid conflicting print buffers
+    private static HashMap<Integer,PrintFunction> connections = new HashMap<Integer,PrintFunction>();
+    private static HashMap<Integer,Certificate> certificates = new HashMap<Integer,Certificate>();
+
     private final List<String> restrictedMethodNames = Arrays.asList("run", "stop", "start", "call", "init", "destroy", "paint");
+
+    // List of methods that will cause the Allow/Deny dialog to pop-up
+    private final List<String> showDialogMethods = Arrays.asList("print", "printHTML", "printPS", "printToFile", "printToHost");
 
     private final TrayManager trayManager = PrintWebSocketServer.getTrayManager();
 
@@ -61,9 +71,18 @@ public class PrintSocket {
         trayManager.displayInfoMessage("Client connected");
     }
 
-    //TODO - is idle timeout going to cause issues ??      - yes
     @OnWebSocketClose
     public void onClose(Session session, int statusCode, String reason) {
+        // Remove the QZ instance associated with the disconnected client
+        Integer port = session.getRemoteAddress().getPort();
+        if (connections.get(port) != null) {
+            connections.get(port).stop();
+            connections.remove(port);
+        }
+        if (certificates.get(port) != null) {
+            certificates.remove(port);
+        }
+
         log.info("WebSocket close: " + statusCode + " - " + reason);
         trayManager.displayWarningMessage("Client disconnected");
     }
@@ -82,193 +101,241 @@ public class PrintSocket {
     @OnWebSocketMessage
     public void onMessage(Session session, String json) {
         if (json == null) {
-            sendResponse(session, "{'error': 'Invalid Message'}");
-        } else if (!"ping".equals(json)){
+            sendError(session, "Invalid Message");
+        } else if (!"ping".equals(json)) {
             try {
-                log.info("Request: "+ json);
-                processMessage(session, new JSONObject(json));
+                log.info("Request: " + json);
+
+                int start = json.indexOf("{");
+                String signature = json.substring(0, start);
+                json = json.substring(start);
+
+                Certificate cert = certificates.get(session.getRemoteAddress().getPort());
+
+                if (cert != null) {
+                    if (cert.isSignatureValid(signature, json)) {
+                        processMessage(session, new JSONObject(json), cert);
+                    } else {
+                        sendError(session, "Invalid Signature");
+                    }
+                } else {
+                    // No certificate - likely a setup call, pass null
+                    processMessage(session, new JSONObject(json), null);
+                }
             }
             catch(JSONException e) {
-                sendResponse(session, "{'error': 'Invalid JSON'}");
+                sendError(session, "Invalid JSON");
                 e.printStackTrace();
             }
         }
     }
 
-    private void processMessage(Session session, JSONObject message) throws JSONException {
-        if (qz == null) { qz = new PrintFunction(); qz.init(); qz.start(); }
+    private void processMessage(Session session, JSONObject message, Certificate certificate) throws JSONException {
+        Integer port = session.getRemoteAddress().getPort();
+        if (connections.get(port) == null) { connections.put(port, new PrintFunction()); connections.get(port).init(); connections.get(port).start(); }
+        PrintFunction qz = connections.get(port);
+
         log.info("Server message: " + message);
 
         // Using Reflection, call correct method on PrintApplet.
         // Except for listMessages which is not part of PrintApplet
-        if (message.getString("method").equals("listMessages")) {
-            if (methods == null) {
-                methods = new JSONArray();
+        if ("listMessages".equals(message.getString("method"))) {
+            JSONArray param = message.optJSONArray("params");
+            String certString = null;
+            if (param != null) { certString = param.getString(0); }
 
-                try {
-                    Class c = PrintFunction.class;
-                    Method[] m = c.getDeclaredMethods();
-                    for(Method method : m) {
-                        if (method.getModifiers() == Modifier.PUBLIC) {
-                            String name = method.getName();
+            try {
+                //Certificate will be null for this call, so we will build it here
+                certificate = new Certificate(certString);
+                certificates.put(port, certificate);
+            }
+            catch(Exception ignore) {}
 
-                            // Add only if not in restricted method names list
-                            if (!restrictedMethodNames.contains(name)) {
-                                JSONObject jMethod = new JSONObject();
-                                jMethod.put("name", name);
-                                jMethod.put("returns", method.getReturnType());
-                                jMethod.put("parameters", method.getParameterTypes().length);
+            if (trayManager.showGatewayDialog(certificate)) {
+                if (methods == null) {
+                    methods = new JSONArray();
 
-                                methods.put(jMethod);
+                    try {
+                        Class c = PrintFunction.class;
+                        Method[] m = c.getDeclaredMethods();
+                        for(Method method : m) {
+                            if (method.getModifiers() == Modifier.PUBLIC) {
+                                String name = method.getName();
+
+                                // Add only if not in restricted method names list
+                                if (!restrictedMethodNames.contains(name)) {
+                                    JSONObject jMethod = new JSONObject();
+                                    jMethod.put("name", name);
+                                    jMethod.put("returns", method.getReturnType());
+                                    jMethod.put("parameters", method.getParameterTypes().length);
+
+                                    methods.put(jMethod);
+                                }
                             }
                         }
                     }
+                    catch(Exception ex) {
+                        ex.printStackTrace();
+                        message.put("error", ex.getMessage());
+                    }
                 }
-                catch(Exception ex) {
-                    ex.printStackTrace();
-                    message.put("error", ex.getMessage());
-                }
-            }
 
-            message.put("result", methods);
-            sendResponse(session, message);
+                message.put("result", methods);
+                sendResponse(session, message);
+            } else {
+                //Send blocked callback to web page
+                message.put("callback", "requestBlocked");
+                message.put("init", "false");
+                sendResponse(session, message);
+            }
 
             return;
         } else {        // Figure out which method is being called and call it returning any values
-            JSONArray parts = message.optJSONArray("params");
-            if (parts == null) parts = new JSONArray();
-            String name = message.getString("method");
-            Vector<Method> possibleMethods = new Vector<Method>();
+            if (!showDialogMethods.contains(message.optString("method")) || trayManager.showPrintDialog(certificate, qz.getPrinter())) {
+                JSONArray parts = message.optJSONArray("params");
+                if (parts == null) { parts = new JSONArray(); }
+                String name = message.getString("method");
+                Vector<Method> possibleMethods = new Vector<Method>();
 
-            try {
-                Method [] methods = PrintFunction.class.getMethods();
-                for (Method m : methods) {
-//                    log.info(name + ":" + params + "  -  " + mm.getName() + ":" + mm.getParameterTypes().length);
-                    if (m.getName().equals(name) && parts.length() == m.getParameterTypes().length) {
-                        possibleMethods.add(m);
+                try {
+                    Method[] methods = PrintFunction.class.getMethods();
+                    for(Method m : methods) {
+                        if (m.getName().equals(name) && parts.length() == m.getParameterTypes().length) {
+                            possibleMethods.add(m);
+                        }
                     }
-                }
 
-                Object result = null;     // default for void
+                    Object result = null;     // default for void
 
-                if (possibleMethods.size() == 0) {
-                    message.put("error", "No methods found");
-                    sendResponse(session, message);
-                    return;
-                } else {
-                    for (Method method : possibleMethods) { // We found methods that may work. Now call them
-                        try {
-                            // Create array of objects based on number of parameters and their types
-                            Object[] params = new Object[parts.length()];
-                            // We must get the parameter object types correct based on what the method wants
-                            for (int i = 0; i < parts.length(); i++) {
-                                params[i] = convertType(parts.getString(i), method.getParameterTypes()[i]);
-                            }
+                    if (possibleMethods.size() == 0) {
+                        message.put("error", "No methods found");
+                        sendResponse(session, message);
+                        return;
+                    } else {
+                        for(Method method : possibleMethods) { // We found methods that may work. Now call them
+                            try {
+                                // Create array of objects based on number of parameters and their types
+                                Object[] params = new Object[parts.length()];
+                                // We must get the parameter object types correct based on what the method wants
+                                for(int i = 0; i < parts.length(); i++) {
+                                    params[i] = convertType(parts.getString(i), method.getParameterTypes()[i]);
+                                }
 
-                            // Using jOOR to call method since primitives are involved
-                            // Invoke the method with all the parameters
-                            log.info("Calling: " + name + Arrays.toString(params));
-                            result = Reflect.on(qz).call(name, params).get();
+                                // Using jOOR to call method since primitives are involved
+                                // Invoke the method with all the parameters
+                                log.info("Calling: " + name + Arrays.toString(params));
+                                result = Reflect.on(qz).call(name, params).get();
 
 
-                            if (result instanceof PrintFunction) {
-                                result = "void";    // set since the return value is void
-                            }
+                                if (result instanceof PrintFunction) {
+                                    result = "void";    // set since the return value is void
+                                }
 
-                            if ("openPort".equals(name)){
-                                result = (qz.getSerialIO() == null ? null : qz.getSerialIO().getPortName());
+                                if ("openPort".equals(name)) {
+                                    result = (qz.getSerialIO() == null? null:qz.getSerialIO().getPortName());
 
-                                // Watch serial port for any received data so we can send it to the browser
-                                if (qz.getSerialIO() != null && qz.getSerialIO().isOpen()) {
-                                    qz.getSerialIO().clearOutput();
+                                    // Watch serial port for any received data so we can send it to the browser
+                                    if (qz.getSerialIO() != null && qz.getSerialIO().isOpen()) {
+                                        qz.getSerialIO().clearOutput();
 
-                                    new Thread(){
-                                        public void run(){
-                                            while(qz.getSerialIO() != null) {
-                                                if (qz.getSerialIO().getOutput() != null) {
-                                                    try {
-                                                        JSONObject portMsg = new JSONObject();
-                                                        portMsg.put("init", false);
-                                                        portMsg.put("callback", "qzSerialReturned");
-                                                        JSONArray res = new JSONArray();
-                                                        res.put(qz.getSerialIO().getPortName());
-                                                        res.put(new String(qz.getSerialIO().getOutput(), qz.getCharset()));
-                                                        portMsg.put("result", res);
+                                        new Thread() {
+                                            public void run() {
+                                                while(qz.getSerialIO() != null) {
+                                                    if (qz.getSerialIO().getOutput() != null) {
+                                                        try {
+                                                            JSONObject portMsg = new JSONObject();
+                                                            portMsg.put("init", false);
+                                                            portMsg.put("callback", "qzSerialReturned");
+                                                            JSONArray res = new JSONArray();
+                                                            res.put(qz.getSerialIO().getPortName());
+                                                            res.put(new String(qz.getSerialIO().getOutput(), qz.getCharset()));
+                                                            portMsg.put("result", res);
 
-                                                        sendResponse(session, portMsg);
-                                                        qz.getSerialIO().clearOutput();
-                                                    }
-                                                    catch (JSONException e){
-                                                        log.warning("Issue sending data received from serial port - "+ e.getMessage());
+                                                            sendResponse(session, portMsg);
+                                                            qz.getSerialIO().clearOutput();
+                                                        }
+                                                        catch(JSONException e) {
+                                                            log.warning("Issue sending data received from serial port - " + e.getMessage());
+                                                        }
                                                     }
                                                 }
                                             }
-                                        }
 
-                                        private Session session;
-                                        private PrintFunction qz;
-                                        public Thread setup(Session session, PrintFunction qz){
-                                            this.session = session;
-                                            this.qz = qz;
-                                            return this;
-                                        }
-                                    }.setup(session, qz).start();
+                                            private Session session;
+                                            private PrintFunction qz;
+
+                                            public Thread setup(Session session, PrintFunction qz) {
+                                                this.session = session;
+                                                this.qz = qz;
+                                                return this;
+                                            }
+                                        }.setup(session, qz).start();
+                                    }
                                 }
-                            }
-                            if ("closePort".equals(name)){
-                                result = params[0];
-                            }
-                            if ("send".equals(name)){
-                                String data = new String(qz.getSerialIO().getOutput() == null? "".getBytes():qz.getSerialIO().getOutput(), qz.getCharset());
-                                qz.getSerialIO().clearOutput();
+                                if ("closePort".equals(name)) {
+                                    result = params[0];
+                                }
+                                if ("send".equals(name)) {
+                                    String data = new String(qz.getSerialIO().getOutput() == null? "".getBytes():qz.getSerialIO().getOutput(), qz.getCharset());
+                                    qz.getSerialIO().clearOutput();
 
-                                result = (qz.getSerialIO() == null ? null : "[\""+ qz.getSerialIO().getPortName() +"\",\""+ data +"\"]");
-                            }
+                                    result = (qz.getSerialIO() == null? null:"[\"" + qz.getSerialIO().getPortName() + "\",\"" + data + "\"]");
+                                }
 
-                            // Send new return value for getPrinter when selected printer changes
-                            if ("findPrinter".equals(name)) {
-                                log.info("Selected New Printer");
-                                sendNewMethod(session, "getPrinter", qz.getPrinter());
-                                sendNewMethod(session, "getPrinters", qz.getPrinters().replaceAll("\\\\", "%5C")); //escape all backslashes
-                            }
+                                // Send new return value for getPrinter when selected printer changes
+                                if ("findPrinter".equals(name)) {
+                                    log.info("Selected New Printer");
+                                    sendNewMethod(session, "getPrinter", qz.getPrinter());
+                                    sendNewMethod(session, "getPrinters", qz.getPrinters().replaceAll("\\\\", "%5C")); //escape all backslashes
+                                }
 
-                            // Pass method results to simulate APPLET's synchronous calls
-                            if ("findPorts".equals(name)) {
-                                sendNewMethod(session, "getPorts", qz.getPorts());
-                            }
+                                // Pass method results to simulate APPLET's synchronous calls
+                                if ("findPorts".equals(name)) {
+                                    sendNewMethod(session, "getPorts", qz.getPorts());
+                                }
 
-                            if ("setLogPostScriptFeatures".equals(name)) {
-                                sendNewMethod(session, "getLogPostScriptFeatures", qz.getLogPostScriptFeatures());
-                            }
+                                if ("setLogPostScriptFeatures".equals(name)) {
+                                    sendNewMethod(session, "getLogPostScriptFeatures", qz.getLogPostScriptFeatures());
+                                }
 
-                            if ("useAlternatePrinting".equals(name)) {
-                                sendNewMethod(session, "isAlternatePrinting", qz.isAlternatePrinting());
-                            }
+                                if ("useAlternatePrinting".equals(name)) {
+                                    sendNewMethod(session, "isAlternatePrinting", qz.isAlternatePrinting());
+                                }
 
-                            if (qz.getException() != lastError){
-                                sendNewMethod(session, "getException", qz.getException()==null? null:qz.getException().getLocalizedMessage());
-                                lastError = qz.getException();
-                            }
+                                if (qz.getException() != lastError) {
+                                    sendNewMethod(session, "getException", qz.getException() == null? null:qz.getException().getLocalizedMessage());
+                                    lastError = qz.getException();
+                                }
 
-                            break; //method worked, don't try others
-                        } catch (Exception e) {
-                            log.warning("Method "+ method.getName() +" failed: '"+ e.getMessage() +"', will try overloaded method if one exists");
-                            e.printStackTrace();
+                                break; //method worked, don't try others
+                            }
+                            catch(Exception e) {
+                                log.warning("Method " + method.getName() + " failed: '" + e.getMessage() + "', will try overloaded method if one exists");
+                                e.printStackTrace();
+                            }
                         }
                     }
+
+                    message.put("result", result);
+                    sendResponse(session, message);
+                    return;
+
                 }
-
-                message.put("result", result);
+                catch(ReflectException ex) {
+                    ex.printStackTrace();
+                    message.put("error", ex.getMessage());
+                }
+            } else {
+                // Didn't print request, clear the buffer for the next request
+                qz.clear();
+                //Send blocked callback to web page
+                message.put("callback", "requestBlocked");
+                message.put("init", "false");
                 sendResponse(session, message);
-                return;
-
-            } catch (ReflectException ex) {
-                ex.printStackTrace();
-                message.put("error", ex.getMessage());
             }
         }
 
-        if (message.get("error") != null) {
+        if (message.opt("error") != null) {
             message.put("error", "Unknown Message");
         }
         sendResponse(session, message);
@@ -278,15 +345,20 @@ public class PrintSocket {
         sendResponse(session, "{\"method\":\"" + methodName + "\",\"params\":[],\"callback\":\"setupMethods\",\"init\":true,\"result\":\"" + result + "\"}");
     }
 
-    private void sendResponse(Session session, JSONObject message){
+    private void sendError(Session session, String error) {
+        sendResponse(session, "{\"error\": \"" + error + "\"}");
+    }
+
+    private void sendResponse(Session session, JSONObject message) {
         sendResponse(session, message.toString());
     }
 
     private void sendResponse(Session session, String jsonMsg) {
         try {
-            log.info("Response: "+ jsonMsg);
+            log.info("Response: " + jsonMsg);
             session.getRemote().sendString(jsonMsg);
-        } catch (Exception ex) {
+        }
+        catch(Exception ex) {
             ex.printStackTrace();
         }
     }
@@ -294,17 +366,17 @@ public class PrintSocket {
     private Object convertType(String data, Object type) {
         log.info("CONVERTING " + data + " --> " + type);
 
-        if (type instanceof String) return data;
-        if (type instanceof Integer) return Integer.decode(data);
-        if (type instanceof Float) return Float.parseFloat(data);
-        if (type instanceof Double) return Double.parseDouble(data);
-        if (type instanceof Boolean) return Boolean.parseBoolean(data);
+        if (type instanceof String) { return data; }
+        if (type instanceof Integer) { return Integer.decode(data); }
+        if (type instanceof Float) { return Float.parseFloat(data); }
+        if (type instanceof Double) { return Double.parseDouble(data); }
+        if (type instanceof Boolean) { return Boolean.parseBoolean(data); }
 
         String name = String.valueOf(type);
-        if ("int".equals(name)) return Integer.decode(data);
-        if ("float".equals(name)) return Float.parseFloat(data);
-        if ("double".equals(name)) return Double.parseDouble(data);
-        if ("boolean".equals(name)) return Boolean.parseBoolean(data);
+        if ("int".equals(name)) { return Integer.decode(data); }
+        if ("float".equals(name)) { return Float.parseFloat(data); }
+        if ("double".equals(name)) { return Double.parseDouble(data); }
+        if ("boolean".equals(name)) { return Boolean.parseBoolean(data); }
 
         return data;
     }

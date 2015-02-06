@@ -81,8 +81,21 @@ function connectionSuccess(websocket){
     console.log('Websocket connection successful');
 
     websocket.sendObj = function (objMsg) {
-        console.log("Sending " + JSON.stringify(objMsg));
-        return this.send(JSON.stringify(objMsg));
+        var msg = JSON.stringify(objMsg);
+
+        console.log("Sending " + msg);
+        var ws = this;
+
+        if (objMsg.method === 'listMessages'){
+            ws.send(msg);
+        } else {
+            //TODO - document cert methods that need implemented by user
+            signRequest(msg,
+                function (signature) {
+                    ws.send(signature + msg);
+                }
+            );
+        }
     };
 
     websocket.onmessage = function (evt) {
@@ -160,8 +173,10 @@ function connectionSuccess(websocket){
 
 function createQZ(websocket) {
     // Get list of methods from websocket
-    websocket.sendObj({method: 'listMessages'});
-    window["qz"] = {};
+    getCertificate(function(cert){
+        websocket.sendObj({method: 'listMessages', params: [cert]});
+        window["qz"] = {};
+    });
 }
 
 function mapMethods(websocket, methods){

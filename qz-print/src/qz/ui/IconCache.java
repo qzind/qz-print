@@ -38,6 +38,7 @@ import java.util.logging.Logger;
 public class IconCache {
     // Internal Jar path containing the images
     static String RESOURCES_DIR = "/qz/ui/resources/";
+
     /**
      * Stores Icon paths
      */
@@ -52,8 +53,13 @@ public class IconCache {
         RELOAD_ICON("qz-reload.png"),
         ABOUT_ICON("qz-about.png"),
         DESKTOP_ICON("qz-desktop.png"),
+        SAVED_ICON("qz-saved.png"),
+        LOG_ICON("qz-log.png"),
         FOLDER_ICON("qz-folder.png"),
         SETTINGS_ICON("qz-settings.png"),
+
+        VERIFIED_ICON("qz-trusted.png"),
+        UNVERIFIED_ICON("qz-untrusted.png"),
 
         // Logo
         LOGO_ICON("qz-logo.png");
@@ -62,16 +68,18 @@ public class IconCache {
 
         /**
          * Default constructor
+         *
          * @param fileName path to image
          */
         Icon(String fileName) { this.fileName = fileName; }
 
         /**
          * Returns whether or not this icon is used for the SystemTray
+         *
          * @return true if this icon is used for the SystemTray
          */
         public boolean isTrayIcon() {
-            switch (this) {
+            switch(this) {
                 case DEFAULT_ICON:
                 case WARNING_ICON:
                 case DANGER_ICON:
@@ -84,6 +92,7 @@ public class IconCache {
 
         /**
          * Returns whether or not this icon requires scaling to be used in the GUI
+         *
          * @return true if this icon requires scaling
          */
         public boolean isScaled() {
@@ -96,16 +105,18 @@ public class IconCache {
         }
 
         @Override
-        public String toString(){ return name(); }
+        public String toString() { return name(); }
 
         /**
          * Returns the full path to the Icon resource
+         *
          * @return full path to Icon resource
          */
         public String getPath() { return RESOURCES_DIR + fileName; }
 
         /**
          * Returns the file name of the Icon resource
+         *
          * @return file name of Icon resource
          */
         public String getFileName() { return fileName; }
@@ -129,6 +140,7 @@ public class IconCache {
     /**
      * Creates an icon cache, scaling icons to the specified Dimension scaleSize.
      * Only icons which return true for IconCache.Icon.isScaled() will be scaled.  Others will be left alone.
+     *
      * @param scaleSize The size to scale each appropriate image to.  See IconCache.Icon.isScaled()
      */
     public IconCache(Dimension scaleSize) {
@@ -143,7 +155,7 @@ public class IconCache {
      * of ImageIcons and BufferedImages
      */
     private void buildIconCache() {
-        for (Icon i : Icon.values()) {
+        for(Icon i : Icon.values()) {
             BufferedImage bi = getImageResource(i);
             imageIcons.put(i, new ImageIcon(bi));
             images.put(i, bi);
@@ -152,7 +164,8 @@ public class IconCache {
 
     /**
      * Adds/overwrites an ImageIcon in the cache
-     * @param i an IconCache.Icon
+     *
+     * @param i         an IconCache.Icon
      * @param imageIcon an ImageIcon
      * @return the ImageIcon that was added
      */
@@ -163,6 +176,7 @@ public class IconCache {
 
     /**
      * Returns the ImageIcon from cache
+     *
      * @param i an IconCache.Icon
      * @return the ImageIcon in the cache
      */
@@ -172,6 +186,7 @@ public class IconCache {
 
     /**
      * Returns the Image from cache
+     *
      * @param i an IconCache.Icon
      * @return the Image in the cache
      */
@@ -181,6 +196,7 @@ public class IconCache {
 
     /**
      * Returns all IconCache.Icon's possible values
+     *
      * @return the complete list of IconCache.Icon values
      */
     public static Icon[] getTypes() {
@@ -189,6 +205,7 @@ public class IconCache {
 
     /**
      * Returns a BufferedImage representing the IconCache.Icon specified taking scaleSize into account
+     *
      * @param i the IconCache.Icon containing an image path
      * @return a BufferedImage, scaled as needed
      */
@@ -214,17 +231,19 @@ public class IconCache {
             if (is != null) {
                 return ImageIO.read(is);
             } else {
-                Logger.getLogger(IconCache.class.getClass().getName()).log(Level.WARNING, "Cannot find {0}", new Object[]{imagePath});
+                Logger.getLogger(IconCache.class.getClass().getName()).log(Level.WARNING, "Cannot find {0}", new Object[] {imagePath});
             }
-        } catch (IOException e) {
-            Logger.getLogger(IconCache.class.getClass().getName()).log(Level.WARNING, "Cannot find {0}", new Object[]{imagePath});
+        }
+        catch(IOException e) {
+            Logger.getLogger(IconCache.class.getClass().getName()).log(Level.WARNING, "Cannot find {0}", new Object[] {imagePath});
         }
         return null;
     }
 
     /**
      * Overwrites the specified IconCache.Icon's underlying ImageIcon and BufferedImage with an opaque version
-     * @param i the IconCache.Icon
+     *
+     * @param i       the IconCache.Icon
      * @param bgColor the java Color used for the transparent pixels
      */
     public void toOpaqueImage(Icon i, Color bgColor) {
@@ -233,6 +252,7 @@ public class IconCache {
 
     /**
      * Creates an opaque icon image by setting transparent pixels to the specified bgColor
+     *
      * @param img The original transparency-enabled image
      * @return The image overlaid on the appropriate background color
      */

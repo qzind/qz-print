@@ -106,10 +106,9 @@ public class Certificate {
     /**
      * Used to find the associated certificate for a print request
      */
-    public static Certificate findCertificateForRequest(String request) {
-        // TODO - something ?
-
-        return new Certificate(); //not this
+    public boolean isSignatureValid(String signature, String request){
+        //TODO - validation here
+        return true;
     }
 
     /**
