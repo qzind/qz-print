@@ -771,7 +771,7 @@ public class TrayManager {
         return "<html><table>" +
                 detailRow("Organization:", cert.getOrganization()) +
                 detailRow("Common Name:", cert.getCommonName()) +
-                detailRow("Verification:", cert.isValidQZCert()? "Verified By QZ Industries":"Unverified website") +
+                detailRow("Verification:", cert.isValid()? "Verified By QZ Industries":"Unverified website") +
                 detailRow("Valid From:", cert.getValidFrom()) +
                 detailRow("Valid To:", cert.getValidTo()) +
                 "</table></html>";

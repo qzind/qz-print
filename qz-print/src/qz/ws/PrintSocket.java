@@ -107,7 +107,7 @@ public class PrintSocket {
                 log.info("Request: " + json);
 
                 int start = json.indexOf("{");
-                if (start == -1){ start = 0; }
+                if (start == -1) { start = 0; }
                 String signature = json.substring(0, start);
                 json = json.substring(start);
 
