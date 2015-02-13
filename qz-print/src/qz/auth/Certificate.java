@@ -1,5 +1,10 @@
 package qz.auth;
 
+import com.estontorise.simplersa.RSAKeyImpl;
+import com.estontorise.simplersa.RSAToolFactory;
+import com.estontorise.simplersa.interfaces.RSAKey;
+import com.estontorise.simplersa.interfaces.RSATool;
+import org.apache.commons.ssl.X509CertificateChainBuilder;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
 import qz.common.Base64;
@@ -8,18 +13,51 @@ import sun.security.provider.X509Factory;
 
 import javax.security.cert.CertificateParsingException;
 import java.io.*;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * Created by Steven on 1/27/2015. Package: qz.auth Project: qz-print
  * Wrapper to store certificate objects from
  */
 public class Certificate {
+
+    public static Certificate qzRootCert=null;
+    static {
+        try {
+            qzRootCert = new Certificate("-----BEGIN CERTIFICATE-----                                     \n" +
+                    "MIIDczCCAlugAwIBAgIJAL84/Wb/WNmOMA0GCSqGSIb3DQEBCwUAMFAxCzAJBgNV\n" +
+                    "BAYTAlVTMQ0wCwYDVQQIDARPaGlvMRswGQYDVQQKDBJTZWxsZXJzVG9vbGJveC5j\n" +
+                    "b20xFTATBgNVBAMMDFNUQi1yb290Q0EwMTAeFw0xNTAyMDkyMTU4MjFaFw0xODAy\n" +
+                    "MDgyMTU4MjFaMFAxCzAJBgNVBAYTAlVTMQ0wCwYDVQQIDARPaGlvMRswGQYDVQQK\n" +
+                    "DBJTZWxsZXJzVG9vbGJveC5jb20xFTATBgNVBAMMDFNUQi1yb290Q0EwMTCCASIw\n" +
+                    "DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKs5YF3m1Nf06M2yb6tsiHzaPzbI\n" +
+                    "7fP51RoBXV+TIkG7OKvDlAhEJJVg0JGV080Oi6It2pWrjRhVLkJ4t12Q5QoFmftv\n" +
+                    "oDf3fyYoagB1KPDylFvxmKvJiyn1dxkSRh8FJIkIpcNhvClG3vsMelyjq1dGfuGm\n" +
+                    "wHDsHkc7v+PgMxlp5yRlcid90n7YCVSbkrFAklJNqjcYYqe+1vqHL4yJnG8TLqBd\n" +
+                    "SKxgJbmE/YWay9iYKkY0C/pu4K9LZAkBO0Xf8tJUR1FWSH/FW6DuuGtZ9aCQUW6C\n" +
+                    "aw2BuzHQYoDKQ5le+JkZbwhLeizoWbMx5PGixq+ZkKT3C6ziIDNDMGDcL7cCAwEA\n" +
+                    "AaNQME4wHQYDVR0OBBYEFL9FwzfseceN2U2YVHkhppgYxDzbMB8GA1UdIwQYMBaA\n" +
+                    "FL9FwzfseceN2U2YVHkhppgYxDzbMAwGA1UdEwQFMAMBAf8wDQYJKoZIhvcNAQEL\n" +
+                    "BQADggEBAB3tVNRGBeIk/YOAolx3uEyBcaN0tCvVnhaPOIK1trv/3p6iq6J16iS7\n" +
+                    "8T5CFpA9LRyraOpEiPJF3e8LGMwcZnOnvy7COvMhDV9uWc+mx8VW6roUiBMRNEdP\n" +
+                    "aafNCt3oBjOwkG9+BdaRa5JNbxTDIKzAO7G+f/wqX12trS9/yOq1toJgbCsV+j1q\n" +
+                    "paowd79tdP0zXcd06vFiC3cSyxeEH5HQODcZLmbBQcqTEdyde74I2l8LnIi+war0\n" +
+                    "Cf0vbK6BGNKYfzitDkhp9pH4GGDodrF18q4KwUDl3J9uw+2hMQzIwSpidTJbU7f/\n" +
+                    "jSRl2nlQvk2VwRcRIzahoPWydVdTwZw=                                \n" +
+                    "-----END CERTIFICATE-----");
+        } catch (javax.security.cert.CertificateParsingException e) {
+            e.printStackTrace();
+        }
+    }
 
     X509Certificate theCertificate;
     X509Certificate theIntermediateCertificate;
@@ -69,7 +107,6 @@ public class Certificate {
             organization = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.O).get(0));
             validFrom = theCertificate.getNotBefore().toString();
             validTo = theCertificate.getNotAfter().toString();
-            valid = isValidQZCert();
         }
         catch(CertificateException e) {
             e.printStackTrace();
@@ -113,32 +150,22 @@ public class Certificate {
     /**
      * Checks given signature for given data against this certificate,
      * ensuring it is properly signed
-     * @param signature the signature appended to the data
+     * @param signature the signature appended to the data, base64 encoded
      * @param data the data to check
      * @return true if signature valid, false if not
      */
     public boolean isSignatureValid(String signature, String data)
     {
-        Signature sig;
+        RSATool tool = RSAToolFactory.getRSATool();
+        RSAKey thePublicKey=new RSAKeyImpl(theCertificate.getPublicKey());
+        //On errors, assume failure.
         try {
-            sig = Signature.getInstance("SHA1withDSA", "SUN");
-            sig.initVerify(theCertificate);
-            sig.update(data.getBytes());
-            return sig.verify(signature.getBytes());
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        } catch (NoSuchProviderException e) {
-            e.printStackTrace();
-        } catch (InvalidKeyException e) {
-            e.printStackTrace();
-        } catch (SignatureException e) {
+            return tool.verifyWithKey(data.getBytes(),Base64.decode(signature),thePublicKey);
+        } catch (Exception e){
             e.printStackTrace();
         }
-
-        //On errors, assume failure.
         return false;
     }
-
 
     /**
      * Checks if the certificate has been added to the local trusted store
@@ -228,55 +255,30 @@ public class Certificate {
      * @return
      */
     public boolean isValidQZCert() {
-        return false;
-        //TODO: Finish
-    }
-
-
-    public static void main(String[] args) throws NoSuchAlgorithmException, CertificateEncodingException {
+        if(theIntermediateCertificate==null)
+            return false;
+        HashSet<X509Certificate> chain = new HashSet<X509Certificate>();
         try {
-            Certificate test = new Certificate("-----BEGIN CERTIFICATE-----\n" +
-                    "MIIGtjCCBZ6gAwIBAgIDAhtyMA0GCSqGSIb3DQEBBQUAMIGMMQswCQYDVQQGEwJJ\n" +
-                    "TDEWMBQGA1UEChMNU3RhcnRDb20gTHRkLjErMCkGA1UECxMiU2VjdXJlIERpZ2l0\n" +
-                    "YWwgQ2VydGlmaWNhdGUgU2lnbmluZzE4MDYGA1UEAxMvU3RhcnRDb20gQ2xhc3Mg\n" +
-                    "MiBQcmltYXJ5IEludGVybWVkaWF0ZSBTZXJ2ZXIgQ0EwHhcNMTQwNDE1MTMzNDQ3\n" +
-                    "WhcNMTYwNDE1MDY1MzA4WjCBojEZMBcGA1UEDRMQRzJhZVlDTzZZdThZRklaQjEL\n" +
-                    "MAkGA1UEBhMCVVMxDTALBgNVBAgTBE9oaW8xDzANBgNVBAcTBkRheXRvbjEYMBYG\n" +
-                    "A1UEChMPU3RldmVuIEplbm5pc29uMRcwFQYDVQQDEw53d3cua2Q4cmhvLm5ldDEl\n" +
-                    "MCMGCSqGSIb3DQEJARYWc3R2bmplbm5pc29uQGdtYWlsLmNvbTCCASIwDQYJKoZI\n" +
-                    "hvcNAQEBBQADggEPADCCAQoCggEBAKb48uj6mT+WiDcWv5r56L3lGENKcbUJLaIV\n" +
-                    "lbQkiw5Wms2/3UzbStSBVW95CqDRwdryNmBOhjvKq0M6hQUkcFdGmxHNXm7WqdbO\n" +
-                    "hdeAJ8u0lJBHMKEYnlpHAcgCqtGPCoXb/lMs29dtKYf9HhQeq3J3Zha3nuRKFamF\n" +
-                    "6NUlR/CkS2JnfRf3qLSeo8Xx+Mo8UCJisx6LlyCesXcLzL8RsedITCNnHyWProgl\n" +
-                    "8AyA6apsWiY7f2koUKFFuLeVpp0KQjvOKgnKG9Vj9GIyMfZVv0seltJWiu/RDI/8\n" +
-                    "yQbSbZJWNPBr5JCyeH/HCsYGd0L8qQkgrLzPPX2dkNcwH9TPHsUCAwEAAaOCAwcw\n" +
-                    "ggMDMAkGA1UdEwQCMAAwCwYDVR0PBAQDAgOoMB0GA1UdJQQWMBQGCCsGAQUFBwMC\n" +
-                    "BggrBgEFBQcDATAdBgNVHQ4EFgQUdD6k3xjFBiCRnhybtDULoZezWogwHwYDVR0j\n" +
-                    "BBgwFoAUEdsjRf1UzGpxb4SKA9e+9wEvJoYwQwYDVR0RBDwwOoIOd3d3LmtkOHJo\n" +
-                    "by5uZXSCCmtkOHJoby5uZXSCDnN2bi5rZDhyaG8ubmV0ggwqLmtkOHJoby5uZXQw\n" +
-                    "ggFWBgNVHSAEggFNMIIBSTAIBgZngQwBAgIwggE7BgsrBgEEAYG1NwECAzCCASow\n" +
-                    "LgYIKwYBBQUHAgEWImh0dHA6Ly93d3cuc3RhcnRzc2wuY29tL3BvbGljeS5wZGYw\n" +
-                    "gfcGCCsGAQUFBwICMIHqMCcWIFN0YXJ0Q29tIENlcnRpZmljYXRpb24gQXV0aG9y\n" +
-                    "aXR5MAMCAQEagb5UaGlzIGNlcnRpZmljYXRlIHdhcyBpc3N1ZWQgYWNjb3JkaW5n\n" +
-                    "IHRvIHRoZSBDbGFzcyAyIFZhbGlkYXRpb24gcmVxdWlyZW1lbnRzIG9mIHRoZSBT\n" +
-                    "dGFydENvbSBDQSBwb2xpY3ksIHJlbGlhbmNlIG9ubHkgZm9yIHRoZSBpbnRlbmRl\n" +
-                    "ZCBwdXJwb3NlIGluIGNvbXBsaWFuY2Ugb2YgdGhlIHJlbHlpbmcgcGFydHkgb2Js\n" +
-                    "aWdhdGlvbnMuMDUGA1UdHwQuMCwwKqAooCaGJGh0dHA6Ly9jcmwuc3RhcnRzc2wu\n" +
-                    "Y29tL2NydDItY3JsLmNybDCBjgYIKwYBBQUHAQEEgYEwfzA5BggrBgEFBQcwAYYt\n" +
-                    "aHR0cDovL29jc3Auc3RhcnRzc2wuY29tL3N1Yi9jbGFzczIvc2VydmVyL2NhMEIG\n" +
-                    "CCsGAQUFBzAChjZodHRwOi8vYWlhLnN0YXJ0c3NsLmNvbS9jZXJ0cy9zdWIuY2xh\n" +
-                    "c3MyLnNlcnZlci5jYS5jcnQwIwYDVR0SBBwwGoYYaHR0cDovL3d3dy5zdGFydHNz\n" +
-                    "bC5jb20vMA0GCSqGSIb3DQEBBQUAA4IBAQDQl5/nwtL7DfYPdAuAvUZuyp7WhmmL\n" +
-                    "vD/6DxozCgwS4dkD4Ft5K3gaUsCPO5uPaQV+GPwn4lqqd6495QPRFc9Nu3TpcEQ8\n" +
-                    "+fnfhOcDFrt0oDIr0HAqQwyvIt1KKTWidkFnIowpgsfWDALKIR2EvPgh/FxsEzOd\n" +
-                    "//IIp0mRl+L8GbTJNuXX319VMPhSVMGvH8UAcnrud1O34/Q7u+Q0nwjidZPovoH3\n" +
-                    "fgyZwA4RFH7SJOqpXWbeqeRPIbXuKjcfEoFqRaFz352l2wyiUV+GPJ1IJSOWeTvU\n" +
-                    "cPCawAyufX4ul0CEty4cmhG8uKJPZrnn5r23cfkmlKTt1JNkai1bWhj0\n" +
-                    "-----END CERTIFICATE-----");
-        }
-        catch(CertificateParsingException e) {
+            chain.add(qzRootCert.theCertificate);
+            if(theIntermediateCertificate!=null)
+                chain.add(theIntermediateCertificate);
+            X509Certificate[] x509Certificates = X509CertificateChainBuilder.buildPath(theCertificate, chain);
+
+            for (X509Certificate x509Certificate : x509Certificates) {
+                if(x509Certificate.equals(qzRootCert.theCertificate))
+                    return true;
+            }
+            return false;
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
             e.printStackTrace();
         }
+        return false;
     }
 
     public static String makeThumbPrint(X509Certificate cert) throws NoSuchAlgorithmException, CertificateEncodingException {
@@ -289,7 +291,7 @@ public class Certificate {
 
     private static String hexify(byte bytes[]) {
         char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7',
-                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
+                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
 
         StringBuilder buf = new StringBuilder(bytes.length * 2);
 

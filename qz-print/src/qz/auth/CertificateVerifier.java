@@ -104,7 +104,7 @@ public class CertificateVerifier {
      */
     private static PKIXCertPathBuilderResult verifyCertificate(X509Certificate cert, Set<X509Certificate> trustedRootCerts,
                                                                Set<X509Certificate> intermediateCerts) throws GeneralSecurityException {
-
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
         // Create the selector that specifies the starting certificate
         X509CertSelector selector = new X509CertSelector();
         selector.setCertificate(cert);
