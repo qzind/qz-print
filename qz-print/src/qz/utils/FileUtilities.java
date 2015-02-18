@@ -137,7 +137,7 @@ public class FileUtilities {
 
 
     /* User resource files */
-    private static HashMap<String, File> filemap = new HashMap<String, File>();
+    private static HashMap<String, File> fileMap = new HashMap<String, File>();
 
     public static void printLineToFile(String fileName, String message) {
         FileWriter fw = null;
@@ -160,19 +160,8 @@ public class FileUtilities {
     }
 
     public static File getFile(String name) {
-        if (!filemap.containsKey(name) || filemap.get(name) == null) {
-            String OS = System.getProperty("os.name").toUpperCase();
-            String fileLoc = System.getProperty("user.dir");
-
-            if (OS.contains("WIN")) {
-                fileLoc = System.getenv("APPDATA");
-            } else if (OS.contains("MAC")) {
-                fileLoc = System.getProperty("user.home") + File.separator + "Library" + File.separator + "Application Support";
-            } else if (OS.contains("NIX") || OS.contains("NUX")) {
-                fileLoc = System.getProperty("user.home");
-            }
-
-            fileLoc += File.separator + ".qz-print";
+        if (!fileMap.containsKey(name) || fileMap.get(name) == null) {
+            String fileLoc = SystemUtilities.getDataDirectory() + File.separator + ".qz";
             try {
                 File locDir = new File(fileLoc);
                 locDir.mkdirs();
@@ -180,24 +169,24 @@ public class FileUtilities {
                 File file = new File(fileLoc + File.separator + name + ".bin");
                 file.createNewFile();
 
-                filemap.put(name, file);
+                fileMap.put(name, file);
             }
             catch(IOException e) {
                 e.printStackTrace();
             }
         }
 
-        return filemap.get(name);
+        return fileMap.get(name);
     }
 
     public static void deleteFile(String name) {
-        File file = filemap.get(name);
+        File file = fileMap.get(name);
 
         if (file != null && !file.delete()) {
             log.warning("Unable to delete file " + name);
         }
 
-        filemap.put(name, null);
+        fileMap.put(name, null);
     }
 
     public static void deleteFromFile(String fileName, String deleteLine) {

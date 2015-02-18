@@ -22,6 +22,8 @@
 
 package qz.utils;
 
+import java.io.File;
+
 /**
  * Utility class for OS detection functions.
  * @author Tres Finocchiaro
@@ -39,6 +41,27 @@ public class SystemUtilities {
      */
     public static String getOS() {
         return OS_NAME;
+    }
+
+
+    /**
+     * Returns the OS-specific Application Data directory such as:
+     *  <code>C:\Users\John\AppData\Roaming</code> on Windows
+     *   -- or --
+     *  <code>/Users/John/Library/Application Support</code> on Mac
+     *  -- or --
+     *  <code>/home/John/</code> on Linux
+     * @return Full path to the Application Data directory
+     */
+    public static String getDataDirectory() {
+        if (isWindows()) {
+            return System.getenv("APPDATA");
+        } else if (isMac()) {
+            return System.getProperty("user.home") + File.separator + "Library" + File.separator + "Application Support";
+        } else if (isUnix()) {
+            return System.getProperty("user.home");
+        }
+        return System.getProperty("user.dir");
     }
 
     
@@ -89,7 +112,7 @@ public class SystemUtilities {
 
     /**
      * Returns whether the output of <code>uname -a</code> shell command contains "Ubuntu"
-     * @return true if this OS is Ubuntu
+     * @return <code>true</code> if this OS is Ubuntu
      */
     public static boolean isUbuntu() {
         String linuxVersion = getLinuxVersion();
