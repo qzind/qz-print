@@ -416,10 +416,10 @@ public class TrayManager {
         int opt = JOptionPane.showOptionDialog(tray, message, name, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, icon, new JButton[] {btnAllow, btnAlways, btnBlock, btnNever}, btnAllow);
 
         switch(opt) {
-            case 0: return true;
-            case 1: if (cert.isValidQZCert()) { whiteList(cert); } return cert.isValidQZCert();
-            case 2: if (!cert.isValidQZCert()) { blackList(cert); } return false;
-            case 3: blackList(cert); return false;
+            case 0: return true; //Allow
+            case 1: whiteList(cert); return true; //AlwaysAllow
+            case 2: return false; //Block
+            case 3: blackList(cert); return false; //AlwaysBlock
             default: return false;
         }
     }
