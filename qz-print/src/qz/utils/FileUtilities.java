@@ -87,6 +87,20 @@ public class FileUtilities {
         return false;
     }
 
+    /**
+     * Returns whether or not the supplied path is restricted, such as the qz-tray data directory
+     * Warning:  This does not follow symlinks
+     * @param path
+     * @return <code>true</code> if restricted, <code>false</code> otherwise
+     */
+    public static boolean isBadPath(String path) {
+        if (SystemUtilities.isWindows()) {
+            // Case insensitive
+            path.toLowerCase().contains(SystemUtilities.getDataDirectory().toLowerCase());
+        }
+        return path.contains(SystemUtilities.getDataDirectory());
+    }
+
     public static byte[] readRawFile(String url) throws IOException {
         ByteArrayBuilder rawCmds = new ByteArrayBuilder();
         byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
@@ -161,12 +175,13 @@ public class FileUtilities {
 
     public static File getFile(String name) {
         if (!fileMap.containsKey(name) || fileMap.get(name) == null) {
-            String fileLoc = SystemUtilities.getDataDirectory() + File.separator + ".qz";
+            String fileLoc = SystemUtilities.getDataDirectory();
             try {
                 File locDir = new File(fileLoc);
                 locDir.mkdirs();
+                String ext = name == Constants.LOG_FILE ? ".log" : ".dat";
 
-                File file = new File(fileLoc + File.separator + name + ".bin");
+                File file = new File(fileLoc + File.separator + name + ext);
                 file.createNewFile();
 
                 fileMap.put(name, file);
@@ -191,7 +206,7 @@ public class FileUtilities {
 
     public static void deleteFromFile(String fileName, String deleteLine) {
         File file = getFile(fileName);
-        File temp = getFile("temp");
+        File temp = getFile(Constants.TEMP_FILE);
 
         BufferedReader br = null;
         BufferedWriter bw = null;

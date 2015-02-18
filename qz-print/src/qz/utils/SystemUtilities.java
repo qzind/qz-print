@@ -22,6 +22,8 @@
 
 package qz.utils;
 
+import qz.common.Constants;
+
 import java.io.File;
 
 /**
@@ -46,22 +48,25 @@ public class SystemUtilities {
 
     /**
      * Returns the OS-specific Application Data directory such as:
-     *  <code>C:\Users\John\AppData\Roaming</code> on Windows
+     *  <code>C:\Users\John\AppData\Roaming\.qz</code> on Windows
      *   -- or --
-     *  <code>/Users/John/Library/Application Support</code> on Mac
+     *  <code>/Users/John/Library/Application Support/.qz</code> on Mac
      *  -- or --
-     *  <code>/home/John/</code> on Linux
+     *  <code>/home/John/.qz</code> on Linux
      * @return Full path to the Application Data directory
      */
     public static String getDataDirectory() {
+        String parent;
         if (isWindows()) {
-            return System.getenv("APPDATA");
+            parent = System.getenv("APPDATA");
         } else if (isMac()) {
-            return System.getProperty("user.home") + File.separator + "Library" + File.separator + "Application Support";
+            parent = System.getProperty("user.home") + File.separator + "Library" + File.separator + "Application Support";
         } else if (isUnix()) {
-            return System.getProperty("user.home");
+            parent = System.getProperty("user.home");
+        } else {
+            parent = System.getProperty("user.dir");
         }
-        return System.getProperty("user.dir");
+        return parent + File.separator + Constants.DATA_DIR;
     }
 
     

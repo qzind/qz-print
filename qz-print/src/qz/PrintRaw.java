@@ -126,10 +126,15 @@ public class PrintRaw {
 
     public void setOutputPath(String outputPath) throws InvalidFileTypeException {
         // Check for vulnerable file extensions, such as "exe" or "bat", etc.
+        // also check for
         if (FileUtilities.isBadExtension(outputPath)) {
             throw new InvalidFileTypeException("Writing file \"" +
                     outputPath + "\" is prohibited for security reason: "
                     + "Prohibited file extension.");
+        } else if(FileUtilities.isBadPath(outputPath)) {
+            throw new InvalidFileTypeException("Writing file \"" +
+                    outputPath + "\" is prohibited for security reason: "
+                    + "Prohibited directory name.");
         } else {
             this.outputPath.set(outputPath);
         }

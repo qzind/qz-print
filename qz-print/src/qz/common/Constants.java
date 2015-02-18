@@ -1,5 +1,7 @@
 package qz.common;
 
+import qz.utils.SystemUtilities;
+
 /**
  * Created by robert on 7/9/2014.
  */
@@ -15,4 +17,11 @@ public class Constants {
     public static final int APPEND_IMAGE_PS = 4;
     public static final int APPEND_PDF = 8;
     public static final int APPEND_HTML = 16;
+
+    /* QZ-Tray Constants */
+    public static final String BLOCK_FILE = "blocked";
+    public static final String ALLOW_FILE = "allowed";
+    public static final String TEMP_FILE = "temp";
+    public static final String LOG_FILE = "debug";
+    public static final String DATA_DIR = ".qz";
 }

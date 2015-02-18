@@ -8,6 +8,7 @@ import org.apache.commons.ssl.X509CertificateChainBuilder;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
 import qz.common.Base64;
+import qz.common.Constants;
 import qz.utils.FileUtilities;
 import sun.security.provider.X509Factory;
 
@@ -155,7 +156,7 @@ public class Certificate {
      * Checks if the certificate has been added to the local trusted store
      */
     public boolean isSaved() {
-        File allowed = FileUtilities.getFile("allowed");
+        File allowed = FileUtilities.getFile(Constants.ALLOW_FILE);
 
         BufferedReader br = null;
         try {
@@ -184,7 +185,7 @@ public class Certificate {
      * Checks if the certificate has been added to the local blocked store
      */
     public boolean isBlocked() {
-        File blocks = FileUtilities.getFile("blocked");
+        File blocks = FileUtilities.getFile(Constants.BLOCK_FILE);
 
         BufferedReader br = null;
         try {

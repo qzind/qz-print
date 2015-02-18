@@ -425,12 +425,12 @@ public class TrayManager {
     }
 
     private void whiteList(Certificate cert) {
-        FileUtilities.printLineToFile("allowed", cert.toString());
+        FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.toString());
         displayInfoMessage("Allowed " + cert.getOrganization() + " to always be able to print");
     }
 
     private void blackList(Certificate cert) {
-        FileUtilities.printLineToFile("blocked", cert.toString());
+        FileUtilities.printLineToFile(Constants.BLOCK_FILE, cert.toString());
         displayInfoMessage("Blocked " + cert.getOrganization() + " from ever being able to print");
     }
 
@@ -459,7 +459,7 @@ public class TrayManager {
 
         try {
             String line;
-            br = new BufferedReader(new FileReader(FileUtilities.getFile("log")));
+            br = new BufferedReader(new FileReader(FileUtilities.getFile(Constants.LOG_FILE)));
             while((line = br.readLine()) != null) {
                 log.append(line).append("\r\n");
             }
@@ -495,7 +495,7 @@ public class TrayManager {
         clearBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                FileUtilities.deleteFile("log");
+                FileUtilities.deleteFile(Constants.LOG_FILE);
                 logText.setText("");
             }
         });
@@ -530,9 +530,9 @@ public class TrayManager {
 
     private void showSites() {
         // Get the site lists
-        File allowFile = FileUtilities.getFile("allowed");
+        File allowFile = FileUtilities.getFile(Constants.ALLOW_FILE);
         final Vector<Certificate> allowedCerts = new Vector<Certificate>();
-        File blockFile = FileUtilities.getFile("blocked");
+        File blockFile = FileUtilities.getFile(Constants.BLOCK_FILE);
         final Vector<Certificate> blockedCerts = new Vector<Certificate>();
 
         BufferedReader br = null;
@@ -672,7 +672,7 @@ public class TrayManager {
                     allowedList.remove(index);
                     allowedSiteList.setListData(allowedList);
 
-                    FileUtilities.deleteFromFile("allowed", cert.toString());
+                    FileUtilities.deleteFromFile(Constants.ALLOW_FILE, cert.toString());
                     printToLog("Removed " + cert.getOrganization() + " (" + cert.getCommonName() + ") from the list of allowed sites", TrayIcon.MessageType.INFO);
                 } else if (tabPane.getSelectedIndex() == 1) { // Blocked
                     int index = blockedSiteList.getSelectedIndex();
@@ -682,7 +682,7 @@ public class TrayManager {
                     blockedList.remove(index);
                     blockedSiteList.setListData(blockedList);
 
-                    FileUtilities.deleteFromFile("blocked", cert.toString());
+                    FileUtilities.deleteFromFile(Constants.BLOCK_FILE, cert.toString());
                     printToLog("Removed " + cert.getOrganization() + " (" + cert.getCommonName() + ") from the list of blocked sites", TrayIcon.MessageType.INFO);
                 }
             }
@@ -900,7 +900,7 @@ public class TrayManager {
     }
 
     public void printToLog(String message, TrayIcon.MessageType type) {
-        FileUtilities.printLineToFile("log", String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s", type, new Date(), message));
+        FileUtilities.printLineToFile(Constants.LOG_FILE, String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s", type, new Date(), message));
     }
 
 }
