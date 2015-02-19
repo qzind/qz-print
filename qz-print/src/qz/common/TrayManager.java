@@ -84,7 +84,7 @@ public class TrayManager {
      * Create a AutoHideJSystemTray with the specified name/text
      */
     public TrayManager() {
-        this.name = "QZ Print " + Constants.VERSION;
+        this.name = Constants.ABOUT_TITLE + " " + Constants.VERSION;
         this.port = -1;
         // Setup the shortcut name so that the UI components can use it
         shortcutCreator = ShortcutUtilities.getSystemShortcutCreator();
@@ -136,22 +136,24 @@ public class TrayManager {
         JMenu advancedMenu = new JMenu("Advanced");
         advancedMenu.setIcon(iconCache.getIcon(IconCache.Icon.SETTINGS_ICON));
 
-        JMenuItem openItem = new JMenuItem("Open file location", iconCache.getIcon(IconCache.Icon.FOLDER_ICON));
-        openItem.addActionListener(openListener);
-
-        JMenuItem desktopItem = new JMenuItem("Create Desktop shortcut", iconCache.getIcon(IconCache.Icon.DESKTOP_ICON));
-        desktopItem.addActionListener(desktopListener);
-
         JMenuItem savedItem = new JMenuItem("Site Manager", iconCache.getIcon(IconCache.Icon.SAVED_ICON));
         savedItem.addActionListener(savedListener);
 
         JMenuItem logItem = new JMenuItem("View Logs", iconCache.getIcon(IconCache.Icon.LOG_ICON));
         logItem.addActionListener(logListener);
 
-        advancedMenu.add(openItem);
-        advancedMenu.add(desktopItem);
+        JMenuItem openItem = new JMenuItem("Open file location", iconCache.getIcon(IconCache.Icon.FOLDER_ICON));
+        openItem.addActionListener(openListener);
+
+        JMenuItem desktopItem = new JMenuItem("Create Desktop shortcut", iconCache.getIcon(IconCache.Icon.DESKTOP_ICON));
+        desktopItem.addActionListener(desktopListener);
+
         advancedMenu.add(savedItem);
         advancedMenu.add(logItem);
+        advancedMenu.add(new JSeparator());
+        advancedMenu.add(openItem);
+        advancedMenu.add(desktopItem);
+
 
         JMenuItem reloadItem = new JMenuItem("Reload", iconCache.getIcon(IconCache.Icon.RELOAD_ICON));
         reloadItem.addActionListener(reloadListener);
@@ -184,7 +186,7 @@ public class TrayManager {
                 d.browse(new File(shortcutCreator.getParentDirectory()).toURI());
             }
             catch(Exception ex) {
-                showError("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
+                showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
             }
         }
     };
@@ -215,7 +217,7 @@ public class TrayManager {
     };
 
     /**
-     * Overrides the default reload action listener
+     * Sets the default reload action (in this case, <code>Thread.start()</code>) to be fired
      *
      * @param reloadThread The Thread to call when reload is clicked
      */
@@ -226,7 +228,7 @@ public class TrayManager {
     private ActionListener reloadListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             if (reloadThread == null) {
-                showError("Sorry, Reload has not yet been implemented.");
+                showErrorDialog("Sorry, Reload has not yet been implemented.");
             } else {
                 reloadThread.start();
             }
@@ -241,7 +243,7 @@ public class TrayManager {
 
     private final ActionListener exitListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            if (confirm("Exit " + name + "?")) {
+            if (showConfirmDialog("Exit " + name + "?")) {
                 System.exit(0);
             }
         }
@@ -255,20 +257,20 @@ public class TrayManager {
      *                   ShortcutUtilities.TOGGLE_TYPE_DESKTOP
      */
     private void shortcutToggle(ActionEvent e, ShortcutUtilities.ToggleType toggleType) {
-        // Assume true incase its a regular JMenuItem
+        // Assume true in case its a regular JMenuItem
         boolean checkBoxState = true;
         if (e.getSource() instanceof JCheckBoxMenuItem) {
             checkBoxState = ((JCheckBoxMenuItem) e.getSource()).getState();
         }
 
         if (shortcutCreator.getJarPath() == null) {
-            showError("Unable to determine jar path; " + toggleType + " entry cannot succeed.");
+            showErrorDialog("Unable to determine jar path; " + toggleType + " entry cannot succeed.");
             return;
         }
 
         if (!checkBoxState) {
             // Remove shortcut entry
-            if (confirm("Remove " + name + " from " + toggleType + "?")) {
+            if (showConfirmDialog("Remove " + name + " from " + toggleType + "?")) {
                 if (!shortcutCreator.removeShortcut(toggleType)) {
                     tray.displayMessage(name, "Error removing " + toggleType + " entry", TrayIcon.MessageType.ERROR);
                     checkBoxState = true;   // Set our checkbox back to true
@@ -300,7 +302,7 @@ public class TrayManager {
      * @param message The text to display
      * @return true if yes is clicked, false if no is clicked
      */
-    private boolean confirm(String message) {
+    private boolean showConfirmDialog(String message) {
         int i = JOptionPane.showConfirmDialog(tray, message, name, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         return i == JOptionPane.YES_OPTION;
     }
@@ -308,7 +310,7 @@ public class TrayManager {
     /**
      * Displays a basic error dialog.
      */
-    private void showError(String message) {
+    private void showErrorDialog(String message) {
         JOptionPane.showMessageDialog(tray, message, name, JOptionPane.ERROR_MESSAGE);
     }
 
@@ -318,16 +320,16 @@ public class TrayManager {
         //TODO - show balloon for requests from unpaid sites + have menu option to show pending requests
 
         String message = "<html>" +
-                "<p>" + cert.getCommonName() + " wants access to your printers.</p>" +
+                "<p>" + cert.getCommonName() + " wants to access local resources</p>" +
                 "<strong>" + (cert.isValidQZCert()? "Verified by QZ Industries":"Unverified website") + "</strong>" +
                 "</html>";
 
         boolean allowed = showAllowDialog(message, cert);
 
         if (allowed) {
-            printToLog("Allowed " + cert.getCommonName() + " to access printers", TrayIcon.MessageType.INFO);
+            printToLog("Allowed " + cert.getCommonName() + " to access local resources", TrayIcon.MessageType.INFO);
         } else {
-            printToLog("Blocked " + cert.getCommonName() + " from accessing printers", TrayIcon.MessageType.INFO);
+            printToLog("Blocked " + cert.getCommonName() + " from accessing local resources", TrayIcon.MessageType.INFO);
         }
 
         return allowed;
@@ -406,12 +408,7 @@ public class TrayManager {
             }
         });
 
-        ImageIcon icon;
-        if (cert.isValidQZCert()) {
-            icon = new ImageIcon(TrayManager.class.getResource(IconCache.Icon.VERIFIED_ICON.getPath()));
-        } else {
-            icon = new ImageIcon(TrayManager.class.getResource(IconCache.Icon.UNVERIFIED_ICON.getPath()));
-        }
+        ImageIcon icon = iconCache.getIcon(cert.isValidQZCert() ? IconCache.Icon.VERIFIED_ICON : IconCache.Icon.UNVERIFIED_ICON);
 
         int opt = JOptionPane.showOptionDialog(tray, message, name, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, icon, new JButton[] {btnAllow, btnAlways, btnBlock, btnNever}, btnAllow);
 
@@ -426,12 +423,12 @@ public class TrayManager {
 
     private void whiteList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.toString());
-        displayInfoMessage("Allowed " + cert.getOrganization() + " to always be able to print");
+        displayInfoMessage(String.format(Constants.WHITE_LIST, cert.getOrganization()));
     }
 
     private void blackList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.BLOCK_FILE, cert.toString());
-        displayInfoMessage("Blocked " + cert.getOrganization() + " from ever being able to print");
+        displayInfoMessage(String.format(Constants.BLACK_LIST, cert.getOrganization()));
     }
 
     /**
@@ -444,9 +441,8 @@ public class TrayManager {
                 "<html><hr/><table>"
                         + row("Software:", name)
                         + row("Port Number:", port < 0? "None":"" + port)
-                        + row("Publisher:", "http://qzindustries.com")
-                        + row("Description:<br/>&nbsp;", "QZ Print is a print plugin for your web browser, <br/>"
-                        + "used to print barcodes, receipts and more.")
+                        + row("Publisher:", Constants.ABOUT_URL)
+                        + row("Description:<br/>&nbsp;", String.format(Constants.ABOUT_DESC, Constants.ABOUT_TITLE))
                         + "</table></html>"
         };
         JOptionPane.showMessageDialog(tray, info, name, JOptionPane.PLAIN_MESSAGE);
@@ -474,7 +470,7 @@ public class TrayManager {
         }
 
         // Build the window
-        final JFrame logWindow = new JFrame("QZ Print - Logs");
+        final JFrame logWindow = new JFrame(Constants.ABOUT_TITLE + " - Logs");
         logWindow.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         JPanel content = new JPanel();
@@ -590,7 +586,7 @@ public class TrayManager {
         }
 
         // Build the window
-        final JFrame listWindow = new JFrame("QZ Print - Saved Sites");
+        final JFrame listWindow = new JFrame(Constants.ABOUT_TITLE + " - Site Manager");
         listWindow.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 
         JPanel content = new JPanel();
@@ -599,7 +595,7 @@ public class TrayManager {
         JPanel labelPanel = new JPanel();
         labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
 
-        final JLabel listLabel = new JLabel("Always Print Requests From These Sites");
+        final JLabel listLabel = new JLabel(String.format(Constants.WHITE_LIST, "").replace("  ", " "));
 
         labelPanel.add(listLabel);
         labelPanel.add(Box.createHorizontalGlue());
@@ -634,9 +630,9 @@ public class TrayManager {
             public void stateChanged(ChangeEvent e) {
                 String label = "";
                 if (tabPane.getSelectedIndex() == 0) {
-                    label = "Always Print Requests From These Sites";
+                    label = String.format(Constants.WHITE_LIST, "").replace("  ", " ");
                 } else if (tabPane.getSelectedIndex() == 1) {
-                    label = "Block All Print Requests From These Sites";
+                    label = String.format(Constants.BLACK_LIST, "").replace("  ", " ");
                 }
 
                 listLabel.setText(label);

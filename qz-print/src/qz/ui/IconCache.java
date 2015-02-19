@@ -98,6 +98,8 @@ public class IconCache {
         public boolean isScaled() {
             switch(this) {
                 case LOGO_ICON:
+                case VERIFIED_ICON:
+                case UNVERIFIED_ICON:
                     return false;
                 default:
                     return true;

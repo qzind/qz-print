@@ -57,16 +57,18 @@ public class SystemUtilities {
      */
     public static String getDataDirectory() {
         String parent;
+        String folder = Constants.DATA_DIR;
         if (isWindows()) {
             parent = System.getenv("APPDATA");
         } else if (isMac()) {
             parent = System.getProperty("user.home") + File.separator + "Library" + File.separator + "Application Support";
         } else if (isUnix()) {
             parent = System.getProperty("user.home");
+            folder = "." + folder;
         } else {
             parent = System.getProperty("user.dir");
         }
-        return parent + File.separator + Constants.DATA_DIR;
+        return parent + File.separator + folder;
     }
 
     

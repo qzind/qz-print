@@ -23,5 +23,13 @@ public class Constants {
     public static final String ALLOW_FILE = "allowed";
     public static final String TEMP_FILE = "temp";
     public static final String LOG_FILE = "debug";
-    public static final String DATA_DIR = ".qz";
+    public static final String DATA_DIR = "qz";
+
+    public static final String ABOUT_TITLE = "QZ Tray";
+    public static final String ABOUT_URL = "http://qzindustries.com";
+    public static final String ABOUT_DESC = "%s is a plugin for your web browser, <br/> used to print barcodes, receipts and more.";
+
+    public static final String WHITE_LIST = "Permanently allowed %s to access local resources";
+    public static final String BLACK_LIST = "Permanently blocked %s from accessing local resources";
+
 }
