@@ -286,7 +286,7 @@ public class Certificate {
                 getOrganization() + "\t" +
                 getValidFrom() + "\t" +
                 getValidTo() + "\t" +
-                isValidQZCert();
+                (theCertificate == null? isValid() : isValidQZCert());
     }
 
 }

@@ -96,7 +96,7 @@ public class FileUtilities {
     public static boolean isBadPath(String path) {
         if (SystemUtilities.isWindows()) {
             // Case insensitive
-            path.toLowerCase().contains(SystemUtilities.getDataDirectory().toLowerCase());
+            return path.toLowerCase().contains(SystemUtilities.getDataDirectory().toLowerCase());
         }
         return path.contains(SystemUtilities.getDataDirectory());
     }
@@ -179,7 +179,7 @@ public class FileUtilities {
             try {
                 File locDir = new File(fileLoc);
                 locDir.mkdirs();
-                String ext = name == Constants.LOG_FILE ? ".log" : ".dat";
+                String ext = Constants.LOG_FILE.equals(name)? ".log" : ".dat";
 
                 File file = new File(fileLoc + File.separator + name + ext);
                 file.createNewFile();

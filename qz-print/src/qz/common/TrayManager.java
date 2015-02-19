@@ -595,7 +595,7 @@ public class TrayManager {
         JPanel labelPanel = new JPanel();
         labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
 
-        final JLabel listLabel = new JLabel(String.format(Constants.WHITE_LIST, "").replace("  ", " "));
+        final JLabel listLabel = new JLabel(String.format(Constants.WHITE_LIST, "").replaceAll("\\s+", " "));
 
         labelPanel.add(listLabel);
         labelPanel.add(Box.createHorizontalGlue());
@@ -630,9 +630,9 @@ public class TrayManager {
             public void stateChanged(ChangeEvent e) {
                 String label = "";
                 if (tabPane.getSelectedIndex() == 0) {
-                    label = String.format(Constants.WHITE_LIST, "").replace("  ", " ");
+                    label = String.format(Constants.WHITE_LIST, "").replaceAll("\\s+", " ");
                 } else if (tabPane.getSelectedIndex() == 1) {
-                    label = String.format(Constants.BLACK_LIST, "").replace("  ", " ");
+                    label = String.format(Constants.BLACK_LIST, "").replaceAll("\\s+", " ");
                 }
 
                 listLabel.setText(label);
