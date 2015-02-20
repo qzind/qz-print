@@ -26,6 +26,7 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import qz.auth.Certificate;
 import qz.deploy.ShortcutUtilities;
+import qz.ui.GatewayDialog;
 import qz.ui.IconCache;
 import qz.ui.JAutoHideSystemTray;
 import qz.utils.FileUtilities;
@@ -64,6 +65,8 @@ public class TrayManager {
     // Custom swing pop-up menu
     JAutoHideSystemTray tray;
 
+    private GatewayDialog gw;
+
     // The name this UI component will use, i.e "QZ Print 1.9.0"
     private final String name;
 
@@ -88,7 +91,7 @@ public class TrayManager {
         this.port = -1;
         // Setup the shortcut name so that the UI components can use it
         shortcutCreator = ShortcutUtilities.getSystemShortcutCreator();
-        shortcutCreator.setShortcutName("QZ Print Service");
+        shortcutCreator.setShortcutName(Constants.ABOUT_TITLE + " Service");
 
         // Initialize a custom Swing system tray that hides after a timeout
         tray = new JAutoHideSystemTray(POPUP_TIMEOUT);
@@ -102,6 +105,9 @@ public class TrayManager {
         if (SystemUtilities.isLinux()) {
             UbuntuUtilities.fixTrayIcons(iconCache);
         }
+
+        // The allow/block dialog
+        gw = new GatewayDialog(null, "Action Required", iconCache);
 
         addMenuItems(tray);
         //tray.displayMessage(name, name + " is running.", TrayIcon.MessageType.INFO);
@@ -315,43 +321,38 @@ public class TrayManager {
     }
 
     public boolean showGatewayDialog(Certificate cert) {
-        if (cert == null) { return false; }
-
-        //TODO - show balloon for requests from unpaid sites + have menu option to show pending requests
-
-        String message = "<html>" +
-                "<p>" + cert.getCommonName() + " wants to access local resources</p>" +
-                "<strong>" + (cert.isValidQZCert()? "Verified by QZ Industries":"Unverified website") + "</strong>" +
-                "</html>";
-
-        boolean allowed = showAllowDialog(message, cert);
-
-        if (allowed) {
+        if (gw.prompt("%s wants to access local resources", cert)) {
             printToLog("Allowed " + cert.getCommonName() + " to access local resources", TrayIcon.MessageType.INFO);
+            if (gw.isPersistent()) {
+                whiteList(cert);
+            }
         } else {
             printToLog("Blocked " + cert.getCommonName() + " from accessing local resources", TrayIcon.MessageType.INFO);
+            if (gw.isPersistent()) {
+                blackList(cert);
+            }
         }
 
-        return allowed;
+        return gw.isApproved();
     }
 
     public boolean showPrintDialog(Certificate cert, String printer) {
-        String message = "<html>" +
-                cert.getCommonName() + " wants to print to " + printer + ".<br/>" +
-                "<strong>" + (cert.isValidQZCert()? "Verified by QZ Industries":"Unverified website") + "</strong>" +
-                "</html>";
-
-        boolean allowed = showAllowDialog(message, cert);
-
-        if (allowed) {
+        if (gw.prompt("%s wants to print to " + printer, cert)) {
             printToLog("Allowed " + cert.getCommonName() + " to print to " + printer, TrayIcon.MessageType.INFO);
+            if (gw.isPersistent()) {
+                whiteList(cert);
+            }
         } else {
             printToLog("Blocked " + cert.getCommonName() + " from printing to " + printer, TrayIcon.MessageType.INFO);
+            if (gw.isPersistent()) {
+                blackList(cert);
+            }
         }
 
-        return allowed;
+        return gw.isApproved();
     }
 
+    /*
     private JOptionPane getOptionPane(JComponent component) {
         if (component == null) { return null; }
 
@@ -361,12 +362,13 @@ public class TrayManager {
             return getOptionPane((JComponent) component.getParent());
         }
     }
+    */
 
     /**
      * Show dialog for allowing or blocking a request
      *
      * @return <code>true</code> if the request is allowed, <code>false</code> if blocked
-     */
+     *
     private boolean showAllowDialog(String message, Certificate cert) {
         if (cert.isBlocked()) { return false; }
         if (cert.isValidQZCert() && cert.isSaved()) { return true; }
@@ -419,7 +421,7 @@ public class TrayManager {
             case 3: blackList(cert); return false; //AlwaysBlock
             default: return false;
         }
-    }
+    }*/
 
     private void whiteList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.toString());

@@ -58,6 +58,9 @@ public class IconCache {
         FOLDER_ICON("qz-folder.png"),
         SETTINGS_ICON("qz-settings.png"),
 
+        // Dialog icons
+        ALLOW_ICON("qz-allow.png"),
+        BLOCK_ICON("qz-block.png"),
         VERIFIED_ICON("qz-trusted.png"),
         UNVERIFIED_ICON("qz-untrusted.png"),
 
