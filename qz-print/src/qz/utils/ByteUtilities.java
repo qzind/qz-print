@@ -84,6 +84,10 @@ public class ByteUtilities {
     }
 
     public static String bytesToHex(byte[] bytes) {
+        return bytesToHex(bytes, true);
+    }
+
+    public static String bytesToHex(byte[] bytes, boolean upperCase) {
         char[] hexChars = new char[bytes.length * 2];
         int v;
         for (int j = 0; j < bytes.length; j++) {
@@ -91,7 +95,10 @@ public class ByteUtilities {
             hexChars[j * 2] = Constants.HEXES_ARRAY[v >>> 4];
             hexChars[j * 2 + 1] = Constants.HEXES_ARRAY[v & 0x0F];
         }
-        return new String(hexChars);
+        if (upperCase) {
+            return new String(hexChars);
+        }
+        return new String(hexChars).toLowerCase();
     }
 
     /**

@@ -63,6 +63,8 @@ public class IconCache {
         BLOCK_ICON("qz-block.png"),
         VERIFIED_ICON("qz-trusted.png"),
         UNVERIFIED_ICON("qz-untrusted.png"),
+        FIELD_ICON("qz-field.png"),
+        DELETE_ICON("qz-delete.png"),
 
         // Logo
         LOGO_ICON("qz-logo.png");

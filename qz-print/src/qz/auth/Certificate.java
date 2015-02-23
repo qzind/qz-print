@@ -9,6 +9,8 @@ import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
 import qz.common.Base64;
 import qz.common.Constants;
+import qz.common.LogIt;
+import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
 import sun.security.provider.X509Factory;
 
@@ -19,6 +21,9 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -28,11 +33,11 @@ import java.util.HashSet;
  */
 public class Certificate {
 
-    public static Certificate qzRootCert = null;
+    public static Certificate trustedRootCert = null;
 
     static {
         try {
-            qzRootCert = new Certificate("-----BEGIN CERTIFICATE-----\n" +
+            trustedRootCert = new Certificate("-----BEGIN CERTIFICATE-----\n" +
                                                  "MIIDczCCAlugAwIBAgIJAL84/Wb/WNmOMA0GCSqGSIb3DQEBCwUAMFAxCzAJBgNV\n" +
                                                  "BAYTAlVTMQ0wCwYDVQQIDARPaGlvMRswGQYDVQQKDBJTZWxsZXJzVG9vbGJveC5j\n" +
                                                  "b20xFTATBgNVBAMMDFNUQi1yb290Q0EwMTAeFw0xNTAyMDkyMTU4MjFaFw0xODAy\n" +
@@ -65,11 +70,12 @@ public class Certificate {
     private String fingerprint;
     private String commonName;
     private String organization;
-    private String validFrom;
-    private String validTo;
+    private Date validFrom;
+    private Date validTo;
 
     private boolean valid = false; //used by review sites UI only
 
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     public static final String[] saveFields = new String[] {"fingerprint", "commonName", "organization", "validFrom", "validTo", "valid"};
 
     /**
@@ -99,8 +105,8 @@ public class Certificate {
             commonName = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.CN).get(0));
             fingerprint = makeThumbPrint(theCertificate);
             organization = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.O).get(0));
-            validFrom = theCertificate.getNotBefore().toString();
-            validTo = theCertificate.getNotAfter().toString();
+            validFrom = theCertificate.getNotBefore();
+            validTo = theCertificate.getNotAfter();
         }
         catch(Exception e) {
             e.printStackTrace();
@@ -121,8 +127,15 @@ public class Certificate {
         cert.fingerprint = data.get("fingerprint");
         cert.commonName = data.get("commonName");
         cert.organization = data.get("organization");
-        cert.validFrom = data.get("validFrom");
-        cert.validTo = data.get("validTo");
+
+        try {
+            cert.validFrom = dateFormat.parse(data.get("validFrom"));
+            cert.validTo = dateFormat.parse(data.get("validTo"));
+        } catch (ParseException badParse) {
+            cert.validFrom = new Date(0);
+            cert.validTo = new Date(0);
+            LogIt.log(badParse);
+        }
 
         cert.valid = Boolean.parseBoolean(data.get("valid"));
 
@@ -223,31 +236,39 @@ public class Certificate {
     }
 
     public String getValidFrom() {
-        return validFrom;
+        return dateFormat.format(validFrom);
     }
 
     public String getValidTo() {
-        return validTo;
+        return dateFormat.format(validTo);
     }
 
     public boolean isValid() {
         return valid;
     }
 
+    public Date getValidFromDate() {
+        return validFrom;
+    }
+
+    public Date getValidToDate() {
+        return validTo;
+    }
+
     /**
-     * Validates certificate against QZ cacert.
+     * Validates certificate against embedded cacert.
      */
-    public boolean isValidQZCert() {
+    public boolean isTrusted() {
         if (theIntermediateCertificate == null) { return false; }
         HashSet<X509Certificate> chain = new HashSet<X509Certificate>();
 
         try {
-            chain.add(qzRootCert.theCertificate);
+            chain.add(trustedRootCert.theCertificate);
             if (theIntermediateCertificate != null) { chain.add(theIntermediateCertificate); }
             X509Certificate[] x509Certificates = X509CertificateChainBuilder.buildPath(theCertificate, chain);
 
             for(X509Certificate x509Certificate : x509Certificates) {
-                if (x509Certificate.equals(qzRootCert.theCertificate)) { return true; }
+                if (x509Certificate.equals(trustedRootCert.theCertificate)) { return true; }
             }
             return false;
         }
@@ -263,21 +284,7 @@ public class Certificate {
         byte[] der = cert.getEncoded();
         md.update(der);
         byte[] digest = md.digest();
-        return hexify(digest);
-    }
-
-    private static String hexify(byte bytes[]) {
-        char[] hexDigits = {'0', '1', '2', '3', '4', '5', '6', '7',
-                            '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-
-        StringBuilder buf = new StringBuilder(bytes.length * 2);
-
-        for(byte aByte : bytes) {
-            buf.append(hexDigits[(aByte & 0xf0) >> 4]);
-            buf.append(hexDigits[aByte & 0x0f]);
-        }
-
-        return buf.toString();
+        return ByteUtilities.bytesToHex(digest, false);
     }
 
     public String toString() {
@@ -286,7 +293,7 @@ public class Certificate {
                 getOrganization() + "\t" +
                 getValidFrom() + "\t" +
                 getValidTo() + "\t" +
-                (theCertificate == null? isValid() : isValidQZCert());
+                (theCertificate == null? isValid() : isTrusted());
     }
 
 }

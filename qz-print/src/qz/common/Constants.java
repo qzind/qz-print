@@ -1,6 +1,6 @@
 package qz.common;
 
-import qz.utils.SystemUtilities;
+import java.awt.*;
 
 /**
  * Created by robert on 7/9/2014.
@@ -30,7 +30,14 @@ public class Constants {
     public static final String ABOUT_COMPANY = "QZ Industries, LLC";
     public static final String ABOUT_DESC = "%s is a plugin for your web browser, <br/> used to print barcodes, receipts and more.";
 
+    public static final String TRUSTED_PUBLISHER = String.format("Verified by %s", Constants.ABOUT_COMPANY);
+    public static final String UNTRUSTED_PUBLISHER = "Untrusted website";
+
+
     public static final String WHITE_LIST = "Permanently allowed %s to access local resources";
     public static final String BLACK_LIST = "Permanently blocked %s from accessing local resources";
 
+    public static final int EXPIRY_WARN = 30;   // days
+    public static final Color WARNING_COLOR = Color.RED;
+    public static final Color TRUSTED_COLOR = Color.BLUE;
 }

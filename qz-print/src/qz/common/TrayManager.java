@@ -29,6 +29,7 @@ import qz.deploy.ShortcutUtilities;
 import qz.ui.GatewayDialog;
 import qz.ui.IconCache;
 import qz.ui.JAutoHideSystemTray;
+import qz.ui.CertificateTable;
 import qz.utils.FileUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
@@ -352,77 +353,6 @@ public class TrayManager {
         return gw.isApproved();
     }
 
-    /*
-    private JOptionPane getOptionPane(JComponent component) {
-        if (component == null) { return null; }
-
-        if (component instanceof JOptionPane) {
-            return (JOptionPane) component;
-        } else {
-            return getOptionPane((JComponent) component.getParent());
-        }
-    }
-    */
-
-    /**
-     * Show dialog for allowing or blocking a request
-     *
-     * @return <code>true</code> if the request is allowed, <code>false</code> if blocked
-     *
-    private boolean showAllowDialog(String message, Certificate cert) {
-        if (cert.isBlocked()) { return false; }
-        if (cert.isValidQZCert() && cert.isSaved()) { return true; }
-
-        final JButton btnAllow = new JButton("Allow");
-        btnAllow.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane pane = getOptionPane((JComponent) e.getSource());
-                pane.setValue(btnAllow);
-            }
-        });
-
-        final JButton btnAlways = new JButton("Always Allow");
-        if (!cert.isValidQZCert()) { btnAlways.setEnabled(false); }
-        btnAlways.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane pane = getOptionPane((JComponent) e.getSource());
-                pane.setValue(btnAlways);
-            }
-        });
-
-        final JButton btnBlock = new JButton("Block");
-        btnBlock.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane pane = getOptionPane((JComponent) e.getSource());
-                pane.setValue(btnBlock);
-            }
-        });
-
-        final JButton btnNever = new JButton("Always Block");
-        btnNever.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JOptionPane pane = getOptionPane((JComponent) e.getSource());
-                pane.setValue(btnNever);
-            }
-        });
-
-        ImageIcon icon = iconCache.getIcon(cert.isValidQZCert() ? IconCache.Icon.VERIFIED_ICON : IconCache.Icon.UNVERIFIED_ICON);
-
-        int opt = JOptionPane.showOptionDialog(tray, message, name, JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, icon, new JButton[] {btnAllow, btnAlways, btnBlock, btnNever}, btnAllow);
-
-        switch(opt) {
-            case 0: return true; //Allow
-            case 1: whiteList(cert); return true; //AlwaysAllow
-            case 2: return false; //Block
-            case 3: blackList(cert); return false; //AlwaysBlock
-            default: return false;
-        }
-    }*/
-
     private void whiteList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.toString());
         displayInfoMessage(String.format(Constants.WHITE_LIST, cert.getOrganization()));
@@ -622,9 +552,9 @@ public class TrayManager {
         JScrollPane blockedListScrollPane = new JScrollPane(blockedSiteList);
 
         final JTabbedPane tabPane = new JTabbedPane(SwingConstants.TOP);
-        tabPane.addTab("Allowed", allowedListScrollPane);
+        tabPane.addTab("Allowed", iconCache.getIcon(IconCache.Icon.ALLOW_ICON),allowedListScrollPane);
         tabPane.setMnemonicAt(0, KeyEvent.VK_A);
-        tabPane.addTab("Blocked", blockedListScrollPane);
+        tabPane.addTab("Blocked", iconCache.getIcon(IconCache.Icon.BLOCK_ICON), blockedListScrollPane);
         tabPane.setMnemonicAt(1, KeyEvent.VK_B);
 
         tabPane.addChangeListener(new ChangeListener() {
@@ -643,21 +573,15 @@ public class TrayManager {
             }
         });
 
-        JPanel detailPanel = new JPanel();
-        final JLabel detailLabel = new JLabel();
-        detailPanel.add(detailLabel);
-
-        JScrollPane detailScrollPane = new JScrollPane(detailPanel);
-        // Ensure the detail pane doesn't resize into the list pane's area
-        detailScrollPane.setMinimumSize(new Dimension(WINDOW_WIDTH - (WINDOW_BUFFER * 2), WINDOW_BUFFER * 3));
-        detailScrollPane.setPreferredSize(new Dimension(WINDOW_WIDTH - (WINDOW_BUFFER * 2), WINDOW_BUFFER * 3));
-        detailScrollPane.setMaximumSize(new Dimension(WINDOW_WIDTH - (WINDOW_BUFFER * 2), WINDOW_BUFFER * 3));
+        final CertificateTable certTable = new CertificateTable();
+        certTable.setIconCache(iconCache);
 
         JPanel btnPanel = new JPanel();
         btnPanel.setLayout(new BoxLayout(btnPanel, BoxLayout.X_AXIS));
         btnPanel.add(Box.createHorizontalGlue());
 
-        final JButton deleteBtn = new JButton("Delete");
+        final JButton deleteBtn = new JButton("Delete", iconCache.getIcon(IconCache.Icon.DELETE_ICON));
+        deleteBtn.setMnemonic(KeyEvent.VK_D);
         deleteBtn.setEnabled(false);
         deleteBtn.addActionListener(new ActionListener() {
             @Override
@@ -687,7 +611,8 @@ public class TrayManager {
         });
         btnPanel.add(deleteBtn);
 
-        JButton closeBtn = new JButton("Close");
+        JButton closeBtn = new JButton("Close", iconCache.getIcon(IconCache.Icon.ALLOW_ICON));
+        closeBtn.setMnemonic(KeyEvent.VK_C);
         closeBtn.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -703,10 +628,10 @@ public class TrayManager {
                 if (!e.getValueIsAdjusting()) {
                     if (allowedSiteList.getSelectedIndex() == -1) { // DESELECTION
                         deleteBtn.setEnabled(false);
-                        detailLabel.setText("");
+                        certTable.setCertificate(null);
                     } else { // SELECTION
                         deleteBtn.setEnabled(true);
-                        detailLabel.setText(detailTable(allowedCerts.get(allowedSiteList.getSelectedIndex())));
+                        certTable.setCertificate(allowedCerts.get(allowedSiteList.getSelectedIndex()));
                     }
                 }
             }
@@ -718,10 +643,10 @@ public class TrayManager {
                 if (!e.getValueIsAdjusting()) {
                     if (blockedSiteList.getSelectedIndex() == -1) { // DESELECTION
                         deleteBtn.setEnabled(false);
-                        detailLabel.setText("");
+                        certTable.setCertificate(null);
                     } else { // SELECTION
                         deleteBtn.setEnabled(true);
-                        detailLabel.setText(detailTable(blockedCerts.get(blockedSiteList.getSelectedIndex())));
+                        certTable.setCertificate(blockedCerts.get(blockedSiteList.getSelectedIndex()));
                     }
                 }
             }
@@ -744,7 +669,7 @@ public class TrayManager {
         content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
         content.add(tabPane);
         content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-        content.add(detailScrollPane);
+        content.add(new JScrollPane(certTable));
         content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
         content.add(btnPanel);
         content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
@@ -763,20 +688,6 @@ public class TrayManager {
 
     private String row(String label, String description) {
         return "<tr><td><b>" + label + "</b></td><td>" + description + "</td></tr>";
-    }
-
-    private String detailTable(Certificate cert) {
-        return "<html><table>" +
-                detailRow("Organization:", cert.getOrganization()) +
-                detailRow("Common Name:", cert.getCommonName()) +
-                detailRow("Verification:", cert.isValid()? "Verified By QZ Industries":"Unverified website") +
-                detailRow("Valid From:", cert.getValidFrom()) +
-                detailRow("Valid To:", cert.getValidTo()) +
-                "</table></html>";
-    }
-
-    private String detailRow(String label, String data) {
-        return "<tr><th style='text-align: right;'>" + label + "</th><td style='width: 32px;'></td><td>" + data + "</td></tr>";
     }
 
     /**

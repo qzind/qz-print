@@ -4,7 +4,6 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.EtchedBorder;
 
 import qz.auth.Certificate;
 import qz.common.Constants;
@@ -17,6 +16,8 @@ public class GatewayDialog extends JDialog {
     private JLabel verifiedLabel;
     private JLabel descriptionLabel;
     private LinkLabel certInfoLabel;
+    private JScrollPane certScrollPane;
+    private CertificateTable certTable;
     private JPanel descriptionPanel;
 
     private JButton allowButton;
@@ -63,10 +64,18 @@ public class GatewayDialog extends JDialog {
         blockButton.addActionListener(buttonAction);
 
         certInfoLabel = new LinkLabel();
+        certTable = new CertificateTable(cert, iconCache);
+        certScrollPane = new JScrollPane(certTable);
         certInfoLabel.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(GatewayDialog.this, cert.getFingerprint());
+                certTable.setCertificate(cert);
+                certTable.autoSize();
+                JOptionPane.showMessageDialog(
+                        GatewayDialog.this,
+                        certScrollPane,
+                        "Certificate",
+                        JOptionPane.PLAIN_MESSAGE);
             }
         });
 
@@ -77,7 +86,7 @@ public class GatewayDialog extends JDialog {
         persistentCheckBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                allowButton.setEnabled(!persistentCheckBox.isSelected() || cert.isValidQZCert());
+                allowButton.setEnabled(!persistentCheckBox.isSelected() || cert.isTrusted());
             }
         });
         persistentCheckBox.setAlignmentX(RIGHT_ALIGNMENT);
@@ -127,10 +136,10 @@ public class GatewayDialog extends JDialog {
         if (cert != null) {
             descriptionLabel.setText("<html>" +
                     String.format(description, "<p>" + cert.getCommonName()) +
-                    "</p><strong>" + (cert.isValidQZCert() ? "Verified by " + Constants.ABOUT_COMPANY : "Unverified publisher") + "</strong>" +
+                    "</p><strong>" + (cert.isTrusted() ?  Constants.TRUSTED_PUBLISHER :  Constants.UNTRUSTED_PUBLISHER) + "</strong>" +
                     "</html>");
-            certInfoLabel.setText("certificate information");
-            verifiedLabel.setIcon(iconCache.getIcon(cert.isValidQZCert() ? IconCache.Icon.VERIFIED_ICON : IconCache.Icon.UNVERIFIED_ICON));
+            certInfoLabel.setText("Certificate information");
+            verifiedLabel.setIcon(iconCache.getIcon(cert.isTrusted() ? IconCache.Icon.VERIFIED_ICON : IconCache.Icon.UNVERIFIED_ICON));
         } else {
             descriptionLabel.setText(description);
             verifiedLabel.setIcon(null);
@@ -168,7 +177,7 @@ public class GatewayDialog extends JDialog {
 
     public boolean prompt(String description, Certificate cert) {
         if (cert == null || cert.isBlocked()) { return false; }
-        if (cert.isValidQZCert() && cert.isSaved()) { return true; }
+        if (cert.isTrusted() && cert.isSaved()) { return true; }
 
         setDescription(description);
         setCertificate(cert);
