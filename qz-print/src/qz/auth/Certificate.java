@@ -58,6 +58,7 @@ public class Certificate {
                                                  "Cf0vbK6BGNKYfzitDkhp9pH4GGDodrF18q4KwUDl3J9uw+2hMQzIwSpidTJbU7f/\n" +
                                                  "jSRl2nlQvk2VwRcRIzahoPWydVdTwZw=                                \n" +
                                                  "-----END CERTIFICATE-----");
+            trustedRootCert.valid = true;
         }
         catch(javax.security.cert.CertificateParsingException e) {
             e.printStackTrace();
@@ -107,6 +108,24 @@ public class Certificate {
             organization = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.O).get(0));
             validFrom = theCertificate.getNotBefore();
             validTo = theCertificate.getNotAfter();
+
+            if (trustedRootCert != null) {
+                HashSet<X509Certificate> chain = new HashSet<X509Certificate>();
+                try {
+                    chain.add(trustedRootCert.theCertificate);
+                    if (theIntermediateCertificate != null) { chain.add(theIntermediateCertificate); }
+                    X509Certificate[] x509Certificates = X509CertificateChainBuilder.buildPath(theCertificate, chain);
+
+                    for(X509Certificate x509Certificate : x509Certificates) {
+                        if (x509Certificate.equals(trustedRootCert.theCertificate)) {
+                            valid = true;
+                        }
+                    }
+                }
+                catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
         }
         catch(Exception e) {
             e.printStackTrace();
@@ -243,10 +262,6 @@ public class Certificate {
         return dateFormat.format(validTo);
     }
 
-    public boolean isValid() {
-        return valid;
-    }
-
     public Date getValidFromDate() {
         return validFrom;
     }
@@ -259,24 +274,7 @@ public class Certificate {
      * Validates certificate against embedded cacert.
      */
     public boolean isTrusted() {
-        if (theIntermediateCertificate == null) { return false; }
-        HashSet<X509Certificate> chain = new HashSet<X509Certificate>();
-
-        try {
-            chain.add(trustedRootCert.theCertificate);
-            if (theIntermediateCertificate != null) { chain.add(theIntermediateCertificate); }
-            X509Certificate[] x509Certificates = X509CertificateChainBuilder.buildPath(theCertificate, chain);
-
-            for(X509Certificate x509Certificate : x509Certificates) {
-                if (x509Certificate.equals(trustedRootCert.theCertificate)) { return true; }
-            }
-            return false;
-        }
-        catch(Exception e) {
-            e.printStackTrace();
-        }
-
-        return false;
+        return valid;
     }
 
     public static String makeThumbPrint(X509Certificate cert) throws NoSuchAlgorithmException, CertificateEncodingException {
@@ -293,7 +291,7 @@ public class Certificate {
                 getOrganization() + "\t" +
                 getValidFrom() + "\t" +
                 getValidTo() + "\t" +
-                (theCertificate == null? isValid() : isTrusted());
+                isTrusted();
     }
 
 }

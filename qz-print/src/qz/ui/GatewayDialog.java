@@ -147,6 +147,7 @@ public class GatewayDialog extends JDialog {
 
         approved = false;
         persistentCheckBox.setSelected(false);
+        allowButton.setEnabled(true);
         allowButton.requestFocusInWindow();
         pack();
     }
@@ -176,6 +177,8 @@ public class GatewayDialog extends JDialog {
     }
 
     public boolean prompt(String description, Certificate cert) {
+        persistentCheckBox.setSelected(false); // prevents re-adding a persistent site to the list it's already on
+
         if (cert == null || cert.isBlocked()) { return false; }
         if (cert.isTrusted() && cert.isSaved()) { return true; }
 

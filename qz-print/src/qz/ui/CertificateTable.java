@@ -21,8 +21,6 @@ public class CertificateTable extends JTable {
         ORGANIZATION("Organization", "getOrganization"),
         COMMON_NAME("Common Name", "getCommonName"),
         TRUSTED("Trusted", "isTrusted"),
-        //TODO:  Find out what this field is for
-        //VALIDITY("Certificate Status", "isValid"),
         VALID_FROM("Valid From", "getValidFrom"),
         VALID_TO("Valid To", "getValidTo"),
         FINGERPRINT("Fingerprint", "getFingerprint");
@@ -188,10 +186,6 @@ public class CertificateTable extends JTable {
 
             CertificateField field = (CertificateField)table.getValueAt(row, col - 1);
             switch (field) {
-                //TODO:  Find out what this field is for
-                //case VALIDITY:
-                //    label.setText(cert.isValid() ?  "Valid" : "Invalid");
-                //    return stylizeLabel(!cert.isValid() ? STATUS_WARNING : STATUS_NORMAL, label, isSelected);
                 case TRUSTED:
                     label.setText(cert.isTrusted() ? Constants.TRUSTED_PUBLISHER : Constants.UNTRUSTED_PUBLISHER);
                     return stylizeLabel(!cert.isTrusted() ? STATUS_WARNING : STATUS_TRUSTED, label, isSelected);
