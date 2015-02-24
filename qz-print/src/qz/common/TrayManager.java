@@ -26,28 +26,21 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import qz.auth.Certificate;
 import qz.deploy.ShortcutUtilities;
-import qz.ui.GatewayDialog;
-import qz.ui.IconCache;
-import qz.ui.JAutoHideSystemTray;
-import qz.ui.CertificateTable;
+import qz.ui.*;
 import qz.utils.FileUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Vector;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -64,7 +57,7 @@ public class TrayManager {
     final int POPUP_TIMEOUT = 2000;
 
     // Custom swing pop-up menu
-    JAutoHideSystemTray tray;
+    AutoHideSysTray tray;
 
     private GatewayDialog gw;
 
@@ -95,7 +88,7 @@ public class TrayManager {
         shortcutCreator.setShortcutName(Constants.ABOUT_TITLE + " Service");
 
         // Initialize a custom Swing system tray that hides after a timeout
-        tray = new JAutoHideSystemTray(POPUP_TIMEOUT);
+        tray = new AutoHideSysTray(POPUP_TIMEOUT);
         tray.setToolTipText(name);
 
         // Iterates over all images denoted by IconCache.getTypes() and caches them
@@ -141,18 +134,23 @@ public class TrayManager {
      */
     private void addMenuItems(JPopupMenu popup) {
         JMenu advancedMenu = new JMenu("Advanced");
+        advancedMenu.setMnemonic(KeyEvent.VK_A);
         advancedMenu.setIcon(iconCache.getIcon(IconCache.Icon.SETTINGS_ICON));
 
-        JMenuItem savedItem = new JMenuItem("Site Manager", iconCache.getIcon(IconCache.Icon.SAVED_ICON));
+        JMenuItem savedItem = new JMenuItem("Site Manager...", iconCache.getIcon(IconCache.Icon.SAVED_ICON));
+        savedItem.setMnemonic(KeyEvent.VK_M);
         savedItem.addActionListener(savedListener);
 
-        JMenuItem logItem = new JMenuItem("View Logs", iconCache.getIcon(IconCache.Icon.LOG_ICON));
+        JMenuItem logItem = new JMenuItem("View Logs...", iconCache.getIcon(IconCache.Icon.LOG_ICON));
+        logItem.setMnemonic(KeyEvent.VK_L);
         logItem.addActionListener(logListener);
 
         JMenuItem openItem = new JMenuItem("Open file location", iconCache.getIcon(IconCache.Icon.FOLDER_ICON));
+        openItem.setMnemonic(KeyEvent.VK_O);
         openItem.addActionListener(openListener);
 
         JMenuItem desktopItem = new JMenuItem("Create Desktop shortcut", iconCache.getIcon(IconCache.Icon.DESKTOP_ICON));
+        desktopItem.setMnemonic(KeyEvent.VK_D);
         desktopItem.addActionListener(desktopListener);
 
         advancedMenu.add(savedItem);
@@ -163,15 +161,17 @@ public class TrayManager {
 
 
         JMenuItem reloadItem = new JMenuItem("Reload", iconCache.getIcon(IconCache.Icon.RELOAD_ICON));
+        reloadItem.setMnemonic(KeyEvent.VK_R);
         reloadItem.addActionListener(reloadListener);
-        //reloadItem.setEnabled(false);
 
         JMenuItem aboutItem = new JMenuItem("About...", iconCache.getIcon(IconCache.Icon.ABOUT_ICON));
+        aboutItem.setMnemonic(KeyEvent.VK_B);
         aboutItem.addActionListener(aboutListener);
 
         JSeparator separator = new JSeparator();
 
         JCheckBoxMenuItem startupItem = new JCheckBoxMenuItem("Automatically start");
+        startupItem.setMnemonic(KeyEvent.VK_S);
         startupItem.setState(shortcutCreator.hasStartupShortcut());
         startupItem.addActionListener(startupListener);
 
@@ -206,7 +206,14 @@ public class TrayManager {
 
     private final ActionListener savedListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            showSites();
+            ArrayList<Certificate> allowList = readCertificates(FileUtilities.getFile(Constants.ALLOW_FILE));
+            ArrayList<Certificate> blockList = readCertificates(FileUtilities.getFile(Constants.BLOCK_FILE));
+
+            JMenuItem item = (JMenuItem)e.getSource();
+            SiteManagerDialog certsDialog = new SiteManagerDialog(null, item.getText().replaceAll("\\.+", ""), iconCache);
+            certsDialog.setAllowList(allowList);
+            certsDialog.setBlockList(blockList);
+            certsDialog.setVisible(true);
         }
     };
 
@@ -354,12 +361,12 @@ public class TrayManager {
     }
 
     private void whiteList(Certificate cert) {
-        FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.toString());
+        FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.data());
         displayInfoMessage(String.format(Constants.WHITE_LIST, cert.getOrganization()));
     }
 
     private void blackList(Certificate cert) {
-        FileUtilities.printLineToFile(Constants.BLOCK_FILE, cert.toString());
+        FileUtilities.printLineToFile(Constants.BLOCK_FILE, cert.data());
         displayInfoMessage(String.format(Constants.BLACK_LIST, cert.getOrganization()));
     }
 
@@ -454,236 +461,6 @@ public class TrayManager {
         // Actually show the window
         logWindow.setLocationRelativeTo(null);
         logWindow.setVisible(true);
-    }
-
-    private void showSites() {
-        // Get the site lists
-        File allowFile = FileUtilities.getFile(Constants.ALLOW_FILE);
-        final Vector<Certificate> allowedCerts = new Vector<Certificate>();
-        File blockFile = FileUtilities.getFile(Constants.BLOCK_FILE);
-        final Vector<Certificate> blockedCerts = new Vector<Certificate>();
-
-        BufferedReader br = null;
-
-        //Pull from allow file
-        try {
-            String line;
-            br = new BufferedReader(new FileReader(allowFile));
-            while((line = br.readLine()) != null) {
-                String[] data = line.split("\\t");
-
-                if (data.length == Certificate.saveFields.length) {
-                    HashMap<String,String> dataMap = new HashMap<String,String>();
-                    for(int i = 0; i < data.length; i++) {
-                        dataMap.put(Certificate.saveFields[i], data[i]);
-                    }
-
-                    allowedCerts.add(Certificate.loadCertificate(dataMap));
-                }
-            }
-        }
-        catch(IOException ioe) {
-            ioe.printStackTrace();
-        }
-        finally {
-            if (br != null) {
-                try { br.close(); } catch(Exception ignore) {}
-            }
-        }
-
-        //Pull from block file
-        try {
-            String line;
-            br = new BufferedReader(new FileReader(blockFile));
-            while((line = br.readLine()) != null) {
-                String[] data = line.split("\\t");
-
-                if (data.length == Certificate.saveFields.length) {
-                    HashMap<String,String> dataMap = new HashMap<String,String>();
-                    for(int i = 0; i < data.length; i++) {
-                        dataMap.put(Certificate.saveFields[i], data[i]);
-                    }
-
-                    blockedCerts.add(Certificate.loadCertificate(dataMap));
-                }
-            }
-        }
-        catch(IOException ioe) {
-            ioe.printStackTrace();
-        }
-        finally {
-            if (br != null) {
-                try { br.close(); } catch(Exception ignore) {}
-            }
-        }
-
-        // Build the window
-        final JFrame listWindow = new JFrame(Constants.ABOUT_TITLE + " - Site Manager");
-        listWindow.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-
-        JPanel labelPanel = new JPanel();
-        labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
-
-        final JLabel listLabel = new JLabel(String.format(Constants.WHITE_LIST, "").replaceAll("\\s+", " "));
-
-        labelPanel.add(listLabel);
-        labelPanel.add(Box.createHorizontalGlue());
-
-        final Vector<String> allowedList = new Vector<String>();
-        for(Certificate cert : allowedCerts) {
-            allowedList.add("<html><div style='margin-left: 8px'>" + cert.getOrganization() + " (" + cert.getCommonName() + ")</div></html>");
-        }
-        final JList<String> allowedSiteList = new JList<String>(allowedList);
-        allowedSiteList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        allowedSiteList.setLayoutOrientation(JList.VERTICAL);
-
-        final Vector<String> blockedList = new Vector<String>();
-        for(Certificate cert : blockedCerts) {
-            blockedList.add("<html><div style='margin-left: 8px'>" + cert.getOrganization() + " (" + cert.getCommonName() + ")</div></html>");
-        }
-        final JList<String> blockedSiteList = new JList<String>(blockedList);
-        blockedSiteList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        blockedSiteList.setLayoutOrientation(JList.VERTICAL);
-
-        JScrollPane allowedListScrollPane = new JScrollPane(allowedSiteList);
-        JScrollPane blockedListScrollPane = new JScrollPane(blockedSiteList);
-
-        final JTabbedPane tabPane = new JTabbedPane(SwingConstants.TOP);
-        tabPane.addTab("Allowed", iconCache.getIcon(IconCache.Icon.ALLOW_ICON),allowedListScrollPane);
-        tabPane.setMnemonicAt(0, KeyEvent.VK_A);
-        tabPane.addTab("Blocked", iconCache.getIcon(IconCache.Icon.BLOCK_ICON), blockedListScrollPane);
-        tabPane.setMnemonicAt(1, KeyEvent.VK_B);
-
-        tabPane.addChangeListener(new ChangeListener() {
-            @Override
-            public void stateChanged(ChangeEvent e) {
-                String label = "";
-                if (tabPane.getSelectedIndex() == 0) {
-                    label = String.format(Constants.WHITE_LIST, "").replaceAll("\\s+", " ");
-                } else if (tabPane.getSelectedIndex() == 1) {
-                    label = String.format(Constants.BLACK_LIST, "").replaceAll("\\s+", " ");
-                }
-
-                listLabel.setText(label);
-                allowedSiteList.clearSelection();
-                blockedSiteList.clearSelection();
-            }
-        });
-
-        final CertificateTable certTable = new CertificateTable();
-        certTable.setIconCache(iconCache);
-
-        JPanel btnPanel = new JPanel();
-        btnPanel.setLayout(new BoxLayout(btnPanel, BoxLayout.X_AXIS));
-        btnPanel.add(Box.createHorizontalGlue());
-
-        final JButton deleteBtn = new JButton("Delete", iconCache.getIcon(IconCache.Icon.DELETE_ICON));
-        deleteBtn.setMnemonic(KeyEvent.VK_D);
-        deleteBtn.setEnabled(false);
-        deleteBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (tabPane.getSelectedIndex() == 0) { // Allowed
-                    int index = allowedSiteList.getSelectedIndex();
-                    Certificate cert = allowedCerts.get(index);
-
-                    allowedCerts.remove(index);
-                    allowedList.remove(index);
-                    allowedSiteList.setListData(allowedList);
-
-                    FileUtilities.deleteFromFile(Constants.ALLOW_FILE, cert.toString());
-                    printToLog("Removed " + cert.getOrganization() + " (" + cert.getCommonName() + ") from the list of allowed sites", TrayIcon.MessageType.INFO);
-                } else if (tabPane.getSelectedIndex() == 1) { // Blocked
-                    int index = blockedSiteList.getSelectedIndex();
-                    Certificate cert = blockedCerts.get(index);
-
-                    blockedCerts.remove(index);
-                    blockedList.remove(index);
-                    blockedSiteList.setListData(blockedList);
-
-                    FileUtilities.deleteFromFile(Constants.BLOCK_FILE, cert.toString());
-                    printToLog("Removed " + cert.getOrganization() + " (" + cert.getCommonName() + ") from the list of blocked sites", TrayIcon.MessageType.INFO);
-                }
-            }
-        });
-        btnPanel.add(deleteBtn);
-
-        JButton closeBtn = new JButton("Close", iconCache.getIcon(IconCache.Icon.ALLOW_ICON));
-        closeBtn.setMnemonic(KeyEvent.VK_C);
-        closeBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                listWindow.dispatchEvent(new WindowEvent(listWindow, WindowEvent.WINDOW_CLOSING));
-            }
-        });
-        btnPanel.add(closeBtn);
-
-        // Change layout text based on selection values
-        allowedSiteList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    if (allowedSiteList.getSelectedIndex() == -1) { // DESELECTION
-                        deleteBtn.setEnabled(false);
-                        certTable.setCertificate(null);
-                    } else { // SELECTION
-                        deleteBtn.setEnabled(true);
-                        certTable.setCertificate(allowedCerts.get(allowedSiteList.getSelectedIndex()));
-                    }
-                }
-            }
-        });
-
-        blockedSiteList.addListSelectionListener(new ListSelectionListener() {
-            @Override
-            public void valueChanged(ListSelectionEvent e) {
-                if (!e.getValueIsAdjusting()) {
-                    if (blockedSiteList.getSelectedIndex() == -1) { // DESELECTION
-                        deleteBtn.setEnabled(false);
-                        certTable.setCertificate(null);
-                    } else { // SELECTION
-                        deleteBtn.setEnabled(true);
-                        certTable.setCertificate(blockedCerts.get(blockedSiteList.getSelectedIndex()));
-                    }
-                }
-            }
-        });
-
-        KeyAdapter delKey = new KeyAdapter() {
-            @Override
-            public void keyReleased(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_DELETE) {
-                    deleteBtn.doClick();
-                }
-            }
-        };
-
-        allowedSiteList.addKeyListener(delKey);
-        blockedSiteList.addKeyListener(delKey);
-
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-        content.add(labelPanel);
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-        content.add(tabPane);
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-        content.add(new JScrollPane(certTable));
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-        content.add(btnPanel);
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-
-        Container container = listWindow.getContentPane();
-        container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
-
-        container.add(Box.createRigidArea(new Dimension(WINDOW_BUFFER, 0)));
-        container.add(content);
-        container.add(Box.createRigidArea(new Dimension(WINDOW_BUFFER, 0)));
-
-        // Actually show the window
-        listWindow.setLocationRelativeTo(null);
-        listWindow.setVisible(true);
     }
 
     private String row(String label, String description) {
@@ -810,6 +587,38 @@ public class TrayManager {
 
     public void printToLog(String message, TrayIcon.MessageType type) {
         FileUtilities.printLineToFile(Constants.LOG_FILE, String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s", type, new Date(), message));
+    }
+
+
+    public ArrayList<Certificate> readCertificates(File file) {
+        ArrayList<Certificate> certList = new ArrayList<Certificate>();
+        BufferedReader br = null;
+        try {
+
+            String line;
+            br = new BufferedReader(new FileReader(file));
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split("\\t");
+
+                if (data.length == Certificate.saveFields.length) {
+                    HashMap<String, String> dataMap = new HashMap<String, String>();
+                    for (int i = 0; i < data.length; i++) {
+                        dataMap.put(Certificate.saveFields[i], data[i]);
+                    }
+                    certList.add(Certificate.loadCertificate(dataMap));
+                }
+            }
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+        } finally {
+            if (br != null) {
+                try {
+                    br.close();
+                } catch (Exception ignore) {
+                }
+            }
+        }
+        return certList;
     }
 
 }

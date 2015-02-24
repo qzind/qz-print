@@ -93,10 +93,6 @@ public class CertificateTable extends JTable {
         model.addColumn("Field");
         model.addColumn("Value");
 
-        for (CertificateField field : CertificateField.values()) {
-            model.addRow(new Object[]{field, ""});
-        }
-
         getTableHeader().setReorderingAllowed(false);
         setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         setRowSelectionAllowed(true);
@@ -109,8 +105,9 @@ public class CertificateTable extends JTable {
     }
 
     public void refreshComponents() {
+        removeRows();
+
         if (cert == null) {
-            clearColumn(1);
             return;
         }
 
@@ -118,6 +115,12 @@ public class CertificateTable extends JTable {
         warn = Calendar.getInstance();
         warn.add(Calendar.DAY_OF_MONTH, -1 * Constants.EXPIRY_WARN);
 
+        // First Column
+        for (CertificateField field : CertificateField.values()) {
+            model.addRow(new Object[]{field, ""});
+        }
+
+        // Second Column
         for (int col = 0; col < model.getColumnCount(); col++) {
             for (int row = 0; row < model.getRowCount(); row++) {
                 Object cell = (model.getValueAt(row, col));
@@ -130,12 +133,6 @@ public class CertificateTable extends JTable {
         repaint();
     }
 
-    private void clearColumn(int index) {
-        for (int row = 0; row < model.getRowCount(); row++) {
-                model.setValueAt(null, row, index);
-        }
-    }
-
     public void setIconCache(IconCache iconCache) {
         this.iconCache = iconCache;
     }
@@ -145,25 +142,31 @@ public class CertificateTable extends JTable {
         refreshComponents();
     }
 
+    public void removeRows() {
+        for (int row = model.getRowCount() - 1; row >= 0 ; row--) {
+            model.removeRow(row);
+        }
+    }
+
     /**
      * Sets preferred <code>ScrollPane</code> preferred viewable height to match the natural table height
      * Leaves the <code>ScrollPane</code> preferred viewable width as default
      */
     public void autoSize() {
+        for (int row = 0; row < CertificateField.size(); row++) {
+            model.addRow(new Object[2]);
+        }
         int normalWidth = (int)getPreferredScrollableViewportSize().getWidth();
         int autoHeight = (int)getPreferredSize().getHeight();
         setPreferredScrollableViewportSize(new Dimension(normalWidth, autoHeight));
         setFillsViewportHeight(true);
+        removeRows();
     }
 
     /**
      * Custom cell renderer for JTable to allow colors and styles not directly available in a JTable
      */
     private class CertificateTableCellRenderer extends DefaultTableCellRenderer {
-        public CertificateTableCellRenderer() {
-            super();
-        }
-
         final int STATUS_NORMAL = 0;
         final int STATUS_WARNING = 1;
         final int STATUS_TRUSTED = 2;
@@ -182,9 +185,10 @@ public class CertificateTable extends JTable {
             }
 
             // Second Column
-            if (cert == null) { return stylizeLabel(STATUS_NORMAL, label, isSelected); }
+            if (cert == null || col < 1) { return stylizeLabel(STATUS_NORMAL, label, isSelected); }
 
             CertificateField field = (CertificateField)table.getValueAt(row, col - 1);
+            if (field == null) { return stylizeLabel(STATUS_NORMAL, label, isSelected); }
             switch (field) {
                 case TRUSTED:
                     label.setText(cert.isTrusted() ? Constants.TRUSTED_PUBLISHER : Constants.UNTRUSTED_PUBLISHER);

@@ -134,6 +134,7 @@ public class GatewayDialog extends JDialog {
 
     public final void refreshComponents() {
         if (cert != null) {
+            // TODO:  Add name, publisher
             descriptionLabel.setText("<html>" +
                     String.format(description, "<p>" + cert.getCommonName()) +
                     "</p><strong>" + (cert.isTrusted() ?  Constants.TRUSTED_PUBLISHER :  Constants.UNTRUSTED_PUBLISHER) + "</strong>" +

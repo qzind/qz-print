@@ -36,7 +36,7 @@ import javax.swing.UIManager;
  * Pop-up Menu which auto-hides after a certain timeout
  * @author A. Tres Finocchiaro
  */
-public class JAutoHideSystemTray extends JSystemTray {
+public class AutoHideSysTray extends SysTray {
     // The timeout in milliseconds before this item is hidden
     private final int timeout;
     
@@ -53,7 +53,7 @@ public class JAutoHideSystemTray extends JSystemTray {
      * Default constructor
      * @param timeout The amount of time before this menu hides itself
      */
-    public JAutoHideSystemTray(final int timeout) {
+    public AutoHideSysTray(final int timeout) {
         super();
         this.mouseOver = false;
         this.threadActive = true;

@@ -285,13 +285,18 @@ public class Certificate {
         return ByteUtilities.bytesToHex(digest, false);
     }
 
-    public String toString() {
+    public String data() {
         return getFingerprint() + "\t" +
                 getCommonName() + "\t" +
                 getOrganization() + "\t" +
                 getValidFrom() + "\t" +
                 getValidTo() + "\t" +
                 isTrusted();
+    }
+
+    @Override
+    public String toString() {
+        return getOrganization() + " (" + getCommonName() + ")";
     }
 
 }
