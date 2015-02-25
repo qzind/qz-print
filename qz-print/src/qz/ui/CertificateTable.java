@@ -82,12 +82,6 @@ public class CertificateTable extends JTable {
         setCertificate(cert);
     }
 
-    public CertificateTable() {
-        super();
-        initComponents();
-        setCertificate(null);
-    }
-
     private void initComponents() {
         model = new DefaultTableModel() { @Override public boolean isCellEditable(int x, int y){ return false; } };
         model.addColumn("Field");
@@ -153,6 +147,7 @@ public class CertificateTable extends JTable {
      * Leaves the <code>ScrollPane</code> preferred viewable width as default
      */
     public void autoSize() {
+        removeRows();
         for (int row = 0; row < CertificateField.size(); row++) {
             model.addRow(new Object[2]);
         }
@@ -160,7 +155,7 @@ public class CertificateTable extends JTable {
         int autoHeight = (int)getPreferredSize().getHeight();
         setPreferredScrollableViewportSize(new Dimension(normalWidth, autoHeight));
         setFillsViewportHeight(true);
-        removeRows();
+        refreshComponents();
     }
 
     /**

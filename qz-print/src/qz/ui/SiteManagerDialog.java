@@ -71,6 +71,8 @@ public class SiteManagerDialog extends JDialog {
         buttonPanel.add(new JSeparator(JSeparator.HORIZONTAL));
         closeButton = appendPanelButton("Close", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_C);
 
+        deleteButton.setEnabled(false);
+
         // TODO:  Add certificate manual import capabilities
         buttonPanel.remove(importButton);
 
@@ -113,11 +115,14 @@ public class SiteManagerDialog extends JDialog {
         super.setVisible(visible);
     }
 
+    @SuppressWarnings("unchecked")
     private static void setList(JList list, ArrayList<Certificate> certs) {
-        DefaultListModel model = (DefaultListModel)list.getModel();
-        model.clear();
-        for (Certificate cert : certs) {
-            model.addElement(cert);
+        if (list.getModel() instanceof DefaultListModel) {
+            DefaultListModel model = (DefaultListModel)list.getModel();
+            model.clear();
+            for (Certificate cert : certs) {
+                model.addElement(cert);
+            }
         }
     }
 
@@ -135,11 +140,15 @@ public class SiteManagerDialog extends JDialog {
             public void valueChanged(ListSelectionEvent e) {
                 if (list.getSelectedValue() instanceof Certificate) {
                     certTable.setCertificate((Certificate)list.getSelectedValue());
+                    deleteButton.setEnabled(true);
+                } else {
+                    deleteButton.setEnabled(false);
                 }
             }
         });
     }
 
+    @SuppressWarnings("unchecked")
     private JList appendListTab(String title, IconCache.Icon icon, int mnemonic) {
         JList list = new JList(new DefaultListModel());
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -171,7 +180,7 @@ public class SiteManagerDialog extends JDialog {
             }
             return label;
         }
-    };
+    }
 
     private void removeSelectedCertificate() {
         String fileName;
