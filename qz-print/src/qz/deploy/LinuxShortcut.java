@@ -90,11 +90,7 @@ public class LinuxShortcut extends ShortcutUtilities {
         String shortcutPath = folderPath + getShortcutName() + ".desktop";
 
         // Create the shortcut's parent folder if it does not exist
-        if (!createParentFolder(shortcutPath)) {
-            return false;
-        }
-
-        return writeArrayToFile(shortcutPath, new String[]{
+        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[]{
             "[Desktop Entry]",
             "Type=Application",
             "Name=" + getShortcutName(),

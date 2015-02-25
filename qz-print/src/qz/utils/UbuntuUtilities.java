@@ -101,7 +101,7 @@ public class UbuntuUtilities {
     /**
      * Replaces the cached tray icons with Ubuntu colorized ones, fixing a Java bug which gives them undesirable
      * transparency
-     * @param iconCache
+     * @param iconCache The icons which have been cached
      */
     public static void fixTrayIcons(IconCache iconCache) {
         // Execute some shell commands to determine specific Linux OS

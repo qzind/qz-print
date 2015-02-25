@@ -118,8 +118,8 @@ public abstract class ShortcutUtilities {
     
     /**
      * Single function to be used to dynamically check if a shortcut already exists
-     * @param toggleType
-     * @return 
+     * @param toggleType Shortcut type, i.e. <code>ToggleType.STARTUP</code> or <code>ToggleType.DESKTOP</code>
+     * @return Whether or not the shortcut already exists
      */
     public boolean hasShortcut(ToggleType toggleType) {
         boolean hasShortcut = false;
@@ -215,7 +215,7 @@ public abstract class ShortcutUtilities {
      * Creates all appropriate parent folders for the file path specified
      *
      * @param filePath The file in which to create parent directories for
-     * @return
+     * @return Whether or not the parent folder creation was successful
      */
     static final boolean createParentFolder(String filePath) {
         String parentDirectory = getParentDirectory(filePath);
@@ -249,7 +249,7 @@ public abstract class ShortcutUtilities {
      * Deletes the specified file
      *
      * @param filePath The full file path to be deleted
-     * @return
+     * @return Whether or not the file deletion was successful
      */
     static final boolean deleteFile(String filePath) {
         File f = new File(filePath);
@@ -301,7 +301,7 @@ public abstract class ShortcutUtilities {
      * Sets the executable permission flag for a file. This only works on
      * Linux/Unix.
      *
-     * @param filePath
+     * @param filePath The full file path to set the execute flag on
      * @return <code>true</code> if successful, <code>false</code> otherwise
      */
     static final boolean setExecutable(String filePath) {
@@ -348,7 +348,7 @@ public abstract class ShortcutUtilities {
     
     /**
      * Set the jar path for which we will create a shortcut for
-     * @param jarPath 
+     * @param jarPath The full file path of the jar file
      */
     public void setJarPath(String jarPath) {
         this.jarPath = jarPath;

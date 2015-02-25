@@ -90,7 +90,7 @@ public class FileUtilities {
     /**
      * Returns whether or not the supplied path is restricted, such as the qz-tray data directory
      * Warning:  This does not follow symlinks
-     * @param path
+     * @param path File or Directory path to test
      * @return <code>true</code> if restricted, <code>false</code> otherwise
      */
     public static boolean isBadPath(String path) {

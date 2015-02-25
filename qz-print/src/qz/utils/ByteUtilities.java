@@ -28,10 +28,8 @@ import qz.common.Constants;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
-import java.text.StringCharacterIterator;
 import java.util.LinkedList;
 import java.util.logging.Logger;
 

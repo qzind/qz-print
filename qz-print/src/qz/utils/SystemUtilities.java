@@ -39,7 +39,7 @@ public class SystemUtilities {
      * Returns a lowercase version of the Operating system name identified by
      * <code>System.getProperty("os.name");</code>.
      *
-     * @return
+     * @return Lowercase version of the Operating system name
      */
     public static String getOS() {
         return OS_NAME;

@@ -22,9 +22,6 @@
 
 package qz.deploy;
 
-import java.util.logging.Level;
-import static qz.deploy.ShortcutUtilities.getParentDirectory;
-import static qz.deploy.ShortcutUtilities.log;
 import qz.utils.ShellUtilities;
 
 /**
@@ -90,7 +87,7 @@ public class WindowsShortcut extends ShortcutUtilities {
     /**
      * Creates a Windows ".url" shortcut
      *
-     * @param jarPath Absolute path to a jar file
+     * @param folderPath Absolute path to a jar file
      * @return Whether or not the shortcut  was created successfully
      */
     private boolean createShortcut(String folderPath) {
@@ -98,11 +95,7 @@ public class WindowsShortcut extends ShortcutUtilities {
         String shortcutPath = folderPath + getShortcutName() + ".url";
 
         // Create the shortcut's parent folder if it does not exist
-        if (!createParentFolder(shortcutPath)) {
-            return false;
-        }
-
-        return writeArrayToFile(shortcutPath, new String[]{
+        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[]{
             "[InternetShortcut]",
             "URL=" + fixURL(getJarPath()),
             workingPath.trim().equals("") ? "" : "WorkingDirectory=" + fixURL(workingPath),
