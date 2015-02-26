@@ -5,6 +5,7 @@ import qz.common.Constants;
 import qz.utils.FileUtilities;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -22,6 +23,7 @@ import java.util.Date;
  */
 public class SiteManagerDialog extends JDialog {
     private JPanel mainPanel;
+    private JSplitPane splitPane;
 
     private JTabbedPane tabbedPane;
     private JLabel headerLabel;
@@ -48,9 +50,14 @@ public class SiteManagerDialog extends JDialog {
     public void initComponents() {
         setIconImage(iconCache.getImage(IconCache.Icon.SAVED_ICON));
         mainPanel= new JPanel();
+        mainPanel.setBorder(new EmptyBorder(Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
+        splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
 
         tabbedPane = new JTabbedPane();
+        tabbedPane.addKeyListener(keyAdapter);
         headerLabel = new JLabel(String.format(Constants.WHITE_LIST, "").replaceAll("\\s+", " "));
+        headerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+        headerLabel.setBorder(new EmptyBorder(0, 0, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
         allowList = appendListTab("Allowed", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_A);
         blockList = appendListTab("Blocked", IconCache.Icon.BLOCK_ICON, KeyEvent.VK_B);
 
@@ -69,6 +76,7 @@ public class SiteManagerDialog extends JDialog {
         importButton = appendPanelButton("Import", IconCache.Icon.SAVED_ICON, KeyEvent.VK_I);
         deleteButton = appendPanelButton("Delete", IconCache.Icon.DELETE_ICON, KeyEvent.VK_D);
         buttonPanel.add(new JSeparator(JSeparator.HORIZONTAL));
+        buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
         closeButton = appendPanelButton("Close", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_C);
 
         deleteButton.setEnabled(false);
@@ -89,17 +97,21 @@ public class SiteManagerDialog extends JDialog {
             }
         });
 
+        splitPane.add(tabbedPane);
+        splitPane.add(new JScrollPane(certTable));
+        splitPane.setAlignmentX(Component.LEFT_ALIGNMENT);
+        certTable.autoSize();
+
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
         mainPanel.add(headerLabel);
-        mainPanel.add(tabbedPane);
-        mainPanel.add(new JScrollPane(certTable));
-        certTable.autoSize();
+        mainPanel.add(splitPane);
         mainPanel.add(buttonPanel);
 
         certTable.addKeyListener(keyAdapter);
         addKeyListener(keyAdapter);
 
         getContentPane().add(mainPanel);
+        setResizable(false);
 
         pack();
 
@@ -223,15 +235,15 @@ public class SiteManagerDialog extends JDialog {
 
     private KeyAdapter keyAdapter = new KeyAdapter() {
         @Override
-        public void keyReleased(KeyEvent e) {
+        public void keyPressed(KeyEvent e) {
             switch (e.getKeyCode()) {
+                case KeyEvent.VK_ESCAPE:
+                    closeButton.doClick();
+                    break;
                 case KeyEvent.VK_DELETE:
                     if (allowList.hasFocus() || blockList.hasFocus()) {
                         deleteButton.doClick();
                     }
-                    break;
-                case KeyEvent.VK_ESCAPE:
-                    closeButton.doClick();
                     break;
             }
         }

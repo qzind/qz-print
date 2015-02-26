@@ -25,6 +25,8 @@ public class Constants {
     public static final String LOG_FILE = "debug";
     public static final String DATA_DIR = "qz";
 
+    public static final int BORDER_PADDING = 10;
+
     public static final String ABOUT_TITLE = "QZ Tray";
     public static final String ABOUT_URL = "http://qzindustries.com";
     public static final String ABOUT_COMPANY = "QZ Industries, LLC";
@@ -34,8 +36,8 @@ public class Constants {
     public static final String UNTRUSTED_PUBLISHER = "Untrusted website";
 
 
-    public static final String WHITE_LIST = "Permanently allowed %s to access local resources";
-    public static final String BLACK_LIST = "Permanently blocked %s from accessing local resources";
+    public static final String WHITE_LIST = "Sites permanently allowed %s to access local resources";
+    public static final String BLACK_LIST = "Sites permanently blocked %s from accessing local resources";
 
     public static final int EXPIRY_WARN = 30;   // days
     public static final Color WARNING_COLOR = Color.RED;
