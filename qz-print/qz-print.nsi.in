@@ -1,0 +1,50 @@
+!include MUI2.nsh
+
+Name "${manifest.application.name}"
+OutFile "${out.dir}/qz-print-${build.version}-setup.exe"
+
+;-------------------------------
+
+InstallDir "$PROGRAMFILES\QZ"
+
+;-------------------------------
+
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_LICENSE "${basedir}/../LICENSE.txt"
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+!insertmacro MUI_LANGUAGE "English"
+
+;------------------------------
+
+Section
+
+  SetOutPath "$INSTDIR"
+
+  File /r "${dist.applet.dir}"
+  File /r "${dist.socket.dir}"
+
+
+  ;WriteRegStr HKCU "Software\qz-print" "" $INSTDIR
+  WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+SectionEnd
+
+;-------------------------------
+
+Section "Uninstall"
+
+  RMDir /r "$INSTDIR\socket"
+  RMDir /r "$INSTDIR\applet"
+  Delete "$INSTDIR\readme.txt"
+
+  Delete "$INSTDIR\Uninstall.exe"
+  RMDir "$INSTDIR"
+
+  ;DeleteRegKey /ifempty HKCU "Software\qz-print"
+
+SectionEnd
