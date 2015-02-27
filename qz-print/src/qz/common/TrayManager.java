@@ -57,9 +57,12 @@ public class TrayManager {
     final int POPUP_TIMEOUT = 2000;
 
     // Custom swing pop-up menu
-    AutoHideSysTray tray;
+    AutoHidePopupTray tray;
 
-    private GatewayDialog gw;
+    private GatewayDialog gatewayDialog;
+    private AboutDialog aboutDialog;
+    private LogDialog logDialog;
+    private SiteManagerDialog sitesDialog;
 
     // The name this UI component will use, i.e "QZ Print 1.9.0"
     private final String name;
@@ -73,10 +76,6 @@ public class TrayManager {
     // Port that the socket is listening on
     private int port;
 
-    private static final int WINDOW_WIDTH = 720;
-    private static final int WINDOW_HEIGHT = 540;
-    private static final int WINDOW_BUFFER = 32;
-
     /**
      * Create a AutoHideJSystemTray with the specified name/text
      */
@@ -88,7 +87,7 @@ public class TrayManager {
         shortcutCreator.setShortcutName(Constants.ABOUT_TITLE + " Service");
 
         // Initialize a custom Swing system tray that hides after a timeout
-        tray = new AutoHideSysTray(POPUP_TIMEOUT);
+        tray = new AutoHidePopupTray(POPUP_TIMEOUT);
         tray.setToolTipText(name);
 
         // Iterates over all images denoted by IconCache.getTypes() and caches them
@@ -101,7 +100,7 @@ public class TrayManager {
         }
 
         // The allow/block dialog
-        gw = new GatewayDialog(null, "Action Required", iconCache);
+        gatewayDialog = new GatewayDialog(null, "Action Required", iconCache);
 
         addMenuItems(tray);
         //tray.displayMessage(name, name + " is running.", TrayIcon.MessageType.INFO);
@@ -137,13 +136,15 @@ public class TrayManager {
         advancedMenu.setMnemonic(KeyEvent.VK_A);
         advancedMenu.setIcon(iconCache.getIcon(IconCache.Icon.SETTINGS_ICON));
 
-        JMenuItem savedItem = new JMenuItem("Site Manager...", iconCache.getIcon(IconCache.Icon.SAVED_ICON));
-        savedItem.setMnemonic(KeyEvent.VK_M);
-        savedItem.addActionListener(savedListener);
+        JMenuItem sitesItem = new JMenuItem("Site Manager...", iconCache.getIcon(IconCache.Icon.SAVED_ICON));
+        sitesItem.setMnemonic(KeyEvent.VK_M);
+        sitesItem.addActionListener(savedListener);
+        sitesDialog = new SiteManagerDialog(sitesItem, iconCache);
 
         JMenuItem logItem = new JMenuItem("View Logs...", iconCache.getIcon(IconCache.Icon.LOG_ICON));
         logItem.setMnemonic(KeyEvent.VK_L);
         logItem.addActionListener(logListener);
+        logDialog = new LogDialog(logItem, iconCache);
 
         JMenuItem openItem = new JMenuItem("Open file location", iconCache.getIcon(IconCache.Icon.FOLDER_ICON));
         openItem.setMnemonic(KeyEvent.VK_O);
@@ -153,7 +154,7 @@ public class TrayManager {
         desktopItem.setMnemonic(KeyEvent.VK_D);
         desktopItem.addActionListener(desktopListener);
 
-        advancedMenu.add(savedItem);
+        advancedMenu.add(sitesItem);
         advancedMenu.add(logItem);
         advancedMenu.add(new JSeparator());
         advancedMenu.add(openItem);
@@ -167,6 +168,7 @@ public class TrayManager {
         JMenuItem aboutItem = new JMenuItem("About...", iconCache.getIcon(IconCache.Icon.ABOUT_ICON));
         aboutItem.setMnemonic(KeyEvent.VK_B);
         aboutItem.addActionListener(aboutListener);
+        aboutDialog = new AboutDialog(aboutItem, iconCache, name, port);
 
         JSeparator separator = new JSeparator();
 
@@ -209,18 +211,17 @@ public class TrayManager {
             ArrayList<Certificate> allowList = readCertificates(FileUtilities.getFile(Constants.ALLOW_FILE));
             ArrayList<Certificate> blockList = readCertificates(FileUtilities.getFile(Constants.BLOCK_FILE));
 
-            JMenuItem item = (JMenuItem)e.getSource();
-            SiteManagerDialog certsDialog = new SiteManagerDialog(null, item.getText().replaceAll("\\.+", ""), iconCache);
-            certsDialog.setAllowList(allowList);
-            certsDialog.setBlockList(blockList);
-            certsDialog.setVisible(true);
+            // TODO:  Auto-refresh the reading of block/allow similar to logs
+            sitesDialog.setAllowList(allowList);
+            sitesDialog.setBlockList(blockList);
+            sitesDialog.setVisible(true);
         }
     };
 
     private final ActionListener logListener = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-            showLog();
+            logDialog.setVisible(true);
         }
     };
 
@@ -251,7 +252,8 @@ public class TrayManager {
 
     private final ActionListener aboutListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            showAbout();
+            aboutDialog.setPort(port);
+            aboutDialog.setVisible(true);
         }
     };
 
@@ -329,35 +331,35 @@ public class TrayManager {
     }
 
     public boolean showGatewayDialog(Certificate cert) {
-        if (gw.prompt("%s wants to access local resources", cert)) {
+        if (gatewayDialog.prompt("%s wants to access local resources", cert)) {
             printToLog("Allowed " + cert.getCommonName() + " to access local resources", TrayIcon.MessageType.INFO);
-            if (gw.isPersistent()) {
+            if (gatewayDialog.isPersistent()) {
                 whiteList(cert);
             }
         } else {
             printToLog("Blocked " + cert.getCommonName() + " from accessing local resources", TrayIcon.MessageType.INFO);
-            if (gw.isPersistent()) {
+            if (gatewayDialog.isPersistent()) {
                 blackList(cert);
             }
         }
 
-        return gw.isApproved();
+        return gatewayDialog.isApproved();
     }
 
     public boolean showPrintDialog(Certificate cert, String printer) {
-        if (gw.prompt("%s wants to print to " + printer, cert)) {
+        if (gatewayDialog.prompt("%s wants to print to " + printer, cert)) {
             printToLog("Allowed " + cert.getCommonName() + " to print to " + printer, TrayIcon.MessageType.INFO);
-            if (gw.isPersistent()) {
+            if (gatewayDialog.isPersistent()) {
                 whiteList(cert);
             }
         } else {
             printToLog("Blocked " + cert.getCommonName() + " from printing to " + printer, TrayIcon.MessageType.INFO);
-            if (gw.isPersistent()) {
+            if (gatewayDialog.isPersistent()) {
                 blackList(cert);
             }
         }
 
-        return gw.isApproved();
+        return gatewayDialog.isApproved();
     }
 
     private void whiteList(Certificate cert) {
@@ -368,99 +370,6 @@ public class TrayManager {
     private void blackList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.BLOCK_FILE, cert.data());
         displayInfoMessage(String.format(Constants.BLACK_LIST, cert.getOrganization()));
-    }
-
-    /**
-     * Displays a basic about dialog. Utilizes an exploit in the JOptionPane
-     * container to layout text as HTML for quick formatting.
-     */
-    private void showAbout() {
-        Object[] info = {
-                new JLabel(iconCache.getIcon(IconCache.Icon.LOGO_ICON)),
-                "<html><hr/><table>"
-                        + row("Software:", name)
-                        + row("Port Number:", port < 0? "None":"" + port)
-                        + row("Publisher:", Constants.ABOUT_URL)
-                        + row("Description:<br/>&nbsp;", String.format(Constants.ABOUT_DESC, Constants.ABOUT_TITLE))
-                        + "</table></html>"
-        };
-        JOptionPane.showMessageDialog(tray, info, name, JOptionPane.PLAIN_MESSAGE);
-    }
-
-    private void showLog() {
-        // Get the log text
-        BufferedReader br = null;
-        StringBuilder log = new StringBuilder();
-
-        try {
-            String line;
-            br = new BufferedReader(new FileReader(FileUtilities.getFile(Constants.LOG_FILE)));
-            while((line = br.readLine()) != null) {
-                log.append(line).append("\r\n");
-            }
-        }
-        catch(IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            if (br != null) {
-                try { br.close(); }catch(Exception ignore) {}
-            }
-        }
-
-        // Build the window
-        final JFrame logWindow = new JFrame(Constants.ABOUT_TITLE + " - Logs");
-        logWindow.setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-
-        JPanel content = new JPanel();
-        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-
-        final JTextArea logText = new JTextArea(log.toString(), 20, 30);
-        logText.setEditable(false);
-        logText.setLineWrap(true);
-        logText.setWrapStyleWord(true);
-
-        JScrollPane scrollPane = new JScrollPane(logText);
-
-        JPanel btnPanel = new JPanel();
-        btnPanel.setLayout(new BoxLayout(btnPanel, BoxLayout.X_AXIS));
-        btnPanel.add(Box.createHorizontalGlue());
-
-        JButton clearBtn = new JButton("Clear");
-        clearBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                FileUtilities.deleteFile(Constants.LOG_FILE);
-                logText.setText("");
-            }
-        });
-        btnPanel.add(clearBtn);
-
-        JButton closeBtn = new JButton("Close");
-        closeBtn.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                logWindow.dispatchEvent(new WindowEvent(logWindow, WindowEvent.WINDOW_CLOSING));
-            }
-        });
-        btnPanel.add(closeBtn);
-
-        btnPanel.add(Box.createRigidArea(new Dimension(WINDOW_BUFFER, 0)));
-
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-        content.add(scrollPane);
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-        content.add(btnPanel);
-        content.add(Box.createRigidArea(new Dimension(0, WINDOW_BUFFER)));
-
-        Container container = logWindow.getContentPane();
-        container.setLayout(new BoxLayout(container, BoxLayout.X_AXIS));
-
-        container.add(content);
-
-        // Actually show the window
-        logWindow.setLocationRelativeTo(null);
-        logWindow.setVisible(true);
     }
 
     private String row(String label, String description) {

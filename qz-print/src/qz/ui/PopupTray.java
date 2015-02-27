@@ -35,7 +35,7 @@ import qz.utils.SystemUtilities;
  * 
  * @author A. Tres Finocchiaro
  */
-public class SysTray extends JPopupMenu {
+public class PopupTray extends JPopupMenu {
     private final SystemTray systemTray;
     private final TrayIcon trayIcon;
     
@@ -45,7 +45,7 @@ public class SysTray extends JPopupMenu {
      * @param imageIcon The icon to display in the System Tray
      * @param toolTipText The text to display during tray mouse-over
      */
-    public SysTray(ImageIcon imageIcon, String toolTipText) {
+    public PopupTray(ImageIcon imageIcon, String toolTipText) {
         super();
         trayIcon = createTrayIcon();
         systemTray = getSystemTray();
@@ -60,7 +60,7 @@ public class SysTray extends JPopupMenu {
      * @param image The image to display in the System Tray
      * @param toolTipText The text to display during tray mouse-over
      */
-    public SysTray(Image image, String toolTipText) {
+    public PopupTray(Image image, String toolTipText) {
         super(toolTipText);
         trayIcon = createTrayIcon();
         systemTray = getSystemTray();
@@ -74,7 +74,7 @@ public class SysTray extends JPopupMenu {
      * the specified toolTipText
      * @param toolTipText The text to display during tray mouse-over
      */
-    public SysTray(String toolTipText) {
+    public PopupTray(String toolTipText) {
         super(toolTipText);
         trayIcon = createTrayIcon();
         systemTray = getSystemTray();
@@ -86,7 +86,7 @@ public class SysTray extends JPopupMenu {
      * Constructs a JPopupMenu attached to the system's SystemTray with
      * no icon and no toolTipText
      */
-    public SysTray() {
+    public PopupTray() {
         super();
         trayIcon = createTrayIcon();
         systemTray = getSystemTray();
@@ -160,7 +160,7 @@ public class SysTray extends JPopupMenu {
         newTrayIcon.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseReleased(MouseEvent e) {
-                setInvoker(SysTray.this);
+                setInvoker(PopupTray.this);
                 setVisible(true);
                 /**
                  * Location must be set after setVisible() or it won't

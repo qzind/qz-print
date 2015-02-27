@@ -5,7 +5,6 @@ import qz.common.Constants;
 import qz.utils.FileUtilities;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -13,7 +12,6 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Date;
@@ -21,101 +19,69 @@ import java.util.Date;
 /**
  * Created by Tres on 2/23/2015.
  */
-public class SiteManagerDialog extends JDialog {
-    private JPanel mainPanel;
+public class SiteManagerDialog extends BasicDialog {
     private JSplitPane splitPane;
 
     private JTabbedPane tabbedPane;
-    private JLabel headerLabel;
     private JList allowList;
     private JList blockList;
 
     private CertificateTable certTable;
 
-
-    private JPanel buttonPanel;
-    private JButton closeButton;
     private JButton deleteButton;
-    private JButton importButton;
 
-    private IconCache iconCache;
-
-    public SiteManagerDialog(Frame owner, String title, IconCache iconCache) {
-        super(owner, title, true);
-        this.iconCache = iconCache;
+    public SiteManagerDialog(JMenuItem caller, IconCache iconCache) {
+        super(caller, iconCache);
         this.certTable = new CertificateTable(null, iconCache);
         initComponents();
     }
 
     public void initComponents() {
-        setIconImage(iconCache.getImage(IconCache.Icon.SAVED_ICON));
-        mainPanel= new JPanel();
-        mainPanel.setBorder(new EmptyBorder(Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
+        setIconImage(getImage(IconCache.Icon.SAVED_ICON));
         splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        splitPane.setResizeWeight(0.5);
 
         tabbedPane = new JTabbedPane();
-        tabbedPane.addKeyListener(keyAdapter);
-        headerLabel = new JLabel(String.format(Constants.WHITE_LIST, "").replaceAll("\\s+", " "));
-        headerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        headerLabel.setBorder(new EmptyBorder(0, 0, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
         allowList = appendListTab("Allowed", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_A);
         blockList = appendListTab("Blocked", IconCache.Icon.BLOCK_ICON, KeyEvent.VK_B);
+
+        setHeader(tabbedPane.getSelectedIndex() == 0 ? Constants.WHITE_LIST : Constants.BLACK_LIST);
 
         tabbedPane.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                String header = tabbedPane.getSelectedIndex() == 0 ? Constants.WHITE_LIST : Constants.BLACK_LIST;
-                headerLabel.setText(String.format(header, "").replaceAll("\\s+", " "));
                 certTable.setCertificate(null);
                 allowList.clearSelection();
                 blockList.clearSelection();
+
+                switch (tabbedPane.getSelectedIndex()) {
+                    case 1: setHeader(Constants.BLACK_LIST);
+                        blockList.setSelectedIndex(0);
+                        break;
+                    default:
+                        setHeader(Constants.WHITE_LIST);
+                        allowList.setSelectedIndex(0);
+                }
             }
         });
 
-        buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        importButton = appendPanelButton("Import", IconCache.Icon.SAVED_ICON, KeyEvent.VK_I);
-        deleteButton = appendPanelButton("Delete", IconCache.Icon.DELETE_ICON, KeyEvent.VK_D);
-        buttonPanel.add(new JSeparator(JSeparator.HORIZONTAL));
-        buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        closeButton = appendPanelButton("Close", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_C);
-
-        deleteButton.setEnabled(false);
-
         // TODO:  Add certificate manual import capabilities
-        buttonPanel.remove(importButton);
-
+        deleteButton = appendPanelButton("Delete", IconCache.Icon.DELETE_ICON, KeyEvent.VK_D);
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 removeSelectedCertificate();
             }
         });
-        closeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setVisible(false);
-            }
-        });
+        deleteButton.setEnabled(false);
+        addKeyListener(KeyEvent.VK_DELETE, deleteButton);
 
         splitPane.add(tabbedPane);
         splitPane.add(new JScrollPane(certTable));
         splitPane.setAlignmentX(Component.LEFT_ALIGNMENT);
         certTable.autoSize();
 
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.add(headerLabel);
-        mainPanel.add(splitPane);
-        mainPanel.add(buttonPanel);
-
-        certTable.addKeyListener(keyAdapter);
-        addKeyListener(keyAdapter);
-
-        getContentPane().add(mainPanel);
-        setResizable(false);
-
-        pack();
-
-        setLocationRelativeTo(null);    // center on main display
+        setContent(splitPane, true);
     }
 
     @Override
@@ -124,6 +90,7 @@ public class SiteManagerDialog extends JDialog {
             allowList.removeAll();
             blockList.removeAll();
         }
+        allowList.setSelectedIndex(0);
         super.setVisible(visible);
     }
 
@@ -166,27 +133,19 @@ public class SiteManagerDialog extends JDialog {
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         list.setLayoutOrientation(JList.VERTICAL);
         JScrollPane scrollPane = new JScrollPane(list);
-        tabbedPane.addTab(title, iconCache == null ? null : iconCache.getIcon(icon), scrollPane);
+        tabbedPane.addTab(title, getIcon(icon), scrollPane);
         tabbedPane.setMnemonicAt(tabbedPane.indexOfComponent(scrollPane), mnemonic);
         addCertificateSelectionListener(list);
         list.setCellRenderer(new CertificateTableCellRenderer());
-        list.addKeyListener(keyAdapter);
         return list;
-    }
-
-    private JButton appendPanelButton(String title, IconCache.Icon icon, int mnemonic) {
-        JButton button = new JButton(title, iconCache == null ? null : iconCache.getIcon(icon));
-        button.setMnemonic(mnemonic);
-        buttonPanel.add(button);
-        return button;
     }
 
     class CertificateTableCellRenderer extends DefaultListCellRenderer {
         @Override
         public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
             JLabel label = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            if (value instanceof Certificate && iconCache != null) {
-                label.setIcon(iconCache.getIcon(IconCache.Icon.SAVED_ICON));
+            if (value instanceof Certificate) {
+                label.setIcon(SiteManagerDialog.super.getIcon(IconCache.Icon.SAVED_ICON));
             } else {
                 label.setIcon(null);
             }
@@ -232,20 +191,4 @@ public class SiteManagerDialog extends JDialog {
     public void printToLog(String message, TrayIcon.MessageType type) {
         FileUtilities.printLineToFile(Constants.LOG_FILE, String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s", type, new Date(), message));
     }
-
-    private KeyAdapter keyAdapter = new KeyAdapter() {
-        @Override
-        public void keyPressed(KeyEvent e) {
-            switch (e.getKeyCode()) {
-                case KeyEvent.VK_ESCAPE:
-                    closeButton.doClick();
-                    break;
-                case KeyEvent.VK_DELETE:
-                    if (allowList.hasFocus() || blockList.hasFocus()) {
-                        deleteButton.doClick();
-                    }
-                    break;
-            }
-        }
-    };
 }
