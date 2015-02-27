@@ -170,7 +170,15 @@
                 <expandproperties/>
             </filterchain>
         </copy>
-        <exec executable="makensis" failonerror="true" >
+
+        <!-- Find makensis executable -->
+        <property name="nsisexe" value="makensis"/>
+        <property name="nsiswin" value="C:\Program Files\NSIS\makensis.exe"/>
+        <property name="nsiswin64" value="C:\Program Files (x86)\NSIS\makensis.exe"/>
+        <available property="nsisexe" value="${nsiswin}" type="file" file="${nsiswin}"/>
+        <available property="nsisexe" value="${nsiswin64}" type="file" file="${nsiswin64}"/>
+
+        <exec executable="${nsisexe}" failonerror="true" >
             <arg value="${basedir}/qz-print.nsi"/>
         </exec>
     </target>
