@@ -1,7 +1,7 @@
 !include MUI2.nsh
 
 Name "${manifest.application.name}"
-OutFile "${out.dir}/qz-print-${build.version}-setup.exe"
+OutFile "${out.dir}/${build.name}-${build.version}-setup.exe"
 
 ;-------------------------------
 
@@ -25,9 +25,7 @@ Section
 
   SetOutPath "$INSTDIR"
 
-  File /r "${dist.applet.dir}"
-  File /r "${dist.socket.dir}"
-
+  File /r "${dist.socket.dir}/*"
 
   ;WriteRegStr HKCU "Software\qz-print" "" $INSTDIR
   WriteUninstaller "$INSTDIR\Uninstall.exe"
