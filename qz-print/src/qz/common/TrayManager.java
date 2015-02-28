@@ -169,6 +169,9 @@ public class TrayManager {
         aboutItem.setMnemonic(KeyEvent.VK_B);
         aboutItem.addActionListener(aboutListener);
         aboutDialog = new AboutDialog(aboutItem, iconCache, name, port);
+        aboutDialog.addPanelButton(sitesItem);
+        aboutDialog.addPanelButton(logItem);
+        aboutDialog.addPanelButton(openItem);
 
         JSeparator separator = new JSeparator();
 
@@ -208,12 +211,6 @@ public class TrayManager {
 
     private final ActionListener savedListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            ArrayList<Certificate> allowList = readCertificates(FileUtilities.getFile(Constants.ALLOW_FILE));
-            ArrayList<Certificate> blockList = readCertificates(FileUtilities.getFile(Constants.BLOCK_FILE));
-
-            // TODO:  Auto-refresh the reading of block/allow similar to logs
-            sitesDialog.setAllowList(allowList);
-            sitesDialog.setBlockList(blockList);
             sitesDialog.setVisible(true);
         }
     };
@@ -364,7 +361,7 @@ public class TrayManager {
 
     private void whiteList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.data());
-        displayInfoMessage(String.format(Constants.WHITE_LIST, cert.getOrganization()));
+        displayInfoMessage(String.format(Constants.WHITE_LIST, "\"" + cert.getOrganization() +  "\""));
     }
 
     private void blackList(Certificate cert) {
@@ -496,38 +493,6 @@ public class TrayManager {
 
     public void printToLog(String message, TrayIcon.MessageType type) {
         FileUtilities.printLineToFile(Constants.LOG_FILE, String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s", type, new Date(), message));
-    }
-
-
-    public ArrayList<Certificate> readCertificates(File file) {
-        ArrayList<Certificate> certList = new ArrayList<Certificate>();
-        BufferedReader br = null;
-        try {
-
-            String line;
-            br = new BufferedReader(new FileReader(file));
-            while ((line = br.readLine()) != null) {
-                String[] data = line.split("\\t");
-
-                if (data.length == Certificate.saveFields.length) {
-                    HashMap<String, String> dataMap = new HashMap<String, String>();
-                    for (int i = 0; i < data.length; i++) {
-                        dataMap.put(Certificate.saveFields[i], data[i]);
-                    }
-                    certList.add(Certificate.loadCertificate(dataMap));
-                }
-            }
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (Exception ignore) {
-                }
-            }
-        }
-        return certList;
     }
 
 }

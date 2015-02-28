@@ -29,6 +29,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import qz.common.ByteArrayBuilder;
 import qz.common.Constants;
+import qz.common.LogIt;
 import qz.exception.NullCommandException;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -204,7 +205,7 @@ public class FileUtilities {
         fileMap.put(name, null);
     }
 
-    public static void deleteFromFile(String fileName, String deleteLine) {
+    public static boolean deleteFromFile(String fileName, String deleteLine) {
         File file = getFile(fileName);
         File temp = getFile(Constants.TEMP_FILE);
 
@@ -229,7 +230,8 @@ public class FileUtilities {
             temp.renameTo(file);
         }
         catch(IOException e) {
-            e.printStackTrace();
+            LogIt.log(e);
+            return false;
         }
         finally {
             if (br != null) {
@@ -239,6 +241,7 @@ public class FileUtilities {
                 try { bw.close(); }catch(Exception ignore) {}
             }
         }
+        return true;
     }
 
 }

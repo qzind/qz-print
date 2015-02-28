@@ -299,4 +299,11 @@ public class Certificate {
         return getOrganization() + " (" + getCommonName() + ")";
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Certificate) {
+            return ((Certificate)obj).data().equals(this.data());
+        }
+        return super.equals(obj);
+    }
 }

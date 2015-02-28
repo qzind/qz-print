@@ -10,6 +10,7 @@ import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by Tres on 2/26/2015.
@@ -24,8 +25,8 @@ public class LogDialog extends BasicDialog implements Runnable {
     private JButton clearButton;
 
     private Thread readerThread;
-    private boolean threadRunning;
-    private boolean deleteLogFile;
+    private AtomicBoolean threadRunning;
+    private AtomicBoolean deleteLogFile;
 
     public LogDialog(JMenuItem caller, IconCache iconCache) {
         super(caller, iconCache);
@@ -42,18 +43,18 @@ public class LogDialog extends BasicDialog implements Runnable {
         logPane = new JScrollPane(logArea);
 
         // TODO:  Fix button panel resizing issues
-        clearButton = appendPanelButton("Clear", IconCache.Icon.DELETE_ICON, KeyEvent.VK_L);
+        clearButton = addPanelButton("Clear", IconCache.Icon.DELETE_ICON, KeyEvent.VK_L);
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 clearButton.setEnabled(false);
-                deleteLogFile = true;
+                deleteLogFile.set(true);
             }
         });
 
         readerThread = new Thread(this);
-        threadRunning = true;
-        deleteLogFile = false;
+        threadRunning = new AtomicBoolean(false);
+        deleteLogFile = new AtomicBoolean(false);
 
         setContent(logPane, true);
         setResizable(true);
@@ -87,33 +88,35 @@ public class LogDialog extends BasicDialog implements Runnable {
     @Override
     public void setVisible(boolean visible) {
         if (visible && !readerThread.isAlive()) {
-            threadRunning = true;
+            threadRunning.set(true);
+            readerThread = new Thread(this);
             readerThread.start();
         } else {
-            threadRunning = false;
+            threadRunning.set(false);
         }
         super.setVisible(visible);
     }
 
     public void run() {
+        threadRunning.set(true);
         BufferedReader br = null;
 
         try {
             String buffer;
 
             // Reads the log file and prints to the text area
-            while (threadRunning) {
+            while (threadRunning.get()) {
                 if (br == null) {
                     br = new BufferedReader(new FileReader(FileUtilities.getFile(Constants.LOG_FILE)));
                 }
 
                 if (isVisible()) {
-                   if (deleteLogFile) {
+                   if (deleteLogFile.get()) {
                         br.close();
                         FileUtilities.deleteFile(Constants.LOG_FILE);
                         clear();
                         br = null;
-                        deleteLogFile = false;
+                        deleteLogFile.set(false);
                     } else if ((buffer = br.readLine()) != null) {
                         append(buffer).append("\r\n");
                     } else sleep(500);
@@ -124,6 +127,7 @@ public class LogDialog extends BasicDialog implements Runnable {
         } finally {
             if (br != null) {
                 try {
+                    threadRunning.set(false);
                     br.close();
                 } catch (Exception ignore) {
                 }

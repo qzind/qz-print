@@ -49,7 +49,7 @@ public class BasicDialog extends JDialog {
         buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(new JSeparator(JSeparator.HORIZONTAL));
         buttonPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-        closeButton = appendPanelButton("Close", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_C);
+        closeButton = addPanelButton("Close", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_C);
         closeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -120,8 +120,12 @@ public class BasicDialog extends JDialog {
         return contentComponent;
     }
 
-    public JButton appendPanelButton(String title, IconCache.Icon icon, int mnemonic) {
-        JButton button = new JButton(title, iconCache == null ? null : iconCache.getIcon(icon));
+    public JButton addPanelButton(String title, IconCache.Icon icon, int mnemonic) {
+        return addPanelButton(title, iconCache == null ? null : iconCache.getIcon(icon), mnemonic);
+    }
+
+    public JButton addPanelButton(String title, Icon icon, int mnemonic) {
+        JButton button = new JButton(title, icon);
         button.setMnemonic(mnemonic);
         buttonPanel.add(button, buttonPanel.getComponents().length - stockButtonCount);
         return button;

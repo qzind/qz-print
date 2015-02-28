@@ -52,7 +52,6 @@ public class AboutDialog extends BasicDialog {
             gridPanel.add(new LinkLabel(Constants.ABOUT_URL));
         }
 
-        // Add description line-by-line
         gridPanel.add(createLabel("Description:", true));
         gridPanel.add(createLabel(String.format(Constants.ABOUT_DESC, Constants.ABOUT_TITLE)));
 
@@ -111,5 +110,11 @@ public class AboutDialog extends BasicDialog {
     public void setPort(int port) {
         this.port = port;
         this.portLabel.setText(port < 0? "None":"" + port);
+    }
+
+    public JButton addPanelButton(JMenuItem menuItem) {
+        JButton button = addPanelButton(menuItem.getText(), menuItem.getIcon(), menuItem.getMnemonic());
+        button.addActionListener(menuItem.getActionListeners()[0]);
+        return button;
     }
 }
