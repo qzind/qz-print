@@ -15,7 +15,7 @@ import java.awt.image.BufferedImage;
  */
 public class BasicDialog extends JDialog {
     private JPanel mainPanel;
-    private JLabel headerLabel;
+    private JComponent headerComponent;
     private JComponent contentComponent;
 
     private JPanel buttonPanel;
@@ -42,9 +42,9 @@ public class BasicDialog extends JDialog {
         mainPanel= new JPanel();
         mainPanel.setBorder(new EmptyBorder(Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
 
-        headerLabel = new JLabel();
-        headerLabel.setBorder(new EmptyBorder(0, 0, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
-        add(headerLabel);
+        headerComponent = new JLabel();
+        headerComponent.setBorder(new EmptyBorder(0, 0, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
+        mainPanel.add(headerComponent, BorderLayout.PAGE_START);
 
         buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.add(new JSeparator(JSeparator.HORIZONTAL));
@@ -58,10 +58,10 @@ public class BasicDialog extends JDialog {
         });
         stockButtonCount = buttonPanel.getComponents().length;
 
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-        mainPanel.add(headerLabel);
-        mainPanel.add(contentComponent = new JLabel("Hello world!"));
-        mainPanel.add(buttonPanel);
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.add(headerComponent, BorderLayout.PAGE_START);
+        mainPanel.add(contentComponent = new JLabel("Hello world!"), BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.PAGE_END);
 
         addKeyListener(KeyEvent.VK_ESCAPE, closeButton);
 
@@ -74,40 +74,27 @@ public class BasicDialog extends JDialog {
     }
 
     public JLabel setHeader(String header) {
-        headerLabel.setText(String.format(header, "").replaceAll("\\s+", " "));
-        return headerLabel;
+        if (headerComponent instanceof JLabel) {
+            ((JLabel)headerComponent).setText(String.format(header, "").replaceAll("\\s+", " "));
+            return (JLabel)headerComponent;
+        }
+        return (JLabel)setHeader(new JLabel(header));
     }
 
-    public JLabel setHeaderLabel(JLabel headerLabel) {
-        headerLabel.setAlignmentX(this.headerLabel.getAlignmentX());
-        headerLabel.setBorder(this.headerLabel.getBorder());
-        mainPanel.add(headerLabel, indexOf(this.headerLabel));
-        mainPanel.remove(indexOf(this.headerLabel));
-        this.headerLabel = headerLabel;
+    public JComponent setHeader(JComponent headerComponent) {
+        headerComponent.setAlignmentX(this.headerComponent.getAlignmentX());
+        headerComponent.setBorder(this.headerComponent.getBorder());
+        mainPanel.add(headerComponent, BorderLayout.PAGE_START, indexOf(this.headerComponent));
+        mainPanel.remove(indexOf(this.headerComponent));
+        this.headerComponent = headerComponent;
         mainPanel.invalidate();
-        return headerLabel;
-    }
-
-    @Override
-    public Component add(Component component) {
-        if (component != null && component instanceof JComponent) {
-            ((JComponent)component).setAlignmentX(LEFT_ALIGNMENT);
-        }
-        return mainPanel.add(component);
-    }
-
-    @Override
-    public Component add(Component component, int index) {
-        if (component != null && component instanceof JComponent) {
-            ((JComponent)component).setAlignmentX(LEFT_ALIGNMENT);
-        }
-        return mainPanel.add(component, index);
+        return headerComponent;
     }
 
     public JComponent setContent(JComponent contentComponent, boolean autoCenter) {
         if (contentComponent != null) {
             contentComponent.setAlignmentX(LEFT_ALIGNMENT);
-            mainPanel.add(contentComponent, indexOf(this.contentComponent));
+            mainPanel.add(contentComponent, BorderLayout.CENTER, indexOf(this.contentComponent));
         }
 
         mainPanel.remove(indexOf(this.contentComponent));

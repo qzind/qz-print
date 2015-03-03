@@ -35,7 +35,7 @@ public class LogDialog extends BasicDialog implements Runnable {
 
     public void initComponents() {
         setIconImage(getImage(IconCache.Icon.LOG_ICON));
-        setHeaderLabel(new LinkLabel(FileUtilities.getFile(Constants.LOG_FILE)));
+        setHeader(new LinkLabel(FileUtilities.getFile(Constants.LOG_FILE)));
         logArea = new JTextArea(ROWS, COLS);
         logArea.setEditable(false);
         logArea.setLineWrap(true);

@@ -5,6 +5,7 @@ import qz.common.Constants;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -29,7 +30,8 @@ public class AboutDialog extends BasicDialog {
     }
 
     public void initComponents() {
-        addBranding();
+        JComponent header = setHeader(new JLabel(getIcon(IconCache.Icon.LOGO_ICON)));
+        header.setBorder(new EmptyBorder(Constants.BORDER_PADDING, 0, Constants.BORDER_PADDING, 0));
 
         gridPanel = new JPanel();
 
@@ -57,18 +59,6 @@ public class AboutDialog extends BasicDialog {
 
         shadeComponents();
         setContent(gridPanel, true);
-    }
-
-    public void addBranding() {
-        JPanel branding = new JPanel();
-        JLabel brandingLabel = new JLabel(getIcon(IconCache.Icon.LOGO_ICON));
-        brandingLabel.setBorder(new EmptyBorder(Constants.BORDER_PADDING, 0, Constants.BORDER_PADDING, 0));
-        branding.add(brandingLabel);
-        branding.setBackground(Color.WHITE);
-        branding.setBorder(new EtchedBorder(EtchedBorder.RAISED));
-
-        // Add at index 0 to bump it to the top
-        add(branding, 0);
     }
 
     public void shadeComponents() {
