@@ -3,4 +3,5 @@
 /jssc_2.6.0_qz/build/
 /jssc_2.6.0_qz/dist/
 /qz-print/build/
-/qz-print/dist/
+/qz-print/out/
+/qz-print/qz-print.nsi
