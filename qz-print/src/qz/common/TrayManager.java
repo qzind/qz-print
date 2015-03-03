@@ -369,10 +369,6 @@ public class TrayManager {
         displayInfoMessage(String.format(Constants.BLACK_LIST, cert.getOrganization()));
     }
 
-    private String row(String label, String description) {
-        return "<tr><td><b>" + label + "</b></td><td>" + description + "</td></tr>";
-    }
-
     /**
      * Sets the WebSocket Server instance for displaying port information and restarting the server
      *

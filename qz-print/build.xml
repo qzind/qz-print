@@ -24,6 +24,7 @@
 
     <target name="clean" depends="init">
         <delete dir="${out.dir}"/>
+        <delete file="${basedir}/qz-print.nsi"/>
     </target>
 
     <target name="compile" depends="init">
@@ -160,6 +161,26 @@
                 <filter token="VERSION" value="${build.version}"/>
             </filterset>
         </copy>
+    </target>
+
+    <target name="nsis" depends="init">
+        <echo>Creating NSIS installer</echo>
+        <copy file="${basedir}/qz-print.nsi.in" tofile="${basedir}/qz-print.nsi" >
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+
+        <!-- Find makensis executable -->
+        <property name="nsisexe" value="makensis"/>
+        <property name="nsiswin" value="C:\Program Files\NSIS\makensis.exe"/>
+        <property name="nsiswin64" value="C:\Program Files (x86)\NSIS\makensis.exe"/>
+        <available property="nsisexe" value="${nsiswin}" type="file" file="${nsiswin}"/>
+        <available property="nsisexe" value="${nsiswin64}" type="file" file="${nsiswin64}"/>
+
+        <exec executable="${nsisexe}" failonerror="true" >
+            <arg value="${basedir}/qz-print.nsi"/>
+        </exec>
     </target>
 
 </project>
