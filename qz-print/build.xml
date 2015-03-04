@@ -19,12 +19,12 @@
         <!-- Please leave this value the netbeans default as a fallback. -->
         <property file="ant/private/private.properties"/>
 
-        <echo message="Building ${build.name} ${build.version} using JDK ${ant.java.version}" />
+        <echo message="Building ${build.applet.name} / ${build.socket.name} ${build.version} using JDK ${ant.java.version}" />
     </target>
 
     <target name="clean" depends="init">
         <delete dir="${out.dir}"/>
-        <delete file="${basedir}/qz-print.nsi"/>
+        <delete file="${basedir}/${build.socket.name}.nsi"/>
     </target>
 
     <target name="compile" depends="init">
@@ -162,25 +162,38 @@
             </filterset>
         </copy>
     </target>
+	
+	<!-- Find makensis executable -->
+	<property environment="env"/>
+	
+	<!-- Linux -->
+	<target name="nsisbin-1" depends="init" unless="env.windir">
+		<property name="nsisbin" value="makensis"/>
+		<echo>Using ${nsisbin}</echo>
+	</target>
+	
+	<!-- Win32 -->
+	<target name="nsisbin-2" depends="init" unless="env.ProgramFiles(x86)">
+		<property name="nsisexe" value="${env.ProgramFiles}\NSIS\makensis.exe"/>
+		<echo>Using ${nsisbin}</echo>
+	</target>
+	
+	<!-- Win64 -->
+	<target name="nsisbin-3" depends="init" if="env.ProgramFiles(x86)">
+		<property name="nsisbin" value="${env.ProgramFiles(x86)}\NSIS\makensis.exe"/>
+		<echo>Using ${nsisbin}</echo>
+	</target>
 
-    <target name="nsis" depends="init">
+    <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3">
         <echo>Creating NSIS installer</echo>
-        <copy file="${basedir}/qz-print.nsi.in" tofile="${basedir}/qz-print.nsi" >
+        <copy file="${basedir}/${build.socket.name}.nsi.in" tofile="${basedir}/${build.socket.name}.nsi" >
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
 
-        <!-- Find makensis executable -->
-        <property name="nsisexe" value="makensis"/>
-        <property name="nsiswin" value="C:\Program Files\NSIS\makensis.exe"/>
-        <property name="nsiswin64" value="C:\Program Files (x86)\NSIS\makensis.exe"/>
-        <available property="nsisexe" value="${nsiswin}" type="file" file="${nsiswin}"/>
-        <available property="nsisexe" value="${nsiswin64}" type="file" file="${nsiswin64}"/>
-
-        <exec executable="${nsisexe}" failonerror="true" >
-            <arg value="${basedir}/qz-print.nsi"/>
+        <exec executable="${nsisbin}" failonerror="true" >
+            <arg value="${basedir}\${build.socket.name}.nsi"/>
         </exec>
     </target>
-
 </project>

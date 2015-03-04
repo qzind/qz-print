@@ -1,16 +1,19 @@
 !include MUI2.nsh
+!include x64.nsh
 
-Name "${manifest.application.name}"
-OutFile "${out.dir}/${build.name}-${build.version}-setup.exe"
+Name "${socket.name}"
+OutFile "${out.dir}\${build.socket.name}-${build.version}-setup.exe"
+
+;-------------------------------
+
+InstallDir "$PROGRAMFILES\${vendor.name}"
 
 ;-------------------------------
 
-InstallDir "$PROGRAMFILES\QZ"
-
-;-------------------------------
+!define MUI_ICON "${build.windows.icon}"
 
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "${basedir}/../LICENSE.txt"
+!insertmacro MUI_PAGE_LICENSE "${basedir}\..\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 
@@ -25,9 +28,9 @@ Section
 
   SetOutPath "$INSTDIR"
 
-  File /r "${dist.socket.dir}/*"
+  File /r "${dist.socket.dir}\*"
 
-  ;WriteRegStr HKCU "Software\qz-print" "" $INSTDIR
+  ;WriteRegStr HKCU "Software\${vendor.name}" "" $INSTDIR
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
 SectionEnd
@@ -37,12 +40,20 @@ SectionEnd
 Section "Uninstall"
 
   RMDir /r "$INSTDIR\socket"
-  RMDir /r "$INSTDIR\applet"
   Delete "$INSTDIR\readme.txt"
 
   Delete "$INSTDIR\Uninstall.exe"
   RMDir "$INSTDIR"
 
-  ;DeleteRegKey /ifempty HKCU "Software\qz-print"
+  ;DeleteRegKey /ifempty HKCU "Software\${vendor.name}"
 
 SectionEnd
+
+;-------------------------------
+
+Function .onInit
+    ${If} ${RunningX64}
+        SetRegView 64
+        StrCpy $INSTDIR "$PROGRAMFILES64\${vendor.name}"
+    ${EndIf}
+FunctionEnd
