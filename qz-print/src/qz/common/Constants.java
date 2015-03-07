@@ -24,6 +24,8 @@ public class Constants {
     public static final String TEMP_FILE = "temp";
     public static final String LOG_FILE = "debug";
     public static final String DATA_DIR = "qz";
+    public static final int LOG_SIZE = 524288;
+    public static final int LOG_ROTATIONS = 5;
 
     public static final int BORDER_PADDING = 10;
 

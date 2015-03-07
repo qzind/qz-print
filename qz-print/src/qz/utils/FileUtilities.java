@@ -175,16 +175,21 @@ public class FileUtilities {
     }
 
     public static File getFile(String name) {
+        return getFile(name, true);
+    }
+
+    public static File getFile(String name, boolean autoCreate) {
         if (!fileMap.containsKey(name) || fileMap.get(name) == null) {
             String fileLoc = SystemUtilities.getDataDirectory();
             try {
                 File locDir = new File(fileLoc);
-                locDir.mkdirs();
-                String ext = Constants.LOG_FILE.equals(name)? ".log" : ".dat";
-
+                String ext = name.startsWith(Constants.LOG_FILE)? ".log" : ".dat";
                 File file = new File(fileLoc + File.separator + name + ext);
-                file.createNewFile();
 
+                if (autoCreate) {
+                    locDir.mkdirs();
+                    file.createNewFile();
+                }
                 fileMap.put(name, file);
             }
             catch(IOException e) {

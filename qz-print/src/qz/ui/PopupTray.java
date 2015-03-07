@@ -186,11 +186,11 @@ public class PopupTray extends JPopupMenu {
      * bold; may be <code>null</code>
      * @param text the text displayed for the particular message; may be
      * <code>null</code>
-     * @param messageType an enum indicating the message type, shouldn't be 
+     * @param level The Logger message severity, shouldn't be
      * <code>null</code>
      */
-    public void displayMessage(String caption, String text, TrayIcon.MessageType messageType) {
-        trayIcon.displayMessage(caption, text, messageType);
+    public void displayMessage(String caption, String text, Level level) {
+        trayIcon.displayMessage(caption, text, convert(level));
     }
     
     
@@ -230,5 +230,16 @@ public class PopupTray extends JPopupMenu {
                     "System tray is not supported on this platform");
             return null;
         }
+    }
+
+    public static TrayIcon.MessageType convert(Level level)  {
+       if (level.equals(Level.SEVERE)) {
+           return TrayIcon.MessageType.ERROR;
+       } else if (level.equals(Level.WARNING)) {
+           return TrayIcon.MessageType.WARNING;
+       } else if (level.equals(Level.INFO)) {
+           return TrayIcon.MessageType.INFO;
+       }
+       return TrayIcon.MessageType.NONE;
     }
 }

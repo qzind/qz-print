@@ -51,7 +51,7 @@ public class LinkLabel extends JLabel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().open(filePath.getParentFile());
+                    Desktop.getDesktop().open(filePath.isDirectory() ? filePath : filePath.getParentFile());
                 } catch (IOException ex) {
                     LogIt.log(ex);
                 }

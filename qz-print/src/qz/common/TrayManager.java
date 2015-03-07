@@ -34,15 +34,12 @@ import qz.utils.UbuntuUtilities;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.*;
 
 /**
  * Manages the icons and actions associated with the TrayIcon
@@ -64,6 +61,9 @@ public class TrayManager {
     private LogDialog logDialog;
     private SiteManagerDialog sitesDialog;
 
+    // Dedicated log handler for web socket activity
+    private final Logger trayLogger;
+
     // The name this UI component will use, i.e "QZ Print 1.9.0"
     private final String name;
 
@@ -80,8 +80,13 @@ public class TrayManager {
      * Create a AutoHideJSystemTray with the specified name/text
      */
     public TrayManager() {
-        this.name = Constants.ABOUT_TITLE + " " + Constants.VERSION;
-        this.port = -1;
+        name = Constants.ABOUT_TITLE + " " + Constants.VERSION;
+        port = -1;
+
+        // Setup the web socket log file writer
+        trayLogger = Logger.getLogger(TrayManager.class.getName());
+        addLogHandler(trayLogger);
+
         // Setup the shortcut name so that the UI components can use it
         shortcutCreator = ShortcutUtilities.getSystemShortcutCreator();
         shortcutCreator.setShortcutName(Constants.ABOUT_TITLE + " Service");
@@ -103,7 +108,7 @@ public class TrayManager {
         gatewayDialog = new GatewayDialog(null, "Action Required", iconCache);
 
         addMenuItems(tray);
-        //tray.displayMessage(name, name + " is running.", TrayIcon.MessageType.INFO);
+        //tray.displayMessage(name, name + " is running.", Level.INFO);
 
         tray.getTrayIcon().addActionListener(new ActionListener() {
             @Override
@@ -285,10 +290,10 @@ public class TrayManager {
             // Remove shortcut entry
             if (showConfirmDialog("Remove " + name + " from " + toggleType + "?")) {
                 if (!shortcutCreator.removeShortcut(toggleType)) {
-                    tray.displayMessage(name, "Error removing " + toggleType + " entry", TrayIcon.MessageType.ERROR);
+                    tray.displayMessage(name, "Error removing " + toggleType + " entry", Level.SEVERE);
                     checkBoxState = true;   // Set our checkbox back to true
                 } else {
-                    tray.displayMessage(name, "Successfully removed " + toggleType + " entry", TrayIcon.MessageType.INFO);
+                    tray.displayMessage(name, "Successfully removed " + toggleType + " entry", Level.INFO);
                 }
             } else {
                 checkBoxState = true;   // Set our checkbox back to true
@@ -296,10 +301,10 @@ public class TrayManager {
         } else {
             // Add shortcut entry
             if (!shortcutCreator.createShortcut(toggleType)) {
-                tray.displayMessage(name, "Error creating " + toggleType + " entry", TrayIcon.MessageType.ERROR);
+                tray.displayMessage(name, "Error creating " + toggleType + " entry", Level.SEVERE);
                 checkBoxState = false;   // Set our checkbox back to false
             } else {
-                tray.displayMessage(name, "Successfully added " + toggleType + " entry", TrayIcon.MessageType.INFO);
+                tray.displayMessage(name, "Successfully added " + toggleType + " entry", Level.INFO);
             }
         }
 
@@ -329,12 +334,12 @@ public class TrayManager {
 
     public boolean showGatewayDialog(Certificate cert) {
         if (gatewayDialog.prompt("%s wants to access local resources", cert)) {
-            printToLog("Allowed " + cert.getCommonName() + " to access local resources", TrayIcon.MessageType.INFO);
+            trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
             if (gatewayDialog.isPersistent()) {
                 whiteList(cert);
             }
         } else {
-            printToLog("Blocked " + cert.getCommonName() + " from accessing local resources", TrayIcon.MessageType.INFO);
+            trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from accessing local resources");
             if (gatewayDialog.isPersistent()) {
                 blackList(cert);
             }
@@ -345,12 +350,12 @@ public class TrayManager {
 
     public boolean showPrintDialog(Certificate cert, String printer) {
         if (gatewayDialog.prompt("%s wants to print to " + printer, cert)) {
-            printToLog("Allowed " + cert.getCommonName() + " to print to " + printer, TrayIcon.MessageType.INFO);
+            trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to print to " + printer);
             if (gatewayDialog.isPersistent()) {
                 whiteList(cert);
             }
         } else {
-            printToLog("Blocked " + cert.getCommonName() + " from printing to " + printer, TrayIcon.MessageType.INFO);
+            trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from printing to " + printer);
             if (gatewayDialog.isPersistent()) {
                 blackList(cert);
             }
@@ -415,7 +420,7 @@ public class TrayManager {
      * Thread safe method for setting the warning status message
      */
     public void displayInfoMessage(String text) {
-        displayMessage(name, text, TrayIcon.MessageType.INFO);
+        displayMessage(name, text, Level.INFO);
     }
 
     /**
@@ -429,7 +434,7 @@ public class TrayManager {
      * Thread safe method for setting the error status message
      */
     public void displayErrorMessage(String text) {
-        displayMessage(name, text, TrayIcon.MessageType.ERROR);
+        displayMessage(name, text, Level.SEVERE);
     }
 
     /**
@@ -443,7 +448,7 @@ public class TrayManager {
      * Thread safe method for setting the warning status message
      */
     public void displayWarningMessage(String text) {
-        displayMessage(name, text, TrayIcon.MessageType.WARNING);
+        displayMessage(name, text, Level.WARNING);
     }
 
 
@@ -473,22 +478,35 @@ public class TrayManager {
      *
      * @param caption     The title of the tray message
      * @param text        The text body of the tray message
-     * @param messageType The message type: TrayIcon.MessageType.INFO, .WARN, .ERROR
+     * @param level The message type: Level.INFO, .WARN, .SEVERE
      */
-    private void displayMessage(final String caption, final String text, final TrayIcon.MessageType messageType) {
+    private void displayMessage(final String caption, final String text, final Level level) {
         if (tray != null) {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    tray.displayMessage(caption, text, messageType);
-                    printToLog(text, messageType);
+                    tray.displayMessage(caption, text, level);
+                    trayLogger.log(Level.INFO, text);
                 }
             }));
         }
     }
 
-    public void printToLog(String message, TrayIcon.MessageType type) {
-        FileUtilities.printLineToFile(Constants.LOG_FILE, String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s", type, new Date(), message));
+    public void addLogHandler(Logger logger) {
+        try {
+            File logFile = FileUtilities.getFile(Constants.LOG_FILE, false);
+            String ext = logFile.getName().substring(logFile.getName().lastIndexOf('.'));
+            FileHandler logHandler = new FileHandler(logFile.getPath().replace(ext, "%g" + ext), Constants.LOG_SIZE, Constants.LOG_ROTATIONS, true);
+            logHandler.setFormatter(new Formatter() {
+                @Override
+                public String format(LogRecord logRecord) {
+                    return String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s\r\n", logRecord.getLevel().toString(), new Date(), logRecord.getMessage());
+                }
+            });
+            logger.addHandler(logHandler);
+        } catch (IOException logException) {
+            LogIt.log(Level.WARNING, String.format("Unable to open file for writing: %s", Constants.LOG_FILE));
+        }
     }
 
 }
