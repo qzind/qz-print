@@ -21,12 +21,13 @@
  */
 package qz.deploy;
 
+import qz.utils.ShellUtilities;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.logging.Level;
-import qz.utils.ShellUtilities;
 
 /**
  *
@@ -106,9 +107,9 @@ public class MacShortcut extends ShortcutUtilities {
     }
 
     /**
-     * Determines if the specified file is a symbolic link. 
+     * Determines if the specified file is a symbolic link.
      * @param filePath path of file to check for symbolic link
-     * @return true if a symbolic link is found 
+     * @return true if a symbolic link is found
      */
     public static boolean isSymlink(String filePath) {
         log.log(Level.INFO, "Verifying symbolic link: {0}", filePath);

@@ -22,7 +22,9 @@
 package qz;
 
 import netscape.javascript.JSException;
-import qz.common.*;
+import qz.common.Constants;
+import qz.common.LogIt;
+import qz.common.SerialIO;
 import qz.exception.SerialException;
 import qz.printer.PaperFormat;
 

@@ -22,15 +22,12 @@
 
 package qz.ui;
 
+import javax.swing.*;
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JMenu;
-import javax.swing.JMenuItem;
-import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
 
 /**
  * Pop-up Menu which auto-hides after a certain timeout
@@ -39,16 +36,16 @@ import javax.swing.UIManager;
 public class AutoHidePopupTray extends PopupTray {
     // The timeout in milliseconds before this item is hidden
     private final int timeout;
-    
+
     // Attached to all menu items, needed for detecting mouse hover
     private final MouseListener globalMouseListener;
-    
+
     // Stores the current mouse hover status
     private boolean mouseOver;
-    
+
     // Notifies the "hide listener thread" to terminate
     private boolean threadActive;
-            
+
     /**
      * Default constructor
      * @param timeout The amount of time before this menu hides itself
@@ -72,7 +69,7 @@ public class AutoHidePopupTray extends PopupTray {
             stopHideListenerThreads();
         }
     }
-    
+
     /**
      * Sets a flag indicating whether or not the mouse is currently over the menu
      * @param mouseOver whether or not the mouse is currently over the menu
@@ -80,7 +77,7 @@ public class AutoHidePopupTray extends PopupTray {
     private void setMouseOver(boolean mouseOver) {
         this.mouseOver = mouseOver;
     }
-    
+
     /**
      * Returns whether or not the mouse is currently over the menu
      * @return whether or not the mouse is currently over the menu
@@ -88,10 +85,10 @@ public class AutoHidePopupTray extends PopupTray {
     private boolean getMouseOver() {
         return mouseOver;
     }
-    
-   
+
+
     /**
-     * Adds a specified JMenuItem and also attaches a mouse listener which 
+     * Adds a specified JMenuItem and also attaches a mouse listener which
      * is used to detect focus
      * @param menuItem The MenuItem to add
      * @return The MenuItem argument
@@ -102,7 +99,7 @@ public class AutoHidePopupTray extends PopupTray {
         recurseSubMenuItems(menuItem);
         return super.add(menuItem);
     }
-    
+
     public void recurseSubMenuItems(Component c) {
         if (c instanceof JMenu) {
             for (Component component : ((JMenu)c).getMenuComponents()) {
@@ -113,7 +110,7 @@ public class AutoHidePopupTray extends PopupTray {
     }
 
     /**
-     * Adds a specified Component and also attaches a mouse listener which 
+     * Adds a specified Component and also attaches a mouse listener which
      * is used to detect focus
      * @param comp The Component to add
      * @return The Component argument
@@ -123,8 +120,8 @@ public class AutoHidePopupTray extends PopupTray {
         if (comp != null) { comp.addMouseListener(globalMouseListener); }
         return super.add(comp);
     }
-    
-    
+
+
     /**
      * Creates a single mouse listener which all JMenuItems will share
      * @return A new MouseListener object
@@ -138,24 +135,24 @@ public class AutoHidePopupTray extends PopupTray {
             public void mouseExited(MouseEvent e) { setMouseOver(false); }
         };
     }
-    
+
     /**
      * Tells all internal "hide listener threads" to stop
      */
     private void stopHideListenerThreads() {
         threadActive = false;
     }
-    
-    
-    
+
+
+
     /**
      * Creates a new thread which hides this component after a specified timeout value
      * Self-aware of mouse position, this will only be hidden if the mouse isn't
      * currently over the component.
-     * 
-     * Since mouse position outside of a pop-up is impossible to determine on a 
+     *
+     * Since mouse position outside of a pop-up is impossible to determine on a
      * system tray, we use the JMenuItem's enter/exit to set the hide flag instead
-     * @param timeout The timeout in milliseconds before this component is hidden 
+     * @param timeout The timeout in milliseconds before this component is hidden
      */
     private void createHideListenerThread(final int timeout) {
         threadActive = true;
@@ -184,7 +181,7 @@ public class AutoHidePopupTray extends PopupTray {
             }
         }).start();
     }
-    
+
     /**
      * Attempts to set the Java Look & Feel to that which matches the Operating
      * System

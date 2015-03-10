@@ -22,10 +22,11 @@
 
 package qz.utils;
 
-import java.awt.Color;
-import java.util.logging.Logger;
 import qz.deploy.ShortcutUtilities;
 import qz.ui.IconCache;
+
+import java.awt.Color;
+import java.util.logging.Logger;
 
 /**
  * Utility class for Ubuntu OS specific functions.
@@ -34,28 +35,28 @@ import qz.ui.IconCache;
 public class UbuntuUtilities {
     // System logger
     static final Logger log = Logger.getLogger(ShortcutUtilities.class.getName());
-    
+
     static Color trayColor;
 
-    
+
     /**
      * Attempts to get the SystemTray background color from the Ubuntu OS by
-     * first parsing the theme name registered with GTK, and then parsing the 
-     * <code>dark_bg_color</code> value from the GTK stylesheet. 
+     * first parsing the theme name registered with GTK, and then parsing the
+     * <code>dark_bg_color</code> value from the GTK stylesheet.
      * @return The Ubuntu system tray background color, or <code>Color.WHITE</code>
      * if it cannot be determined
      */
     public static Color getTrayColor() {
         if (trayColor == null) {
-            trayColor = ColorUtilities.DEFAULT_COLOR; 
-            
+            trayColor = ColorUtilities.DEFAULT_COLOR;
+
             // Ubuntu 12.04 LTS
             String themeName = getThemeName("Ambiance");
             String stdout = ShellUtilities.execute(
                     new String[]{
                         "grep", "dark_bg_color",
                         "/usr/share/themes/" + themeName + "/gtk-3.0/gtk.css"
-                    }, 
+                    },
                     new String[]{
                         "dark_bg_color"
                     });
@@ -66,7 +67,7 @@ public class UbuntuUtilities {
                     new String[]{
                         "grep", "dark_bg_color",
                         "/usr/share/themes/" + themeName + "/gtk-3.0/gtk-main.css"
-                    }, 
+                    },
                     new String[]{
                         "dark_bg_color"
                 });
@@ -83,16 +84,16 @@ public class UbuntuUtilities {
 
     /**
      * Attempts to retrieve the Ubuntu theme name, i.e. "Ambience", "Radiance", etc
-     * @return the current running theme, or an empty String if it could not be 
+     * @return the current running theme, or an empty String if it could not be
      * determined.
      */
     public static String getThemeName(String defaultTheme) {
         String themeName = ShellUtilities.execute(
                 new String[]{
-                    "gconftool-2", 
-                    "--get", 
+                    "gconftool-2",
+                    "--get",
                     "/desktop/gnome/shell/windows/theme"
-                }, 
+                },
                 null
         );
         return themeName.isEmpty() ? defaultTheme : themeName;

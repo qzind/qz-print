@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
 import java.util.logging.Level;
+
 import static qz.utils.UbuntuUtilities.log;
 
 /**
@@ -36,7 +37,7 @@ import static qz.utils.UbuntuUtilities.log;
 public class ShellUtilities {
 
     /**
-     * Executes a synchronous shell command and returns true if the 
+     * Executes a synchronous shell command and returns true if the
      * <code>Process.exitValue()</code> is <code>0</code>.
      * @param commandArray array of command pieces to supply to the shell environment to e executed as a single command
      * @return <code>true</code> if <code>Process.exitValue()</code> is <code>0</code>, otherwise
@@ -112,13 +113,13 @@ public class ShellUtilities {
     }
 
     /**
-     * Checks that the currently running OS is Apple and executes a native 
-     * AppleScript macro against the OS. Returns true if the 
-     * <code>Process.exitValue()</code> is <code>0</code>. 
+     * Checks that the currently running OS is Apple and executes a native
+     * AppleScript macro against the OS. Returns true if the
+     * <code>Process.exitValue()</code> is <code>0</code>.
      *
      * @param scriptBody AppleScript to execute
-     * @return true if the <code>Process.exitValue()</code> is 
-     * <code>0</code>. 
+     * @return true if the <code>Process.exitValue()</code> is
+     * <code>0</code>.
      */
     public static boolean executeAppleScript(String scriptBody) {
         if (!SystemUtilities.isMac()) {
@@ -127,16 +128,16 @@ public class ShellUtilities {
         }
         return execute(new String[]{"osascript", "-e", scriptBody});
     }
-    
+
    /**
-     * Checks that the currently running OS is Apple and executes a native 
-     * AppleScript macro against the OS. Returns true if the 
+     * Checks that the currently running OS is Apple and executes a native
+     * AppleScript macro against the OS. Returns true if the
      * supplied searchValues are found within the standard output.
      *
      * @param scriptBody AppleScript text to execute
      * @param searchValue1 first value to search for
      * @param searchValue2 second value to search for
-     * @return true if the supplied searchValues are found within the standard 
+     * @return true if the supplied searchValues are found within the standard
      * output.
      */
     public static boolean executeAppleScript(String scriptBody, String searchValue1, String searchValue2) {
@@ -145,10 +146,10 @@ public class ShellUtilities {
             return false;
         }
         // Empty string returned by execute(...) means the values weren't found
-        return !execute(new String[]{"osascript", "-e", scriptBody}, 
+        return !execute(new String[]{"osascript", "-e", scriptBody},
                 new String[] {searchValue1, searchValue2}).isEmpty();
     }
-    
+
     /**
      * Executes a native Registry delete/query command against the OS
      * @param keyPath The path to the containing registry key
@@ -159,7 +160,7 @@ public class ShellUtilities {
     public static boolean executeRegScript(String keyPath, String function, String value) {
         return executeRegScript(keyPath, function, value, null);
     }
-    
+
     /**
      * Executes a native Registry add/delete/query command against the OS
      * @param keyPath The path to the containing registry key

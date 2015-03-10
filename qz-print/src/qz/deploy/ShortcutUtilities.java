@@ -22,6 +22,8 @@
 
 package qz.deploy;
 
+import qz.utils.SystemUtilities;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -29,7 +31,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import qz.utils.SystemUtilities;
 
 /**
  * Utility class for creating, querying and removing startup shortcuts and
@@ -59,14 +60,14 @@ public abstract class ShortcutUtilities {
      * @return Returns <code>true</code> if the startup item was created
      */
     public abstract boolean createStartupShortcut();
-    
+
     /**
      * Test whether or not a startup shortcut for the specified shortcutName
      * exists on this system
      * @return true if a startup shortcut exists on this system, false otherwise
      */
     public abstract boolean hasStartupShortcut();
-    
+
      /**
      * Test whether or not a desktop shortcut for the specified shortcutName
      * exists on this system
@@ -112,10 +113,10 @@ public abstract class ShortcutUtilities {
                 return !hasShortcut(ToggleType.DESKTOP) ? createDesktopShortcut() : true;
             default:
                 log.log(Level.WARNING, "Sorry, creating {0} shortcuts are not yet supported", toggleType);
-                return false;            
+                return false;
         }
     }
-    
+
     /**
      * Single function to be used to dynamically check if a shortcut already exists
      * @param toggleType Shortcut type, i.e. <code>ToggleType.STARTUP</code> or <code>ToggleType.DESKTOP</code>
@@ -133,15 +134,15 @@ public abstract class ShortcutUtilities {
             default:
                 log.log(Level.WARNING, "Sorry, checking for {0} shortcuts are not yet supported", toggleType);
         }
-        
+
         if (hasShortcut) {
-            log.log(Level.INFO, "The {0} shortcut for {1} ({2}) exists", 
+            log.log(Level.INFO, "The {0} shortcut for {1} ({2}) exists",
                     new Object[]{ toggleType, getShortcutName(), getJarPath() });
         }
-        
+
         return hasShortcut;
     }
-    
+
     /**
      * Single function to be used to dynamically remove various shortcut types
      * @param toggleType ToggleType.STARTUP or ToggleType.DESKTOP
@@ -155,7 +156,7 @@ public abstract class ShortcutUtilities {
                 return hasShortcut(ToggleType.DESKTOP) ? removeDesktopShortcut() : true;
             default:
                 log.log(Level.WARNING, "Sorry, removing {0} shortcuts are not yet supported", toggleType);
-                return false;            
+                return false;
         }
     }
 
@@ -179,12 +180,12 @@ public abstract class ShortcutUtilities {
         lastSlash = lastSlash < 0 ? filePath.lastIndexOf('\\') : lastSlash;
         return lastSlash < 0 ? "" : filePath.substring(0, lastSlash);
     }
-    
+
     public String getParentDirectory() {
         return getParentDirectory(getJarPath());
     }
-    
-    
+
+
     public void setShortcutName(String shortcutName) {
         if (shortcutName != null) {
             this.shortcutName = shortcutName;
@@ -224,12 +225,12 @@ public abstract class ShortcutUtilities {
             f.mkdirs();
             return f.exists();
         } catch (SecurityException e) {
-            log.log(Level.SEVERE, "Error while creating parent directories for: {0} {1}", 
+            log.log(Level.SEVERE, "Error while creating parent directories for: {0} {1}",
                     new Object[]{filePath, e.getLocalizedMessage()});
         }
         return false;
     }
-    
+
     /**
      * Returns whether or not a file exists
      * @param filePath The full path to a file
@@ -239,7 +240,7 @@ public abstract class ShortcutUtilities {
         try {
             return new File(filePath).exists();
         } catch (SecurityException e) {
-            log.log(Level.WARNING, "SecurityException while checking for file {0}{1}", 
+            log.log(Level.WARNING, "SecurityException while checking for file {0}{1}",
                     new Object[]{filePath, e.getLocalizedMessage()});
             return false;
         }
@@ -256,7 +257,7 @@ public abstract class ShortcutUtilities {
         try {
             return f.delete();
         } catch (SecurityException e) {
-            log.log(Level.SEVERE, "Error while deleting: {0} {1}", 
+            log.log(Level.SEVERE, "Error while deleting: {0} {1}",
                     new Object[]{filePath, e.getLocalizedMessage()});
         }
         return false;
@@ -272,7 +273,7 @@ public abstract class ShortcutUtilities {
      * @return Whether or not the write was successful
      */
     static final boolean writeArrayToFile(String filePath, String[] array) {
-        log.log(Level.INFO, "Writing array contents to file: {0}: \n{1}", 
+        log.log(Level.INFO, "Writing array contents to file: {0}: \n{1}",
                 new Object[]{filePath, Arrays.toString(array)});
         BufferedWriter writer = null;
         boolean returnVal = false;
@@ -283,7 +284,7 @@ public abstract class ShortcutUtilities {
             }
             returnVal = true;
         } catch (IOException e) {
-            log.log(Level.SEVERE, "Could not write file: {0}{1}", 
+            log.log(Level.SEVERE, "Could not write file: {0}{1}",
                     new Object[]{filePath, e.getLocalizedMessage()});
         } finally {
             try {
@@ -311,7 +312,7 @@ public abstract class ShortcutUtilities {
                 f.setExecutable(true);
                 return true;
             } catch (SecurityException e) {
-                log.log(Level.SEVERE, "Unable to set file as executable: {0} {1}", 
+                log.log(Level.SEVERE, "Unable to set file as executable: {0} {1}",
                         new Object[]{filePath, e.getLocalizedMessage()});
             }
         } else {
@@ -319,7 +320,7 @@ public abstract class ShortcutUtilities {
         }
         return false;
     }
-    
+
     /**
      * Determines the currently running Jar's absolute path on the local filesystem
      * @return A String value representing the absolute path to the currently running
@@ -334,7 +335,7 @@ public abstract class ShortcutUtilities {
         }
         return null;
     }
-    
+
     /**
      * Returns the jar which we will create a shortcut for
      * @return The path to the jar path which has been set
@@ -345,7 +346,7 @@ public abstract class ShortcutUtilities {
         }
         return jarPath;
     }
-    
+
     /**
      * Set the jar path for which we will create a shortcut for
      * @param jarPath The full file path of the jar file
@@ -353,7 +354,7 @@ public abstract class ShortcutUtilities {
     public void setJarPath(String jarPath) {
         this.jarPath = jarPath;
     }
-    
+
     /**
      * Small Enum for differentiating "desktop" and "startup"
      */
@@ -367,7 +368,7 @@ public abstract class ShortcutUtilities {
         public String toString() {
             return getName();
         }
-        
+
         /**
          * Returns the English description of this object
          * @return The string "startup" or "desktop"

@@ -25,7 +25,6 @@ package qz.deploy;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.logging.Level;
-import static qz.deploy.ShortcutUtilities.log;
 
 /**
  *
@@ -44,17 +43,17 @@ public class LinuxShortcut extends ShortcutUtilities {
 
     @Override
     public boolean removeStartupShortcut() {
-        return deleteFile(System.getProperty("user.home") + 
+        return deleteFile(System.getProperty("user.home") +
                 "/.config/autostart/" + getShortcutName() + ".desktop");
     }
 
     @Override
     public boolean removeDesktopShortcut() {
-        return deleteFile(System.getProperty("user.home") + "/Desktop/" + 
+        return deleteFile(System.getProperty("user.home") + "/Desktop/" +
                 getShortcutName() + ".desktop");
     }
-    
-    
+
+
     @Override
     public boolean hasStartupShortcut() {
         return fileExists(System.getProperty("user.home") + "/.config/autostart/" +
@@ -63,22 +62,22 @@ public class LinuxShortcut extends ShortcutUtilities {
 
     @Override
     public boolean hasDesktopShortcut() {
-        return fileExists(System.getProperty("user.home") + "/Desktop/" + 
+        return fileExists(System.getProperty("user.home") + "/Desktop/" +
                 getShortcutName() + ".desktop");
     }
-    
+
     @Override
-    public String getJarPath() {  
+    public String getJarPath() {
         String jarPath = super.getJarPath();
         try {
             jarPath = URLDecoder.decode(jarPath, "UTF-8");
         } catch (UnsupportedEncodingException e) {
-            log.log(Level.WARNING, "Error decoding URL: {0}{1}", 
+            log.log(Level.WARNING, "Error decoding URL: {0}{1}",
                     new Object[]{jarPath, e.getLocalizedMessage()});
         }
         return jarPath;
     }
-    
+
     /**
      * Creates a Linux ".desktop" shortcut
      *

@@ -13,7 +13,6 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
 
 /**
  * Created by Tres on 2/26/2015.
