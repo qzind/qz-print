@@ -12,7 +12,6 @@ import qz.common.Constants;
 import qz.common.LogIt;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
-import sun.security.provider.X509Factory;
 
 import javax.security.cert.CertificateParsingException;
 import java.io.*;
@@ -90,14 +89,14 @@ public class Certificate {
 
             String[] split = in.split("--START INTERMEDIATE CERT--");
 
-            byte[] serverCertificate = Base64.decode(split[0].replaceAll(X509Factory.BEGIN_CERT, "").replaceAll(X509Factory.END_CERT, ""));
+            byte[] serverCertificate = Base64.decode(split[0].replaceAll(X509Constants.BEGIN_CERT, "").replaceAll(X509Constants.END_CERT, ""));
             //Strip beginning and end
 
             theCertificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(serverCertificate));
             //Generate cert
 
             if (split.length == 2) {
-                byte[] intermediateCertificate = Base64.decode(split[1].replaceAll(X509Factory.BEGIN_CERT, "").replaceAll(X509Factory.END_CERT, ""));
+                byte[] intermediateCertificate = Base64.decode(split[1].replaceAll(X509Constants.BEGIN_CERT, "").replaceAll(X509Constants.END_CERT, ""));
                 theIntermediateCertificate = (X509Certificate) cf.generateCertificate(new ByteArrayInputStream(intermediateCertificate));
             } else {
                 theIntermediateCertificate = null; //Self-signed
