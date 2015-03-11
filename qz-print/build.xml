@@ -29,9 +29,12 @@
 
     <target name="compile" depends="init">
         <mkdir dir="${build.dir}"/>
-        <javac destdir="${build.dir}" source="${javac.source}" target="${javac.target}">
+        <javac destdir="${build.dir}" source="${javac.source}" target="${javac.target}" includeantruntime="false">
             <src path="${src.dir}"/>
             <classpath>
+                <path id="plugin.override">
+                    <pathelement path="${java.home}/lib/plugin.jar" />
+                </path>
                 <fileset dir="${lib.dir}">
                     <include name="**/*.jar"/>
                 </fileset>
@@ -39,6 +42,7 @@
                     <include name="**/*.jar"/>
                 </fileset>
             </classpath>
+            <compilerarg value="-Xlint:options"/>
         </javac>
 
         <!-- Include non-class files from src in build directory -->
