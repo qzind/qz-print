@@ -173,23 +173,20 @@
 	<!-- Linux -->
 	<target name="nsisbin-1" depends="init" unless="env.windir">
 		<property name="nsisbin" value="makensis"/>
-		<echo>Using ${nsisbin}</echo>
 	</target>
 	
 	<!-- Win32 -->
 	<target name="nsisbin-2" depends="init" unless="env.ProgramFiles(x86)">
 		<property name="nsisexe" value="${env.ProgramFiles}\NSIS\makensis.exe"/>
-		<echo>Using ${nsisbin}</echo>
 	</target>
 	
 	<!-- Win64 -->
 	<target name="nsisbin-3" depends="init" if="env.ProgramFiles(x86)">
 		<property name="nsisbin" value="${env.ProgramFiles(x86)}\NSIS\makensis.exe"/>
-		<echo>Using ${nsisbin}</echo>
 	</target>
 
     <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3">
-        <echo>Creating NSIS installer</echo>
+        <echo>Creating installer using ${nsisbin}</echo>
         <copy file="${basedir}/${build.socket.name}.nsi.in" tofile="${basedir}/${build.socket.name}.nsi" >
             <filterchain>
                 <expandproperties/>
