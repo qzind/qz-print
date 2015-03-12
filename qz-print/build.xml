@@ -19,7 +19,7 @@
         <!-- Please leave this value the netbeans default as a fallback. -->
         <property file="ant/private/private.properties"/>
 
-        <echo message="Building ${build.applet.name} / ${build.socket.name} ${build.version} using JDK ${ant.java.version}" />
+        <echo message="Building ${build.applet.name} / ${build.socket.name} using JDK ${ant.java.version}" />
     </target>
 
     <target name="clean" depends="init">
@@ -133,7 +133,18 @@
                 />
     </target>
 
-    <target name="include-assets" depends="init" >
+    <!-- Get version information from JAR -->
+    <target name="get-version" depends="build-jar">
+        <property file="ant/project.properties"/>
+        <java jar="${dist.applet.jar}" fork="true" outputproperty="build.version">
+            <arg value="--version"/>
+        </java>
+        <!-- Fallback to a bogus version number if the above command failed -->
+        <property name="build.version" value="0.0.0" />
+        <echo>Version ${build.version}</echo>
+    </target>
+
+    <target name="include-assets" depends="init,get-version" >
         <echo>Copying resource files to output</echo>
 
         <copy todir="${dist.applet.dir}/${asset.dir}">
@@ -162,11 +173,12 @@
         <copy todir="${dist.dir}">
             <fileset file="readme.txt"/>
             <filterset>
+                <!-- Set by get-version task -->
                 <filter token="VERSION" value="${build.version}"/>
             </filterset>
         </copy>
     </target>
-	
+
 	<!-- Find makensis executable -->
 	<property environment="env"/>
 	
@@ -177,15 +189,15 @@
 	
 	<!-- Win32 -->
 	<target name="nsisbin-2" depends="init" unless="env.ProgramFiles(x86)">
-		<property name="nsisexe" value="${env.ProgramFiles}\NSIS\makensis.exe"/>
+		<property name="nsisexe" value="${env.ProgramFiles}/NSIS/makensis.exe"/>
 	</target>
 	
 	<!-- Win64 -->
 	<target name="nsisbin-3" depends="init" if="env.ProgramFiles(x86)">
-		<property name="nsisbin" value="${env.ProgramFiles(x86)}\NSIS\makensis.exe"/>
+		<property name="nsisbin" value="${env.ProgramFiles(x86)}/NSIS/makensis.exe"/>
 	</target>
 
-    <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3">
+    <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3,get-version">
         <echo>Creating installer using ${nsisbin}</echo>
         <copy file="${basedir}/${build.socket.name}.nsi.in" tofile="${basedir}/${build.socket.name}.nsi" >
             <filterchain>
@@ -194,7 +206,7 @@
         </copy>
 
         <exec executable="${nsisbin}" failonerror="true" >
-            <arg value="${basedir}\${build.socket.name}.nsi"/>
+            <arg value="${basedir}/${build.socket.name}.nsi"/>
         </exec>
     </target>
 </project>

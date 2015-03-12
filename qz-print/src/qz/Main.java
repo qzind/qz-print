@@ -24,6 +24,8 @@
 
 package qz;
 
+import qz.common.Constants;
+
 import javax.swing.*;
 
 /**
@@ -33,6 +35,13 @@ import javax.swing.*;
 public class Main {
 
     public static void main(String[] args) {
+        for (String s : args) {
+            // Print version information and exit
+            if (s.equals("-v") || s.equals("--version")) {
+                System.out.println(Constants.VERSION);
+                System.exit(0);
+            }
+        }
         JOptionPane.showMessageDialog(null, "This program cannot be run interactively.  Please visit: http://qzindustries.com", "Error", JOptionPane.ERROR_MESSAGE);
         System.exit(0);
     }
