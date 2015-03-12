@@ -78,12 +78,8 @@ function signRequest(toSign, callback) {
     });
     */
 
-    $.ajax({
-        method: 'GET',
-        // For testing purposes only, change port as needed
-        url: 'http://localhost:63342/qz-print/php/signRequestExample.php?request=' + toSign,
-        success: callback
-    });
+    //Send unsigned messages to socket - users will then have to Allow/Deny each print request
+    callback(toSign);
 }
 
 

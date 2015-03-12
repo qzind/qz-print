@@ -50,6 +50,20 @@ public class PrintSocket {
 
     private final Logger log = Logger.getLogger(PrintSocket.class.getName());
 
+    // We are going to pass this for all unsigned requests
+    // This way, paid or not, users will have to Allow/Deny all unsigned requests, encouraging security
+    public static final Certificate UNSIGNED;
+    static {
+        HashMap<String,String> map = new HashMap<String,String>();
+        map.put("fingerprint", "UNSIGNED REQUEST");
+        map.put("commonName", "An anonymous request");
+        map.put("organization", "Unknown");
+        map.put("validFrom", "0000-00-00 00:00:00");
+        map.put("validTo", "0000-00-00 00:00:00");
+        map.put("valid", "false");
+        UNSIGNED = Certificate.loadCertificate(map);
+    }
+
     // Each connection to the websocket has its own instance of QZ to avoid conflicting print buffers
     private static HashMap<Integer,PrintFunction> connections = new HashMap<Integer,PrintFunction>();
     private static HashMap<Integer,Certificate> certificates = new HashMap<Integer,Certificate>();
@@ -117,7 +131,7 @@ public class PrintSocket {
                     if (cert.isSignatureValid(signature, json)) {
                         processMessage(session, new JSONObject(json), cert);
                     } else {
-                        sendError(session, "Invalid Signature");
+                        processMessage(session, new JSONObject(json), UNSIGNED);
                     }
                 } else {
                     // No certificate - likely a setup call, pass null

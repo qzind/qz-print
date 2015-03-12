@@ -4,6 +4,7 @@ import qz.auth.Certificate;
 import qz.common.Constants;
 import qz.common.LogIt;
 import qz.utils.FileUtilities;
+import qz.ws.PrintSocket;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -276,7 +277,8 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
                         dataMap.put(Certificate.saveFields[i], data[i]);
                     }
                     Certificate certificate = Certificate.loadCertificate(dataMap);
-                    if (!certList.contains(certificate)) {
+                    // Don't include the unsigned certificate if we are blocking it, there is a menu option instead
+                    if (!certList.contains(certificate) && !PrintSocket.UNSIGNED.equals(certificate)) {
                         certList.add(certificate);
                     }
                 }

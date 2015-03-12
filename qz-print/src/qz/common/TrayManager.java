@@ -30,6 +30,7 @@ import qz.ui.*;
 import qz.utils.FileUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
+import qz.ws.PrintSocket;
 
 import javax.swing.*;
 import java.awt.*;
@@ -62,6 +63,9 @@ public class TrayManager {
     private AboutDialog aboutDialog;
     private LogDialog logDialog;
     private SiteManagerDialog sitesDialog;
+
+    // Need a class reference to this so we can set it from the request dialog window
+    private JCheckBoxMenuItem anonymousItem;
 
     // Dedicated log handler for web socket activity
     private final Logger trayLogger;
@@ -148,6 +152,11 @@ public class TrayManager {
         sitesItem.addActionListener(savedListener);
         sitesDialog = new SiteManagerDialog(sitesItem, iconCache);
 
+        anonymousItem = new JCheckBoxMenuItem("Block Anonymous Requests");
+        anonymousItem.setMnemonic(KeyEvent.VK_K);
+        anonymousItem.setState(PrintSocket.UNSIGNED.isBlocked());
+        anonymousItem.addActionListener(anonymousListener);
+
         JMenuItem logItem = new JMenuItem("View Logs...", iconCache.getIcon(IconCache.Icon.LOG_ICON));
         logItem.setMnemonic(KeyEvent.VK_L);
         logItem.addActionListener(logListener);
@@ -162,6 +171,7 @@ public class TrayManager {
         desktopItem.addActionListener(desktopListener);
 
         advancedMenu.add(sitesItem);
+        advancedMenu.add(anonymousItem);
         advancedMenu.add(logItem);
         advancedMenu.add(new JSeparator());
         advancedMenu.add(openItem);
@@ -219,6 +229,24 @@ public class TrayManager {
     private final ActionListener savedListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             sitesDialog.setVisible(true);
+        }
+    };
+
+    private final ActionListener anonymousListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            boolean checkBoxState = true;
+            if (e.getSource() instanceof JCheckBoxMenuItem) {
+                checkBoxState = ((JCheckBoxMenuItem)e.getSource()).getState();
+            }
+
+            System.out.println("Block unsigned: " + checkBoxState);
+
+            if (checkBoxState) {
+                blackList(PrintSocket.UNSIGNED);
+            } else {
+                FileUtilities.deleteFromFile(Constants.BLOCK_FILE, PrintSocket.UNSIGNED.data());
+            }
         }
     };
 
@@ -359,7 +387,11 @@ public class TrayManager {
         } else {
             trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from printing to " + printer);
             if (gatewayDialog.isPersistent()) {
-                blackList(cert);
+                if (PrintSocket.UNSIGNED.equals(cert)) {
+                    anonymousItem.doClick(); // if always block anonymous requests -> flag menu item
+                } else {
+                    blackList(cert);
+                }
             }
         }
 
@@ -368,7 +400,7 @@ public class TrayManager {
 
     private void whiteList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.data());
-        displayInfoMessage(String.format(Constants.WHITE_LIST, "\"" + cert.getOrganization() +  "\""));
+        displayInfoMessage(String.format(Constants.WHITE_LIST, "\"" + cert.getOrganization() + "\""));
     }
 
     private void blackList(Certificate cert) {
