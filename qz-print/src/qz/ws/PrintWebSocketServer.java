@@ -38,6 +38,8 @@ import java.util.logging.Logger;
 
 public class PrintWebSocketServer {
 
+    private static final int MAX_MESSAGE_SIZE = 5000000;
+
     private static final Logger log = Logger.getLogger(PrintWebSocketServer.class.getName());
 
     private static final Integer[] ports = new Integer[] { 8181, 8282, 8383, 8484 };
@@ -61,6 +63,7 @@ public class PrintWebSocketServer {
                     @Override
                     public void configure(WebSocketServletFactory factory) {
                         factory.register(PrintSocket.class);
+                        factory.getPolicy().setMaxTextMessageSize(MAX_MESSAGE_SIZE);
                     }
                 };
                 server.setHandler(wsHandler);

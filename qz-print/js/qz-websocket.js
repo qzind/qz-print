@@ -50,19 +50,15 @@ function connectWebsocket(port) {
             }, qzConfig.keepAlive);
         };
 
-        websocket.onclose = function (evt) {
+        websocket.onclose = function (event) {
             if (websocket.valid || qzConfig.portIndex >= qzConfig.ports.length) {
-                document.getElementById("content").style.background = "#A0A0A0";
-                console.log('Close:');
-                console.log(evt);
+                qzSocketClose(event);
             }
         };
 
-        websocket.onerror = function (evt) {
+        websocket.onerror = function (event) {
             if (websocket.valid || qzConfig.portIndex >= qzConfig.ports.length) {
-                document.getElementById("content").style.background = "#F5A9A9";
-                console.log('Error:');
-                console.log(evt);
+                qzSocketError(event);
             }
 
             // Move on to the next port

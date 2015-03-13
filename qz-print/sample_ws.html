@@ -107,6 +107,22 @@ function qzReady() {
     }
 }
 
+function qzSocketError(event) {
+    document.getElementById("content").style.background = "#F5A9A9";
+    console.log('Error:');
+    console.log(event);
+
+    alert("Connection had an error:\n"+ event.reason);
+}
+
+function qzSocketClose(event) {
+    document.getElementById("content").style.background = "#A0A0A0";
+    console.log('Close:');
+    console.log(event);
+
+    alert("Connection was closed:\n"+ event.reason);
+}
+
 /**
  * Returns whether or not the applet is not ready to print.
  * Displays an alert if not ready.
