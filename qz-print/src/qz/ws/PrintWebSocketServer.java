@@ -38,7 +38,7 @@ import java.util.logging.Logger;
 
 public class PrintWebSocketServer {
 
-    private static final int MAX_MESSAGE_SIZE = 5000000;
+    private static final int MAX_MESSAGE_SIZE = Integer.MAX_VALUE;
 
     private static final Logger log = Logger.getLogger(PrintWebSocketServer.class.getName());
 
