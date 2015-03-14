@@ -24,7 +24,7 @@
 
     <target name="clean" depends="init">
         <delete dir="${out.dir}"/>
-        <delete file="${basedir}/${build.socket.name}.nsi"/>
+        <delete file="${build.nsis.nsi}"/>
     </target>
 
     <target name="compile" depends="init">
@@ -199,14 +199,14 @@
 
     <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3,get-version">
         <echo>Creating installer using ${nsisbin}</echo>
-        <copy file="${basedir}/${build.socket.name}.nsi.in" tofile="${basedir}/${build.socket.name}.nsi" >
+        <copy file="${build.nsis.in}" tofile="${build.nsis.nsi}" >
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
 
         <exec executable="${nsisbin}" failonerror="true" >
-            <arg value="${basedir}/${build.socket.name}.nsi"/>
+            <arg value="${build.nsis.nsi}"/>
         </exec>
     </target>
 </project>
