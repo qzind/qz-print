@@ -3,6 +3,7 @@ var qzConfig = {
     preemptive: {isActive:'', getVersion:'', getPrinter:'', getIP:'', getMac:'', getLogPostScriptFeatures:''},
     callbackMap: {
         findPrinter:     'qzDoneFinding',
+        findPrinters:     'qzDoneFinding',
         appendFile:      'qzDoneAppending',
         appendXML:       'qzDoneAppending',
         appendPDF:       'qzDoneAppending',

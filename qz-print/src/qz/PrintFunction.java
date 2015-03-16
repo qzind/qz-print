@@ -516,6 +516,9 @@ public class PrintFunction extends Applet {
         }
     }
 
+    public void findPrinters() {
+        PrintServiceMatcher.getPrinterArray(true);
+    }
 
     public void findPrinter() {
         findPrinter(null);

@@ -301,6 +301,9 @@ public class PrintSocket {
                                 if ("findPrinter".equals(name)) {
                                     log.info("Selected New Printer");
                                     sendNewMethod(session, "getPrinter", qz.getPrinter());
+                                }
+
+                                if ("findPrinter".equals(name) || "findPrinters".equals(name)) {
                                     sendNewMethod(session, "getPrinters", qz.getPrinters().replaceAll("\\\\", "%5C")); //escape all backslashes
                                 }
 
