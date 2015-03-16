@@ -296,13 +296,13 @@ function findPrinter(name) {
 /***************************************************************************
  * Prototype function for listing all printers attached to the system
  * Usage:
- *    qz.findPrinters();
+ *    qz.findPrinter('\\{dummy_text\\}');
  *    window['qzDoneFinding'] = function() { alert(qz.getPrinters()); };
  ***************************************************************************/
 function findPrinters() {
     if (isLoaded()) {
-        // Searches for all locally installed printers
-        qz.findPrinters();
+        // Searches for a locally installed printer with a bogus name
+        qz.findPrinter('\\{bogus_printer\\}');
 
         // Automatically gets called when "qz.findPrinter()" is finished.
         window['qzDoneFinding'] = function() {

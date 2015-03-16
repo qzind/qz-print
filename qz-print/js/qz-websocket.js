@@ -124,6 +124,11 @@ function connectionSuccess(websocket){
                 if (message.result.substring(0, 1) == '[') {
                     message.result = JSON.parse(message.result);
                 }
+
+                //ensure null is read as null
+                if (message.result == "null"){
+                    message.result = null;
+                }
             }
 
             if (message.callback != 'setupMethods' && message.result != undefined && message.result.constructor !== Array) {
