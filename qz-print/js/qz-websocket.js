@@ -86,7 +86,6 @@ function connectionSuccess(websocket){
         if (objMsg.method === 'listMessages'){
             ws.send(msg);
         } else {
-            //TODO - document cert methods that need implemented by user
             signRequest(msg,
                 function (signature) {
                     ws.send(signature + msg);
@@ -208,8 +207,15 @@ function mapMethods(websocket, methods){
                 var cbName = _name +'_callback';
 
                 if ($.isFunction(cb)){
-                    if (cb.name == 'setupMethods'){
-                        cbName = cb.name;
+                    var method = cb.name;
+
+                    // Special case for IE, which does not have function.name property ..
+                    if (method == undefined){
+                        method = cb.toString().match(/^function\s*([^\s(]+)/)[1];
+                    }
+
+                    if (method == 'setupMethods'){
+                        cbName = method;
                     }
 
                     window["qz"][cbName] = cb;
