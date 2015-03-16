@@ -186,7 +186,10 @@ public class GatewayDialog extends JDialog {
             approved = false;
             return false;
         }
-        if (cert.isTrusted() && cert.isSaved()) { return true; }
+        if (cert.isTrusted() && cert.isSaved()) {
+            approved = true;
+            return true;
+        }
 
         setDescription(description);
         setCertificate(cert);
