@@ -142,31 +142,49 @@
         <!-- Fallback to a bogus version number if the above command failed -->
         <property name="build.version" value="0.0.0" />
         <echo>Version ${build.version}</echo>
+        <!-- Calculate installation size -->
+        <length property="build.socket.bytes" mode="all">
+            <fileset dir="${dist.socket.dir}" includes="**/*"/>
+        </length>
+        <script language="javascript">
+            <![CDATA[
+            project.setNewProperty("build.socket.size", Math.round(project.getProperty("build.socket.bytes") / 1024));
+            ]]>
+        </script>
+        <echo>Size: ${build.socket.size} KB</echo>
     </target>
 
     <target name="include-assets" depends="init,get-version" >
         <echo>Copying resource files to output</echo>
 
-        <copy todir="${dist.applet.dir}/${asset.dir}">
-            <fileset dir="${asset.dir}" excludes="**/*.properties"/>
+        <copy todir="${dist.applet.dir}/${demo.dir}/${asset.dir}">
+            <fileset dir="${asset.dir}">
+                <exclude name="**/*.properties"/>
+                <exclude name="**/branding/"/>
+            </fileset>
         </copy>
-        <copy todir="${dist.socket.dir}/${asset.dir}">
-            <fileset dir="${asset.dir}" excludes="**/*.properties"/>
+        <copy todir="${dist.socket.dir}/${demo.dir}/${asset.dir}">
+            <fileset dir="${asset.dir}">
+                <exclude name="**/*.properties"/>
+                <exclude name="**/branding/"/>
+            </fileset>
         </copy>
 
-        <copy todir="${dist.applet.dir}/${js.dir}">
+        <copy todir="${dist.applet.dir}/${demo.dir}/${js.dir}">
             <fileset dir="${js.dir}" excludes="qz-websocket.js"/>
         </copy>
-        <copy todir="${dist.socket.dir}/${js.dir}">
+        <copy todir="${dist.socket.dir}/${demo.dir}/${js.dir}">
             <fileset dir="${js.dir}"/>
         </copy>
 
-        <copy todir="${dist.applet.dir}">
+        <copy todir="${dist.applet.dir}/${demo.dir}">
             <fileset file="sample.html"/>
         </copy>
-        <copy todir="${dist.socket.dir}">
+        <copy todir="${dist.socket.dir}/${demo.dir}">
             <fileset file="sample_ws.html"/>
         </copy>
+
+        <copy file="${build.nsis.branding}/${build.windows.icon}" tofile="${dist.socket.dir}/${build.windows.icon}" />
 
         <copy file="${jnlp.inf.dir}/APPLICATION.JNLP" tofile="${dist.applet.jnlp}" />
 

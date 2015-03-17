@@ -95,7 +95,7 @@ public class TrayManager {
 
         // Setup the shortcut name so that the UI components can use it
         shortcutCreator = ShortcutUtilities.getSystemShortcutCreator();
-        shortcutCreator.setShortcutName(Constants.ABOUT_TITLE + " Service");
+        shortcutCreator.setShortcutName(Constants.ABOUT_TITLE);
 
         // Initialize a custom Swing system tray that hides after a timeout
         tray = new AutoHidePopupTray(POPUP_TIMEOUT);

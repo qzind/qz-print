@@ -22,6 +22,7 @@
 
 package qz.deploy;
 
+import qz.common.Constants;
 import qz.utils.ShellUtilities;
 
 /**
@@ -29,6 +30,11 @@ import qz.utils.ShellUtilities;
  * @author Tres Finocchiaro
  */
 public class WindowsShortcut extends ShortcutUtilities {
+    // Try using ${build.windows.icon} first, if it exists
+    private static String qzIcon = System.getenv("programfiles").replace(" (x86)", "") + "\\" + Constants.ABOUT_TITLE + "\\windows-icon.ico";
+    private static String defaultIcon = System.getenv("windir") + "\\system32\\SHELL32.dll";
+    private static boolean useQzIcon = fileExists(qzIcon);
+
     @Override
     public boolean createStartupShortcut() {
         return ShellUtilities.executeRegScript(
@@ -100,8 +106,8 @@ public class WindowsShortcut extends ShortcutUtilities {
             "URL=" + fixURL(getJarPath()),
             workingPath.trim().equals("") ? "" : "WorkingDirectory=" + fixURL(workingPath),
            // SHELL32.DLL:16 is a printer icon on all Windows Operating systems
-            "IconIndex=16",
-            "IconFile=" + System.getenv("windir") + "\\system32\\SHELL32.dll",
+            "IconIndex=" + (useQzIcon ? 0 : 16),
+            "IconFile=" + (useQzIcon ? qzIcon : defaultIcon),
             "HotKey=0"
         });
     }

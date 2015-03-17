@@ -18,8 +18,8 @@
 	*/
 	function deployQZ() {
 		var attributes = {id: "qz", code:'qz.PrintApplet.class',
-			archive:'qz-print.jar', width:1, height:1};
-		var parameters = {jnlp_href: 'qz-print_jnlp.jnlp',
+			archive:'../qz-print.jar', width:1, height:1};
+		var parameters = {jnlp_href: '../qz-print_jnlp.jnlp',
 			cache_option:'plugin', disable_logging:'false',
 			initial_focus:'false', separate_jvm:'true'};
 		if (deployJava.versionCheck("1.7+") == true) {}
@@ -968,8 +968,8 @@
 	<input type="button" onClick="useDefaultPrinter()" value="Use Default Printer"><br /><br />
 	<!-- NEW QZ APPLET TAG USAGE -- RECOMMENDED -->
 	<!--
-	<applet id="qz" archive="./qz-print.jar" name="QZ Print Plugin" code="qz.PrintApplet.class" width="55" height="55">
-	<param name="jnlp_href" value="qz-print_jnlp.jnlp">
+	<applet id="qz" archive="../qz-print.jar" name="QZ Print Plugin" code="qz.PrintApplet.class" width="55" height="55">
+	<param name="jnlp_href" value="../qz-print_jnlp.jnlp">
 	<param name="cache_option" value="plugin">
 	<param name="disable_logging" value="false">
 	<param name="initial_focus" value="false">
@@ -979,8 +979,8 @@
 
 	<!-- OLD JZEBRA TAG USAGE -- FOR UPGRADES -->
     <!--
-	<applet name="jzebra" archive="./qz-print.jar" code="qz.PrintApplet.class" width="55" height="55">
-	<param name="jnlp_href" value="qz-print_jnlp.jnlp">
+	<applet name="jzebra" archive="../qz-print.jar" code="qz.PrintApplet.class" width="55" height="55">
+	<param name="jnlp_href" value="../qz-print_jnlp.jnlp">
 	<param name="cache_option" value="plugin">
 	<param name="disable_logging" value="false">
 	<param name="initial_focus" value="false">
