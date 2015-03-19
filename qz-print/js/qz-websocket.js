@@ -3,7 +3,7 @@ var qzConfig = {
     preemptive: {isActive:'', getVersion:'', getPrinter:'', getIP:'', getMac:'', getLogPostScriptFeatures:''},
     callbackMap: {
         findPrinter:     'qzDoneFinding',
-        findPrinters:     'qzDoneFinding',
+        findPrinters:    'qzDoneFinding',
         appendFile:      'qzDoneAppending',
         appendXML:       'qzDoneAppending',
         appendPDF:       'qzDoneAppending',
@@ -21,9 +21,14 @@ var qzConfig = {
 
 
 function deployQZ() {
-    console.log('Starting deploy of qz');
+    if ("WebSocket" in window) {
+        console.log('Starting deploy of qz');
 
-    connectWebsocket(qzConfig.ports[qzConfig.portIndex]);
+        connectWebsocket(qzConfig.ports[qzConfig.portIndex]);
+    } else {
+        alert("WebSocket not supported");
+        window["deployQZ"] = null;
+    }
 }
 
 function connectWebsocket(port) {
