@@ -46,6 +46,11 @@ public class WindowsShortcut extends ShortcutUtilities {
     }
 
     @Override
+    public String getParentDirectory() {
+        return fixWhitespaces(super.getParentDirectory());
+    }
+
+    @Override
     public boolean createDesktopShortcut() {
         return createShortcut(System.getenv("userprofile") + "\\Desktop\\");
     }
