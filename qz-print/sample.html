@@ -11,8 +11,8 @@
  */
 window["deployQZ"] = typeof(deployQZ) == "function" ? deployQZ : function() {
     var attributes = {id: "qz", code:'qz.PrintApplet.class',
-        archive:'qz-print.jar', width:1, height:1};
-    var parameters = {jnlp_href: 'qz-print_jnlp.jnlp',
+        archive:'../qz-print.jar', width:1, height:1};
+    var parameters = {jnlp_href: '../qz-print_jnlp.jnlp',
         cache_option:'plugin', disable_logging:'false',
         initial_focus:'false', separate_jvm:'true'};
     if (deployJava.versionCheck("1.7+") == true) {}
