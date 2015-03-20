@@ -202,9 +202,9 @@ public class PrintRaw {
      */
     public boolean print(byte[] data) throws IOException, PrintException, InterruptedException {
         if (printServiceAtomicReference.get() == null) {
-            throw new NullPrintServiceException("qz.PrintRaw.print() failed.");
+            throw new NullPrintServiceException("qz.PrintRaw.print() failed, no print service.");
         } else if (rawCmds.get() == null) {
-            throw new NullCommandException("qz.PrintRaw.print() failed.");
+            throw new NullCommandException("qz.PrintRaw.print() failed, no commands.");
         } else if (outputPath.get() != null) {
             return printToFile();
         } else if (socketHost.get() != null) {
