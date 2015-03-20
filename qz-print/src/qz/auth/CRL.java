@@ -15,7 +15,7 @@ public class CRL {
     /**
      * The URL to the QZ CRL. Should not be changed except for dev tests
      */
-    public static final String CRL_URL = "https://hosted.kd8rho.net/crl-temp.txt";
+    public static final String CRL_URL = "http://hosted.kd8rho.net/crl-temp.txt";
 
     ArrayList<String> revokedHashes = new ArrayList<String>();
 
@@ -40,6 +40,7 @@ public class CRL {
 
             CRL theNewCRL = new CRL();
             theNewCRL.revokedHashes = httpResult;
+            return theNewCRL;
         }
         catch(MalformedURLException e) {
             e.printStackTrace();
@@ -53,12 +54,8 @@ public class CRL {
         return null;
     }
 
-    public static void main(String[] args) {
-        try {
-            CRL crl = getQzCrl();
-        }
-        catch(IOException e) {
-            e.printStackTrace();
-        }
+    public boolean isRevoked(String fingerprint)
+    {
+        return revokedHashes.contains(fingerprint);
     }
 }

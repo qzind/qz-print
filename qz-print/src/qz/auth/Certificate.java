@@ -112,6 +112,10 @@ public class Certificate {
             validFrom = theCertificate.getNotBefore();
             validTo = theCertificate.getNotAfter();
 
+            CRL qzCrl = CRL.getQzCrl();
+            if(qzCrl.isRevoked(getFingerprint())||theIntermediateCertificate==null||qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate)))
+                valid = false;
+
             if (trustedRootCert != null) {
                 HashSet<X509Certificate> chain = new HashSet<X509Certificate>();
                 try {
