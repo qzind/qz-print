@@ -25,6 +25,8 @@ InstallDir "$PROGRAMFILES\${socket.name}"
 ;------------------------------
 
 Section
+  ; Kills any running ${socket.name} processes
+  ExecWait "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
 
   SetOutPath "$INSTDIR"
 
@@ -58,11 +60,17 @@ SectionEnd
 ;-------------------------------
 
 Section "Uninstall"
+  ; Kills any running ${socket.name} processes
+  ExecWait "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+
   Delete "$SMPROGRAMS\${socket.name}.lnk"
   Delete "$INSTDIR\Uninstall.exe"
   RMDir /r "$INSTDIR"
 
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}"
+
+  Delete "$DESKTOP\${socket.name}.url"
+  Delete "$DESKTOP\${socket.name}.lnk"
 SectionEnd
 
 ;-------------------------------
