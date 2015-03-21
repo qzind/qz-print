@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.logging.Logger;
 
 /**
  * Created by Steven on 1/27/2015. Package: qz.auth Project: qz-print
@@ -33,7 +34,7 @@ import java.util.HashSet;
 public class Certificate {
 
     public static Certificate trustedRootCert = null;
-
+    private static final Logger log = Logger.getLogger(Certificate.class.getName());
     static {
         try {
             trustedRootCert = new Certificate("-----BEGIN CERTIFICATE-----\n" +
@@ -113,9 +114,16 @@ public class Certificate {
             validTo = theCertificate.getNotAfter();
 
             CRL qzCrl = CRL.getQzCrl();
-            if(qzCrl.isRevoked(getFingerprint())||theIntermediateCertificate==null||qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate)))
-                valid = false;
 
+            if(qzCrl==null)
+            {
+                //Assume nothing is revoked, because we can't get the CRL
+                log.info("Failed to retrieve QZ CRL, skipping CRL check");
+            }
+            else {
+                if (qzCrl.isRevoked(getFingerprint()) || theIntermediateCertificate == null || qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate)))
+                    valid = false;
+            }
             if (trustedRootCert != null) {
                 HashSet<X509Certificate> chain = new HashSet<X509Certificate>();
                 try {
