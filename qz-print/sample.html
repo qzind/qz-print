@@ -9,10 +9,14 @@
 /**
  * Re-use the new WebSockets deployment if available.  If not, fallback on the Oracle deployment
  */
-window["deployQZ"] = typeof(deployQZ) == "function" ? deployQZ : function() {
+window["deployQZ"] = typeof(deployQZ) == "function" ? deployQZ : deployQZApplet;
+
+function deployQZApplet() {
+    console.log('Starting deploy of qz applet');
+
     var attributes = {id: "qz", code:'qz.PrintApplet.class',
-        archive:'qz-print.jar', width:1, height:1};
-    var parameters = {jnlp_href: 'qz-print_jnlp.jnlp',
+        archive:'../qz-print.jar', width:1, height:1};
+    var parameters = {jnlp_href: '../qz-print_jnlp.jnlp',
         cache_option:'plugin', disable_logging:'false',
         initial_focus:'false', separate_jvm:'true'};
     if (deployJava.versionCheck("1.7+") == true) {}
@@ -112,7 +116,7 @@ function signRequest(toSign, callback) {
     */
 
     //Send unsigned messages to socket - users will then have to Allow/Deny each print request
-    callback(toSign);
+    callback();
 }
 
 

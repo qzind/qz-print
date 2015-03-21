@@ -192,7 +192,13 @@ public class PrintApplet extends PrintFunction implements Runnable {
                     serialIO.clearOutput();
                 }
                 if (startPrinting) {
-                    super.print();
+                    if (psPrint){
+                        super.printPS();
+                    } else if (htmlPrint) {
+                        super.printHTML();
+                    } else {
+                        super.print();
+                    }
 
                     startPrinting = false;
                     setDonePrinting(true);
@@ -773,13 +779,13 @@ public class PrintApplet extends PrintFunction implements Runnable {
             log.warning("Setting null PrintService");
             return;
         }
-        if (printHTML != null) {
+        if (getPrintHTML() != null) {
             printHTML.setPrintService(ps);
         }
-        if (printPS != null) {
+        if (getPrintPS() != null) {
             printPS.setPrintService(ps);
         }
-        if (printRaw != null) {
+        if (getPrintRaw() != null) {
             printRaw.setPrintService(ps);
         }
     }

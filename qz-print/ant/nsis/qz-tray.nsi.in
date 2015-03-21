@@ -51,7 +51,6 @@ Section
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "EstimatedSize" "${build.socket.size}"
 
-
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${build.windows.icon}" 0
