@@ -38,7 +38,7 @@ function getCertificate(callback) {
     /*
     $.ajax({
         method: 'GET',
-        url: 'assets/auth/public_key_sample.txt',
+        url: 'assets/auth/public-key.txt',
         success: callback // Data returned from ajax call should be the site certificate
     });
     */
@@ -110,7 +110,7 @@ function signRequest(toSign, callback) {
     /*
     $.ajax({
         method: 'GET',
-        url: '/secure/url/for/signing?sign_me=' + toSign,
+        url: '/secure/url/for/sign-message.php?request=' + toSign,
         success: callback // Data returned from ajax call should be the signature
     });
     */
