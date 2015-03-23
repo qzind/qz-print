@@ -1,14 +1,21 @@
 <?php
-require_once "RSAToolFactory.php";
 
-$rsa_tool = RSAToolFactory::getRSATool();
+$KEY = 'private-key.pem';
+$PASS = 'S3cur3P@ssw0rd';
 
 $req = $_GET['request'];
-$signature = '';
-$privateKey = $rsa_tool->loadPrivateKey('test.key');
-// 'test.key' will be the server's private key for signing requests
+$privateKey = openssl_get_privatekey(file_get_contents($KEY), $PASS);
 
-openssl_sign($req,$signature,$privateKey);
+$signature = null;
+openssl_sign($req, $signature, $privateKey);
 
-$base64signature = base64_encode($signature);
-echo $base64signature;
+if ($signature) {
+	header("Content-type: text/plain");
+	echo base64_encode($signature);
+	exit(0);
+}
+
+echo '<h1>Error signing message</h1>';
+exit(1);
+
+?>
