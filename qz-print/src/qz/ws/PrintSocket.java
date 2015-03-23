@@ -321,8 +321,14 @@ public class PrintSocket {
                                 }
 
                                 if (qz.getException() != lastError) {
-                                    sendNewMethod(session, "getException", qz.getException() == null? null:qz.getException().getLocalizedMessage());
+                                    String eMsg = (qz.getException() == null? null:qz.getException().getLocalizedMessage());
+
+                                    sendNewMethod(session, "getException", eMsg);
                                     lastError = qz.getException();
+
+                                    if (eMsg != null) {
+                                        trayManager.displayErrorMessage(eMsg);
+                                    }
                                 }
 
                                 break; //method worked, don't try others

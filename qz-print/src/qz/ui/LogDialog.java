@@ -118,9 +118,8 @@ public class LogDialog extends BasicDialog implements Runnable {
                         catch (Exception ignore) {}
                     }
                     br = new BufferedReader(new FileReader(activeLogFile));
+                    LogIt.log("Reading " + activeLogFile.getPath());
                 }
-
-                LogIt.log("Reading " + activeLogFile.getPath());
 
                 if (isVisible()) {
                    if (clearLogFile.get()) {

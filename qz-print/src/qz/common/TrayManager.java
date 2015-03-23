@@ -520,7 +520,7 @@ public class TrayManager {
                 @Override
                 public void run() {
                     tray.displayMessage(caption, text, level);
-                    trayLogger.log(Level.INFO, text);
+                    trayLogger.log(level, text);
                 }
             }));
         }
