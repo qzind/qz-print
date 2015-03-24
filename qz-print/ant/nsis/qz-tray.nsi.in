@@ -32,6 +32,13 @@ Section
 
   File /r "${dist.socket.dir}\*"
 
+
+  ; Exports a self-signed certificate and properties file
+  File "${build.windows.keygen.js}"
+  ExecWait "cscript.exe //B $\"$INSTDIR\${build.windows.keygen}$\""
+  Delete "$INSTDIR\${build.windows.keygen}"
+
+
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "DisplayName" "${socket.name} ${build.version}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
@@ -63,7 +70,7 @@ Section "Uninstall"
   ExecWait "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
 
   Delete "$SMPROGRAMS\${socket.name}.lnk"
-  Delete "$INSTDIR\Uninstall.exe"
+  Delete "$INSTDIR\uninstall.exe"
   RMDir /r "$INSTDIR"
 
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}"

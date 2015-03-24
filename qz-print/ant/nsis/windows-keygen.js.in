@@ -1,0 +1,93 @@
+/**
+ * Creates a self-signed Java Keystore for jetty wss://localhost
+ * TODO: 1. Export self-signed certificate into Win-compat format
+ *       2. Import into Windows Certs
+ */
+var shell = new ActiveXObject("WScript.shell");
+var fso = new ActiveXObject("Scripting.FileSystemObject");
+
+var javaKey = "HKLM\\Software\\JavaSoft\\Java Runtime Environment\\";
+var jreHome = getRegValue(javaKey + getRegValue(javaKey + "CurrentVersion") + "\\JavaHome");
+
+if (jreHome == "") {
+	WScript.Echo("Can't find JavaHome");
+	WScript.Exit(1);
+}
+
+// Fix commas for keytool command line
+var org = "${vendor.company}".replace(/,/, "\\,");
+
+// Generate random password hash
+var password = pw();
+var keyStore = programFiles() + "\\${socket.name}\\${build.socket.name}.jks";
+var keyTool = jreHome + "\\bin\\keytool.exe";
+var cmd = "\"" + keyTool + "\" -genkey -noprompt -alias ${build.socket.name} -dname " +
+	"\"CN=localhost, OU=" + org + ", O=" + org + " L=Canastota, S=NY, C=US\" " +
+	"-keystore \"" + keyStore + "\" -storepass " + password + " -keypass " + password;
+
+// Remove the old keystore, if one exists
+deleteFile(keyStore);
+shell.Run(cmd);
+
+var file = fso.OpenTextFile(keyStore.replace(/.jks/, ".properties"), 2, true);
+file.WriteLine("wss.alias=" + "${build.socket.name}");
+file.WriteLine("wss.keystore=" + keyStore);
+file.WriteLine("wss.keypass=" + password);
+file.WriteLine("wss.storepass=" + password);
+file.Close();
+
+/**
+ * Deletes a file
+ */
+function deleteFile(filePath) {
+	if (fso.FileExists(filePath)) {
+		try {
+			fso.DeleteFile(filePath);
+		} catch (err) {
+			WScript.Echo("Unable to delete " + filePath);
+		}
+	}
+}
+
+/**
+ * Generates a random string to be used as a password
+ */
+function pw() {
+    var text = "";
+    var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+    for( var i=0; i < 10; i++ ) {
+        text += chars.charAt(Math.floor(Math.random() * chars.length));
+	}
+    return text;
+}
+
+/**
+ * Reads a registry value, taking 32-bit/64-bit architecture into consideration
+ */
+function getRegValue(path) {	
+	// If 64-bit OS, try 32-bit registry first
+	var arch = "";
+	if (shell.ExpandEnvironmentStrings("ProgramFiles(x86)")) {
+		path = path.replace(/\\Software\\/, "\\Software\\Wow6432Node\\");
+	}
+	
+	var regValue = ""
+	try {
+		regValue = shell.RegRead(path);
+	} catch (err) {
+		try {
+		} catch (err) {
+			// Fall back to 64-bit registry
+			path = path.replace(/\\Software\\Wow6432Node\\/, "\\Software\\");
+			regValue = shell.RegRead(path);
+		}
+	}
+	return regValue;
+}
+
+/**
+ * Always gets "Program Files" path, never with "(x86)"
+ */
+function programFiles() {
+	return shell.ExpandEnvironmentStrings("%programfiles%").replace(/ (x86)/, "");
+}

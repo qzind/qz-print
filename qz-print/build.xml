@@ -223,6 +223,12 @@
             </filterchain>
         </copy>
 
+        <copy file="${build.windows.keygen.in}" tofile="${build.windows.keygen.js}" >
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+
         <exec executable="${nsisbin}" failonerror="true" >
             <arg value="${build.nsis.nsi}"/>
         </exec>
