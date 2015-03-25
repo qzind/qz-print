@@ -72,7 +72,11 @@ function connectWebsocket(port) {
 
             // Move on to the next port
             if (!websocket.valid){
-                connectWebsocket(qzConfig.ports[++qzConfig.portIndex]);
+                if (++qzConfig.portIndex < qzConfig.ports.length){
+                    connectWebsocket(qzConfig.ports[qzConfig.portIndex]);
+                } else {
+                    qzNoConnection();
+                }
             }
         };
 

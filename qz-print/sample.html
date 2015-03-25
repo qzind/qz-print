@@ -28,6 +28,7 @@ function deployQZApplet() {
 }
 
 /**
+ * Deploy tray version of QZ, or
  * Optionally used to deploy multiple versions of the applet for mixed
  * environments.  Oracle uses document.write(), which puts the applet at the
  * top of the page, bumping all HTML content down.
@@ -160,6 +161,10 @@ function qzSocketClose(event) {
     console.log(event);
 
     alert("Connection was closed:\n"+ event.reason);
+}
+
+function qzNoConnection() {
+    alert("Unable to connect to QZ, is it running?");
 }
 
 /**
