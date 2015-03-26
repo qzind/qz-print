@@ -252,6 +252,12 @@
             </filterchain>
         </copy>
 
+	<chmod perm="u+x" type="file">
+            <fileset dir="${build.dir}">
+                 <include name="**/*.sh"/>
+            </fileset>
+        </chmod>
+
         <exec executable="${build.makeself.sh}" failonerror="true" />
     </target>
 </project>
