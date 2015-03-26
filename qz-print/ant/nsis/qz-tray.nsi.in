@@ -32,12 +32,10 @@ Section
 
   File /r "${dist.socket.dir}\*"
 
-
   ; Exports a self-signed certificate and properties file
-  File "${build.windows.keygen.js}"
-  ExecWait "cscript.exe //B $\"$INSTDIR\${build.windows.keygen}$\""
-  Delete "$INSTDIR\${build.windows.keygen}"
-
+  File /r "${build.dir}\${build.windows.keygen.name}*"
+  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${build.windows.keygen.name}$\""
+  Delete "$INSTDIR\${build.windows.keygen.name}"
 
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "DisplayName" "${socket.name} ${build.version}"
@@ -77,6 +75,9 @@ Section "Uninstall"
 
   Delete "$DESKTOP\${socket.name}.url"
   Delete "$DESKTOP\${socket.name}.lnk"
+
+  ; Remove ${vendor.company} certificates
+  ExecWait "certutil.exe -delstore $\"${build.windows.certstore}$\" $\"${vendor.company}$\"";
 SectionEnd
 
 ;-------------------------------

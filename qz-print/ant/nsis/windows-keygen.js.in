@@ -1,8 +1,21 @@
 /**
- * Creates a self-signed Java Keystore for jetty wss://localhost
- * TODO: 1. Export self-signed certificate into Win-compat format
- *       2. Import into Windows Certs
+ * @author Tres Finocchiaro
+ *
+ * Copyright (C) 2015 Tres Finocchiaro, QZ Industries
  */
+
+/******************************************************************************
+ *                        Windows KeyGen Utility                              *
+ ******************************************************************************
+ *  Description:                                                              *
+ *    1. Creates a self-signed Java Keystore for jetty wss://localhost        *
+ *    2. Exports public certificate from Java Keystore                        *
+ *    3. Imports into Windows Trusted Root Certs                              *
+ *                                                                            *
+ *  Usage:                                                                    *
+ *    > cscript //NoLogo windows-keygen.js                                    *
+ *                                                                            *
+ *****************************************************************************/
 var shell = new ActiveXObject("WScript.shell");
 var fso = new ActiveXObject("Scripting.FileSystemObject");
 
@@ -15,21 +28,39 @@ if (jreHome == "") {
 }
 
 // Fix commas for keytool command line
-var org = "${vendor.company}".replace(/,/, "\\,");
+var org = "${vendor.company}".replace(",", "\\,");
 
 // Generate random password hash
 var password = pw();
 var keyStore = programFiles() + "\\${socket.name}\\${build.socket.name}.jks";
+var derCert = keyStore.replace(".jks", ".der");
 var keyTool = jreHome + "\\bin\\keytool.exe";
-var cmd = "\"" + keyTool + "\" -genkey -noprompt -alias ${build.socket.name} -dname " +
-	"\"CN=localhost, OU=" + org + ", O=" + org + " L=Canastota, S=NY, C=US\" " +
+var makeKeyStore = "\"" + keyTool + "\" -genkey -noprompt -alias ${build.socket.name} -dname " +
+	"\"CN=" + org + ", OU=" + org + ", O=" + org + ", L=Canastota, S=NY, C=US\" -validity 7305 " +
 	"-keystore \"" + keyStore + "\" -storepass " + password + " -keypass " + password;
 
 // Remove the old keystore, if one exists
 deleteFile(keyStore);
-shell.Run(cmd);
+WScript.Echo("Creating keystore for secure websockets...");
+shell.Run(makeKeyStore, 0, true);
 
-var file = fso.OpenTextFile(keyStore.replace(/.jks/, ".properties"), 2, true);
+var makeDerCert =  "\"" + keyTool + "\" -exportcert -alias ${build.socket.name} " +
+    "-keystore \"" + keyStore + "\" -storepass " + password + " -keypass " + password + " " +
+    "-file \"" + derCert + "\"";
+
+// Remove old public cert, if one exists
+deleteFile(derCert)
+WScript.Echo("Converting keystore to native format...");
+shell.Run(makeDerCert, 0, true);
+
+WScript.Echo("Installing native certificate for secure websockets...");
+var deleteDerCert = "certutil.exe -delstore \"${build.windows.certstore}\" \"${vendor.company}\"";
+var installDerCert = "certutil.exe -addstore -f \"${build.windows.certstore}\" \"" + derCert + "\"";
+
+shell.Run(deleteDerCert, 0, true);
+shell.Run(installDerCert, 0, true);
+
+var file = fso.OpenTextFile(keyStore.replace(".jks", ".properties"), 2, true);
 file.WriteLine("wss.alias=" + "${build.socket.name}");
 file.WriteLine("wss.keystore=" + keyStore);
 file.WriteLine("wss.keypass=" + password);
@@ -68,7 +99,7 @@ function getRegValue(path) {
 	// If 64-bit OS, try 32-bit registry first
 	var arch = "";
 	if (shell.ExpandEnvironmentStrings("ProgramFiles(x86)")) {
-		path = path.replace(/\\Software\\/, "\\Software\\Wow6432Node\\");
+		path = path.replace("\\Software\\", "\\Software\\Wow6432Node\\");
 	}
 	
 	var regValue = ""
@@ -78,7 +109,7 @@ function getRegValue(path) {
 		try {
 		} catch (err) {
 			// Fall back to 64-bit registry
-			path = path.replace(/\\Software\\Wow6432Node\\/, "\\Software\\");
+			path = path.replace("\\Software\\Wow6432Node\\", "\\Software\\");
 			regValue = shell.RegRead(path);
 		}
 	}
@@ -89,5 +120,5 @@ function getRegValue(path) {
  * Always gets "Program Files" path, never with "(x86)"
  */
 function programFiles() {
-	return shell.ExpandEnvironmentStrings("%programfiles%").replace(/ (x86)/, "");
+	return shell.ExpandEnvironmentStrings("%programfiles%").replace(" (x86)", "");
 }
