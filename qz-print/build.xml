@@ -239,7 +239,7 @@
     </target>
 
     <target name="makeself" depends="get-version">
-        <echo>Creating installer using ${nsisbin}</echo>
+        <echo>Creating installer using makeself</echo>
         <copy file="${build.install.in}" tofile="${build.install.sh}" >
             <filterchain>
                 <expandproperties/>
