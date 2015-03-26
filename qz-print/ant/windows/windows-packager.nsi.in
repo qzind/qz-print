@@ -31,6 +31,8 @@ Section
   SetOutPath "$INSTDIR"
 
   File /r "${dist.socket.dir}\*"
+  Delete "$INSTDIR\${build.linux.icon}"
+  Delete "$INSTDIR\${build.apple.icon}"
 
   ; Exports a self-signed certificate and properties file
   File /r "${build.dir}\${build.windows.keygen.name}*"

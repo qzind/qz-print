@@ -1,0 +1,79 @@
+#!/bin/bash
+###############################################################################
+#                         ${socket.name} Linux Installer                             #
+###############################################################################
+#  Description:                                                               #
+#    1. Stops any existing instances                                          #
+#    2. Patches Ubuntu Unity Desktop for tray icon support                    #
+#    3. Installs to current users home directory                              #
+#                                                                             #
+#  Usage:                                                                     #
+#    $ chmod +x linux-installer.sh                                            #
+#    $ ./linux-installer.sh                                                   #
+#                                                                             #
+###############################################################################
+echo
+echo "============================================"
+echo "            Installing ${socket.name}"
+echo "============================================"
+echo
+destdir="$HOME/${socket.name}"
+shortcut="$HOME/Desktop/${socket.name}.desktop"
+jarfile="${destdir}/${build.socket.name}.jar"
+echo " - Stopping any running versions..."
+pkill -f "java -jar ${jarfile}"
+echo " - Removing old versions..."
+rm -rf "${destdir}" > /dev/null 2>&1
+echo " - Creating directory..."
+mkdir -p "${destdir}" > /dev/null 2>&1
+echo " - Installing new version..."
+cp -R ./ "${destdir}"
+rm "${destdir}/`basename $0`"
+echo " - Creating desktop shortcut..."
+echo "[Desktop Entry]
+Type=Application
+Name=${socket.name}
+Exec=java -jar \"${jarfile}\"
+Path=\"${destdir}\"
+Icon=printer
+Terminal=false
+Comment=${socket.name}" > "${shortcut}"
+chmod +x "${shortcut}"
+
+# Ubuntu process restarter
+function restart_it {
+    # Check for running process, kill it
+    ps -e |grep -q $1
+    if [ $? -eq 0 ]; then
+        echo "   - Killing $1..."
+        killall -w $1 > /dev/null 2>&1
+    fi
+
+    # Make sure process isn't running, start it
+    ps -e |grep -q $1
+    if [ $? -ne 0 ]; then
+        echo "   - Starting $1..."
+        nohup $1 > /dev/null 2>&1 &
+    fi
+}
+
+# Check for Ubuntu to fix System Tray
+grep -q "Ubuntu" /etc/lsb-release
+if [ $? -eq 0 ]; then
+    echo " - Ubuntu detected.  Restarting Unity Panel..."
+    gsettings set com.canonical.Unity.Panel systray-whitelist "['all']" > /dev/null 2>&1
+    restart_it unity-panel-service
+    restart_it unity-2d-panel
+fi
+
+cd "${destdir}"
+rm -f "${build.apple.icon}"
+rm -f "${build.windows.icon}"
+echo " - Installation complete... Starting ${socket.name}..."
+nohup "java" -jar "${jarfile}" > /dev/null 2>&1 &
+echo
+echo "============================================"
+echo "                 Finished                   "
+echo "============================================"
+echo
+exit 0

@@ -34,6 +34,8 @@
             <classpath>
                 <path id="plugin.override">
                     <pathelement path="${java.home}/lib/plugin.jar" />
+                    <!-- For OpenJDK -->
+                    <pathelement path="/usr/share/icedtea-web/plugin.jar" />
                 </path>
                 <fileset dir="${lib.dir}">
                     <include name="**/*.jar"/>
@@ -185,6 +187,8 @@
         </copy>
 
         <copy file="${build.nsis.branding}/${build.windows.icon}" tofile="${dist.socket.dir}/${build.windows.icon}" />
+        <copy file="${build.nsis.branding}/${build.linux.icon}" tofile="${dist.socket.dir}/${build.linux.icon}" />
+        <copy file="${build.nsis.branding}/${build.apple.icon}" tofile="${dist.socket.dir}/${build.apple.icon}" />
 
         <copy file="${jnlp.inf.dir}/APPLICATION.JNLP" tofile="${dist.applet.jnlp}" />
 
@@ -232,5 +236,22 @@
         <exec executable="${nsisbin}" failonerror="true" >
             <arg value="${build.nsis.nsi}"/>
         </exec>
+    </target>
+
+    <target name="makeself" depends="get-version">
+        <echo>Creating installer using ${nsisbin}</echo>
+        <copy file="${build.install.in}" tofile="${build.install.sh}" >
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+
+        <copy file="${build.makeself.in}" tofile="${build.makeself.sh}" >
+            <filterchain>
+                <expandproperties/>
+            </filterchain>
+        </copy>
+
+        <exec executable="${build.makeself.sh}" failonerror="true" />
     </target>
 </project>
