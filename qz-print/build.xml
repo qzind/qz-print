@@ -238,8 +238,8 @@
         </exec>
     </target>
 
-    <target name="makeself" depends="get-version">
-        <echo>Creating installer using ${nsisbin}</echo>
+    <target name="makeself" depends="init,get-version">
+        <echo>Creating installer using makeself</echo>
         <copy file="${build.install.in}" tofile="${build.install.sh}" >
             <filterchain>
                 <expandproperties/>
@@ -254,6 +254,9 @@
 
 	<chmod perm="u+x" type="file">
             <fileset dir="${build.dir}">
+                 <include name="**/*.sh"/>
+            </fileset>
+            <fileset dir="${dist.dir}">
                  <include name="**/*.sh"/>
             </fileset>
         </chmod>
