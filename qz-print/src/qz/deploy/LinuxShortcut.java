@@ -22,6 +22,8 @@
 
 package qz.deploy;
 
+import qz.common.Constants;
+
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.logging.Level;
@@ -31,6 +33,11 @@ import java.util.logging.Level;
  * @author Tres Finocchiaro
  */
 public class LinuxShortcut extends ShortcutUtilities {
+    // Try using ${build.windows.icon} first, if it exists
+    private static String qzIcon = System.getenv("HOME") + "/" + Constants.ABOUT_TITLE + "/linux-icon.svg";
+    private static String defaultIcon = "printer";
+    private static boolean useQzIcon = fileExists(qzIcon);
+
     @Override
     public boolean createStartupShortcut() {
         return createShortcut(System.getProperty("user.home") + "/.config/autostart/");
@@ -96,7 +103,7 @@ public class LinuxShortcut extends ShortcutUtilities {
             "Exec=java -jar \"" + getJarPath() + "\"",
             workingPath.trim().equals("") ? "" : "Path=" + workingPath,
             //"IconIndex=" + iconIndex,
-            "Icon=printer",
+            "Icon=" + (useQzIcon ? qzIcon : defaultIcon),
             "Terminal=false",
             "Comment=" + getShortcutName()
         });

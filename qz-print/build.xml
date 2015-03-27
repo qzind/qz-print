@@ -9,6 +9,7 @@
     </target>
 
     <target name="init">
+        <property environment="env"/>
         <property file="ant/project.properties"/>
 
         <!-- Your custom code signing properties here. Feel free to change. -->
@@ -24,7 +25,6 @@
 
     <target name="clean" depends="init">
         <delete dir="${out.dir}"/>
-        <delete file="${build.nsis.nsi}"/>
     </target>
 
     <target name="compile" depends="init">
@@ -186,10 +186,6 @@
             <fileset file="sample.html"/>
         </copy>
 
-        <copy file="${build.nsis.branding}/${build.windows.icon}" tofile="${dist.socket.dir}/${build.windows.icon}" />
-        <copy file="${build.nsis.branding}/${build.linux.icon}" tofile="${dist.socket.dir}/${build.linux.icon}" />
-        <copy file="${build.nsis.branding}/${build.apple.icon}" tofile="${dist.socket.dir}/${build.apple.icon}" />
-
         <copy file="${jnlp.inf.dir}/APPLICATION.JNLP" tofile="${dist.applet.jnlp}" />
 
         <copy todir="${dist.dir}">
@@ -201,26 +197,19 @@
         </copy>
     </target>
 
-	<!-- Find makensis executable -->
-	<property environment="env"/>
-	
-	<!-- Linux -->
-	<target name="nsisbin-1" depends="init" unless="env.windir">
-		<property name="nsisbin" value="makensis"/>
-	</target>
-	
-	<!-- Win32 -->
-	<target name="nsisbin-2" depends="init" unless="env.ProgramFiles(x86)">
-		<property name="nsisexe" value="${env.ProgramFiles}/NSIS/makensis.exe"/>
-	</target>
-	
-	<!-- Win64 -->
-	<target name="nsisbin-3" depends="init" if="env.ProgramFiles(x86)">
-		<property name="nsisbin" value="${env.ProgramFiles(x86)}/NSIS/makensis.exe"/>
-	</target>
-
+    <!--
+    ################################################################
+    #                    Windows Installer                         #
+    ################################################################
+    -->
     <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3,get-version">
         <echo>Creating installer using ${nsisbin}</echo>
+
+        <property file="ant/self-sign.properties"/>
+        <property file="ant/windows/windows.properties"/>
+        <copy file="${build.nsis.branding}/${build.windows.icon}" tofile="${dist.socket.dir}/${build.windows.icon}" />
+
+        <delete file="${build.nsis.nsi}"/>
         <copy file="${build.nsis.in}" tofile="${build.nsis.nsi}" >
             <filterchain>
                 <expandproperties/>
@@ -236,10 +225,39 @@
         <exec executable="${nsisbin}" failonerror="true" >
             <arg value="${build.nsis.nsi}"/>
         </exec>
+
+        <!-- Cleanup lingering icon (for other OS installers) -->
+        <delete file="${dist.socket.dir}/${build.windows.icon}" />
     </target>
 
+    <!-- Linux makensis -->
+    <target name="nsisbin-1" depends="init" unless="env.windir">
+        <property name="nsisbin" value="makensis"/>
+    </target>
+
+    <!-- Win32 makensis -->
+    <target name="nsisbin-2" depends="init" unless="env.ProgramFiles(x86)">
+        <property name="nsisexe" value="${env.ProgramFiles}/NSIS/makensis.exe"/>
+    </target>
+
+    <!-- Win64 makensis -->
+    <target name="nsisbin-3" depends="init" if="env.ProgramFiles(x86)">
+        <property name="nsisbin" value="${env.ProgramFiles(x86)}/NSIS/makensis.exe"/>
+    </target>
+
+
+    <!--
+    ################################################################
+    #                     Linux Installer                          #
+    ################################################################
+    -->
     <target name="makeself" depends="get-version">
         <echo>Creating installer using makeself</echo>
+
+        <property file="ant/self-sign.properties"/>
+        <property file="ant/linux/linux.properties"/>
+        <copy file="${branding.dir}/${build.linux.icon}" tofile="${dist.socket.dir}/${build.linux.icon}" />
+
         <copy file="${build.install.in}" tofile="${build.install.sh}" >
             <filterchain>
                 <expandproperties/>
@@ -252,12 +270,31 @@
             </filterchain>
         </copy>
 
-	<chmod perm="u+x" type="file">
+	    <chmod perm="u+x" type="file">
             <fileset dir="${build.dir}">
                  <include name="**/*.sh"/>
             </fileset>
         </chmod>
 
         <exec executable="${build.makeself.sh}" failonerror="true" />
+
+        <!-- Cleanup lingering icon (for other OS installers) -->
+        <delete file="${dist.socket.dir}/${build.linux.icon}" />
+    </target>
+
+    <!--
+    ################################################################
+    #                     Apple Installer                          #
+    ################################################################
+    -->
+    <target name="dmg" depends="get-version">
+        <echo>Creating installer using node-appdmg</echo>
+
+        <property file="ant/self-sign.properties"/>
+        <property file="ant/apple/apple.properties"/>
+        <copy file="${branding.dir}/${build.apple.icon}" tofile="${dist.socket.dir}/${build.apple.icon}" />
+
+        <!-- Cleanup lingering icon (for other OS installers) -->
+        <delete file="${dist.socket.dir}/${build.apple.icon}" />
     </target>
 </project>

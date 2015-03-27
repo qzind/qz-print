@@ -27,41 +27,45 @@ if (jreHome == "") {
 	WScript.Exit(1);
 }
 
-// Fix commas for keytool command line
-var org = "${vendor.company}".replace(",", "\\,");
-
-// Generate random password hash
-var password = pw();
-var keyStore = programFiles() + "\\${socket.name}\\${build.socket.name}.jks";
-var derCert = keyStore.replace(".jks", ".der");
 var keyTool = jreHome + "\\bin\\keytool.exe";
-var makeKeyStore = "\"" + keyTool + "\" -genkey -noprompt -alias ${build.socket.name} -dname " +
-	"\"CN=" + org + ", OU=" + org + ", O=" + org + ", L=Canastota, S=NY, C=US\" -validity 7305 " +
-	"-keystore \"" + keyStore + "\" -storepass " + password + " -keypass " + password;
+var keyStore = programFiles("${jks.keystore}");
+var derCert = programFiles("${der.cert}");
+var password = pw();    // random password hash
 
-// Remove the old keystore, if one exists
-deleteFile(keyStore);
+var makeKeyStore = "${jks.command}"
+    .replace("${jks.keytool}", keyTool)
+    .replace("${jks.keystore}", keyStore)
+    .replace("${jks.storepass}", password)
+    .replace("${jks.keypass}", password);
+
+deleteFile(keyStore);   // remove old, if exists
 WScript.Echo("Creating keystore for secure websockets...");
 shell.Run(makeKeyStore, 0, true);
+verifyExists(keyStore, "Check keystore exists");
 
-var makeDerCert =  "\"" + keyTool + "\" -exportcert -alias ${build.socket.name} " +
-    "-keystore \"" + keyStore + "\" -storepass " + password + " -keypass " + password + " " +
-    "-file \"" + derCert + "\"";
+var makeDerCert = "${der.command}"
+    .replace("${jks.keytool}", keyTool)
+    .replace("${jks.keystore}", keyStore)
+    .replace("${jks.storepass}", password)
+    .replace("${jks.keypass}", password)
+    .replace("${der.cert}", derCert);
 
-// Remove old public cert, if one exists
-deleteFile(derCert)
-WScript.Echo("Converting keystore to native format...");
+deleteFile(derCert);    // remove old, if exists
+WScript.Echo("Converting keystore to native certificate...");
 shell.Run(makeDerCert, 0, true);
+verifyExists(derCert, "Check certificate exists");
 
 WScript.Echo("Installing native certificate for secure websockets...");
-var deleteDerCert = "certutil.exe -delstore \"${build.windows.certstore}\" \"${vendor.company}\"";
-var installDerCert = "certutil.exe -addstore -f \"${build.windows.certstore}\" \"" + derCert + "\"";
+var deleteDerCert = 'certutil.exe -delstore "${build.windows.certstore}" "${vendor.company}"';
+var installDerCert = 'certutil.exe -addstore -f "${build.windows.certstore}" "' + derCert + '"';
+var verifyDerCert = 'certutil.exe -verifystore "${build.windows.certstore}" "${vendor.company}"';
 
 shell.Run(deleteDerCert, 0, true);
 shell.Run(installDerCert, 0, true);
+verifyExec(verifyDerCert, "Check certificate installed");
 
-var file = fso.OpenTextFile(keyStore.replace(".jks", ".properties"), 2, true);
-file.WriteLine("wss.alias=" + "${build.socket.name}");
+var file = fso.OpenTextFile(programFiles("${jks.properties}"), 2, true);
+file.WriteLine("wss.alias=" + "${jks.alias}");
 file.WriteLine("wss.keystore=" + keyStore);
 file.WriteLine("wss.keypass=" + password);
 file.WriteLine("wss.storepass=" + password);
@@ -102,7 +106,7 @@ function getRegValue(path) {
 		path = path.replace("\\Software\\", "\\Software\\Wow6432Node\\");
 	}
 	
-	var regValue = ""
+	var regValue = "";
 	try {
 		regValue = shell.RegRead(path);
 	} catch (err) {
@@ -117,8 +121,23 @@ function getRegValue(path) {
 }
 
 /**
- * Always gets "Program Files" path, never with "(x86)"
+ * Displays a message regarding whether or not a file exists
  */
-function programFiles() {
-	return shell.ExpandEnvironmentStrings("%programfiles%").replace(" (x86)", "");
+function verifyExists(path, msg) {
+    WScript.Echo(" - " + msg + (fso.FileExists(path) ? " [success]" : " [failed]"));
+}
+
+/**
+ * Displays a message regarding whether or not a command succeeded
+ */
+function verifyExec(cmd, msg) {
+    WScript.Echo(" - " + msg + (shell.Run(cmd, 0, true) == 0 ? " [success]" : " [failed]"));
+}
+
+/**
+ * Appends "Program Files" path, never with "(x86)", fixes slashes
+ */
+function programFiles(append) {
+	var prog = shell.ExpandEnvironmentStrings("%programfiles%").replace(" (x86)", "");
+    return append.replace("${jks.install}", prog).replace(/\//g, "\\");
 }

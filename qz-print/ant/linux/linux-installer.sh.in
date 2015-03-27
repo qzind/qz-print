@@ -35,7 +35,7 @@ Type=Application
 Name=${socket.name}
 Exec=java -jar \"${jarfile}\"
 Path=\"${destdir}\"
-Icon=printer
+Icon=\"${destdir}/${build.linux.icon}\"
 Terminal=false
 Comment=${socket.name}" > "${shortcut}"
 chmod +x "${shortcut}"
@@ -67,8 +67,6 @@ if [ $? -eq 0 ]; then
 fi
 
 cd "${destdir}"
-rm -f "${build.apple.icon}"
-rm -f "${build.windows.icon}"
 echo " - Installation complete... Starting ${socket.name}..."
 nohup "java" -jar "${jarfile}" > /dev/null 2>&1 &
 echo

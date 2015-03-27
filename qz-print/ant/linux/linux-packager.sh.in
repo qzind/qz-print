@@ -18,7 +18,7 @@ echo "============================================"
 echo "            Packaging ${socket.name}"
 echo "============================================"
 echo
-makeself "${dist.socket.dir}" "${build.socket.name}-${build.version}.run" "${socket.name} Installer" "./${build.install.name}"
+makeself "${dist.socket.dir}" "${out.dir}/${build.socket.name}-${build.version}.run" "${socket.name} Installer" "./${build.install.name}"
 code=$?
 echo
 echo "============================================"
