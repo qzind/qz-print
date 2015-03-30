@@ -78,7 +78,7 @@ check_exists  "$propspath"
 rootstore="${linux.keygen.store}"
 rootcertpath="${dercert/${install}/$rootstore}"
 
-read -p "Install certificate for secure websockets? [y/n] " -r
+read -p "Install certificate for secure websockets? [y/N] " -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]] ; then
     sudo rm -f "$rootcertpath" > /dev/null 2>&1

@@ -17,9 +17,20 @@ destdir="${linux.installdir}"
 shortcut="$HOME/Desktop/${socket.name}.desktop"
 jarfile="${destdir}/${build.socket.name}.jar"
 
-# OK dialog
+# Confirmation dialog
 height=8; width=41
 function confirm_dialog() {
+   dialog --help > /dev/null 2>&1
+   if [ $? -ne 0 ]; then
+      # Legacy input fallback
+      echo -e "\n"; read -p "$1 [y/N] " -r; echo
+      if [[ $REPLY =~ ^[Yy]$ ]] ; then
+         return 0
+      else
+         echo -e "${bash.aborted}\n"
+         exit 1
+      fi
+   fi
    dialog --title "Install ${socket.name}" --backtitle "Install ${socket.name}" --yesno "$1" $height $width
    if [ $? -ne 0 ]; then
       echo -e "\n\n${bash.aborted}\n"
@@ -29,11 +40,17 @@ function confirm_dialog() {
 
 # Progress dialog
 function progress_dialog() {
+   dialog --help > /dev/null 2>&1
+   if [ $? -ne 0 ]; then
+      # Fallback on old input prompt
+      echo -e "   - $2"; return 0
+   fi
    echo "$1" | dialog --title "Install ${socket.name}" \
     --backtitle "Install ${socket.name}" \
     --gauge "$2" $height $width
 }
 
+# Check minimum java version
 function check_java() {
    curver=$(java -version 2>&1 | grep -i version | cut -d'"' -f2 | cut -d'.' -f1-2) 
    minver="${javac.target}"
@@ -97,7 +114,6 @@ function restart_it() {
 # Check for Ubuntu to fix System Tray
 grep -q "Ubuntu" /etc/lsb-release
 if [ $? -eq 0 ]; then
-    echo " - Ubuntu detected.  Restarting Unity Panel..."
     gsettings set com.canonical.Unity.Panel systray-whitelist "['all']" > /dev/null 2>&1
     restart_it unity-panel-service 50
     restart_it unity-2d-panel 60
@@ -111,4 +127,5 @@ cd "${destdir}"
 progress_dialog 90 "Installation complete... Starting ${socket.name}..."
 nohup "java" -jar "${jarfile}" > /dev/null 2>&1 &
 progress_dialog 100 "Finished.  QZ Tray should start automatically."
+echo
 exit 0
