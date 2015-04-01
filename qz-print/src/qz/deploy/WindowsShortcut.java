@@ -30,7 +30,7 @@ import qz.utils.ShellUtilities;
  * @author Tres Finocchiaro
  */
 public class WindowsShortcut extends ShortcutUtilities {
-    // Try using ${build.windows.icon} first, if it exists
+    // Try using ${windows.icon} first, if it exists
     private static String qzIcon = System.getenv("programfiles").replace(" (x86)", "") + "\\" + Constants.ABOUT_TITLE + "\\windows-icon.ico";
     private static String defaultIcon = System.getenv("windir") + "\\system32\\SHELL32.dll";
     private static boolean useQzIcon = fileExists(qzIcon);

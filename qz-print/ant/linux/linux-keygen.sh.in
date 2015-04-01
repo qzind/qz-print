@@ -1,0 +1,66 @@
+#!/bin/bash
+###############################################################################
+#                  ${socket.name} Linux KeyGen Utility                               #
+###############################################################################
+#  Description:                                                               #
+#     1. Creates a self-signed Java Keystore for jetty wss://localhost        #
+#     2. Exports public certificate from Java Keystore                        #
+#     3. TODO: Imports into Linux Trusted Root Certs                          #
+#                                                                             #
+#  Depends:                                                                   #
+#    java (sudo apt-get install openjdk-7-jre                                 #
+#                                                                             #
+#  Usage:                                                                     #
+#    $ ./linux-keygen.sh                                                      #
+#                                                                             #
+###############################################################################
+
+# Random password hash
+password=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${jks.passlength} | head -n 1)
+
+makekeystore="${jks.command}"
+makedercert="${der.command}"
+installdir="${linux.installdir}"
+
+# Substitution variables (!storepass, !keypass, !install, etc)
+install="${jks.install}"
+storepass="${jks.storepass}"
+keypass="${jks.keypass}"
+keystore="${jks.keystore}"
+dercert="${der.cert}"
+
+# Keystore generation variable substitutions
+keystorepath="${keystore/$install/$installdir}"
+makekeystore="${makekeystore/$storepass/$password}"
+makekeystore="${makekeystore/$keypass/$password}"
+makekeystore="${makekeystore/$keystore/keystorepath}"
+
+# Cert export variable substitutions
+dercertpath="${dercert/${install}/$installdir}"
+makedercert="${makedercert/${storepass}/$password}"
+makedercert="${makedercert/${keypass}/$password}"
+makedercert="${makedercert/${keystore}/$keystorepath}"
+makedercert="${makedercert/${dercert}/$dercertpath}"
+
+# Check to see if file exists
+function check_exists {
+    if [ -e "$0" ]; then
+        echo " [success]"
+    else
+        echo " [failed]"
+    fi
+}
+
+
+# Delete old keystore, if exists
+rm -rf "$keystore" > /dev/null 2>&1
+
+echo "Creating keystore for secure websockets..."
+makekeystore
+check_exists $keystore
+
+echo "Convertiing keystore to native certificate..."
+makedercert
+check_exists $dercert
+
+# TODO -- import into linux cert store

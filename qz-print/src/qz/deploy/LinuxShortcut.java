@@ -33,7 +33,7 @@ import java.util.logging.Level;
  * @author Tres Finocchiaro
  */
 public class LinuxShortcut extends ShortcutUtilities {
-    // Try using ${build.windows.icon} first, if it exists
+    // Try using ${linux.icon} first, if it exists
     private static String qzIcon = System.getenv("HOME") + "/" + Constants.ABOUT_TITLE + "/linux-icon.svg";
     private static String defaultIcon = "printer";
     private static boolean useQzIcon = fileExists(qzIcon);

@@ -17,7 +17,7 @@ echo "============================================"
 echo "            Installing ${socket.name}"
 echo "============================================"
 echo
-destdir="$HOME/${socket.name}"
+destdir="${linux.installdir}"
 shortcut="$HOME/Desktop/${socket.name}.desktop"
 jarfile="${destdir}/${build.socket.name}.jar"
 echo " - Stopping any running versions..."
@@ -65,6 +65,10 @@ if [ $? -eq 0 ]; then
     restart_it unity-panel-service
     restart_it unity-2d-panel
 fi
+
+echo " - Generating certificate..."
+chmod +x "${linux.keygen.out}"  > /dev/null 2>&1
+"${linux.keygen.out}"
 
 cd "${destdir}"
 echo " - Installation complete... Starting ${socket.name}..."

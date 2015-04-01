@@ -207,27 +207,27 @@
 
         <property file="ant/self-sign.properties"/>
         <property file="ant/windows/windows.properties"/>
-        <copy file="${build.nsis.branding}/${build.windows.icon}" tofile="${dist.socket.dir}/${build.windows.icon}" />
+        <copy file="${branding.dir}/${windows.icon}" tofile="${dist.socket.dir}/${windows.icon}" />
 
-        <delete file="${build.nsis.nsi}"/>
-        <copy file="${build.nsis.in}" tofile="${build.nsis.nsi}" >
+        <delete file="${windows.packager.out}"/>
+        <copy file="${windows.packager.in}" tofile="${windows.packager.out}" >
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
 
-        <copy file="${build.windows.keygen.in}" tofile="${build.windows.keygen.js}" >
+        <copy file="${windows.keygen.in}" tofile="${windows.keygen.out}" >
             <filterchain>
                 <expandproperties/>
             </filterchain>
         </copy>
 
         <exec executable="${nsisbin}" failonerror="true" >
-            <arg value="${build.nsis.nsi}"/>
+            <arg value="${windows.packager.out}"/>
         </exec>
 
         <!-- Cleanup lingering icon (for other OS installers) -->
-        <delete file="${dist.socket.dir}/${build.windows.icon}" />
+        <delete file="${dist.socket.dir}/${windows.icon}" />
     </target>
 
     <!-- Linux makensis -->
@@ -256,30 +256,30 @@
 
         <property file="ant/self-sign.properties"/>
         <property file="ant/linux/linux.properties"/>
-        <copy file="${branding.dir}/${build.linux.icon}" tofile="${dist.socket.dir}/${build.linux.icon}" />
+        <copy file="${branding.dir}/${linux.icon}" tofile="${dist.socket.dir}/${linux.icon}" />
 
-        <copy file="${build.install.in}" tofile="${build.install.sh}" >
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
+        <copy file="${linux.installer.in}" tofile="${linux.installer.out}" >
+            <filterchain><expandproperties/></filterchain>
         </copy>
 
-        <copy file="${build.makeself.in}" tofile="${build.makeself.sh}" >
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
+        <copy file="${linux.keygen.in}" tofile="${linux.keygen.out}" >
+            <filterchain><expandproperties/></filterchain>
         </copy>
 
-	    <chmod perm="u+x" type="file">
+        <copy file="${linux.packager.in}" tofile="${linux.packager.out}" >
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+
+        <chmod perm="u+x" type="file">
             <fileset dir="${build.dir}">
                  <include name="**/*.sh"/>
             </fileset>
         </chmod>
 
-        <exec executable="${build.makeself.sh}" failonerror="true" />
+        <exec executable="${linux.packager.out}" failonerror="true" />
 
         <!-- Cleanup lingering icon (for other OS installers) -->
-        <delete file="${dist.socket.dir}/${build.linux.icon}" />
+        <delete file="${dist.socket.dir}/${linux.icon}" />
     </target>
 
     <!--
@@ -292,9 +292,9 @@
 
         <property file="ant/self-sign.properties"/>
         <property file="ant/apple/apple.properties"/>
-        <copy file="${branding.dir}/${build.apple.icon}" tofile="${dist.socket.dir}/${build.apple.icon}" />
+        <copy file="${branding.dir}/${apple.icon}" tofile="${dist.socket.dir}/${apple.icon}" />
 
         <!-- Cleanup lingering icon (for other OS installers) -->
-        <delete file="${dist.socket.dir}/${build.apple.icon}" />
+        <delete file="${dist.socket.dir}/${apple.icon}" />
     </target>
 </project>

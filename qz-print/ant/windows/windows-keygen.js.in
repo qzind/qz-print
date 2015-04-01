@@ -12,6 +12,9 @@
  *    2. Exports public certificate from Java Keystore                        *
  *    3. Imports into Windows Trusted Root Certs                              *
  *                                                                            *
+ *  Depends:                                                                  *
+ *    keytool.exe (distributed with jre: http://java.com)                     *
+ *                                                                            *
  *  Usage:                                                                    *
  *    > cscript //NoLogo windows-keygen.js                                    *
  *                                                                            *
@@ -22,14 +25,20 @@ var fso = new ActiveXObject("Scripting.FileSystemObject");
 var javaKey = "HKLM\\Software\\JavaSoft\\Java Runtime Environment\\";
 var jreHome = getRegValue(javaKey + getRegValue(javaKey + "CurrentVersion") + "\\JavaHome");
 
+// Uses passed-in parameter as install location.  Will fallback to registry if not provided.
+var qzInstall = WScript.Arguments.length ? WScript.Arguments(0) : getRegValue("HKLM\\Software\\${socket.name}\\");
+
 if (jreHome == "") {
-	WScript.Echo("Can't find JavaHome");
-	WScript.Exit(1);
+    die("Can't find JavaHome.  Secure websockets will not work.", true);
+}
+
+if (qzInstall == "") {
+    die("Can't find ${socket.name} installation path. Secure websockets will not work.", true);
 }
 
 var keyTool = jreHome + "\\bin\\keytool.exe";
-var keyStore = programFiles("${jks.keystore}");
-var derCert = programFiles("${der.cert}");
+var keyStore = fixPath("${jks.keystore}");
+var derCert = fixPath("${der.cert}");
 var password = pw();    // random password hash
 
 var makeKeyStore = "${jks.command}"
@@ -39,7 +48,7 @@ var makeKeyStore = "${jks.command}"
     .replace("${jks.keypass}", password);
 
 deleteFile(keyStore);   // remove old, if exists
-WScript.Echo("Creating keystore for secure websockets...");
+debug("Creating keystore for secure websockets...");
 shell.Run(makeKeyStore, 0, true);
 verifyExists(keyStore, "Check keystore exists");
 
@@ -51,20 +60,20 @@ var makeDerCert = "${der.command}"
     .replace("${der.cert}", derCert);
 
 deleteFile(derCert);    // remove old, if exists
-WScript.Echo("Converting keystore to native certificate...");
+debug("Converting keystore to native certificate...");
 shell.Run(makeDerCert, 0, true);
 verifyExists(derCert, "Check certificate exists");
 
-WScript.Echo("Installing native certificate for secure websockets...");
-var deleteDerCert = 'certutil.exe -delstore "${build.windows.certstore}" "${vendor.company}"';
-var installDerCert = 'certutil.exe -addstore -f "${build.windows.certstore}" "' + derCert + '"';
-var verifyDerCert = 'certutil.exe -verifystore "${build.windows.certstore}" "${vendor.company}"';
+debug("Installing native certificate for secure websockets...");
+var deleteDerCert = 'certutil.exe -delstore "${windows.keygen.store}" "${vendor.company}"';
+var installDerCert = 'certutil.exe -addstore -f "${windows.keygen.store}" "' + derCert + '"';
+var verifyDerCert = 'certutil.exe -verifystore "${windows.keygen.store}" "${vendor.company}"';
 
 shell.Run(deleteDerCert, 0, true);
 shell.Run(installDerCert, 0, true);
 verifyExec(verifyDerCert, "Check certificate installed");
 
-var file = fso.OpenTextFile(programFiles("${jks.properties}"), 2, true);
+var file = fso.OpenTextFile(fixPath("${jks.properties}"), 2, true);
 file.WriteLine("wss.alias=" + "${jks.alias}");
 file.WriteLine("wss.keystore=" + keyStore);
 file.WriteLine("wss.keypass=" + password);
@@ -79,7 +88,7 @@ function deleteFile(filePath) {
 		try {
 			fso.DeleteFile(filePath);
 		} catch (err) {
-			WScript.Echo("Unable to delete " + filePath);
+			die("Unable to delete " + filePath, false);
 		}
 	}
 }
@@ -90,7 +99,7 @@ function deleteFile(filePath) {
 function pw() {
     var text = "";
     var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-    for( var i=0; i < 10; i++ ) {
+    for( var i=0; i < parseInt("${jks.passlength}"); i++ ) {
         text += chars.charAt(Math.floor(Math.random() * chars.length));
 	}
     return text;
@@ -111,11 +120,10 @@ function getRegValue(path) {
 		regValue = shell.RegRead(path);
 	} catch (err) {
 		try {
-		} catch (err) {
-			// Fall back to 64-bit registry
-			path = path.replace("\\Software\\Wow6432Node\\", "\\Software\\");
-			regValue = shell.RegRead(path);
-		}
+            // Fall back to 64-bit registry
+            path = path.replace("\\Software\\Wow6432Node\\", "\\Software\\");
+            regValue = shell.RegRead(path);
+		} catch (err) {}
 	}
 	return regValue;
 }
@@ -124,20 +132,46 @@ function getRegValue(path) {
  * Displays a message regarding whether or not a file exists
  */
 function verifyExists(path, msg) {
-    WScript.Echo(" - " + msg + (fso.FileExists(path) ? " [success]" : " [failed]"));
+    debug(" - " + msg + (fso.FileExists(path) ? " [success]" : " [failed]"));
 }
 
 /**
  * Displays a message regarding whether or not a command succeeded
  */
 function verifyExec(cmd, msg) {
-    WScript.Echo(" - " + msg + (shell.Run(cmd, 0, true) == 0 ? " [success]" : " [failed]"));
+    debug(" - " + msg + (shell.Run(cmd, 0, true) == 0 ? " [success]" : " [failed]"));
 }
 
 /**
- * Appends "Program Files" path, never with "(x86)", fixes slashes
+ * Replaces "!install" with proper location, usually "C:\Program Files\", fixes forward slashes
  */
-function programFiles(append) {
-	var prog = shell.ExpandEnvironmentStrings("%programfiles%").replace(" (x86)", "");
-    return append.replace("${jks.install}", prog).replace(/\//g, "\\");
+function fixPath(append) {
+    return append.replace("${jks.install}", qzInstall).replace(/\//g, "\\");
+}
+
+/**
+ * Displays an error message and exits the script
+ * @param msg
+ */
+function die(msg, block) {
+    WScript.Echo("ERROR: " + msg);
+    if (block) {
+        WScript.Echo("\n\nPress enter to continue");
+        WScript.StdIn.Read(0);
+        WScript.StdIn.ReadLine();
+    }
+    WScript.Quit(1);
+}
+
+/**
+ * Displays a status message
+ * @param msg
+ */
+function debug(msg, block) {
+    WScript.Echo(msg);
+    if (block) {
+        WScript.Echo("\n\nPress enter to continue");
+        WScript.StdIn.Read(0);
+        WScript.StdIn.ReadLine();
+    }
 }

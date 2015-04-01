@@ -10,7 +10,7 @@ InstallDir "$PROGRAMFILES\${socket.name}"
 
 ;-------------------------------
 
-!define MUI_ICON "${build.nsis.branding}\${build.windows.icon}"
+!define MUI_ICON "${basedir}\${branding.dir}\${windows.icon}"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "${basedir}\..\LICENSE.txt"
@@ -32,11 +32,8 @@ Section
 
   File /r "${dist.socket.dir}\*"
 
-  ; Exports a self-signed certificate and properties file
-  File /r "${build.dir}\${build.windows.keygen.name}*"
-  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${build.windows.keygen.name}$\""
-  Delete "$INSTDIR\${build.windows.keygen.name}"
-
+  WriteRegStr HKLM "Software\${socket.name}" \
+                     "" "$INSTDIR"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "DisplayName" "${socket.name} ${build.version}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
@@ -44,7 +41,7 @@ Section
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
-                   "DisplayIcon" "$INSTDIR\${build.windows.icon}"
+                   "DisplayIcon" "$INSTDIR\${windows.icon}"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "HelpLink" "${vendor.website}/support"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
@@ -58,7 +55,12 @@ Section
 
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
-  CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${build.windows.icon}" 0
+  ; Exports a self-signed certificate and properties file
+  File /r "${build.dir}\${windows.keygen.name}*"
+  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\""
+  Delete "$INSTDIR\${windows.keygen.name}"
+
+  CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${windows.icon}" 0
 SectionEnd
 
 ;-------------------------------
@@ -72,12 +74,13 @@ Section "Uninstall"
   RMDir /r "$INSTDIR"
 
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}"
+  DeleteRegKey HKLM "Software\${socket.name}"
 
   Delete "$DESKTOP\${socket.name}.url"
   Delete "$DESKTOP\${socket.name}.lnk"
 
   ; Remove ${vendor.company} certificates
-  ExecWait "certutil.exe -delstore $\"${build.windows.certstore}$\" $\"${vendor.company}$\"";
+  ExecWait "certutil.exe -delstore $\"${windows.keygen.store}$\" $\"${vendor.company}$\"";
 SectionEnd
 
 ;-------------------------------
