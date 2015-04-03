@@ -10,7 +10,7 @@
  *  Description:                                                              *
  *    1. Creates a self-signed Java Keystore for jetty wss://localhost        *
  *    2. Exports public certificate from Java Keystore                        *
- *    3. Imports into Windows Trusted Root Certs                              *
+ *    3. Imports into Windows trusted cert store                              *
  *                                                                            *
  *  Depends:                                                                  *
  *    keytool.exe (distributed with jre: http://java.com)                     *

@@ -33,34 +33,56 @@ dercert="${der.cert}"
 keystorepath="${keystore/$install/$installdir}"
 makekeystore="${makekeystore/$storepass/$password}"
 makekeystore="${makekeystore/$keypass/$password}"
-makekeystore="${makekeystore/$keystore/keystorepath}"
+makekeystore="${makekeystore/$keystore/$keystorepath}"
 
 # Cert export variable substitutions
 dercertpath="${dercert/${install}/$installdir}"
-makedercert="${makedercert/${storepass}/$password}"
-makedercert="${makedercert/${keypass}/$password}"
-makedercert="${makedercert/${keystore}/$keystorepath}"
-makedercert="${makedercert/${dercert}/$dercertpath}"
+makedercert="${makedercert/$storepass/$password}"
+makedercert="${makedercert/$keypass/$password}"
+makedercert="${makedercert/$keystore/$keystorepath}"
+makedercert="${makedercert/$dercert/$dercertpath}"
 
 # Check to see if file exists
 function check_exists {
-    if [ -e "$0" ]; then
-        echo " [success]"
+    if [ -e "$1" ]; then
+        echo -e "${bash.success}\n"
     else
-        echo " [failed]"
+        echo -e "${bash.failure}\n"
     fi
 }
 
 
 # Delete old keystore, if exists
-rm -rf "$keystore" > /dev/null 2>&1
+rm -f "$keystorepath" > /dev/null 2>&1
 
 echo "Creating keystore for secure websockets..."
-makekeystore
-check_exists $keystore
+eval "$makekeystore" > /dev/null 2>&1
+check_exists "$keystorepath"
 
 echo "Convertiing keystore to native certificate..."
-makedercert
-check_exists $dercert
+eval "$makedercert" > /dev/null 2>&1
+check_exists "$dercertpath"
 
-# TODO -- import into linux cert store
+rootstore="${linux.keygen.store}"
+rootcertpath="${dercert/${install}/$rootstore}"
+
+read -p "Install certificate for secure websockets? [y/n] " -n 1 -r
+echo
+if [[ $REPLY =~ ^[Yy]$ ]] ; then
+    sudo rm -f "$rootcertpath" > /dev/null 2>&1
+    sudo cp "$dercertpath" "$rootcertpath" > /dev/null 2>&1
+    sudo update-ca-certificates > /dev/null 2>&1
+    # Verify proper installation
+    grep -F -x -f "${linux.keygen.installed}" "$dercertpath" > /dev/null 2>&1
+    if [ $? -eq 0 ]; then
+        echo -e "${bash.success}\n"
+    else
+        echo -e "${bash.failure}\n"
+    fi
+else
+    echo "Skipping certificate installation per user request"
+    echo -e "${bash.skipped} :$dercertpath\n"
+fi
+
+echo "Finished"
+exit 0
