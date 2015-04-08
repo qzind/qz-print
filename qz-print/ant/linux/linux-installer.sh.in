@@ -12,14 +12,16 @@
 #    $ ./linux-installer.sh                                                   #
 #                                                                             #
 ###############################################################################
+
+destdir="${linux.installdir}"
+shortcut="$HOME/Desktop/${socket.name}.desktop"
+jarfile="${destdir}/${build.socket.name}.jar"
+
 echo
 echo "============================================"
 echo "            Installing ${socket.name}"
 echo "============================================"
 echo
-destdir="${linux.installdir}"
-shortcut="$HOME/Desktop/${socket.name}.desktop"
-jarfile="${destdir}/${build.socket.name}.jar"
 echo " - Stopping any running versions..."
 pkill -f "java -jar ${jarfile}"
 echo " - Removing old versions..."
@@ -35,7 +37,7 @@ Type=Application
 Name=${socket.name}
 Exec=java -jar \"${jarfile}\"
 Path=\"${destdir}\"
-Icon=\"${destdir}/${build.linux.icon}\"
+Icon=\"${destdir}/${linux.icon}\"
 Terminal=false
 Comment=${socket.name}" > "${shortcut}"
 chmod +x "${shortcut}"
