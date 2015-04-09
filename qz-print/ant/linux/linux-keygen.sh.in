@@ -5,7 +5,7 @@
 #  Description:                                                               #
 #     1. Creates a self-signed Java Keystore for jetty wss://localhost        #
 #     2. Exports public certificate from Java Keystore                        #
-#     3. TODO: Imports into Linux Trusted Root Certs                          #
+#     3. Imports into Linux Trusted Root Certs                                #
 #                                                                             #
 #  Depends:                                                                   #
 #    java (sudo apt-get install openjdk-7-jre                                 #
@@ -28,6 +28,7 @@ storepass="${jks.storepass}"
 keypass="${jks.keypass}"
 keystore="${jks.keystore}"
 dercert="${der.cert}"
+props="${jks.properties}"
 
 # Keystore generation variable substitutions
 keystorepath="${keystore/$install/$installdir}"
@@ -36,11 +37,14 @@ makekeystore="${makekeystore/$keypass/$password}"
 makekeystore="${makekeystore/$keystore/$keystorepath}"
 
 # Cert export variable substitutions
-dercertpath="${dercert/${install}/$installdir}"
+dercertpath="${dercert/$install/$installdir}"
 makedercert="${makedercert/$storepass/$password}"
 makedercert="${makedercert/$keypass/$password}"
 makedercert="${makedercert/$keystore/$keystorepath}"
 makedercert="${makedercert/$dercert/$dercertpath}"
+
+# Property file containing jks signing info
+propspath="${props/$install/$installdir}"
 
 # Check to see if file exists
 function check_exists {
@@ -63,10 +67,18 @@ echo "Convertiing keystore to native certificate..."
 eval "$makedercert" > /dev/null 2>&1
 check_exists "$dercertpath"
 
+echo "Writing properties file..."
+echo "wss.alias=${jks.alias}" > "$propspath"
+echo "wss.keystore=$keystorepath" >> "$propspath"
+echo "wss.keypass=$password" >> "$propspath"
+echo "wss.storepass=$password" >> "$propspath"
+echo "" >> "$propspath"
+check_exists  "$propspath"
+
 rootstore="${linux.keygen.store}"
 rootcertpath="${dercert/${install}/$rootstore}"
 
-read -p "Install certificate for secure websockets? [y/n] " -n 1 -r
+read -p "Install certificate for secure websockets? [y/n] " -r
 echo
 if [[ $REPLY =~ ^[Yy]$ ]] ; then
     sudo rm -f "$rootcertpath" > /dev/null 2>&1

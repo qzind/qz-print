@@ -36,8 +36,8 @@ echo "[Desktop Entry]
 Type=Application
 Name=${socket.name}
 Exec=java -jar \"${jarfile}\"
-Path=\"${destdir}\"
-Icon=\"${destdir}/${linux.icon}\"
+Path=${destdir}
+Icon=${destdir}/${linux.icon}
 Terminal=false
 Comment=${socket.name}" > "${shortcut}"
 chmod +x "${shortcut}"

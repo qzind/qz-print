@@ -202,7 +202,7 @@
     #                    Windows Installer                         #
     ################################################################
     -->
-    <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3,get-version">
+    <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3,distribute">
         <echo>Creating installer using ${nsisbin}</echo>
 
         <property file="ant/self-sign.properties"/>
@@ -251,7 +251,7 @@
     #                     Linux Installer                          #
     ################################################################
     -->
-    <target name="makeself" depends="get-version">
+    <target name="makeself" depends="distribute">
         <echo>Creating installer using makeself</echo>
 
         <property file="ant/self-sign.properties"/>
