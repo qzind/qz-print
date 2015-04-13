@@ -69,8 +69,27 @@ var deleteDerCert = 'certutil.exe -delstore "${windows.keygen.store}" "${vendor.
 var installDerCert = 'certutil.exe -addstore -f "${windows.keygen.store}" "' + derCert + '"';
 var verifyDerCert = 'certutil.exe -verifystore "${windows.keygen.store}" "${vendor.company}"';
 
-shell.Run(deleteDerCert, 0, true);
-shell.Run(installDerCert, 0, true);
+try {
+    // Windows Vista or higher
+	shell.Run(deleteDerCert, 0, true);
+	shell.Run(installDerCert, 0, true);
+	verifyExec(verifyDerCert, "Check certificate installed");
+} catch (err) {
+    // Windows XP or older
+	shell.Popup("Automatic certificate installation is not available for this platform.\n" +
+		"For secure websockets to function properly:\n\n" +
+		"     1.  Navigate to \"" + derCert + "\"\n" +
+		"     2.  Click \"Install Certificate...\"\n" +
+		"     3.  Click \"Place all certificates in the following store\"\n" +
+		"     4.  Browse to \"Trusted Root Certificate Authorities\"\n" +
+		"     5.  Click \"Finish\"\n" +
+		"     6.  Click \"Yes\" on thumbprint Security Warning\n\n" +
+		"Click OK to automatically launch the certificate import wizard now.\n", 0, "Warning - ${socket.name}", 48);
+
+	// Do not wrap quotes around derCert, or this next line will fail
+	shell.Run("rundll32.exe cryptext.dll,CryptExtAddCER " + derCert, 1, true);
+}
+
 verifyExec(verifyDerCert, "Check certificate installed");
 
 var file = fso.OpenTextFile(fixPath("${jks.properties}"), 2, true);
