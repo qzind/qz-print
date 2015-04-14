@@ -27,9 +27,10 @@
         <delete dir="${out.dir}"/>
     </target>
 
-    <target name="compile" depends="init">
-        <mkdir dir="${build.dir}"/>
-        <javac destdir="${build.dir}" source="${javac.source}" target="${javac.target}" includeantruntime="false">
+    <target name="compile-applet" depends="init">
+        <mkdir dir="${build.applet.dir}"/>
+
+        <javac destdir="${build.applet.dir}" source="${javac.applet.source}" target="${javac.applet.target}" includeantruntime="false">
             <src path="${src.dir}"/>
             <classpath>
                 <path id="plugin.override">
@@ -48,15 +49,44 @@
         </javac>
 
         <!-- Include non-class files from src in build directory -->
-        <copy todir="${build.dir}">
+        <copy todir="${build.applet.dir}">
             <fileset dir="${src.dir}" excludes="**/*.java"/>
         </copy>
     </target>
 
-    <target name="build-jar" depends="compile">
+    <target name="compile-socket" depends="init">
+        <mkdir dir="${build.socket.dir}"/>
+
+        <javac destdir="${build.socket.dir}" source="${javac.applet.source}" target="${javac.socket.target}" includeantruntime="false">
+            <src path="${src.dir}"/>
+            <classpath>
+                <path id="plugin.override">
+                    <pathelement path="${java.home}/lib/plugin.jar" />
+                    <!-- For OpenJDK -->
+                    <pathelement path="/usr/share/icedtea-web/plugin.jar" />
+                </path>
+                <fileset dir="${lib.dir}">
+                    <include name="**/*.jar"/>
+                </fileset>
+                <fileset dir="${java.home}">
+                    <include name="**/*.jar"/>
+                </fileset>
+            </classpath>
+            <compilerarg value="-Xlint:-options"/>
+        </javac>
+
+        <!-- Include non-class files from src in build directory -->
+        <copy todir="${build.socket.dir}">
+            <fileset dir="${src.dir}" excludes="**/*.java"/>
+        </copy>
+    </target>
+
+    <target name="build-jar" depends="build-applet-jar,build-socket-jar" />
+
+    <target name="build-applet-jar" depends="compile-applet">
         <echo>Building Jar for Applet use</echo>
         <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.applet.jar}" duplicate="preserve">
-            <fileset dir="${build.dir}" excludes="org/joor/*.*,qz/ws/*.*"/>
+            <fileset dir="${build.applet.dir}" excludes="org/joor/*.*,qz/ws/*.*"/>
             <manifest>
                 <attribute name="Application-Name" value="${manifest.application.name}"/>
                 <attribute name="Main-Class" value="${manifest.main.applet.class}"/>
@@ -69,10 +99,12 @@
         <copy todir="${dist.applet.dir}/${lib.dir}">
             <fileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*,plugin.jar"/>
         </copy>
+    </target>
 
+    <target name="build-socket-jar" depends="compile-socket">
         <echo>Building Jar for Socket use</echo>
         <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.socket.jar}" duplicate="preserve">
-            <fileset dir="${build.dir}"/>
+            <fileset dir="${build.socket.dir}"/>
             <zipgroupfileset dir="${lib.dir}" includes="**/*.jar"/>
             <manifest>
                 <attribute name="Application-Name" value="${manifest.application.name}"/>
