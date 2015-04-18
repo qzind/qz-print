@@ -277,6 +277,22 @@
         <property name="nsisbin" value="${env.ProgramFiles(x86)}/NSIS/makensis.exe"/>
     </target>
 
+    <!--
+    ################################################################
+    #                     Apple Installer                          #
+    ################################################################
+    -->
+    <target name="pkgbuild" depends="distribute">
+        <echo>Creating installer using pkgbuild</echo>
+
+	<property file="ant/self-sign.properties"/>
+	<property file="ant/apple/apple.properties"/>
+	<copy file="${branding.dir}/${apple.icon}" tofile="${dist.socket.dir}/${apple.icon}" />
+
+	<copy file="${apple.packager.in}" tofile="${apple.packager.out}" >
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+    </target>
 
     <!--
     ################################################################
