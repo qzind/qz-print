@@ -284,14 +284,30 @@
     -->
     <target name="pkgbuild" depends="distribute">
         <echo>Creating installer using pkgbuild</echo>
-
-	<property file="ant/self-sign.properties"/>
-	<property file="ant/apple/apple.properties"/>
-	<copy file="${branding.dir}/${apple.icon}" tofile="${dist.socket.dir}/${apple.icon}" />
-
-	<copy file="${apple.packager.in}" tofile="${apple.packager.out}" >
+ 
+        <property file="ant/self-sign.properties"/>
+        <property file="ant/apple/apple.properties"/>
+        <copy file="${branding.dir}/${apple.icon}" tofile="${dist.socket.dir}/${apple.icon}" />
+ 
+        <copy file="${apple.packager.in}" tofile="${apple.packager.out}">
             <filterchain><expandproperties/></filterchain>
         </copy>
+ 
+        <chmod perm="u+x" type="file">
+            <fileset dir="${build.dir}">
+                <include name="**/*.sh"/>
+            </fileset>
+        </chmod>
+
+	<mkdir dir="${apple.scripts}"/>
+	<copy file="${apple.keygen.in}" tofile="${apple.keygen.out}">
+	    <filterchain><expandproperties/></filterchain>
+	</copy>
+ 
+        <exec executable="${apple.packager.out}" failonerror="true" />
+ 
+        <!-- Cleanup lingering icon (for other OS installers) -->
+        <delete file="${dist.socket.dir}/${apple.icon}" />
     </target>
 
     <!--

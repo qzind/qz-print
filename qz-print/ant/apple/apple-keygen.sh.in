@@ -1,0 +1,18 @@
+#!/bin/bash
+###############################################################################
+#                ${socket.name} Apple OS X KeyGen Utility                            #
+###############################################################################
+#  Description:                                                               #
+#     1. Creates a self-signed Java Keystore for jetty wss://localhost        #
+#     2. Exports public certificate from Java Keystore                        #
+#     3. Imports into Apple OS X Trusted Root Certs                                #
+#                                                                             #
+#  Depends:                                                                   #
+#    java                                                                     #
+#                                                                             #
+#  Usage:                                                                     #
+#    $ ./apple-keygen.sh                                                      #
+#                                                                             #
+###############################################################################
+echo "FIXME: Hello World!"
+exit 0

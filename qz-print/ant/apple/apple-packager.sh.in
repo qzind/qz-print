@@ -18,8 +18,13 @@ echo "============================================"
 echo "            Packaging ${socket.name}"
 echo "============================================"
 echo
-chmod +x "${apple.installer.out}"
-pkgbuild --root "${dist.socket.dir}" "${build.socket.name}-${build.version}.pkg"
+chmod +x "${apple.packager.out}"
+pkgbuild --identifier "${build.socket.name}" \
+	--root "${dist.socket.dir}" \
+	--install-location "/Applications/${socket.name}.app" \
+	--scripts "${apple.scripts}" \
+	--version "${build.version}" \
+	"${out.dir}/${build.socket.name}-${build.version}.pkg"
 code=$?
 echo
 echo "============================================"
