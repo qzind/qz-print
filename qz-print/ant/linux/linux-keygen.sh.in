@@ -63,7 +63,7 @@ echo "Creating keystore for secure websockets..."
 eval "$makekeystore" > /dev/null 2>&1
 check_exists "$keystorepath"
 
-echo "Convertiing keystore to native certificate..."
+echo "Converting keystore to native certificate..."
 eval "$makedercert" > /dev/null 2>&1
 check_exists "$dercertpath"
 

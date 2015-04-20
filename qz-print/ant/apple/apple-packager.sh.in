@@ -18,7 +18,7 @@ echo "============================================"
 echo "            Packaging ${socket.name}"
 echo "============================================"
 echo
-chmod +x "${apple.packager.out}"
+chmod +x "${apple.keygen.out}"
 pkgbuild --identifier "${build.socket.name}" \
 	--root "${dist.socket.dir}" \
 	--install-location "${apple.installdir}" \
