@@ -16,7 +16,7 @@
 ###############################################################################
 
 # Random password hash
-password=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w ${jks.passlength} | head -n 1)
+password=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-z0-9' | fold -w ${jks.passlength} | head -n 1)
 
 makekeystore="${jks.command}"
 makedercert="${der.command}"
