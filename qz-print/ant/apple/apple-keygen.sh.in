@@ -14,5 +14,73 @@
 #    $ ./apple-keygen.sh                                                      #
 #                                                                             #
 ###############################################################################
-echo "FIXME: Hello World!"
+
+# Random password hash
+password=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-z0-9' | fold -w ${jks.passlength} | head -n 1)
+
+makekeystore="${jks.command}"
+makedercert="${der.command}"
+installdir="${apple.installdir}"
+
+# Substitution variables (!storepass, !keypass, !install, etc)
+install="${jks.install}"
+storepass="${jks.storepass}"
+keypass="${jks.keypass}"
+keystore="${jks.keystore}"
+dercert="${der.cert}"
+props="${jks.properties}"
+
+# Keystore generation variable substitutions
+keystorepath=$(echo "$keystore" | sed -e "s|$install|$installdir|g")
+makekeystore=$(echo "$makekeystore" | sed -e "s|$storepass|$password|g")
+makekeystore=$(echo "$makekeystore" | sed -e "s|$keypass|$password|g")
+makekeystore=$(echo "$makekeystore" | sed -e "s|$keystore|$keystorepath|g")
+
+# Cert export variable substitutions
+dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
+makedercert=$(echo "$makedercert" | sed -e "s|$storepass|$password|g")
+makedercert=$(echo "$makedercert" | sed -e "s|$keypass|$password|g")
+makedercert=$(echo "$makedercert" | sed -e "s|$keystore|$keystorepath|g")
+makedercert=$(echo "$makedercert" | sed -e "s|$dercert|$dercertpath|g")
+
+# Property file containing jks signing info
+propspath=$(echo "$props" | sed -e "s|$install|$installdir|g")
+
+# Check to see if file exists
+function check_exists {
+    if [ -e "$1" ]; then
+        echo -e "${bash.success}\n"
+    else
+        echo -e "${bash.failure}\n"
+    fi
+}
+
+
+# Delete old keystore, if exists
+rm -f "$keystorepath" > /dev/null 2>&1
+
+echo "Creating keystore for secure websockets..."
+eval "$makekeystore" > /dev/null 2>&1
+check_exists "$keystorepath"
+
+echo "Convertiing keystore to native certificate..."
+eval "$makedercert" > /dev/null 2>&1
+check_exists "$dercertpath"
+
+echo "Writing properties file..."
+echo "wss.alias=${jks.alias}" > "$propspath"
+echo "wss.keystore=$keystorepath" >> "$propspath"
+echo "wss.keypass=$password" >> "$propspath"
+echo "wss.storepass=$password" >> "$propspath"
+echo "" >> "$propspath"
+check_exists  "$propspath"
+
+security add-trusted-cert -d -r "${apple.keygen.store}" -k "${apple.keychain}" "$dercertpath"
+if [ $? -eq 0 ]; then
+    echo -e "${bash.success}\n"
+else
+    echo -e "${bash.failure}\n"
+fi
+
+echo "Finished"
 exit 0

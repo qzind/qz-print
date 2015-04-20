@@ -21,7 +21,7 @@ echo
 chmod +x "${apple.packager.out}"
 pkgbuild --identifier "${build.socket.name}" \
 	--root "${dist.socket.dir}" \
-	--install-location "/Applications/${socket.name}.app" \
+	--install-location "${apple.installdir}" \
 	--scripts "${apple.scripts}" \
 	--version "${build.version}" \
 	"${out.dir}/${build.socket.name}-${build.version}.pkg"
