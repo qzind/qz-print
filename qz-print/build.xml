@@ -303,7 +303,7 @@
         <copy file="${apple.launcher.in}" tofile="${apple.launcher.out}">
             <filterchain><expandproperties/></filterchain>
         </copy>
-        <chmod perm="u+x" file="${apple.launcher.out}"/>
+        <chmod perm="+x" file="${apple.launcher.out}"/>
 
         <!-- Info.plist -->
         <copy file="${apple.plist.in}" tofile="${apple.plist.out}">
