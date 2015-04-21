@@ -287,27 +287,51 @@
  
         <property file="ant/self-sign.properties"/>
         <property file="ant/apple/apple.properties"/>
-        <copy file="${branding.dir}/${apple.icon}" tofile="${dist.socket.dir}/${apple.icon}" />
- 
+
+        <!--
+        ###################################
+        #   Build MacOS Bundle Structure  #
+        ###################################
+        -->
+
+        <!-- Contents/Resources/apple-icon.icns -->
+        <mkdir dir="${dist.socket.dir}/${apple.resources}"/>
+        <copy file="${branding.dir}/${apple.icon}" tofile="${dist.socket.dir}/${apple.resources}/${apple.icon}" />
+
+        <!-- Contents/MacOS/QZ\ Tray -->
+        <mkdir dir="${dist.socket.dir}/${apple.macos}"/>
+        <copy file="${apple.launcher.in}" tofile="${apple.launcher.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${apple.launcher.out}"/>
+
+        <!-- Info.plist -->
+        <copy file="${apple.plist.in}" tofile="${apple.plist.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+
         <copy file="${apple.packager.in}" tofile="${apple.packager.out}">
             <filterchain><expandproperties/></filterchain>
         </copy>
- 
-        <chmod perm="u+x" type="file">
-            <fileset dir="${build.dir}">
-                <include name="**/*.sh"/>
-            </fileset>
-        </chmod>
+        <chmod perm="u+x" file="${apple.packager.out}"/>
 
-	<mkdir dir="${apple.scripts}"/>
-	<copy file="${apple.keygen.in}" tofile="${apple.keygen.out}">
-	    <filterchain><expandproperties/></filterchain>
-	</copy>
+        <mkdir dir="${apple.scripts}"/>
+        <copy file="${apple.keygen.in}" tofile="${apple.keygen.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${apple.keygen.out}"/>
+
+        <copy file="${apple.preinstall.in}" tofile="${apple.preinstall.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${apple.preinstall.out}"/>
  
         <exec executable="${apple.packager.out}" failonerror="true" />
  
-        <!-- Cleanup lingering icon (for other OS installers) -->
-        <delete file="${dist.socket.dir}/${apple.icon}" />
+        <!-- Cleanup lingering resources for other installer targets -->
+        <delete dir="${dist.socket.dir}/${apple.resources}" />
+        <delete dir="${dist.socket.dir}/${apple.macos}" />
+        <delete file="${dist.socket.dir}/${apple.plist.out}" />
     </target>
 
     <!--

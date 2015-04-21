@@ -1,0 +1,31 @@
+#!/bin/bash
+###############################################################################
+#                         ${socket.name} Apple OS X Preinstall                       #
+###############################################################################
+#  Description:                                                               #
+#    1. Checks for minimum Java version                                       #
+#    2. Kills any running instances                                           #
+#                                                                             #
+#  Usage:                                                                     #
+#    $ ./preinstall                                                           #
+###############################################################################
+
+# Check minimum java version
+function check_java() {
+   curver=$(java -version 2>&1 | grep -i version | cut -d'"' -f2 | cut -d'.' -f1-2)
+   minver="${javac.socket.target}"
+
+   if [ -z "$curver" ]; then
+      curver="0.0"
+   fi
+
+   if [ $(echo "$curver>=$minver" | bc -l) -eq 0 ]; then
+      exit 1
+   fi
+}
+
+check_java
+
+# Kill any running versions
+kill -9 $(ps -e |grep "${build.socket.name}.jar" |grep -v grep|awk '{print $1}') > /dev/null 2>&1
+exit 0
