@@ -40,6 +40,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.logging.Logger;
 
 /**
@@ -53,6 +54,7 @@ public class PrintSocket {
     // We are going to pass this for all unsigned requests
     // This way, paid or not, users will have to Allow/Deny all unsigned requests, encouraging security
     public static final Certificate UNSIGNED;
+
     static {
         HashMap<String,String> map = new HashMap<String,String>();
         map.put("fingerprint", "UNSIGNED REQUEST");
@@ -67,6 +69,7 @@ public class PrintSocket {
     // Each connection to the websocket has its own instance of QZ to avoid conflicting print buffers
     private static HashMap<Integer,PrintFunction> connections = new HashMap<Integer,PrintFunction>();
     private static HashMap<Integer,Certificate> certificates = new HashMap<Integer,Certificate>();
+    private static AtomicBoolean isAsking = new AtomicBoolean(false);
 
     private final List<String> restrictedMethodNames = Arrays.asList("run", "stop", "start", "call", "init", "destroy", "paint");
 
@@ -166,6 +169,13 @@ public class PrintSocket {
             }
             catch(Exception ignore) {}
 
+            //Dialog blocks UI, so each request should wait until no longer blocked
+            while(isAsking.get()) {
+                try { Thread.sleep(1000); }catch(Exception ignore) {}
+            }
+
+            isAsking.set(true);
+
             if (trayManager.showGatewayDialog(certificate)) {
                 if (methods == null) {
                     methods = new JSONArray();
@@ -203,6 +213,8 @@ public class PrintSocket {
                 message.put("init", "false");
                 sendResponse(session, message);
             }
+
+            isAsking.set(false);
 
             return;
         } else {        // Figure out which method is being called and call it returning any values
