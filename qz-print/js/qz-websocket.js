@@ -15,7 +15,7 @@ var qzConfig = {
         closePort:       'qzDoneClosingPort',
         findNetworkInfo: 'qzDoneFindingNetwork'
     },
-    protocol: "ws://",
+    protocol: "wss://",
     uri: "localhost",                // Base URL to server
     ports: [8181, 8282, 8383, 8484], // Ports to try
     portIndex: 0,                    // Used to track which value in 'ports' array is being used
