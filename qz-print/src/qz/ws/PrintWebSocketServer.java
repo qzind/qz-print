@@ -17,9 +17,8 @@
 
 package qz.ws;
 
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
@@ -70,39 +69,14 @@ public class PrintWebSocketServer {
                 SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setKeyStorePath(sslProperties.getProperty("wss.keystore"));
                 sslContextFactory.setKeyStorePassword(sslProperties.getProperty("wss.storepass"));
-                sslContextFactory.setCertAlias(sslProperties.getProperty("wss.alias"));
 
-                SslConnectionFactory sslConnectionFactory = new SslConnectionFactory(sslContextFactory, "http/1.1");
+                SslConnectionFactory sslConnection = new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString());
+                HttpConnectionFactory httpConnection = new HttpConnectionFactory(new HttpConfiguration());
 
-                ServerConnector connector = new ServerConnector(server, sslConnectionFactory);
-
+                ServerConnector connector = new ServerConnector(server, sslConnection, httpConnection);
+                connector.setHost("localhost");
                 connector.setPort(ports[portIndex.get()]);
                 server.addConnector(connector);
-            }
-            try {
-                final WebSocketHandler wsHandler = new WebSocketHandler() {
-                    @Override
-                    public void configure(WebSocketServletFactory factory) {
-                        factory.register(PrintSocket.class);
-                        factory.getPolicy().setMaxTextMessageSize(MAX_MESSAGE_SIZE);
-                    }
-                };
-                server.setHandler(wsHandler);
-                server.setStopAtShutdown(true);
-                server.start();
-
-                running.set(true);
-                log.info("Server started on port " + ports[portIndex.get()]);
-                trayManager.setServer(server, running, portIndex);
-
-                server.join();
-
-                // Don't remove this next line or while loop will seize on restart
-                log.info("Shutting down server");
-            } catch (BindException e) {
-                log.warning("Port " + ports[portIndex.get()] + " is already in use");
-            } catch (Exception e) {
-                e.printStackTrace();
             }
 
             trayManager.setWarningIcon();
@@ -140,11 +114,12 @@ public class PrintWebSocketServer {
         Properties sslProps = new Properties();
         String sslPropertiesFile = System.getProperty("sslPropertiesFile");
         if (sslPropertiesFile != null) {
-            log.finer("Loading SSL properties file from " + sslPropertiesFile);
+            log.info("SSL properties file from " + sslPropertiesFile);
         } else {
-            log.finer("Loading SSL properties file from default directory");
+            log.info("SSL properties file from default directory");
             sslPropertiesFile = ShortcutUtilities.detectJarPath() + "/qz-tray.properties";
         }
+
         try {
             File propsFile = new File(sslPropertiesFile);
             FileInputStream inputStream = new FileInputStream(propsFile);
