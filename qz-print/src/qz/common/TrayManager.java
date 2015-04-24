@@ -123,6 +123,8 @@ public class TrayManager {
                 System.out.println("Tray message clicked");
             }
         });
+
+        addLogHandler(Certificate.getLogger());
     }
 
     /**

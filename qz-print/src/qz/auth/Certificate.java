@@ -10,6 +10,7 @@ import org.bouncycastle.jce.PrincipalUtil;
 import qz.common.Base64;
 import qz.common.Constants;
 import qz.common.LogIt;
+import qz.common.TrayManager;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
 
@@ -34,7 +35,7 @@ import java.util.logging.Logger;
 public class Certificate {
 
     public static Certificate trustedRootCert = null;
-    private static final Logger log = Logger.getLogger(Certificate.class.getName());
+    private static final Logger log = Logger.getLogger(TrayManager.class.getName());
 
     static {
         try {
@@ -309,6 +310,10 @@ public class Certificate {
                 getValidFrom() + "\t" +
                 getValidTo() + "\t" +
                 isTrusted();
+    }
+
+    public static Logger getLogger() {
+        return log;
     }
 
     @Override
