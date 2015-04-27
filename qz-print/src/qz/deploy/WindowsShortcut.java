@@ -135,7 +135,7 @@ public class WindowsShortcut extends ShortcutUtilities {
      * @param filePath The absolute file path to convert
      * @return The converted path
      */
-    private static String fixWhitespaces(String filePath) {
+    public static String fixWhitespaces(String filePath) {
         return filePath.replace("%20", " ");
     }
 }

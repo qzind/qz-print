@@ -23,6 +23,7 @@ public class Constants {
     public static final String ALLOW_FILE = "allowed";
     public static final String TEMP_FILE = "temp";
     public static final String LOG_FILE = "debug";
+    public static final String PROPS_FILE = "qz-tray"; // .properties extension is assumed
     public static final String DATA_DIR = "qz";
     public static final int LOG_SIZE = 524288;
     public static final int LOG_ROTATIONS = 5;

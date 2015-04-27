@@ -22,6 +22,7 @@
 
 package qz.deploy;
 
+import qz.common.Constants;
 import qz.utils.SystemUtilities;
 
 import java.io.BufferedWriter;
@@ -319,6 +320,29 @@ public abstract class ShortcutUtilities {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Gets the path to qz-tray.properties
+     * @return
+     */
+    public static final String detectPropertiesPath() {
+        // Use supplied path from IDE or command line
+        // i.e  -DsslPropertiesFile=C:\qz-tray.properties
+        String override = System.getProperty("sslPropertiesFile");
+        if (override != null) {
+            return override;
+        }
+
+        String jarPath = detectJarPath();
+        String propFile = Constants.PROPS_FILE + ".properties";
+
+        // Use relative path based on qz-tray.jar
+        if (SystemUtilities.isWindows()) {
+            // Fix %20's on Windows
+            return WindowsShortcut.fixWhitespaces(getParentDirectory(jarPath) + "\\" + propFile);
+        }
+        return getParentDirectory(jarPath) + "/" + propFile;
     }
 
     /**

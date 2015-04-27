@@ -65,9 +65,11 @@ shell.Run(makeDerCert, 0, true);
 verifyExists(derCert, "Check certificate exists");
 
 debug("Installing native certificate for secure websockets...");
-var deleteDerCert = 'certutil.exe -delstore "${windows.keygen.store}" "${vendor.company}"';
+// FIXME: blindly deleting localhost certs is too generic
+var deleteDerCert = 'certutil.exe -delstore "${windows.keygen.store}" "localhost"';
 var installDerCert = 'certutil.exe -addstore -f "${windows.keygen.store}" "' + derCert + '"';
-var verifyDerCert = 'certutil.exe -verifystore "${windows.keygen.store}" "${vendor.company}"';
+// FIXME: blindly searching for a localhost cert is too generic
+var verifyDerCert = 'certutil.exe -verifystore "${windows.keygen.store}" "localhost}"';
 
 try {
     // Windows Vista or higher
@@ -94,7 +96,7 @@ verifyExec(verifyDerCert, "Check certificate installed");
 
 var file = fso.OpenTextFile(fixPath("${jks.properties}"), 2, true);
 file.WriteLine("wss.alias=" + "${jks.alias}");
-file.WriteLine("wss.keystore=" + keyStore);
+file.WriteLine("wss.keystore=" + keyStore.replace(/\\/g,"\\\\"));
 file.WriteLine("wss.keypass=" + password);
 file.WriteLine("wss.storepass=" + password);
 file.Close();

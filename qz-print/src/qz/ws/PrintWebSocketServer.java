@@ -112,13 +112,8 @@ public class PrintWebSocketServer {
 
     private static Properties loadSSLProperties() {
         Properties sslProps = new Properties();
-        String sslPropertiesFile = System.getProperty("sslPropertiesFile");
-        if (sslPropertiesFile != null) {
-            log.info("SSL properties file from " + sslPropertiesFile);
-        } else {
-            log.info("SSL properties file from default directory");
-            sslPropertiesFile = ShortcutUtilities.detectJarPath() + "/qz-tray.properties";
-        }
+        String sslPropertiesFile = ShortcutUtilities.detectPropertiesPath();
+        log.info("SSL properties file from " + sslPropertiesFile);
 
         try {
             File propsFile = new File(sslPropertiesFile);
