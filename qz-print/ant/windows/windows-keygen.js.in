@@ -19,6 +19,7 @@
  *    > cscript //NoLogo windows-keygen.js                                    *
  *                                                                            *
  *****************************************************************************/
+
 var shell = new ActiveXObject("WScript.shell");
 var fso = new ActiveXObject("Scripting.FileSystemObject");
 
@@ -48,7 +49,7 @@ var makeKeyStore = "${jks.command}"
     .replace("${jks.keypass}", password);
 
 deleteFile(keyStore);   // remove old, if exists
-debug("Creating keystore for secure websockets...");
+debug("Creating keystore for secure websockets (this could take a minute)...");
 shell.Run(makeKeyStore, 0, true);
 verifyExists(keyStore, "Check keystore exists");
 
@@ -100,6 +101,33 @@ file.WriteLine("wss.keystore=" + keyStore.replace(/\\/g,"\\\\"));
 file.WriteLine("wss.keypass=" + password);
 file.WriteLine("wss.storepass=" + password);
 file.Close();
+
+debug("Registering with Firefox...");
+
+//  Determine if Firefox is installed
+var firefoxKey = "HKLM\\Software\\Mozilla\\Mozilla Firefox";
+var firefoxVer = getRegValue(firefoxKey + "\\");
+if (!firefoxVer) {
+    debug(" - [skipped] Firefox was not detected");
+    WScript.Quit(0);
+} else {
+    debug(" - [success] Found Firefox " + firefoxVer);
+}
+
+// Determine full path to firefox.exe, i.e. "C:\Program Files (x86)\Mozilla Firefox\firefox.exe"
+var firefoxInstall = getRegValue(firefoxKey + " " + firefoxVer + "\\bin\\PathToExe");
+var firefoxCfg = firefoxInstall + "\\..\\${firefoxconfig.name}";
+var firefoxPrefs = firefoxInstall + "\\..\\defaults\\pref\\${firefoxprefs.name}";
+
+// 1. readPlainCert() reads in certificate, stripping non-base64 content
+// 2. writeParsedConfig(...) places config file in same folder as firefox.exe
+writeParsedConfig(fixPath("${firefoxconfig.install}"), firefoxCfg, "\\${certData}", readPlainCert(derCert));
+verifyExists(firefoxCfg, "Check Firefox config exists");
+
+// Install the preference file tells Firefox to launches ${firefoxconfig.name} each it starts
+fso.CopyFile(fixPath("${firefoxprefs.install}"), firefoxPrefs);
+
+WScript.Quit(0);
 
 /**
  * Deletes a file
@@ -153,14 +181,14 @@ function getRegValue(path) {
  * Displays a message regarding whether or not a file exists
  */
 function verifyExists(path, msg) {
-    debug(" - " + msg + (fso.FileExists(path) ? " [success]" : " [failed]"));
+    debug(" - " + (fso.FileExists(path) ? "[success] " : "[failed] ") + msg);
 }
 
 /**
  * Displays a message regarding whether or not a command succeeded
  */
 function verifyExec(cmd, msg) {
-    debug(" - " + msg + (shell.Run(cmd, 0, true) == 0 ? " [success]" : " [failed]"));
+    debug(" - " + (shell.Run(cmd, 0, true) == 0 ? "[success] " : "[failed] ")  + msg);
 }
 
 /**
@@ -195,4 +223,40 @@ function debug(msg, block) {
         WScript.StdIn.Read(0);
         WScript.StdIn.ReadLine();
     }
+}
+
+/*
+ * Reads in a text file, expands the specified variable and writes it back out.
+ * Note: Due to regular expressions, special characters must be escaped in the
+ * variable name, i.e. "${foo}" should be "\\${foo}"
+ */
+function writeParsedConfig(inPath, outPath, varName, varData) {
+    var inFile = fso.OpenTextFile(inPath, 1, true);     // 1 = ForReading
+    var outFile = fso.OpenTextFile(outPath, 2, true);   // 2 = ForWriting
+    var re = new RegExp(varName, 'g')
+    while(!inFile.AtEndOfStream) {
+        outFile.WriteLine(inFile.ReadLine().replace(re, varData));
+    }
+    inFile.close();
+    outFile.close();
+}
+
+/*
+ * Reads in a X509 certificate, stripping BEGIN, END and NEWLINE string
+ */
+function readPlainCert(certPath) {
+    var certFile = fso.OpenTextFile(certPath, 1, true);
+    var certData = "";
+    while (!certFile.AtEndOfStream) { certData += strip(certFile.ReadLine()); }
+    certFile.close();
+    return certData;
+}
+
+/*
+ * Strips non-base64 data (i.e RFC X509 --START, --END) from a string
+ */
+function strip(line) {
+    var X509 = ["-----BEGIN CERTIFICATE-----", "-----END CERTIFICATE-----", "\r", "\n"];
+    for (var i in X509) { line = line.replace(new RegExp(X509[i], 'g'), ''); }
+    return line;
 }

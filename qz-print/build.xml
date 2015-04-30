@@ -231,13 +231,31 @@
 
     <!--
     ################################################################
+    #               Prepackage Steps - All Platforms               #
+    ################################################################
+    -->
+    <target name="prepackage">
+        <echo>Processing self-signing variables</echo>
+        <property file="ant/self-sign.properties"/>
+
+        <echo>Creating Firefox certificate config files</echo>
+        <copy file="${firefoxconfig.in}" tofile="${firefoxconfig.out}" >
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+
+        <copy file="${firefoxprefs.in}" tofile="${firefoxprefs.out}" >
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+    </target>
+
+    <!--
+    ################################################################
     #                    Windows Installer                         #
     ################################################################
     -->
-    <target name="nsis" depends="nsisbin-1,nsisbin-2,nsisbin-3,distribute">
+    <target name="nsis" depends="distribute,prepackage,nsisbin-1,nsisbin-2,nsisbin-3">
         <echo>Creating installer using ${nsisbin}</echo>
 
-        <property file="ant/self-sign.properties"/>
         <property file="ant/windows/windows.properties"/>
         <copy file="${branding.dir}/${windows.icon}" tofile="${dist.socket.dir}/${windows.icon}" />
 
@@ -282,10 +300,9 @@
     #                     Apple Installer                          #
     ################################################################
     -->
-    <target name="pkgbuild" depends="distribute">
+    <target name="pkgbuild" depends="distribute,prepackage">
         <echo>Creating installer using pkgbuild</echo>
- 
-        <property file="ant/self-sign.properties"/>
+
         <property file="ant/apple/apple.properties"/>
 
         <!--
@@ -339,10 +356,9 @@
     #                     Linux Installer                          #
     ################################################################
     -->
-    <target name="makeself" depends="distribute">
+    <target name="makeself" depends="distribute,prepackage">
         <echo>Creating installer using makeself</echo>
 
-        <property file="ant/self-sign.properties"/>
         <property file="ant/linux/linux.properties"/>
         <copy file="${branding.dir}/${linux.icon}" tofile="${dist.socket.dir}/${linux.icon}" />
 
@@ -368,21 +384,5 @@
 
         <!-- Cleanup lingering icon (for other OS installers) -->
         <delete file="${dist.socket.dir}/${linux.icon}" />
-    </target>
-
-    <!--
-    ################################################################
-    #                     Apple Installer                          #
-    ################################################################
-    -->
-    <target name="dmg" depends="get-version">
-        <echo>Creating installer using node-appdmg</echo>
-
-        <property file="ant/self-sign.properties"/>
-        <property file="ant/apple/apple.properties"/>
-        <copy file="${branding.dir}/${apple.icon}" tofile="${dist.socket.dir}/${apple.icon}" />
-
-        <!-- Cleanup lingering icon (for other OS installers) -->
-        <delete file="${dist.socket.dir}/${apple.icon}" />
     </target>
 </project>
