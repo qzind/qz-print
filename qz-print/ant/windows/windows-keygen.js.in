@@ -8,7 +8,7 @@
  *                        Windows KeyGen Utility                              *
  ******************************************************************************
  *  Description:                                                              *
- *    1. Creates a self-signed Java Keystore for jetty wss://localhost        *
+ *    1. Creates a self-signed Java Keystore for jetty wss://${jks.cn}        *
  *    2. Exports public certificate from Java Keystore                        *
  *    3. Imports into Windows trusted cert store                              *
  *                                                                            *
@@ -66,11 +66,11 @@ shell.Run(makeDerCert, 0, true);
 verifyExists(derCert, "Check certificate exists");
 
 debug("Installing native certificate for secure websockets...");
-// FIXME: blindly deleting localhost certs is too generic
-var deleteDerCert = 'certutil.exe -delstore "${windows.keygen.store}" "localhost"';
+// FIXME: blindly deleting localhost certs is too generic, consider using NSIS
+var deleteDerCert = 'certutil.exe -delstore "${windows.keygen.store}" "${jks.cn}"';
 var installDerCert = 'certutil.exe -addstore -f "${windows.keygen.store}" "' + derCert + '"';
-// FIXME: blindly searching for a localhost cert is too generic
-var verifyDerCert = 'certutil.exe -verifystore "${windows.keygen.store}" "localhost}"';
+// FIXME: blindly searching for a localhost cert is too generic, consider using NSIS
+var verifyDerCert = 'certutil.exe -verifystore "${windows.keygen.store}" "${jks.cn}}"';
 
 try {
     // Windows Vista or higher
