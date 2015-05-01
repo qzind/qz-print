@@ -65,7 +65,8 @@ public class PrintWebSocketServer {
                 server = new Server(ports[portIndex.get()]);
                 log.warning("Failed to load keystore, launching in insecure mode!");
             } else {
-                server = new Server();
+                server = new Server(ports[portIndex.get()] + 1); //port fallback to allow listening for insecure socket
+
                 SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setKeyStorePath(sslProperties.getProperty("wss.keystore"));
                 sslContextFactory.setKeyStorePassword(sslProperties.getProperty("wss.storepass"));

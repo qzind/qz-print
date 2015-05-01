@@ -15,9 +15,10 @@ var qzConfig = {
         closePort:       'qzDoneClosingPort',
         findNetworkInfo: 'qzDoneFindingNetwork'
     },
-    protocol: "wss://",
+    protocol: ["wss://", "ws://"],   // Protocols to use, will try secure WS before insecure
     uri: "localhost",                // Base URL to server
-    ports: [8181, 8282, 8383, 8484], // Ports to try
+    ports: [8181, 8282, 8383, 8484], // Ports to try, insecure WS uses port (ports[x] + 1)
+    protocolIndex: 0,                // Used to track which value in 'protocol' array is being used
     portIndex: 0,                    // Used to track which value in 'ports' array is being used
     keepAlive: (60 * 1000)           // Interval in millis to send pings to server
 };
@@ -41,7 +42,7 @@ function connectWebsocket(port) {
     console.log('Attempting connection on port ' + port);
 
     try {
-        var websocket = new WebSocket(qzConfig.protocol + qzConfig.uri + ":" + port);
+        var websocket = new WebSocket(qzConfig.protocol[qzConfig.protocolIndex] + qzConfig.uri + ":" + port);
     }
     catch(e) {
         console.error(e);
@@ -81,9 +82,15 @@ function connectWebsocket(port) {
             // Move on to the next port
             if (!websocket.valid) {
                 if (++qzConfig.portIndex < qzConfig.ports.length) {
-                    connectWebsocket(qzConfig.ports[qzConfig.portIndex]);
+                    connectWebsocket(qzConfig.ports[qzConfig.portIndex] + qzConfig.protocolIndex);
                 } else {
-                    qzNoConnection();
+                    if (++qzConfig.protocolIndex < qzConfig.protocol.length) {
+                        //Try again using insecure protocol
+                        qzConfig.portIndex = 0;
+                        connectWebsocket(qzConfig.ports[qzConfig.portIndex] + qzConfig.protocolIndex);
+                    } else {
+                        qzNoConnection();
+                    }
                 }
             }
         };
@@ -107,9 +114,9 @@ function connectionSuccess(websocket) {
             ws.send(msg);
         } else {
             signRequest(msg,
-                function(signature) {
-                    ws.send(signature + msg);
-                }
+                        function(signature) {
+                            ws.send(signature + msg);
+                        }
             );
         }
     };
