@@ -1,0 +1,148 @@
+/**
+ * @author Tres Finocchiaro
+ *
+ * Copyright (C) 2015 Tres Finocchiaro, QZ Industries
+ */
+
+/******************************************************************************
+ *                       Windows KeyDelete Utility                            *
+ ******************************************************************************
+ *  Description:                                                              *
+ *    1. Removes old self-signed certificates from Windows trusted            *
+ *       cert store based on matching CN and OU values                        *
+ *                                                                            *
+ *  Depends:                                                                  *
+ *    ${windows.keygen.tool} (Windows Vista or higher)                                  *
+ *                                                                            *
+ *  Usage:                                                                    *
+ *    > cscript //NoLogo windows-keydel.js                                    *
+ *                                                                            *
+ *****************************************************************************/
+
+var shell = WScript.CreateObject("WScript.Shell");
+
+// Tags and delimiters
+var newLine = "\r\n";
+var serialTag = "Serial Number:";
+var issuerTag = "Issuer:";
+var serialDelim = "||";
+
+debug("Deleting old certificates...");
+var matches = findMatches();
+
+// If matches are found, delete them
+if (matches) {
+    matches = matches.split(serialDelim);
+    for (var i in matches) {
+        if (matches[i]) {
+            shell.Run('${windows.keygen.tool} -delstore "${windows.keygen.store}" "' + matches[i] + '"', 1, true);
+        }
+    }
+
+    // Verify removal
+    matches = findMatches();
+    if (matches) {
+        die(" - [failed] Some certificates not deleted");
+    } else {
+        debug(" - [success] Certificate(s) removed");
+    }
+} else {
+    debug(" - [skipped] No matches found");
+}
+
+WScript.Quit(0);
+
+
+
+/*
+ * Returns matching serial numbers delimited by two pipes, i.e "9876fedc||1234abcd"
+ */
+function findMatches() {
+    var matches = "";
+    var proc = shell.Exec('${windows.keygen.tool} -store "${windows.keygen.store}"');
+    var certData = "";
+    while (!proc.StdOut.AtEndOfStream) {
+        var line = proc.StdOut.ReadLine()
+        if (trim(line) != "") {
+            certData += line + newLine;
+        } else {
+            var serial = getSerial(certData);
+            if (serial && isMatch(certData)) {
+                matches += serial + serialDelim;
+            }
+            certData = "";
+        }
+    }
+    return matches;
+}
+
+/*
+ * Parses the console output for serialTag
+ * If found, returns the serial number of the certificate, i.e. "89e301a9"
+ */
+function getSerial(certData) {
+    if (certData.indexOf(newLine) != -1) {
+        var lines = certData.split(newLine);
+        for (var i in lines) {
+            var line = trim(lines[i]);
+            if (line.indexOf(serialTag) == 0) {
+                return trim(line.split(serialTag)[1]);
+            }
+        }
+    }
+    return 0;
+}
+
+/*
+ * Parses the console output for issuerTag
+ * If found, parses the ISSUER data for CN and OU specified above,
+ * Returns true if found
+ */
+function isMatch(certData) {
+    if (certData.indexOf(newLine) != -1) {
+        var lines = certData.split(newLine);
+        for (var i in lines) {
+            var line = trim(lines[i]);
+            if (line.indexOf(issuerTag) == 0) {
+                if (line.indexOf("OU=${vendor.company}") != -1 && line.indexOf("CN=${jks.cn}") != -1) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+}
+
+/*
+ * Functional equivalent of foo.trim()
+ */
+function trim(val) {
+    return val.replace(/^\s+/,'').replace(/\s+$/,'');
+}
+
+/**
+ * Displays an error message and exits the script
+ * @param msg
+ */
+function die(msg, block) {
+    WScript.Echo("ERROR: " + msg);
+    if (block) {
+        WScript.Echo("\n\nPress enter to continue");
+        WScript.StdIn.Read(0);
+        WScript.StdIn.ReadLine();
+    }
+    WScript.Quit(1);
+}
+
+/**
+ * Displays a status message
+ * @param msg
+ */
+function debug(msg, block) {
+    WScript.Echo(msg);
+    if (block) {
+        WScript.Echo("\n\nPress enter to continue");
+        WScript.StdIn.Read(0);
+        WScript.StdIn.ReadLine();
+    }
+}

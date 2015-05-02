@@ -1,3 +1,5 @@
+Changes 1.8.91 (5/2/2015)
+ - Added QZ Tray support for HTTPS pages via Secure WebSockets
 Changes 1.8.90 (3/16/2015)
  - Initial WebSockets release, works without NPAPI
 Changes 1.8.11 (1/23/2015)

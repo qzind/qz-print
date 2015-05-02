@@ -66,17 +66,12 @@ shell.Run(makeDerCert, 0, true);
 verifyExists(derCert, "Check certificate exists");
 
 debug("Installing native certificate for secure websockets...");
-// FIXME: blindly deleting localhost certs is too generic, consider using NSIS
-var deleteDerCert = 'certutil.exe -delstore "${windows.keygen.store}" "${jks.cn}"';
-var installDerCert = 'certutil.exe -addstore -f "${windows.keygen.store}" "' + derCert + '"';
-// FIXME: blindly searching for a localhost cert is too generic, consider using NSIS
-var verifyDerCert = 'certutil.exe -verifystore "${windows.keygen.store}" "${jks.cn}}"';
+var installDerCert = '${windows.keygen.tool} -addstore -f "${windows.keygen.store}" "' + derCert + '"';
+var verifyDerCert = '${windows.keygen.tool} -store "${windows.keygen.store}" |find "OU=${vendor.company}" |find "CN=${jks.cn}"';
 
 try {
     // Windows Vista or higher
-	shell.Run(deleteDerCert, 0, true);
 	shell.Run(installDerCert, 0, true);
-	verifyExec(verifyDerCert, "Check certificate installed");
 } catch (err) {
     // Windows XP or older
 	shell.Popup("Automatic certificate installation is not available for this platform.\n" +

@@ -246,6 +246,8 @@
         <copy file="${firefoxprefs.in}" tofile="${firefoxprefs.out}" >
             <filterchain><expandproperties/></filterchain>
         </copy>
+
+        <copy file="${basedir}/../CHANGELOG.txt" tofile="${build.socket.dir}/CHANGELOG.txt" />
     </target>
 
     <!--
@@ -261,15 +263,15 @@
 
         <delete file="${windows.packager.out}"/>
         <copy file="${windows.packager.in}" tofile="${windows.packager.out}" >
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+
+        <copy file="${windows.keydel.in}" tofile="${windows.keydel.out}" >
+            <filterchain><expandproperties/></filterchain>
         </copy>
 
         <copy file="${windows.keygen.in}" tofile="${windows.keygen.out}" >
-            <filterchain>
-                <expandproperties/>
-            </filterchain>
+            <filterchain><expandproperties/></filterchain>
         </copy>
 
         <exec executable="${nsisbin}" failonerror="true" >
