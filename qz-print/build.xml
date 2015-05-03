@@ -266,10 +266,6 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
 
-        <copy file="${windows.keydel.in}" tofile="${windows.keydel.out}" >
-            <filterchain><expandproperties/></filterchain>
-        </copy>
-
         <copy file="${windows.keygen.in}" tofile="${windows.keygen.out}" >
             <filterchain><expandproperties/></filterchain>
         </copy>

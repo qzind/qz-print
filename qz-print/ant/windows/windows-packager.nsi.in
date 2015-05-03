@@ -56,14 +56,11 @@ Section
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   ; Remove ${vendor.company} certificates
-  File /r "${build.dir}\${windows.keydel.name}*"
-  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keydel.name}$\""
-  Delete "$INSTDIR\${windows.keydel.name}"
+  File /r "${build.dir}\${windows.keygen.name}*"
+  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
 
   ; Exports a self-signed certificate and properties file
-  File /r "${build.dir}\${windows.keygen.name}*"
-  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\""
-  Delete "$INSTDIR\${windows.keygen.name}"
+  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\" install"
 
   CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${windows.icon}" 0
 SectionEnd
@@ -74,6 +71,9 @@ Section "Uninstall"
   ; Kills any running ${socket.name} processes
   ExecWait "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
 
+  ; Remove ${vendor.company} certificates
+  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
+
   Delete "$SMPROGRAMS\${socket.name}.lnk"
   Delete "$INSTDIR\uninstall.exe"
   RMDir /r "$INSTDIR"
@@ -83,11 +83,6 @@ Section "Uninstall"
 
   Delete "$DESKTOP\${socket.name}.url"
   Delete "$DESKTOP\${socket.name}.lnk"
-
-  ; Remove ${vendor.company} certificates
-  File /r "${build.dir}\${windows.keydel.name}*"
-  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keydel.name}$\""
-  Delete "$INSTDIR\${windows.keydel.name}"
 SectionEnd
 
 ;-------------------------------
