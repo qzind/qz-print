@@ -1,5 +1,13 @@
 !include MUI2.nsh
 !include x64.nsh
+
+!ifdef NSIS_UNICODE
+	!addplugindir "${windows.nsis.addons}/Plugins/Release_Unicode"
+!else
+	!addplugindir "${windows.nsis.addons}/Plugins/Release_ANSI"
+!endif
+
+!addincludedir "${windows.nsis.addons}/Include/"
 !include StdUtils.nsh
 
 Name "${socket.name}"
