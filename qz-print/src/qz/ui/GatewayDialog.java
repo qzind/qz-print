@@ -115,6 +115,7 @@ public class GatewayDialog extends JDialog {
         setResizable(false);
         pack();
 
+        setAlwaysOnTop(true);
         setLocationRelativeTo(null);    // center on main display
     }
 
