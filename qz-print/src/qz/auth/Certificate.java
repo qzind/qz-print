@@ -139,7 +139,7 @@ public class Certificate {
                     log.warning("Problem verifying certificate with CRL");
                     valid = false;
                 }
-            } else {
+            } else if (trustedRootCert != null) {
                 //Assume nothing is revoked, because we can't get the CRL
                 log.warning("Failed to retrieve QZ CRL, skipping CRL check");
             }
