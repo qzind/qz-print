@@ -1,8 +1,10 @@
 !include MUI2.nsh
 !include x64.nsh
+!include StdUtils.nsh
 
 Name "${socket.name}"
 OutFile "${out.dir}\${build.socket.name}-${build.version}-setup.exe"
+RequestExecutionLevel admin
 
 ;-------------------------------
 
@@ -26,7 +28,7 @@ InstallDir "$PROGRAMFILES\${socket.name}"
 
 Section
   ; Kills any running ${socket.name} processes
-  ExecWait "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+  nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
 
   SetOutPath "$INSTDIR"
 
@@ -56,23 +58,25 @@ Section
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   ; Remove ${vendor.company} certificates
-  File /r "${build.dir}\${windows.keygen.name}*"
-  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
+  nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
 
   ; Exports a self-signed certificate and properties file
-  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\" install"
+  nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" install"
 
   CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${windows.icon}" 0
+
+  ; Launch a non-elevated instance of ${socket.name}
+  ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${socket.name}.lnk" "open" ""
 SectionEnd
 
 ;-------------------------------
 
 Section "Uninstall"
   ; Kills any running ${socket.name} processes
-  ExecWait "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+  nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
 
   ; Remove ${vendor.company} certificates
-  ExecWait "cscript.exe //NoLogo $\"$INSTDIR\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
+  nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
 
   Delete "$SMPROGRAMS\${socket.name}.lnk"
   Delete "$INSTDIR\uninstall.exe"
