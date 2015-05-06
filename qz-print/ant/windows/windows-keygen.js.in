@@ -40,12 +40,22 @@ var qzInstall = getArg(0, getRegValue("HKLM\\Software\\${socket.name}\\"));
 var installMode = getArg(1, "install");
 
 if (installMode == "install") {
-    var javaKey, jreHome, keyTool, keyStore, password, derCert;
+    var javaKey, jreHome, keyTool, keyStore, password, derCert, firefoxInstall;
     if (createJavaKeystore()) {
         installWindowsCertificate();
-        installFirefoxCertificate();
+        if (hasFirefoxConflict()) {
+            alert("WARNING: ${socket.name} installation would conflict with an existing Firefox AutoConfig rule.\n\n" +
+                "Please notify your administrator of this warning.\n\n" +
+                "The installer will continue, but ${socket.name} will not function with Firefox until this conflict is resolved.",
+                "Firefox AutoConfig Warning");
+        } else {
+            if (firefoxInstall) {
+                installFirefoxCertificate();
+            }
+        }
     }
 } else {
+    var firefoxInstall;
     deleteWindowsCertificate();
     deleteFirefoxCertificate();
 }
@@ -281,23 +291,89 @@ function installWindowsXPCertificate(derCert) {
 }
 
 /*
- * Delete certificate for Mozilla Firefox browser, which utilizes its own cert database
+ * Gets the Firefox installation path, stores it a global variable "firefoxInstall"
  */
-function deleteFirefoxCertificate() {
-    debug("Removing from Firefox...");
-
+function getFirefoxInstall() {
     //  Determine if Firefox is installed
     var firefoxKey = "HKLM\\Software\\Mozilla\\Mozilla Firefox";
     var firefoxVer = getRegValue(firefoxKey + "\\");
     if (!firefoxVer) {
         debug(" - [skipped] Firefox was not detected");
-        return;
+        return false;
     } else {
         debug(" - [success] Found Firefox " + firefoxVer);
     }
 
     // Determine full path to firefox.exe, i.e. "C:\Program Files (x86)\Mozilla Firefox\firefox.exe"
-    var firefoxInstall = getRegValue(firefoxKey + " " + firefoxVer + "\\bin\\PathToExe");
+    firefoxInstall = getRegValue(firefoxKey + " " + firefoxVer + "\\bin\\PathToExe");
+
+    return firefoxInstall;
+}
+
+/*
+ * Iterates over the installed preferences file looking for a non-${socket.name} AutoConfig rule
+ */
+function hasFirefoxConflict() {
+    if (!getFirefoxInstall()) { return false; }
+
+    debug("Searching for Firefox AutoConfig conflicts...");
+    // AutoConfig rule conflicts to search for
+    var conflicts = ["general.config.filename"];
+
+    // White-listed preference files, used for ${socket.name} deployment
+    var exceptions = ["${firefoxprefs.name}"];
+    var folder = fso.GetFolder(firefoxInstall + "\\..\\defaults\\pref");
+    var o = new Enumerator(folder.Files);
+    for ( ; !o.atEnd(); o.moveNext()) {
+        var whitelist = false;
+        for (var i in exceptions) {
+            if (exceptions[i] == o.item().Name) {
+                debug(" - [skipping] ${socket.name} config file: " + exceptions[i]);
+                whitelist = true;
+            }
+        }
+        if (!whitelist && parseFirefoxPref(o.item(), conflicts)) {
+            return true;
+        }
+    }
+    debug(" - [success] No conflicts found");
+    return false;
+}
+
+/*
+ * Reads a Firefox preference file for already existing AutoConfig rule conflicts
+ * Conflicts suggest an enterprise-type deployment environment.
+ * Returns true if a conflict exists.
+ */
+function parseFirefoxPref(file, conflicts) {
+    var inFile = fso.OpenTextFile(file.Path, 1, true);     // 1 = ForReading
+    var counter = 0;
+    while(!inFile.AtEndOfStream) {
+        var line = inFile.ReadLine()
+        counter++;
+        for (var i in conflicts) {
+            // Check for both quote styles, 'foo.bar.name' and "foo.bar.name"
+            if (line.indexOf("'" + conflicts[i] + "'") >= 0 ||
+                line.indexOf('"' + conflicts[i] + '"') >= 0) {
+                debug(" - [error] Conflict found in " + file.Name +
+                    "\n\t Conflict on line " + counter + ": \"" + line + "\"");
+                inFile.close();
+                return true;
+            }
+        }
+    }
+    inFile.close();
+    return false;
+}
+
+
+/*
+ * Delete certificate for Mozilla Firefox browser, which utilizes its own cert database
+ */
+function deleteFirefoxCertificate() {
+    if (!getFirefoxInstall()) { return; }
+
+    debug("Removing from Firefox...");
     var firefoxCfg = firefoxInstall + "\\..\\${firefoxconfig.name}";
 
     // Variable replacements for Firefox config file
@@ -317,19 +393,6 @@ function deleteFirefoxCertificate() {
  */
 function installFirefoxCertificate() {
     debug("Registering with Firefox...");
-
-    //  Determine if Firefox is installed
-    var firefoxKey = "HKLM\\Software\\Mozilla\\Mozilla Firefox";
-    var firefoxVer = getRegValue(firefoxKey + "\\");
-    if (!firefoxVer) {
-        debug(" - [skipped] Firefox was not detected");
-        return;
-    } else {
-        debug(" - [success] Found Firefox " + firefoxVer);
-    }
-
-    // Determine full path to firefox.exe, i.e. "C:\Program Files (x86)\Mozilla Firefox\firefox.exe"
-    var firefoxInstall = getRegValue(firefoxKey + " " + firefoxVer + "\\bin\\PathToExe");
     var firefoxCfg = firefoxInstall + "\\..\\${firefoxconfig.name}";
 
     // Variable replacements for Firefox config file
@@ -474,4 +537,11 @@ function getArg(index, defaultVal) {
         return defaultVal;
     }
     return WScript.Arguments(index);
+}
+
+/*
+ * Mimic an alert dialog, used only for OK_ONLY + WARNING (0 + 48)
+ */
+function alert(message, title) {
+    new ActiveXObject("WScript.Shell").Popup(message, 0, title == null ? "Warning" : title, 48);
 }
