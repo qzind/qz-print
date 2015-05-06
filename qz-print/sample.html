@@ -133,9 +133,9 @@ function qzReady() {
     if (qz) {
         try {
             title.innerHTML = title.innerHTML + " " + qz.getVersion();
-            document.getElementById("content").style.background = "#F0F0F0";
+            document.getElementById("qz-status").style.background = "#F0F0F0";
         } catch(err) { // LiveConnect error, display a detailed message
-            document.getElementById("content").style.background = "#F5A9A9";
+            document.getElementById("qz-status").style.background = "#F5A9A9";
             alert("ERROR:  \nThe applet did not load correctly.  Communication to the " +
                     "applet has failed, likely caused by Java Security Settings.  \n\n" +
                     "CAUSE:  \nJava 7 update 25 and higher block LiveConnect calls " +
@@ -148,7 +148,7 @@ function qzReady() {
 }
 
 function qzSocketError(event) {
-    document.getElementById("content").style.background = "#F5A9A9";
+    document.getElementById("qz-status").style.background = "#F5A9A9";
     console.log('Error:');
     console.log(event);
 
@@ -156,7 +156,7 @@ function qzSocketError(event) {
 }
 
 function qzSocketClose(event) {
-    document.getElementById("content").style.background = "#A0A0A0";
+    document.getElementById("qz-status").style.background = "#A0A0A0";
     console.log('Close:');
     console.log(event);
 
@@ -845,7 +845,7 @@ function listNetworkInfo() {
  *    qz.appendImage($("canvas")[0].toDataURL('image/png'));
  ***************************************************************************/
 function printHTML5Page() {
-    $("#content").html2canvas({
+    $("#qz-status").html2canvas({
         canvas: hidden_screenshot,
         onrendered: function() {
             if (notReady()) { return; }
@@ -1063,7 +1063,7 @@ function chr(i) {
 <script type="text/javascript" src="js/3rdparty/jquery.plugin.html2canvas.js"></script>
 </head>
 
-<body id="content" bgcolor="#FFF380">
+<body id="qz-status" bgcolor="#FFF380">
 <div style="margin: 0 1em;"><h1 id="title" style="margin:0;">QZ Print Plugin</h1></div>
 
 <table border="1px" cellpadding="5px" cellspacing="0px">
