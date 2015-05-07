@@ -337,12 +337,9 @@ public abstract class ShortcutUtilities {
         String jarPath = detectJarPath();
         String propFile = Constants.PROPS_FILE + ".properties";
 
-        // Use relative path based on qz-tray.jar
-        if (SystemUtilities.isWindows()) {
-            // Fix %20's on Windows
-            return WindowsShortcut.fixWhitespaces(getParentDirectory(jarPath) + "\\" + propFile);
-        }
-        return getParentDirectory(jarPath) + "/" + propFile;
+        // Use relative path based on qz-tray.jar, fix %20
+        // TODO:  Find a better way to fix the unicode chars?
+        return fixWhitespaces(getParentDirectory(jarPath) + File.separator + propFile);
     }
 
     /**
@@ -400,5 +397,16 @@ public abstract class ShortcutUtilities {
         public String getName() {
             return this.name() == null ? null : this.name().toLowerCase();
         }
+    }
+      
+    /**
+     * Attempts to correct URL path conversions that occur on old JREs and older
+     * Windows versions.  For now, just addresses %20 spaces, but 
+     * there could be other URLs which will need special consideration.
+     * @param filePath The absolute file path to convert
+     * @return The converted path
+     */
+    public static String fixWhitespaces(String filePath) {
+        return filePath.replace("%20", " ");
     }
 }
