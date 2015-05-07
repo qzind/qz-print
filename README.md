@@ -24,5 +24,6 @@ Free browser applet for sending documents and raw commands to a printer.
  4. Package
  ```bash
  ant nsis       # <-- Windows installer
+ ant pkgbuild   # <-- Apple installer
  ant makeself   # <-- Linux installer
  ```

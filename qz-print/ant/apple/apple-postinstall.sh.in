@@ -1,0 +1,19 @@
+#!/bin/bash
+###############################################################################
+#                         ${socket.name} Apple OS X Postinstall                      #
+###############################################################################
+#  Description:                                                               #
+#    1. Generates and installs certificate for secure websockets              #
+#    2. Installs certificate to Firefox                                       #
+#                                                                             #
+#  Usage:                                                                     #
+#    $ ./preinstall                                                           #
+###############################################################################
+
+# Install ${socket.name} certificate
+${apple.installdir}/auth/${apple.keygen.name}
+
+if [ $? -eq 0 ]; then
+    # Install Firefox certificate
+    ${apple.installdir}/auth/firefox/${apple.firefox.name} "install"
+fi

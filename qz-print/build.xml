@@ -340,6 +340,16 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
         <chmod perm="u+x" file="${apple.preinstall.out}"/>
+
+        <copy file="${apple.postinstall.in}" tofile="${apple.postinstall.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${apple.postinstall.out}"/>
+
+        <copy file="${apple.firefox.in}" tofile="${apple.firefox.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${apple.firefox.out}"/>
  
         <exec executable="${apple.packager.out}" failonerror="true" />
  
