@@ -49,10 +49,14 @@ function get_appdir()
 
 get_appdir
 
+echo "Searching for Firefox..."
+
 # Firefox was not found, skip Firefox certificate installation
 if [ -z "$appdir" ]; then
-	echo -e " - [skipping] Firefox not found"
+	echo -e "${bash.skipped} Firefox not found"
 	exit 0
+else
+    echo -e "${bash.success} $appdir"
 fi
 
 
@@ -76,7 +80,7 @@ if [ "$1" == "uninstall" ]; then
         if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ]; then
             echo -e "${bash.success} Certificate removed successfully"
         else
-            echo -e "${bash.error} ${socket.name} Certificate removal failed"
+            echo -e "${bash.failure} ${socket.name} Certificate removal failed"
             exit 1
         fi
     else
@@ -103,13 +107,25 @@ for i in $prefdir/*; do
 		grep "'$j'" $i &>/dev/null
 		ret2=$?
 		if [ $ret1 -eq 0 ] || [ $ret2 -eq 0 ]; then
-		   echo -e "${bash.error} Conflict found while looking for \"$j\"\n\tin $i"
+		   echo -e "${bash.failure} Conflict found while looking for \"$j\"\n\tin $i"
 		   exit 1
 		fi
 	done
 done
 
 echo -e "${bash.success} No conflicts found"
+
+# Substitution variables (!install, etc)
+install="${jks.install}"
+dercert="${der.cert}"
+prefs="${firefoxprefs.install}"
+config="${firefoxconfig.install}"
+
+# Perform substitutions
+installdir="${apple.installdir}"
+dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
+prefspath=$(echo "$prefs" | sed -e "s|$install|$installdir|g")
+configpath=$(echo "$config" | sed -e "s|$install|$installdir|g")
 
 echo -e "\nRegistering with Firefox..."
 cp "${firefoxprefs.install}" "$prefdir/${firefoxprefs.name}"
@@ -118,13 +134,7 @@ cp "${firefoxconfig.install}" "$bindir/${firefoxconfig.name}"
 bcert="\-\-\-\-\-BEGIN CERTIFICATE\-\-\-\-\-"
 ecert="\-\-\-\-\-END CERTIFICATE\-\-\-\-\-"
 
-# Substitution variables (!install, etc)
-install="${jks.install}"
-dercert="${der.cert}"
-installdir="${apple.installdir}"
 
-# Cert export variable substitutions
-dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
 
 # Get raw base64 data only
 certdata=$(cat "$dercertpath"| tr -d '\n' |tr -d "$bcert" |tr -d "$ecert")
@@ -139,10 +149,10 @@ if [ -f "$bindir/${firefoxconfig.name}" ]; then
     if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ]; then
         echo -e "${bash.success} Certificate installed"
     else
-        echo -e "${bash.error} Certificate installation failed"
+        echo -e "${bash.failure} Certificate installation failed"
     fi
 else
-	echo -e "${bash.error} Cannot locate ${socket.name} AutoConfig"
+	echo -e "${bash.failure} Cannot locate ${socket.name} AutoConfig"
 	exit 1
 fi
 
