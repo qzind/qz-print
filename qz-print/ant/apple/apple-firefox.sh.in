@@ -128,8 +128,8 @@ prefspath=$(echo "$prefs" | sed -e "s|$install|$installdir|g")
 configpath=$(echo "$config" | sed -e "s|$install|$installdir|g")
 
 echo -e "\nRegistering with Firefox..."
-cp "$prefs" "$prefdir/${firefoxprefs.name}"
-cp "$config" "$bindir/${firefoxconfig.name}"
+cp "prefspath" "$prefdir/${firefoxprefs.name}"
+cp "configpath" "$bindir/${firefoxconfig.name}"
 
 bcert="\-\-\-\-\-BEGIN CERTIFICATE\-\-\-\-\-"
 ecert="\-\-\-\-\-END CERTIFICATE\-\-\-\-\-"
