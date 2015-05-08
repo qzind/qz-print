@@ -127,15 +127,4 @@ public class WindowsShortcut extends ShortcutUtilities {
     private static String fixURL(String filePath) {
        return "file:///" + filePath.replace("\\", "/");
     }
-    
-    /**
-     * Attempts to correct URL path conversions that occur on old JREs and older
-     * Windows versions.  For now, just addresses %20 spaces, but 
-     * there could be other URLs which will need special consideration.
-     * @param filePath The absolute file path to convert
-     * @return The converted path
-     */
-    public static String fixWhitespaces(String filePath) {
-        return filePath.replace("%20", " ");
-    }
 }

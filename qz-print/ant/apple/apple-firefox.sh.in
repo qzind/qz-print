@@ -56,13 +56,13 @@ if [ -z "$appdir" ]; then
 	echo -e "${bash.skipped} Firefox not found"
 	exit 0
 else
-    echo -e "${bash.success} $appdir"
+    echo -e "${bash.success} /$appdir"
 fi
 
 
 
 appdir="/$appdir"
-bindir="$appdir/Contents/MacOS/"
+bindir="$appdir/Contents/Resources/"
 prefdir="$appdir/Contents/Resources/defaults/pref"
 
 #
@@ -131,13 +131,16 @@ echo -e "\nRegistering with Firefox..."
 cp "$prefspath" "$prefdir/${firefoxprefs.name}"
 cp "$configpath" "$bindir/${firefoxconfig.name}"
 
-bcert="\-\-\-\-\-BEGIN CERTIFICATE\-\-\-\-\-"
-ecert="\-\-\-\-\-END CERTIFICATE\-\-\-\-\-"
+bcert="-----BEGIN CERTIFICATE-----"
+ecert="-----END CERTIFICATE-----"
+blank=""
 
+# Read certificate, stripping newlines
+certdata=$(cat "$dercertpath" |tr -d '\n'|tr -d '\r')
 
-
-# Get raw base64 data only
-certdata=$(cat "$dercertpath"| tr -d '\n' |tr -d "$bcert" |tr -d "$ecert")
+# Strip all non-base64 data
+certdata=$(echo "$certdata" | sed -e "s|$bcert|$blank|g")
+certdata=$(echo "$certdata" | sed -e "s|$ecert|$blank|g")
 
 if [ -f "$bindir/${firefoxconfig.name}" ]; then
 	echo -e "${bash.success} Check ${socket.name} AutoConfig exists"
