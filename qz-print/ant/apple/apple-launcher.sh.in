@@ -1,3 +1,5 @@
 #!/bin/bash
-java -jar "$0/../../../${build.socket.name}.jar"
+# Build absolute path to the jar file, based relative to the location of this script
+jarpath=$(echo "$0" | rev | cut -d/ -f4- | rev)/${build.socket.name}.jar
+java -jar "$jarpath"
 exit $?
