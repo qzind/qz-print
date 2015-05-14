@@ -78,6 +78,7 @@ public class PrintWebSocketServer {
                 connector.setHost("localhost");
                 connector.setPort(ports[portIndex.get()]);
                 server.addConnector(connector);
+                trayManager.setSecure(true);
             }
 
             trayManager.setWarningIcon();

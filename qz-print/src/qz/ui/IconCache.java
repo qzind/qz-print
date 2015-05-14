@@ -65,6 +65,7 @@ public class IconCache {
         UNVERIFIED_ICON("qz-untrusted.png"),
         FIELD_ICON("qz-field.png"),
         DELETE_ICON("qz-delete.png"),
+        QUESTION_ICON("qz-question.png"),
 
         // Logo
         LOGO_ICON("qz-logo.png");
@@ -105,6 +106,7 @@ public class IconCache {
                 case LOGO_ICON:
                 case VERIFIED_ICON:
                 case UNVERIFIED_ICON:
+                case QUESTION_ICON:
                     return false;
                 default:
                     return true;

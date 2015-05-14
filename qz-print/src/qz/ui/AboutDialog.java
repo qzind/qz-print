@@ -16,7 +16,8 @@ import java.net.URL;
  */
 public class AboutDialog extends BasicDialog {
     JPanel gridPanel;
-    JLabel portLabel;
+    JLabel urlLabel;
+    Color textColor;
 
     String name;
     int port;
@@ -40,10 +41,12 @@ public class AboutDialog extends BasicDialog {
         gridPanel.add(createLabel("Software:", true));
         gridPanel.add(createLabel(name));
 
-        portLabel = new JLabel();
+        urlLabel = new JLabel();
+        // Cache the foreground color
+        textColor = urlLabel.getForeground();
         setPort(port);
-        gridPanel.add(createLabel("Port Number:", true));
-        gridPanel.add(portLabel);
+        gridPanel.add(createLabel("Listening On:", true));
+        gridPanel.add(urlLabel);
 
 
         gridPanel.add(createLabel("Publisher:", true));
@@ -97,8 +100,31 @@ public class AboutDialog extends BasicDialog {
     }
 
     public void setPort(int port) {
-        this.port = port;
-        this.portLabel.setText(port < 0? "None":"" + port);
+        setPort(port, false);
+    }
+
+    /**
+     * Display port and socket secure/insecure information
+     * @param port
+     * @param secure
+     */
+    public void setPort(int port, boolean secure) {
+        if (port < 0) {
+            urlLabel.setText("None");
+            urlLabel.setForeground(Constants.WARNING_COLOR);
+            urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
+            return;
+        }
+
+        if (secure) {
+            urlLabel.setText("wss://localhost:" + port + " (https enabled)");
+            urlLabel.setForeground(textColor);
+            urlLabel.setFont(urlLabel.getFont().deriveFont(Font.PLAIN));
+        } else {
+            urlLabel.setText("ws://localhost:" + port + " (http only)");
+            urlLabel.setForeground(Constants.WARNING_COLOR);
+            urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
+        }
     }
 
     public JButton addPanelButton(JMenuItem menuItem) {

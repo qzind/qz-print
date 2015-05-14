@@ -75,9 +75,25 @@ echo "wss.storepass=$password" >> "$propspath"
 echo "" >> "$propspath"
 check_exists  "$propspath"
 
+
+# Remove all prior certificates
+function remove_certs {
+	hash=$(security find-certificate -e "${vendor.email}" -Z |grep ^SHA-1|rev|cut -d' ' -f1|rev)
+	if [ -n "$hash" ]; then
+		security delete-certificate -Z "$hash" > /dev/null 2>&1
+		# Recurse on self
+		remove_certs
+		return 0
+	fi
+	# No certs found, exit
+	return 1
+}
+
+echo "Removing old certificates (warnings are safe to ignore)..."
+remove_certs
+echo -e "${bash.success}\n"
+
 echo "Installing certificate..."
-# Remove any prior certificate
-security delete-certificate -c "${vendor.company}" > /dev/null 2>&1
 
 # Install new certificate
 security add-trusted-cert -d -r "${apple.keygen.store}" -k "${apple.keychain}" "$dercertpath"

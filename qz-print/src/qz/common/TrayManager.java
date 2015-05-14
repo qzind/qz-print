@@ -34,9 +34,7 @@ import qz.ws.PrintSocket;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -59,6 +57,7 @@ public class TrayManager {
     // Custom swing pop-up menu
     AutoHidePopupTray tray;
 
+    private ConfirmDialog confirmDialog;
     private GatewayDialog gatewayDialog;
     private AboutDialog aboutDialog;
     private LogDialog logDialog;
@@ -79,6 +78,9 @@ public class TrayManager {
     // Action to run when reload is triggered
     private Thread reloadThread;
 
+    // Whether or not the socket was started securely
+    private boolean secure;
+
     // Port that the socket is listening on
     private int port;
 
@@ -87,6 +89,7 @@ public class TrayManager {
      */
     public TrayManager() {
         name = Constants.ABOUT_TITLE + " " + Constants.VERSION;
+        secure = false;
         port = -1;
 
         // Setup the web socket log file writer
@@ -113,15 +116,32 @@ public class TrayManager {
         // The allow/block dialog
         gatewayDialog = new GatewayDialog(null, "Action Required", iconCache);
 
+        // The ok/cancel dialog
+        confirmDialog = new ConfirmDialog(null, "Please Confirm", iconCache);
+
         addMenuItems(tray);
         //tray.displayMessage(name, name + " is running.", Level.INFO);
 
-        tray.getTrayIcon().addActionListener(new ActionListener() {
+        tray.getTrayIcon().addMouseListener(new MouseListener() {
             @Override
-            public void actionPerformed(ActionEvent e) {
-                //TODO - show pending dialog
-                System.out.println("Tray message clicked");
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    tray.setVisible(false);
+                    aboutListener.actionPerformed(new ActionEvent(e.getSource(),e.getID(),null));
+                }
             }
+
+            @Override
+            public void mousePressed(MouseEvent e) {}
+
+            @Override
+            public void mouseReleased(MouseEvent e) {}
+
+            @Override
+            public void mouseEntered(MouseEvent e) {}
+
+            @Override
+            public void mouseExited(MouseEvent e) {}
         });
 
         addLogHandler(Certificate.getLogger());
@@ -214,7 +234,7 @@ public class TrayManager {
         public void actionPerformed(ActionEvent e) {
             try {
                 Desktop d = Desktop.getDesktop();
-                d.browse(new File(shortcutCreator.getParentDirectory()).toURI());
+                d.open(new File(shortcutCreator.getParentDirectory()));
             }
             catch(Exception ex) {
                 showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
@@ -286,14 +306,14 @@ public class TrayManager {
 
     private final ActionListener aboutListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            aboutDialog.setPort(port);
+            aboutDialog.setPort(port, secure);
             aboutDialog.setVisible(true);
         }
     };
 
     private final ActionListener exitListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            if (showConfirmDialog("Exit " + name + "?")) {
+            if (confirmDialog.prompt("Exit " + name + "?")) {
                 System.exit(0);
             }
         }
@@ -320,7 +340,7 @@ public class TrayManager {
 
         if (!checkBoxState) {
             // Remove shortcut entry
-            if (showConfirmDialog("Remove " + name + " from " + toggleType + "?")) {
+            if (confirmDialog.prompt("Remove " + name + " from " + toggleType + "?")) {
                 if (!shortcutCreator.removeShortcut(toggleType)) {
                     tray.displayMessage(name, "Error removing " + toggleType + " entry", Level.SEVERE);
                     checkBoxState = true;   // Set our checkbox back to true
@@ -343,18 +363,6 @@ public class TrayManager {
         if (e.getSource() instanceof JCheckBoxMenuItem) {
             ((JCheckBoxMenuItem) e.getSource()).setState(checkBoxState);
         }
-    }
-
-    /**
-     * Displays a simple yes/no confirmation dialog and returns true/false
-     * respectively
-     *
-     * @param message The text to display
-     * @return true if yes is clicked, false if no is clicked
-     */
-    private boolean showConfirmDialog(String message) {
-        int i = JOptionPane.showConfirmDialog(tray, message, name, JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
-        return i == JOptionPane.YES_OPTION;
     }
 
     /**
@@ -507,6 +515,14 @@ public class TrayManager {
                 }
             }));
         }
+    }
+
+    /**
+     * Sets the "secure" flag, to be shown on the About dialog
+     * @param secure
+     */
+    public void setSecure(boolean secure) {
+        this.secure = secure;
     }
 
     /**
