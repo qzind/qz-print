@@ -214,7 +214,7 @@ public class TrayManager {
         public void actionPerformed(ActionEvent e) {
             try {
                 Desktop d = Desktop.getDesktop();
-                d.browse(new File(shortcutCreator.getParentDirectory()).toURI());
+                d.open(new File(shortcutCreator.getParentDirectory()));
             }
             catch(Exception ex) {
                 showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());

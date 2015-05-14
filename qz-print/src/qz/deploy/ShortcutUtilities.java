@@ -177,8 +177,7 @@ public abstract class ShortcutUtilities {
      */
     static final String getParentDirectory(String filePath) {
         // Working path should always default to the JARs parent folder
-        int lastSlash = filePath.lastIndexOf('/');
-        lastSlash = lastSlash < 0 ? filePath.lastIndexOf('\\') : lastSlash;
+        int lastSlash = filePath.lastIndexOf(File.separator);
         return lastSlash < 0 ? "" : filePath.substring(0, lastSlash);
     }
 
