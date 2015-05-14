@@ -61,12 +61,11 @@ public class PrintWebSocketServer {
         while (!running.get() && portIndex.getAndIncrement() < ports.length) {
             Server server;
 
-            if (sslProperties == null) {
-                server = new Server(ports[portIndex.get()]);
-                log.warning("Failed to load keystore, launching in insecure mode!");
-            } else {
-                server = new Server(ports[portIndex.get()] + 1); //port fallback to allow listening for insecure socket
+            // Always start on port + 1 (i.e. 8182) to allow insecure socket
+            server = new Server(ports[portIndex.get()] + 1);
 
+            if (sslProperties != null) {
+                // Bind the secure socket on the proper port number (i.e. 8181), add it as an additional connector
                 SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setKeyStorePath(sslProperties.getProperty("wss.keystore"));
                 sslContextFactory.setKeyStorePassword(sslProperties.getProperty("wss.storepass"));
@@ -78,7 +77,8 @@ public class PrintWebSocketServer {
                 connector.setHost("localhost");
                 connector.setPort(ports[portIndex.get()]);
                 server.addConnector(connector);
-                trayManager.setSecure(true);
+            }  else {
+                log.warning("Could not start secure WebSocket");
             }
 
             trayManager.setWarningIcon();
@@ -96,8 +96,8 @@ public class PrintWebSocketServer {
                 server.start();
 
                 running.set(true);
-                log.info("Server started on port " + ports[portIndex.get()]);
                 trayManager.setServer(server, running, portIndex);
+                log.info("Server started on port(s) " + TrayManager.getPorts(server));
 
                 server.join();
 
@@ -105,7 +105,7 @@ public class PrintWebSocketServer {
                 log.info("Shutting down server");
 
             } catch (BindException e) {
-                log.warning("Port " + ports[portIndex.get()] + " is already in use");
+                log.warning("Port(s) already in use " + ports[portIndex.get()] + " or " + (ports[portIndex.get()] + 1));
             } catch (Exception e) {
                 e.printStackTrace();
             }

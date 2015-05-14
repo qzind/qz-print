@@ -22,6 +22,7 @@
 
 package qz.common;
 
+import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import qz.auth.Certificate;
@@ -78,19 +79,11 @@ public class TrayManager {
     // Action to run when reload is triggered
     private Thread reloadThread;
 
-    // Whether or not the socket was started securely
-    private boolean secure;
-
-    // Port that the socket is listening on
-    private int port;
-
     /**
      * Create a AutoHideJSystemTray with the specified name/text
      */
     public TrayManager() {
         name = Constants.ABOUT_TITLE + " " + Constants.VERSION;
-        secure = false;
-        port = -1;
 
         // Setup the web socket log file writer
         trayLogger = Logger.getLogger(TrayManager.class.getName());
@@ -207,7 +200,7 @@ public class TrayManager {
         JMenuItem aboutItem = new JMenuItem("About...", iconCache.getIcon(IconCache.Icon.ABOUT_ICON));
         aboutItem.setMnemonic(KeyEvent.VK_B);
         aboutItem.addActionListener(aboutListener);
-        aboutDialog = new AboutDialog(aboutItem, iconCache, name, port);
+        aboutDialog = new AboutDialog(aboutItem, iconCache, name);
         aboutDialog.addPanelButton(sitesItem);
         aboutDialog.addPanelButton(logItem);
         aboutDialog.addPanelButton(openItem);
@@ -306,7 +299,6 @@ public class TrayManager {
 
     private final ActionListener aboutListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            aboutDialog.setPort(port, secure);
             aboutDialog.setVisible(true);
         }
     };
@@ -427,8 +419,8 @@ public class TrayManager {
      */
     public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger portIndex) {
         if (server != null && server.getConnectors().length > 0) {
-            port = ((ServerConnector) server.getConnectors()[0]).getLocalPort();
-            displayInfoMessage("Server started on port " + port);
+            displayInfoMessage("Server started on port(s) " + TrayManager.getPorts(server));
+            aboutDialog.setServer(server);
             setDefaultIcon();
 
             setReloadThread(new Thread(new Runnable() {
@@ -436,7 +428,6 @@ public class TrayManager {
                 public void run() {
                     try {
                         setDangerIcon();
-                        setPort(-1);
                         server.stop();
                         running.set(false);
                         portIndex.set(-1);
@@ -452,12 +443,17 @@ public class TrayManager {
     }
 
     /**
-     * Sets the port number in use for display purposes only
-     *
-     * @param port The port to display in the About dialog
+     * Returns a String representation of the ports assigned to the specified Server
+     * @param server
+     * @return
      */
-    public void setPort(int port) {
-        this.port = port;
+    public static String getPorts(Server server) {
+        String ports = "";
+        for (Connector c : server.getConnectors()) {
+            ports = ports + ((ServerConnector)c).getLocalPort() + ", ";
+        }
+
+        return ports.replaceAll(", $", "");
     }
 
     /**
@@ -515,14 +511,6 @@ public class TrayManager {
                 }
             }));
         }
-    }
-
-    /**
-     * Sets the "secure" flag, to be shown on the About dialog
-     * @param secure
-     */
-    public void setSecure(boolean secure) {
-        this.secure = secure;
     }
 
     /**

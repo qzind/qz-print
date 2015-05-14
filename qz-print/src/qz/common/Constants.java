@@ -33,7 +33,6 @@ public class Constants {
     public static final String ABOUT_TITLE = "QZ Tray";
     public static final String ABOUT_URL = "http://qzindustries.com";
     public static final String ABOUT_COMPANY = "QZ Industries, LLC";
-    public static final String ABOUT_DESC = "%s is a plugin for your web browser,\nused to print barcodes, receipts and more.";
 
     public static final String TRUSTED_PUBLISHER = String.format("Verified by %s", Constants.ABOUT_COMPANY);
     public static final String UNTRUSTED_PUBLISHER = "Untrusted website";

@@ -1,5 +1,6 @@
 package qz.ui;
 
+import org.eclipse.jetty.server.*;
 import qz.common.Constants;
 
 import javax.swing.*;
@@ -16,16 +17,14 @@ import java.net.URL;
  */
 public class AboutDialog extends BasicDialog {
     JPanel gridPanel;
-    JLabel urlLabel;
-    Color textColor;
+    JLabel wssLabel;
+    JLabel wsLabel;
 
     String name;
-    int port;
 
-    public AboutDialog(JMenuItem menuItem, IconCache iconCache, String name, int port) {
+    public AboutDialog(JMenuItem menuItem, IconCache iconCache, String name) {
         super(menuItem, iconCache);
         this.name = name;
-        this.port = port;
         initComponents();
     }
 
@@ -38,16 +37,19 @@ public class AboutDialog extends BasicDialog {
         gridPanel.setLayout(new GridLayout(4, 2));
         gridPanel.setBorder(new EtchedBorder(EtchedBorder.LOWERED));
 
+        wsLabel = new JLabel("None");
+        wssLabel = new JLabel("None.  No https support.");
+        wssLabel.setForeground(Constants.WARNING_COLOR);
+        wssLabel.setFont(wsLabel.getFont().deriveFont(Font.BOLD));
+
         gridPanel.add(createLabel("Software:", true));
         gridPanel.add(createLabel(name));
 
-        urlLabel = new JLabel();
-        // Cache the foreground color
-        textColor = urlLabel.getForeground();
-        setPort(port);
-        gridPanel.add(createLabel("Listening On:", true));
-        gridPanel.add(urlLabel);
+        gridPanel.add(createLabel("Secure Socket:", true));
+        gridPanel.add(wssLabel);
 
+        gridPanel.add(createLabel("Fallback Socket:", true));
+        gridPanel.add(wsLabel);
 
         gridPanel.add(createLabel("Publisher:", true));
         try {
@@ -55,9 +57,6 @@ public class AboutDialog extends BasicDialog {
         } catch (MalformedURLException ex) {
             gridPanel.add(new LinkLabel(Constants.ABOUT_URL));
         }
-
-        gridPanel.add(createLabel("Description:", true));
-        gridPanel.add(createLabel(String.format(Constants.ABOUT_DESC, Constants.ABOUT_TITLE)));
 
         shadeComponents();
         setContent(gridPanel, true);
@@ -80,51 +79,35 @@ public class AboutDialog extends BasicDialog {
     }
 
     public JComponent createLabel(String text, boolean isBold) {
-        if (text.contains("\n")) {
-            JLabel styleLabel = new JLabel();
-            JTextArea area = new JTextArea(text);
-            area.setEditable(false);
-            area.setCursor(null);
-            area.setFocusable(false);
-            area.setFont(styleLabel.getFont());
-            area.setBackground(styleLabel.getBackground());
-            return area;
-        } else {
-            JLabel label = new JLabel(text);
-            if (isBold) {
-                label.setFont(label.getFont().deriveFont(Font.BOLD));
-            }
-            return label;
+        JLabel label = new JLabel(text);
+        if (isBold) {
+            label.setFont(label.getFont().deriveFont(Font.BOLD));
         }
-
-    }
-
-    public void setPort(int port) {
-        setPort(port, false);
+        return label;
     }
 
     /**
-     * Display port and socket secure/insecure information
-     * @param port
-     * @param secure
+     * Sets server for displaying port and socket secure/insecure information
+     * @param server
      */
-    public void setPort(int port, boolean secure) {
-        if (port < 0) {
-            urlLabel.setText("None");
-            urlLabel.setForeground(Constants.WARNING_COLOR);
-            urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
-            return;
+    public void setServer(Server server) {
+        for (Connector c : server.getConnectors()) {
+            for (ConnectionFactory f : c.getConnectionFactories()) {
+                ServerConnector s = (ServerConnector)c;
+                if (f instanceof SslConnectionFactory) {
+                    wssLabel.setText("wss://localhost:" + s.getLocalPort());
+                    wssLabel.setFont(wsLabel.getFont());
+                    wssLabel.setForeground(wsLabel.getForeground());
+                    break;
+                }
+                else {
+                    wsLabel.setText("ws://localhost:" + s.getLocalPort());
+                    break;
+                }
+            }
         }
 
-        if (secure) {
-            urlLabel.setText("wss://localhost:" + port + " (https enabled)");
-            urlLabel.setForeground(textColor);
-            urlLabel.setFont(urlLabel.getFont().deriveFont(Font.PLAIN));
-        } else {
-            urlLabel.setText("ws://localhost:" + port + " (http only)");
-            urlLabel.setForeground(Constants.WARNING_COLOR);
-            urlLabel.setFont(urlLabel.getFont().deriveFont(Font.BOLD));
-        }
+        pack();
     }
 
     public JButton addPanelButton(JMenuItem menuItem) {
