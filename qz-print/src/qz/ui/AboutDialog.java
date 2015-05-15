@@ -84,7 +84,7 @@ public class AboutDialog extends BasicDialog {
             label.setFont(label.getFont().deriveFont(Font.BOLD));
         }
         return label;
-    }
+    }	
 
     /**
      * Sets server for displaying port and socket secure/insecure information

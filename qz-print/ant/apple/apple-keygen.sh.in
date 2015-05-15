@@ -55,6 +55,32 @@ function check_exists {
     fi
 }
 
+# Remove all matching system certificates
+function remove_certs {
+	hash=$(security find-certificate -e "${vendor.email}" -Z |grep ^SHA-1|rev|cut -d' ' -f1|rev)
+	if [ -n "$hash" ]; then
+		security delete-certificate -Z "$hash" > /dev/null 2>&1
+		# Recurse on self
+		remove_certs
+		return 0
+	fi
+	# No certs found, exit
+	return 1
+}
+
+#
+# Uninstall mode
+#
+if [ "$1" == "uninstall" ]; then
+    echo "Removing installed certificates (warnings are safe to ignore)..."
+	remove_certs
+	echo -e "${bash.success}\n"
+    exit 0
+fi
+
+#
+# Install mode
+#
 
 # Delete old keystore, if exists
 rm -f "$keystorepath" > /dev/null 2>&1
@@ -74,20 +100,6 @@ echo "wss.keypass=$password" >> "$propspath"
 echo "wss.storepass=$password" >> "$propspath"
 echo "" >> "$propspath"
 check_exists  "$propspath"
-
-
-# Remove all prior certificates
-function remove_certs {
-	hash=$(security find-certificate -e "${vendor.email}" -Z |grep ^SHA-1|rev|cut -d' ' -f1|rev)
-	if [ -n "$hash" ]; then
-		security delete-certificate -Z "$hash" > /dev/null 2>&1
-		# Recurse on self
-		remove_certs
-		return 0
-	fi
-	# No certs found, exit
-	return 1
-}
 
 echo "Removing old certificates (warnings are safe to ignore)..."
 remove_certs

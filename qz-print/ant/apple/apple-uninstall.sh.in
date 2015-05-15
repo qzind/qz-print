@@ -7,17 +7,25 @@
 #    2. Installs certificate to Firefox                                       #
 #                                                                             #
 #  Usage:                                                                     #
-#    $ ./preinstall                                                           #
+#    $ sudo ./uninstall                                                       #
 ###############################################################################
 
-# Install ${socket.name} certificate
-"${apple.installdir}/auth/${apple.keygen.name}" "install"
-
-if [ $? -eq 0 ]; then
-    # Install Firefox certificate
-    "${apple.installdir}/auth/firefox/${apple.firefox.name}" "install"
+if [ "$(id -u)" != "0" ]; then
+   echo -e "\nThis script must be run with root (sudo) privileges" 1>&2
+   echo -e "${bash.failure}"
+   exit 1
 fi
 
-# Start ${socket.name}
-echo -e "\nStarting ${socket.name} as $USER..."
-su $USER -c "open -a \"${socket.name}\""
+# Uninstall ${socket.name} system certificates
+"${apple.installdir}/auth/${apple.keygen.name}" "uninstall"
+
+if [ $? -eq 0 ]; then
+    # Uninstall Firefox certificate
+    "${apple.installdir}/auth/firefox/${apple.firefox.name}" "uninstall"
+fi
+
+echo -e "Cleanup is complete.  Removing ${apple.installdir}..."
+rm -rf "${apple.installdir}"
+echo -e "${bash.success}"
+
+echo -e "\nUninstall of ${socket.name} complete.\n"

@@ -1,5 +1,7 @@
 #!/bin/bash
 # Build absolute path to the jar file, based relative to the location of this script
-jarpath=$(echo "$0" | rev | cut -d/ -f4- | rev)/${build.socket.name}.jar
-java -jar "$jarpath"
+installpath=$(echo "$0" | rev | cut -d/ -f4- | rev)
+jarpath=$installpath/${build.socket.name}.jar
+iconpath=$installpath/${apple.resources}/${apple.icon}
+java -Xdock:name="${socket.name}" -Xdock:icon="$iconpath" -jar "$jarpath"
 exit $?

@@ -345,6 +345,11 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
         <chmod perm="u+x" file="${apple.postinstall.out}"/>
+        
+        <copy file="${apple.uninstall.in}" tofile="${apple.uninstall.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${apple.uninstall.out}"/>
 
         <copy file="${apple.firefox.in}" tofile="${apple.firefox.out}">
             <filterchain><expandproperties/></filterchain>
