@@ -1,3 +1,12 @@
+Changes 1.8.94 (5/18/2015)
+ - Added secure websocket support for Apple
+ - Added secure websocket support for Firefox (Windows and Apple only)
+ - Improved certificate cleanup on Apple
+ - Prevent unnecessary signing of preemptive messages
+ - Fix "Open folder location" on Apple
+ - Detect and block legacy WebSockets versions
+ - About dialog: Display all active ports and secure/insecure status
+ - New ConfirmDialog, bring GatewayDialog to top
 Changes 1.8.91 (5/2/2015)
  - Added QZ Tray support for HTTPS pages via Secure WebSockets
 Changes 1.8.90 (3/16/2015)
