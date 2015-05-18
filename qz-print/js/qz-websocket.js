@@ -110,7 +110,8 @@ function connectionSuccess(websocket) {
         console.log("Sending " + msg);
         var ws = this;
 
-        if (objMsg.method === 'listMessages') {
+        // Determine if the message requires signing
+        if (objMsg.method === 'listMessages' || Object.keys(qzConfig.preemptive).indexOf(objMsg.method) != -1) {
             ws.send(msg);
         } else {
             signRequest(msg,
