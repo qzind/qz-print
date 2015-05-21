@@ -5,7 +5,7 @@ Free browser applet for sending documents and raw commands to a printer.
 
 **Compilation Instructions**
 
- 1. Install depencies
+ 1. Install dependencies
   ```bash
   sudo apt-get install git openjdk-7-jdk ant nsis makeself
   ```
