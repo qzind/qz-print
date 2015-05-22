@@ -37,6 +37,8 @@ InstallDir "$PROGRAMFILES\${socket.name}"
 Section
   ; Kills any running ${socket.name} processes
   nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+  ; Cleanup for wmic on Windows XP
+  Delete "$DESKTOP\TempWmicBatchFile.bat"
 
   SetOutPath "$INSTDIR"
 
@@ -82,6 +84,8 @@ SectionEnd
 Section "Uninstall"
   ; Kills any running ${socket.name} processes
   nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+  ; Cleanup for wmic on Windows XP
+  Delete "$DESKTOP\TempWmicBatchFile.bat"
 
   ; Remove ${vendor.company} certificates
   nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
