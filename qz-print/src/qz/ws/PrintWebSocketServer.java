@@ -26,7 +26,6 @@ import qz.common.TrayManager;
 import qz.deploy.ShortcutUtilities;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.BindException;
 import java.util.Properties;
@@ -55,7 +54,7 @@ public class PrintWebSocketServer {
     public static void runServer() {
         final AtomicBoolean running = new AtomicBoolean(false);
         final AtomicInteger portIndex = new AtomicInteger(-1);
-        Properties sslProperties = loadSSLProperties();
+        Properties sslProperties = ShortcutUtilities.loadSSLProperties();
 
 
         while (!running.get() && portIndex.getAndIncrement() < ports.length) {
@@ -109,23 +108,6 @@ public class PrintWebSocketServer {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    private static Properties loadSSLProperties() {
-        Properties sslProps = new Properties();
-        String sslPropertiesFile = ShortcutUtilities.detectPropertiesPath();
-        log.info("SSL properties file from " + sslPropertiesFile);
-
-        try {
-            File propsFile = new File(sslPropertiesFile);
-            FileInputStream inputStream = new FileInputStream(propsFile);
-            sslProps.load(inputStream);
-            return sslProps;
-        } catch (IOException e) {
-            e.printStackTrace();
-            log.warning("Failed to load properties file!");
-            return null;
         }
     }
 

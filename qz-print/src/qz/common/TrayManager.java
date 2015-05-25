@@ -28,6 +28,7 @@ import org.eclipse.jetty.server.ServerConnector;
 import qz.auth.Certificate;
 import qz.deploy.ShortcutUtilities;
 import qz.ui.*;
+import qz.deploy.LinuxCertificate;
 import qz.utils.FileUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
@@ -101,9 +102,12 @@ public class TrayManager {
         iconCache = new IconCache(tray.getTrayIcon().getSize());
         tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
 
-        // Use some native system tricks to fix the tray icon to look proper on Ubuntu
+        // Linux spcecific tasks
         if (SystemUtilities.isLinux()) {
+            // Fix the tray icon to look proper on Ubuntu
             UbuntuUtilities.fixTrayIcons(iconCache);
+            // Install cert into user's nssdb for Chrome, etc
+            LinuxCertificate.installCertificate();
         }
 
         // The allow/block dialog

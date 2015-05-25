@@ -120,8 +120,12 @@ if [ $? -eq 0 ]; then
 fi
 
 progress_dialog 70 "Generating certificate..."
-chmod +x "${linux.keygen.out}"  > /dev/null 2>&1
-"${linux.keygen.out}"
+chmod +x "$destdir/auth/${linux.keygen.name}"  > /dev/null 2>&1
+"$destdir/auth/${linux.keygen.name}"
+
+progress_dialog 80 "Importing Firefox certificate..."
+chmod +x "$destdir/auth/firefox/${firefoxcert.name}"  > /dev/null 2>&1
+sudo "$destdir/auth/firefox/${firefoxcert.name}"
 
 cd "${destdir}"
 progress_dialog 90 "Installation complete... Starting ${socket.name}..."

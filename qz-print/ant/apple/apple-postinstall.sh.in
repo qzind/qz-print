@@ -15,7 +15,7 @@
 
 if [ $? -eq 0 ]; then
     # Install Firefox certificate
-    "${apple.installdir}/auth/firefox/${apple.firefox.name}" "install"
+    "${apple.installdir}/auth/firefox/${firefoxcert.name}" "install"
 fi
 
 # Start ${socket.name}

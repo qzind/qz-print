@@ -27,9 +27,11 @@ import qz.utils.SystemUtilities;
 
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -342,6 +344,27 @@ public abstract class ShortcutUtilities {
     }
 
     /**
+     * Returns a properties object containing the SSL properties infor
+     * @return
+     */
+    public static Properties loadSSLProperties() {
+        Properties sslProps = new Properties();
+        String sslPropertiesFile = ShortcutUtilities.detectPropertiesPath();
+        log.info("SSL properties file from " + sslPropertiesFile);
+
+        try {
+            File propsFile = new File(sslPropertiesFile);
+            FileInputStream inputStream = new FileInputStream(propsFile);
+            sslProps.load(inputStream);
+            return sslProps;
+        } catch (IOException e) {
+            e.printStackTrace();
+            log.warning("Failed to load properties file!");
+            return null;
+        }
+    }
+
+    /**
      * Determines the currently running Jar's absolute path on the local filesystem
      * @return A String value representing the absolute path to the currently running
      * jar
@@ -408,4 +431,5 @@ public abstract class ShortcutUtilities {
     public static String fixWhitespaces(String filePath) {
         return filePath.replace("%20", " ");
     }
+
 }

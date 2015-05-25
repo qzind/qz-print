@@ -5,10 +5,9 @@
 #  Description:                                                               #
 #     1. Creates a self-signed Java Keystore for jetty wss://localhost        #
 #     2. Exports public certificate from Java Keystore                        #
-#     3. Imports into Linux Trusted Root Certs                                #
 #                                                                             #
 #  Depends:                                                                   #
-#    java (sudo apt-get install openjdk-7-jre                                 #
+#    java (sudo apt-get install openjdk-7-jre)                                #
 #                                                                             #
 #  Usage:                                                                     #
 #    $ ./linux-keygen.sh                                                      #
@@ -75,26 +74,4 @@ echo "wss.storepass=$password" >> "$propspath"
 echo "" >> "$propspath"
 check_exists  "$propspath"
 
-rootstore="${linux.keygen.store}"
-rootcertpath="${dercert/${install}/$rootstore}"
-
-read -p "Install certificate for secure websockets? [y/N] " -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]] ; then
-    sudo rm -f "$rootcertpath" > /dev/null 2>&1
-    sudo cp "$dercertpath" "$rootcertpath" > /dev/null 2>&1
-    sudo update-ca-certificates > /dev/null 2>&1
-    # Verify proper installation
-    grep -F -x -f "${linux.keygen.installed}" "$dercertpath" > /dev/null 2>&1
-    if [ $? -eq 0 ]; then
-        echo -e "${bash.success}\n"
-    else
-        echo -e "${bash.failure}\n"
-    fi
-else
-    echo "Skipping certificate installation per user request"
-    echo -e "${bash.skipped} :$dercertpath\n"
-fi
-
-echo "Finished"
 exit 0

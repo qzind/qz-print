@@ -1,10 +1,10 @@
 #!/bin/bash
 ###############################################################################
-#           ${socket.name} Apple OS X Firefox Certificate Utility                    #
+#           ${socket.name} Linux / Unix Firefox Certificate Utility                  #
 ###############################################################################
 #  Description:                                                               #
 #   INSTALL:                                                                  #
-#     1. Searches for Firefox installation using lsregister                   #
+#     1. Searches for Firefox installation path                               #
 #     2. Parses defaults/pref for potential Firefox AutoConfig conflicts      #
 #     3. Imports certificate into Firefox web browser using AutoConfig file   #
 #                                                                             #
@@ -12,34 +12,34 @@
 #     1. Deletes certificate from Firefox web browser using AutoConfig file   #
 #                                                                             #
 #  Depends:                                                                   #
-#    lsregister (provided by Apple's launch services)                         #
+#    - lsregister (Apple-only, provided by launch services)                   #
+#    - perl (standard with most modern Linux/Unix systems)                    #
 #                                                                             #
 #  Usage:                                                                     #
-#    $ ./${apple.firefox.name} "install"                                           #
-#    $ ./${apple.firefox.name} "uninstall"                                         #
+#    $ ./${firefoxcert.name} "install"                                            #
+#    $ ./${firefoxcert.name} "uninstall"                                          #
 #                                                                             #
 ###############################################################################
 
-# Array of possible Firefox application names
-appnames=("Firefox")	# "Firefox" "IceWeasel" "etc"
+# Array of possible Firefox application names.
+appnames=("Firefox")	# "Firefox" "IceWeasel" "etc
 
 # Array of possible pref tag conflicts
 conflicts=("general.config.filename")
 
-# Array of possible lsregister command locations
-lsregs=("/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister")
-
-appdir=""
-
 #
 # Calls lsregister -dump and parses the output for "/Firefox.app", etc.  Returns the very first result found.
 #
-function get_appdir()
+function get_osx_ffdir()
 {
-	for i in ${lsregs[@]}; do
+	# OSX Array of possible lsregister command locations
+	lsregs=("/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister")
+
+	for i in "${lsregs[@]}"; do
 		for j in ${appnames[@]}; do
 			if [ -f $i ]; then
-				appdir=$($i -dump |grep -E "/$j.app$" |cut -d'/' -f2- |head -1)
+				ffdir=$($i -dump |grep -E "/$j.app$" |cut -d'/' -f2- |head -1)
+				ffdir="/$ffdir"
 				return 0
 			fi
 		done
@@ -47,23 +47,51 @@ function get_appdir()
 	return 1
 }
 
-get_appdir
+#
+# Uses "which" and "readlink" to locate firefox on Linux, etc
+#
+function get_ffdir()
+{
+	for i in "${appnames[@]}"; do
+		# Convert "Firefox" to "firefox", etc
+		lower=$(echo "$i" |tr '[:upper:]' '[:lower:]')
+		exec=$(readlink -f "$(which $lower)")
+		ffdir=$(echo "$exec" |rev |cut -d'/' -f2- |rev)
+		if [ -f "$ffdir" ]; then
+			return 0
+		fi
+	done
+	
+}
+
 
 echo "Searching for Firefox..."
 
+ffdir=""
+if [[ "$OSTYPE" == "darwin"* ]]; then
+	# Mac OSX
+	get_osx_ffdir
+	bindir="$ffdir/Contents/Resources/"
+	prefdir="$ffdir/Contents/Resources/defaults/pref"
+	installdir="${apple.installdir}"
+else
+	# Linux, etc
+	get_ffdir
+	bindir="$ffdir"
+	prefdir="$ffdir/defaults/pref"
+	installdir="${linux.installdir}"
+fi
+
 # Firefox was not found, skip Firefox certificate installation
-if [ -z "$appdir" ]; then
+if [ -z "$ffdir" ] || [ "$ffdir" = "/" ]; then
 	echo -e "${bash.skipped} Firefox not found"
 	exit 0
 else
-    echo -e "${bash.success} /$appdir"
+    echo -e "${bash.success} $ffdir"
 fi
 
 
 
-appdir="/$appdir"
-bindir="$appdir/Contents/Resources/"
-prefdir="$appdir/Contents/Resources/defaults/pref"
 
 #
 # Uninstall mode
@@ -101,7 +129,7 @@ for i in $prefdir/*; do
 		echo -e "${bash.skipped} Ignoring ${socket.name} preference file \"${firefoxprefs.name}\""
 		continue
 	fi
-	for j in ${conflicts[@]}; do
+	for j in "${conflicts[@]}"; do
 		grep '"$j"' $i &>/dev/null
 		ret1=$?
 		grep "'$j'" $i &>/dev/null
@@ -122,7 +150,7 @@ prefs="${firefoxprefs.install}"
 config="${firefoxconfig.install}"
 
 # Perform substitutions
-installdir="${apple.installdir}"
+
 dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
 prefspath=$(echo "$prefs" | sed -e "s|$install|$installdir|g")
 configpath=$(echo "$config" | sed -e "s|$install|$installdir|g")
@@ -160,3 +188,4 @@ else
 fi
 
 exit 0
+

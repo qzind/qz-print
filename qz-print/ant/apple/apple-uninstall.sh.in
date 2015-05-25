@@ -21,7 +21,7 @@ fi
 
 if [ $? -eq 0 ]; then
     # Uninstall Firefox certificate
-    "${apple.installdir}/auth/firefox/${apple.firefox.name}" "uninstall"
+    "${apple.installdir}/auth/firefox/${firefoxcert.name}" "uninstall"
 fi
 
 echo -e "Cleanup is complete.  Removing ${apple.installdir}..."

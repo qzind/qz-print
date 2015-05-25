@@ -345,16 +345,16 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
         <chmod perm="u+x" file="${apple.postinstall.out}"/>
-        
+
         <copy file="${apple.uninstall.in}" tofile="${apple.uninstall.out}">
             <filterchain><expandproperties/></filterchain>
         </copy>
         <chmod perm="u+x" file="${apple.uninstall.out}"/>
 
-        <copy file="${apple.firefox.in}" tofile="${apple.firefox.out}">
+        <copy file="${firefoxcert.in}" tofile="${firefoxcert.out}">
             <filterchain><expandproperties/></filterchain>
         </copy>
-        <chmod perm="u+x" file="${apple.firefox.out}"/>
+        <chmod perm="u+x" file="${firefoxcert.out}"/>
  
         <exec executable="${apple.packager.out}" failonerror="true" />
  
@@ -392,6 +392,11 @@
                  <include name="**/*.sh"/>
             </fileset>
         </chmod>
+
+        <copy file="${firefoxcert.in}" tofile="${firefoxcert.out}">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${firefoxcert.out}"/>
 
         <exec executable="${linux.packager.out}" failonerror="true" />
 
