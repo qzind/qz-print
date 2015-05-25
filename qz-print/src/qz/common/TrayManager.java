@@ -30,6 +30,7 @@ import qz.deploy.ShortcutUtilities;
 import qz.ui.*;
 import qz.deploy.LinuxCertificate;
 import qz.utils.FileUtilities;
+import qz.utils.MacUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
 import qz.ws.PrintSocket;
@@ -208,6 +209,10 @@ public class TrayManager {
         aboutDialog.addPanelButton(sitesItem);
         aboutDialog.addPanelButton(logItem);
         aboutDialog.addPanelButton(openItem);
+        
+        if (SystemUtilities.isMac()) {
+            MacUtilities.registerAboutDialog(aboutDialog);
+        }
 
         JSeparator separator = new JSeparator();
 
