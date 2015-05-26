@@ -42,7 +42,8 @@ var installMode = getArg(1, "install");
 if (installMode == "install") {
     var javaKey, jreHome, keyTool, keyStore, password, derCert, firefoxInstall;
     if (createJavaKeystore()) {
-        installWindowsCertificate();
+        try { installWindowsCertificate(); }
+        catch (err) { installWindowsXPCertificate(); }
         if (hasFirefoxConflict()) {
             alert("WARNING: ${socket.name} installation would conflict with an existing Firefox AutoConfig rule.\n\n" +
                 "Please notify your administrator of this warning.\n\n" +
@@ -56,7 +57,8 @@ if (installMode == "install") {
     }
 } else {
     var firefoxInstall;
-    deleteWindowsCertificate();
+    try { deleteWindowsCertificate(); }
+    catch (err) { deleteWindowsXPCertificate(); }
     deleteFirefoxCertificate();
 }
 
@@ -264,18 +266,12 @@ function installWindowsCertificate() {
     debug("Installing native certificate for secure websockets...");
     var installDerCert = '${windows.keygen.tool} -addstore -f "${windows.keygen.store}" "' + derCert + '"';
 
-    try {
-        // Windows Vista or higher
-        shell.Run(installDerCert, 0, true);
-    } catch (err) {
-        // Windows XP or older
-        installWindowsXPCertificate(derCert);
-    }
-
+    // Windows Vista or higher
+    shell.Run(installDerCert, 0, true);
     debug(" - " + (findWindowsMatches("") ? "[success] " : "[failed] ")  + "Check certificate installed");
 }
 
-function installWindowsXPCertificate(derCert) {
+function installWindowsXPCertificate() {
     shell.Popup("Automatic certificate installation is not available for this platform.\n" +
         "For secure websockets to function properly:\n\n" +
         "     1.  Navigate to \"" + derCert + "\"\n" +

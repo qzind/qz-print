@@ -67,6 +67,9 @@ Section
 
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
+  ; Handle edge-case where jscript support is unregistered
+  nsExec::ExecToLog "regsvr32.exe /s $\"%systemroot%\system32\jscript.dll$\""
+
   ; Remove ${vendor.company} certificates
   nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
 
