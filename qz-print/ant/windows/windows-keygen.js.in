@@ -72,7 +72,7 @@ function deleteFile(filePath) {
 		try {
 			fso.DeleteFile(filePath);
 		} catch (err) {
-			die("Unable to delete " + filePath, false);
+			die("Unable to delete " + filePath);
 		}
 	}
 }
@@ -137,27 +137,18 @@ function fixPath(append) {
  * Displays an error message and exits the script
  * @param msg
  */
-function die(msg, block) {
+function die(msg, status) {
     WScript.Echo("ERROR: " + msg);
-    if (block) {
-        WScript.Echo("\n\nPress enter to continue");
-        WScript.StdIn.Read(0);
-        WScript.StdIn.ReadLine();
-    }
-    WScript.Quit(1);
+    status = status ? status : -1;
+    WScript.Quit(status);
 }
 
 /**
  * Displays a status message
  * @param msg
  */
-function debug(msg, block) {
+function debug(msg) {
     WScript.Echo(msg);
-    if (block) {
-        WScript.Echo("\n\nPress enter to continue");
-        WScript.StdIn.Read(0);
-        WScript.StdIn.ReadLine();
-    }
 }
 
 /*
@@ -213,13 +204,11 @@ function createJavaKeystore() {
     derCert = fixPath("${der.cert}");
 
     if (jreHome == "") {
-        debug("Can't find JavaHome.  Secure websockets will not work.", true);
-        return false;
+        die("Can't find JavaHome.  Secure websockets will not work.", "${windows.err.java}");
     }
 
     if (qzInstall == "") {
-        debug("Can't find ${socket.name} installation path. Secure websockets will not work.", true);
-        return false;
+        die("Can't find ${socket.name} installation path. Secure websockets will not work.", "${windows.err.install}");
     }
 
 

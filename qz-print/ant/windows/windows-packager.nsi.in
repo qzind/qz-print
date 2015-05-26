@@ -1,5 +1,6 @@
 !include MUI2.nsh
 !include x64.nsh
+!include LogicLib.nsh
 
 !ifdef NSIS_UNICODE
 	!addplugindir "${windows.nsis.addons}/Plugins/Release_Unicode"
@@ -71,22 +72,38 @@ Section
   nsExec::ExecToLog "regsvr32.exe /s $\"%systemroot%\system32\jscript.dll$\""
 
   ; Remove ${vendor.company} certificates
-  nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
+  nsExec::ExecToLog "cscript.exe //NoLogo //E:jscript $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
 
+  keygen:
   ; Exports a self-signed certificate and properties file
-  nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" install"
+  nsExec::ExecToLog "cscript.exe //NoLogo //E:jscript $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" install"
+  Pop $0
+  ; Secure websockets is required, handle errors
+  ${If} "$0" != "0"
+    ${If} "$0" == "${windows.err.java}"
+      MessageBox MB_YESNO "Java is required for installation.  Download now?" IDYES true IDNO false
+        true:
+          ExecShell "open" "https://java.com/download/"
+          MessageBox MB_OK "Click OK after Java is installed to resume installation"
+          Goto keygen
+        false:
+          SetErrorLevel $0
+          Abort "Failed while checking for Java ${javac.socket.source}"
+        next:
+    ${Else}
+        Abort "Installation failed.  Please check log for details."
+    ${EndIf}
+  ${EndIf}
 
   CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${windows.icon}" 0
 
   ; Delete matching firewall rules
-  nsExec::ExecToLog "cmd.exe /c $\"echo Removing ${socket.name} firewall rules...$\""
+  DetailPrint "Removing ${socket.name} firewall rules..."
   nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${socket.name}$\""
 
   ; Install new Firewall rules
-  nsExec::ExecToLog "cmd.exe /c $\"echo Installing ${socket.name} inbound firewall rule...$\""
-  nsExec::ExecToLog "netsh.exe advfirewall firewall add rule name=$\"${socket.name}$\" dir=in action=allow profile=any localport=any localip=any protocol=tcp"
-  nsExec::ExecToLog "cmd.exe /c $\"echo Installing ${socket.name} outbound firewall rule...$\""
-  nsExec::ExecToLog "netsh.exe advfirewall firewall add rule name=$\"${socket.name}$\" dir=out action=allow profile=any localport=any localip=any protocol=tcp"
+  DetailPrint "Installing ${socket.name} inbound firewall rule..."
+  nsExec::ExecToLog "netsh.exe advfirewall firewall add rule name=$\"${socket.name}$\" dir=in action=allow profile=any localport=8181,8282,8383,8484,8182,8283,8384,8485 localip=any protocol=tcp"
 
   ; Launch a non-elevated instance of ${socket.name}
   ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${socket.name}.lnk" "open" ""
@@ -101,10 +118,10 @@ Section "Uninstall"
   Delete "$DESKTOP\TempWmicBatchFile.bat"
 
   ; Remove ${vendor.company} certificates
-  nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
+  nsExec::ExecToLog "cscript.exe //NoLogo //E:jscript $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
 
   ; Delete matching firewall rules
-  nsExec::ExecToLog "cmd.exe /c $\"echo Removing ${socket.name} firewall rules...$\""
+  DetailPrint "Removing ${socket.name} firewall rules..."
   nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${socket.name}$\""
 
   Delete "$SMPROGRAMS\${socket.name}.lnk"
