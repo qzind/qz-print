@@ -78,6 +78,16 @@ Section
 
   CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${windows.icon}" 0
 
+  ; Delete matching firewall rules
+  nsExec::ExecToLog "cmd.exe /c $\"echo Removing ${socket.name} firewall rules...$\""
+  nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${socket.name}$\""
+
+  ; Install new Firewall rules
+  nsExec::ExecToLog "cmd.exe /c $\"echo Installing ${socket.name} inbound firewall rule...$\""
+  nsExec::ExecToLog "netsh.exe advfirewall firewall add rule name=$\"${socket.name}$\" dir=in action=allow profile=any localport=any localip=any protocol=tcp"
+  nsExec::ExecToLog "cmd.exe /c $\"echo Installing ${socket.name} outbound firewall rule...$\""
+  nsExec::ExecToLog "netsh.exe advfirewall firewall add rule name=$\"${socket.name}$\" dir=out action=allow profile=any localport=any localip=any protocol=tcp"
+
   ; Launch a non-elevated instance of ${socket.name}
   ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${socket.name}.lnk" "open" ""
 SectionEnd
@@ -92,6 +102,10 @@ Section "Uninstall"
 
   ; Remove ${vendor.company} certificates
   nsExec::ExecToLog "cscript.exe //NoLogo $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
+
+  ; Delete matching firewall rules
+  nsExec::ExecToLog "cmd.exe /c $\"echo Removing ${socket.name} firewall rules...$\""
+  nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${socket.name}$\""
 
   Delete "$SMPROGRAMS\${socket.name}.lnk"
   Delete "$INSTDIR\uninstall.exe"
