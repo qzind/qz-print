@@ -89,7 +89,6 @@ Section
         false:
           SetErrorLevel $0
           Abort "Failed while checking for Java ${javac.socket.source}"
-        next:
     ${Else}
         Abort "Installation failed.  Please check log for details."
     ${EndIf}
