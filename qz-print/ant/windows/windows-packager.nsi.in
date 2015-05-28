@@ -142,3 +142,11 @@ Function .onInit
         StrCpy $INSTDIR "$PROGRAMFILES64\${socket.name}"
     ${EndIf}
 FunctionEnd
+
+Function un.onInit
+    ${If} ${RunningX64}
+        SetRegView 64
+        StrCpy $INSTDIR "$PROGRAMFILES64\${socket.name}"
+    ${EndIf}
+FunctionEnd
+
