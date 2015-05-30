@@ -16,7 +16,7 @@ public class CRL {
     /**
      * The URL to the QZ CRL. Should not be changed except for dev tests
      */
-    public static final String CRL_URL = "http://crl.qzindustries.com";
+    public static final String CRL_URL = "https://crl.qz.io/";
 
     ArrayList<String> revokedHashes = new ArrayList<String>();
     boolean loaded = false;
