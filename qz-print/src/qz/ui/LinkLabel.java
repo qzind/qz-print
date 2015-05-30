@@ -10,6 +10,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -24,9 +25,26 @@ public class LinkLabel extends JLabel {
         initialize();
     }
 
-    public LinkLabel(String text) {
+    public LinkLabel(final String text) {
         super(linkify(text));
         initialize();
+        addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    // Sense the action based on the content of the text
+                    if (text.contains("@")) {
+                        Desktop.getDesktop().mail(new URI(text));
+                    } else {
+                        File filePath = new File(text);
+                        Desktop.getDesktop().browse(filePath.isDirectory() ? filePath.toURI() : filePath.getParentFile().toURI());
+                    }
+
+                } catch (Exception ex) {
+                    LogIt.log(ex);
+                }
+            }
+        });
     }
 
     public LinkLabel(final URL url) {
@@ -51,7 +69,7 @@ public class LinkLabel extends JLabel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().open(filePath.isDirectory() ? filePath : filePath.getParentFile());
+                    Desktop.getDesktop().browse(filePath.isDirectory() ? filePath.toURI() : filePath.getParentFile().toURI());
                 } catch (IOException ex) {
                     LogIt.log(ex);
                 }

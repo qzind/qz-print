@@ -3,6 +3,7 @@ package qz.ui;
 import qz.common.Constants;
 import qz.common.LogIt;
 import qz.utils.FileUtilities;
+import qz.utils.SystemUtilities;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -37,7 +38,7 @@ public class LogDialog extends BasicDialog implements Runnable {
 
     public void initComponents() {
         setIconImage(getImage(IconCache.Icon.LOG_ICON));
-        setHeader(new LinkLabel(FileUtilities.getFile(Constants.LOG_FILE, false).getParentFile()));
+        setHeader(new LinkLabel(SystemUtilities.getDataDirectory() + File.separator));
         logArea = new JTextArea(ROWS, COLS);
         logArea.setEditable(false);
         logArea.setLineWrap(true);
@@ -111,7 +112,7 @@ public class LogDialog extends BasicDialog implements Runnable {
             // Reads the log file and prints to the text area
             while (threadRunning.get()) {
                 File activeLogFile = getActiveLogFile();
-                if (br == null || activeLogFile != previousLogFile) {
+                if (br == null || !activeLogFile.equals(previousLogFile)) {
                     previousLogFile = activeLogFile;
                     if (br != null) {
                         try { br.close(); }
@@ -145,16 +146,17 @@ public class LogDialog extends BasicDialog implements Runnable {
 
     public File getActiveLogFile() {
         File logFile = null;
-        for (int i = 0; i < Constants.LOG_ROTATIONS; i++) {
-            File compareFile = FileUtilities.getFile(Constants.LOG_FILE + i, false);
-            if (!compareFile.exists()) {
-                continue;
-            }
+        File dataDir = new File(SystemUtilities.getDataDirectory());
+        for (File f : dataDir.listFiles()) {
+            if (f.getName().startsWith(Constants.LOG_FILE) && f.getName().contains(".log") && !f.getName().contains(".lck")) {
+                File compareFile = f;
 
-            if (logFile == null || compareFile.lastModified() > logFile.lastModified()) {
-                logFile = compareFile;
+                if (logFile == null || compareFile.lastModified() > logFile.lastModified()) {
+                    logFile = compareFile;
+                }
             }
         }
+
         return logFile;
     }
 

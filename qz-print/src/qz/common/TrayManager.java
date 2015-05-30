@@ -71,6 +71,7 @@ public class TrayManager {
 
     // Dedicated log handler for web socket activity
     private final Logger trayLogger;
+    private FileHandler logHandler;
 
     // The name this UI component will use, i.e "QZ Print 1.9.0"
     private final String name;
@@ -141,8 +142,6 @@ public class TrayManager {
             @Override
             public void mouseExited(MouseEvent e) {}
         });
-
-        addLogHandler(Certificate.getLogger());
     }
 
     /**
@@ -377,7 +376,11 @@ public class TrayManager {
     }
 
     public boolean showGatewayDialog(Certificate cert) {
-        if (gatewayDialog.prompt("%s wants to access local resources", cert)) {
+        if (cert == null) {
+            displayErrorMessage("Invalid certificate");
+            return false;
+        }
+        else if (gatewayDialog.prompt("%s wants to access local resources", cert)) {
             trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
             if (gatewayDialog.isPersistent()) {
                 whiteList(cert);
@@ -538,27 +541,38 @@ public class TrayManager {
                 @Override
                 public void run() {
                     tray.displayMessage(caption, text, level);
-                    trayLogger.log(level, text);
+                    trayLogger.log(level, "Tray Message: " + text);
                 }
             }));
         }
     }
 
     public void addLogHandler(Logger logger) {
-        try {
-            File logFile = FileUtilities.getFile(Constants.LOG_FILE, false);
-            String ext = "." + logFile.getName().substring(logFile.getName().lastIndexOf('.'));
-            FileHandler logHandler = new FileHandler(logFile.getPath().replace(ext, "%g" + ext), Constants.LOG_SIZE, Constants.LOG_ROTATIONS, true);
-            logHandler.setFormatter(new Formatter() {
-                @Override
-                public String format(LogRecord logRecord) {
-                    return String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s\r\n", logRecord.getLevel().toString(), new Date(), logRecord.getMessage());
-                }
-            });
-            logger.addHandler(logHandler);
-        } catch (IOException logException) {
-            LogIt.log(Level.WARNING, String.format("Unable to open file for writing: %s", Constants.LOG_FILE));
+        if (logHandler == null) {
+            try {
+                logHandler = createLogHandler();
+            } catch (IOException e) {
+                logger.log(Level.WARNING, String.format("Could not write to log file %s.  " +
+                        "Log history be limited to the console only.", Constants.LOG_FILE), e);
+            }
         }
+
+        if (logHandler != null) {
+            logger.addHandler(logHandler);
+        }
+    }
+
+    public FileHandler createLogHandler() throws IOException {
+        String logFile = SystemUtilities.getDataDirectory() + File.separator + Constants.LOG_FILE + "%g.log";
+
+        FileHandler logHandler = new FileHandler(logFile, Constants.LOG_SIZE, Constants.LOG_ROTATIONS, true);
+        logHandler.setFormatter(new Formatter() {
+            @Override
+            public String format(LogRecord logRecord) {
+                return String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s\r\n", logRecord.getLevel().toString(), new Date(), logRecord.getMessage());
+            }
+        });
+        return logHandler;
     }
 
 }
