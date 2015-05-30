@@ -13,7 +13,7 @@
     <orderEntry type="module-library">
       <library>
         <CLASSES>
-          <root url="jar://C:/Program Files/Java/jdk1.8.0_25/jre/lib/plugin.jar!/" />
+          <root url="jar://$MODULE_DIR$/qz-print/lib/jre/plugin.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
