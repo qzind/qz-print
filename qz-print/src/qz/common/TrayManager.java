@@ -315,6 +315,9 @@ public class TrayManager {
     private final ActionListener exitListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             if (confirmDialog.prompt("Exit " + name + "?")) {
+                for (Handler h : trayLogger.getHandlers()) {
+                    trayLogger.removeHandler(h);
+                }
                 System.exit(0);
             }
         }
@@ -544,7 +547,7 @@ public class TrayManager {
     public void addLogHandler(Logger logger) {
         try {
             File logFile = FileUtilities.getFile(Constants.LOG_FILE, false);
-            String ext = logFile.getName().substring(logFile.getName().lastIndexOf('.'));
+            String ext = "." + logFile.getName().substring(logFile.getName().lastIndexOf('.'));
             FileHandler logHandler = new FileHandler(logFile.getPath().replace(ext, "%g" + ext), Constants.LOG_SIZE, Constants.LOG_ROTATIONS, true);
             logHandler.setFormatter(new Formatter() {
                 @Override
