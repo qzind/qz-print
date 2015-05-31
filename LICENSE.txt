@@ -1,6 +1,6 @@
                             QZ Industries, LLC
           ATTRIBUTION, LICENSING AND SUMMARY OF QZ-PRINT COMPONENTS
-                        Version 1.0, October 2013
+                        Version 1.1, May 2015
 
 QZ-PRINT / QZ-TRAY Application
   Copyright (c) 2008-2013 QZ Industries, LLC
@@ -9,13 +9,13 @@ QZ-PRINT / QZ-TRAY Application
   QZ Industries Source Code License (proprietary)
   *Premium versions of QZ-PRINT are also subject to an additional sofware 
   usage agreement.
-  http://qzindustries.com
+  https://qz.io
 
 
 jOOR Reflection Library (As-Is, No Modifications)
   Copyright (c) 2011-2012, Lukas Eder, lukas.eder@gmail.com
   Apache License, Version 2.0 (attached), with Copyright Notice
-  https://code.google.com/p/joor/
+  https://github.com/jOOQ/jOOR
 
 
 jetty Web Server (As-Is, No Modifications)
@@ -39,7 +39,7 @@ ______________________________________________________________________
 
 
 LGPL 2.1
-Applies ONLY to: qz-print, pdf-renderer, jssc
+Applies ONLY to: qz-print, qz-tray, pdf-renderer, jssc
 
 
                   GNU LESSER GENERAL PUBLIC LICENSE

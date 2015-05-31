@@ -11,7 +11,7 @@ public class Constants {
     public static final int OUTPUT_STREAM_SIZE = 20480;
     public static final int BYTE_BUFFER_SIZE = 512;
     public static final int APPEND_XML = 1;
-    public static final String VERSION = "1.8.94";
+    public static final String VERSION = "1.8.95";
     public static final int APPEND_RAW = 2;
     public static final int APPEND_IMAGE = 3;
     public static final int APPEND_IMAGE_PS = 4;
@@ -31,7 +31,7 @@ public class Constants {
     public static final int BORDER_PADDING = 10;
 
     public static final String ABOUT_TITLE = "QZ Tray";
-    public static final String ABOUT_URL = "http://qzindustries.com";
+    public static final String ABOUT_URL = "https://qz.io";
     public static final String ABOUT_COMPANY = "QZ Industries, LLC";
 
     public static final String TRUSTED_PUBLISHER = String.format("Verified by %s", Constants.ABOUT_COMPANY);

@@ -1,3 +1,13 @@
+Changes 1.8.95 (5/30/2015)
+ - Added better messaging when certificate is invalid
+ - Certificate Revocation List (CRL) switched to HTTPS, qz.io domain
+ - Added CRL fetching status to the LogDialog
+ - Removed duplicate log entries
+ - Windows:  Fix broken uninstaller on 64-bit OS
+ - Windows:  Better compatibility for installer JScript
+ - Windows:  Added firewall exception logic (8181, 8182, ...)
+ - Apple:  Better menu integration with OS X
+ - Linux:  Added secure websocket support
 Changes 1.8.94 (5/18/2015)
  - Added secure websocket support for Apple
  - Added secure websocket support for Firefox (Windows and Apple only)
