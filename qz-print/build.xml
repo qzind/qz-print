@@ -3,7 +3,7 @@
 <project name="qz" default="distribute" basedir=".">
 
     <target name="distribute" depends="init,clean,sign-jar,include-assets">
-        <zip destfile="${zip.file}" basedir="${dist.dir}"/>
+        <zip destfile="${zip.file}" basedir="${dist.applet.dir}"/>
 
         <echo message="Process complete" />
     </target>
@@ -81,8 +81,22 @@
 
     <target name="build-applet-jar" depends="compile-applet">
         <echo>Building Jar for Applet use</echo>
+
+        <copy todir="${dist.applet.dir}/${lib.dir}">
+            <fileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*,**/plugin.jar"/>
+        </copy>
+
+        <manifestclasspath property="manifest.main.applet.classpath" jarfile="${dist.applet.jar}">
+            <classpath>
+                <fileset dir="${dist.applet.dir}/${lib.dir}" includes="*.jar"/>
+            </classpath>
+        </manifestclasspath>
+
         <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.applet.jar}" duplicate="preserve">
             <fileset dir="${build.applet.dir}" excludes="org/joor/*.*,qz/ws/*.*"/>
+            <indexjars>
+                <fileset dir="${dist.applet.dir}/${lib.dir}" includes="*.jar"/>
+            </indexjars>
             <manifest>
                 <attribute name="Application-Name" value="${manifest.application.name}"/>
                 <attribute name="Main-Class" value="${manifest.main.applet.class}"/>
@@ -90,11 +104,9 @@
                 <attribute name="Codebase" value="${manifest.codebase}"/>
                 <attribute name="Caller-Allowable-Codebase" value="${manifest.caller.allowable.codebase}"/>
                 <attribute name="Application-Library-Allowable-Codebase" value="${manifest.application.allowable.codebase}"/>
+                <attribute name="Class-Path" value="${manifest.main.applet.classpath}"/>
             </manifest>
         </jar>
-        <copy todir="${dist.applet.dir}/${lib.dir}">
-            <fileset dir="${lib.dir}" includes="**/*.jar" excludes="ws/*.*,**/plugin.jar"/>
-        </copy>
     </target>
 
     <target name="build-socket-jar" depends="compile-socket">
@@ -216,13 +228,16 @@
 
         <copy file="${jnlp.inf.dir}/APPLICATION.JNLP" tofile="${dist.applet.jnlp}" />
 
-        <copy todir="${dist.dir}">
-            <fileset file="readme.txt"/>
-            <filterset>
-                <!-- Set by get-version task -->
-                <filter token="VERSION" value="${build.version}"/>
-            </filterset>
+        <!-- Distribute applet with README, CHANGELOG, LICENSE -->
+        <copy todir="${dist.applet.dir}">
+            <fileset file="${basedir}/../*.txt"/>
         </copy>
+
+        <!-- Distribute socket with LICENSE only -->
+        <copy todir="${dist.socket.dir}">
+            <fileset file="${basedir}/../LICENSE.txt"/>
+        </copy>
+
     </target>
 
     <!--
