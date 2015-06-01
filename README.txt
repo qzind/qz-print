@@ -7,14 +7,14 @@
 1. Extract /dist
 2. Open sample.html in a web browser
 3. View-Source of sample.html for usage
-4. Visit code.google.com/p/jzebra or qzindustries.com for API,
+4. Visit qz.io for API,
    resources, examples, bug reports and feature requests.
 READFIRST:
    - Premium versions of the applet will work "out of the box"
-   - Free versons of the applet are self-signed and will only 
+   - Free versions of the applet are self-signed and will only
      run when qz-free.csr has been added as a "Signer CA" from
      within the Java Control Panel.
-   - If clients do not recieve an update after refreshing the
+   - If clients do not receive an update after refreshing the
      page you can force an update using Java Control Panel,
      General, View, Remove "QZ Print Plugin"
    - IIS Users need to permit JNLP file extensions before the
