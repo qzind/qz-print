@@ -142,6 +142,14 @@
                  keystore="${signing.keystore}"
                  keypass="${signing.keypass}"
                 />
+        <signjar alias="${signing.alias}"
+                 storepass="${signing.storepass}"
+                 keystore="${signing.keystore}"
+                 keypass="${signing.keypass}">
+            <path>
+                <fileset dir="${dist.applet.dir}/${lib.dir}" includes="**/*.jar" />
+            </path>
+        </signjar>
 
         <echo>Self-signing Socket jar</echo>
         <signjar jar="${dist.socket.jar}"
@@ -151,14 +159,6 @@
                  keystore="${signing.keystore}"
                  keypass="${signing.keypass}"
                 />
-        <signjar alias="${signing.alias}"
-                 storepass="${signing.storepass}"
-                 keystore="${signing.keystore}"
-                 keypass="${signing.keypass}">
-            <path>
-                <fileset dir="${dist.applet.dir}/${lib.dir}" includes="**/*.jar" />
-            </path>
-        </signjar>
     </target>
 
     <target name="sign-jar-tsa" if="signing.tsaurl">
@@ -171,6 +171,15 @@
                  keypass="${signing.keypass}"
                  tsaurl="${signing.tsaurl}"
                 />
+        <signjar alias="${signing.alias}"
+                 storepass="${signing.storepass}"
+                 keystore="${signing.keystore}"
+                 keypass="${signing.keypass}"
+                 tsaurl="${signing.tsaurl}">
+            <path>
+                <fileset dir="${dist.applet.dir}/${lib.dir}" includes="**/*.jar" />
+            </path>
+        </signjar>
 
         <echo>Signing Socket jar with timestamp</echo>
         <signjar jar="${dist.socket.jar}"
