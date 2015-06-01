@@ -1,5 +1,5 @@
 var qzConfig = {
-    preemptive: {isActive: '', getVersion: '', getPrinter: '', getIP: '', getMac: '', getLogPostScriptFeatures: ''},
+    preemptive: {isActive: '', getVersion: '', getPrinter: '', getLogPostScriptFeatures: ''},
     callbackMap: {
         findPrinter:     'qzDoneFinding',
         findPrinters:    'qzDoneFinding',

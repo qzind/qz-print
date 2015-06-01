@@ -73,8 +73,11 @@ public class PrintSocket {
 
     private final List<String> restrictedMethodNames = Arrays.asList("run", "stop", "start", "call", "init", "destroy", "paint");
 
-    // List of methods that will cause the Allow/Deny dialog to pop-up
-    private final List<String> showDialogMethods = Arrays.asList("print", "printHTML", "printPS", "printToFile", "printToHost");
+    // List of methods that will cause the print dialog to pop-up
+    private final List<String> printingMethods = Arrays.asList("print", "printHTML", "printPS", "printToFile", "printToHost");
+    // List of methods that will cause the gateway dialog to pop-up
+    private final List<String> privilegedMethods = Arrays.asList("findNetworkInfo", "closePort", "findPrinter", "findPrinters",
+            "findPorts", "openPort", "send", "setSerialProperties", "setSerialBegin", "setSerialEnd", "getSerialIO");
 
     private final TrayManager trayManager = PrintWebSocketServer.getTrayManager();
 
@@ -218,10 +221,19 @@ public class PrintSocket {
 
             return;
         } else {        // Figure out which method is being called and call it returning any values
-            if (!showDialogMethods.contains(message.optString("method")) || trayManager.showPrintDialog(certificate, qz.getPrinter())) {
+            String name = message.optString("method");
+            boolean blocked = false;
+
+            if (printingMethods.contains(name) && !trayManager.showPrintDialog(certificate, qz.getPrinter())) {
+                blocked = true; //required successful print dialog, but failed
+            }
+            if (privilegedMethods.contains(name) && !trayManager.showGatewayDialog(certificate)) {
+                blocked = true; //required successful gateway dialog, but failed
+            }
+
+            if (!blocked) {
                 JSONArray parts = message.optJSONArray("params");
                 if (parts == null) { parts = new JSONArray(); }
-                String name = message.getString("method");
                 Vector<Method> possibleMethods = new Vector<Method>();
 
                 try {
@@ -322,6 +334,11 @@ public class PrintSocket {
                                 // Pass method results to simulate APPLET's synchronous calls
                                 if ("findPorts".equals(name)) {
                                     sendNewMethod(session, "getPorts", qz.getPorts());
+                                }
+
+                                if ("findNetworkInfo".equals(name)) {
+                                    sendNewMethod(session, "getIP", qz.getIP());
+                                    sendNewMethod(session, "getMac", qz.getMac());
                                 }
 
                                 if ("setLogPostScriptFeatures".equals(name)) {
