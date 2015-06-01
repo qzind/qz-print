@@ -151,6 +151,14 @@
                  keystore="${signing.keystore}"
                  keypass="${signing.keypass}"
                 />
+        <signjar alias="${signing.alias}"
+                 storepass="${signing.storepass}"
+                 keystore="${signing.keystore}"
+                 keypass="${signing.keypass}">
+            <path>
+                <fileset dir="${dist.applet.dir}/${lib.dir}" includes="**/*.jar" />
+            </path>
+        </signjar>
     </target>
 
     <target name="sign-jar-tsa" if="signing.tsaurl">
@@ -366,9 +374,9 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
         <chmod perm="u+x" file="${firefoxcert.out}"/>
- 
+
         <exec executable="${apple.packager.out}" failonerror="true" />
- 
+
         <!-- Cleanup lingering resources for other installer targets -->
         <delete dir="${dist.socket.dir}/${apple.resources}" />
         <delete dir="${dist.socket.dir}/${apple.macos}" />
