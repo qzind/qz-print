@@ -142,7 +142,8 @@ function connectionSuccess(websocket) {
             console.log(message);
 
             if (typeof message.result == 'string') {
-                message.result = message.result.replace(/%5C/g, "\\");
+                //unescape special characters
+                message.result = message.result.replace(/%5C/g, "\\").replace(/%22/g, "\"");
 
                 //ensure boolean strings are read as booleans
                 if (message.result == "true" || message.result == "false") {

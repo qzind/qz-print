@@ -324,11 +324,11 @@ public class PrintSocket {
                                 // Send new return value for getPrinter when selected printer changes
                                 if ("findPrinter".equals(name)) {
                                     log.info("Selected New Printer");
-                                    sendNewMethod(session, "getPrinter", qz.getPrinter().replaceAll("\\\\", "%5C"));
+                                    sendNewMethod(session, "getPrinter", qz.getPrinter());
                                 }
 
                                 if ("findPrinter".equals(name) || "findPrinters".equals(name)) {
-                                    sendNewMethod(session, "getPrinters", qz.getPrinters().replaceAll("\\\\", "%5C")); //escape all backslashes
+                                    sendNewMethod(session, "getPrinters", qz.getPrinters()); //escape all backslashes
                                 }
 
                                 // Pass method results to simulate APPLET's synchronous calls
@@ -395,6 +395,11 @@ public class PrintSocket {
     }
 
     private void sendNewMethod(Session session, String methodName, Object result) {
+        if (result instanceof String) {
+            //escape special characters
+            result = ((String)result).replaceAll("\\\\", "%5C").replaceAll("\"", "%22");
+        }
+
         sendResponse(session, "{\"method\":\"" + methodName + "\",\"params\":[],\"callback\":\"setupMethods\",\"init\":true,\"result\":\"" + result + "\"}");
     }
 
