@@ -12,7 +12,7 @@
 !include StdUtils.nsh
 
 Name "${socket.name}"
-OutFile "${out.dir}\${build.socket.name}-${build.version}-setup.exe"
+OutFile "${out.dir}\${build.socket.name}-${build.version}.exe"
 RequestExecutionLevel admin
 
 ;-------------------------------
