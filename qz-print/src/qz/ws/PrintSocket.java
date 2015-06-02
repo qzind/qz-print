@@ -324,7 +324,7 @@ public class PrintSocket {
                                 // Send new return value for getPrinter when selected printer changes
                                 if ("findPrinter".equals(name)) {
                                     log.info("Selected New Printer");
-                                    sendNewMethod(session, "getPrinter", qz.getPrinter());
+                                    sendNewMethod(session, "getPrinter", qz.getPrinter().replaceAll("\\\\", "%5C"));
                                 }
 
                                 if ("findPrinter".equals(name) || "findPrinters".equals(name)) {
