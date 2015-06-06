@@ -230,7 +230,7 @@
         </copy>
 
         <copy todir="${dist.applet.dir}/${demo.dir}/${js.dir}">
-            <fileset dir="${js.dir}" excludes="qz-websocket.js"/>
+            <fileset dir="${js.dir}"/>
         </copy>
         <copy todir="${dist.socket.dir}/${demo.dir}/${js.dir}">
             <fileset dir="${js.dir}"/>
