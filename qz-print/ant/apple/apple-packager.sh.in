@@ -19,11 +19,17 @@ echo "            Packaging ${socket.name}"
 echo "============================================"
 echo
 chmod +x "${apple.keygen.out}"
+
+# Add signing certificate
+security add-certificates "${apple.packager.cert}"
+security add-certificates "${apple.intermediate.cert}"
+
 pkgbuild --identifier "${build.socket.name}" \
 	--root "${dist.socket.dir}" \
 	--install-location "${apple.installdir}" \
 	--scripts "${apple.scripts}" \
 	--version "${build.version}" \
+	--sign "P5DMU6659X" \
 	"${out.dir}/${build.socket.name}-${build.version}.pkg"
 code=$?
 echo
