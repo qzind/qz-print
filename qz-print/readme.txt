@@ -1,2 +1,0 @@
-QZ-Print v@VERSION@
-
