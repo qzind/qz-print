@@ -247,12 +247,12 @@
 
         <!-- Distribute applet with README, CHANGELOG, LICENSE -->
         <copy todir="${dist.applet.dir}">
-            <fileset file="${basedir}/../*.txt"/>
+            <fileset file="${basedir}/*.txt"/>
         </copy>
 
         <!-- Distribute socket with LICENSE only -->
         <copy todir="${dist.socket.dir}">
-            <fileset file="${basedir}/../LICENSE.txt"/>
+            <fileset file="${basedir}/LICENSE.txt"/>
         </copy>
 
     </target>
@@ -275,7 +275,7 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
 
-        <copy file="${basedir}/../CHANGELOG.txt" tofile="${build.socket.dir}/CHANGELOG.txt" />
+        <copy file="${basedir}/CHANGELOG.txt" tofile="${build.socket.dir}/CHANGELOG.txt" />
     </target>
 
     <!--

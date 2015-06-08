@@ -24,7 +24,7 @@ InstallDir "$PROGRAMFILES\${socket.name}"
 !define MUI_ICON "${basedir}\${branding.dir}\${windows.icon}"
 
 !insertmacro MUI_PAGE_WELCOME
-!insertmacro MUI_PAGE_LICENSE "${basedir}\..\LICENSE.txt"
+!insertmacro MUI_PAGE_LICENSE "${basedir}\LICENSE.txt"
 !insertmacro MUI_PAGE_DIRECTORY
 !insertmacro MUI_PAGE_INSTFILES
 
