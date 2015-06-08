@@ -5,6 +5,7 @@ Free browser applet for sending documents and raw commands to a printer.
 
 ##Getting Started
   * See our [Getting Started](Getting-Started) guide.
+  * Visit our home page https://qz.io.
   
 ##Support
   * File a bug via our [issue tracker](../../issues)
