@@ -5,4 +5,7 @@
 /qz-print/build/
 /qz-print/out/
 /.idea/workspace.xml
+/.idea/uiDesigner.xml
+/.idea/compiler.xml
+/README.md
 .DS_Store
