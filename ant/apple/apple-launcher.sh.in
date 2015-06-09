@@ -3,5 +3,5 @@
 installpath=$(echo "$0" | rev | cut -d/ -f4- | rev)
 jarpath=$installpath/${build.socket.name}.jar
 iconpath=$installpath/${apple.resources}/${apple.icon}
-java -Xdock:name="${socket.name}" -Xdock:icon="$iconpath" -jar "$jarpath"
+${apple.jvmcmd} java -Xdock:name="${socket.name}" -Xdock:icon="$iconpath" -jar "$jarpath"
 exit $?

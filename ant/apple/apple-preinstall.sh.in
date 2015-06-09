@@ -10,22 +10,11 @@
 #    $ ./preinstall                                                           #
 ###############################################################################
 
-# Check minimum java version
-function check_java() {
-   curver=$(java -version 2>&1 | grep -i version | cut -d'"' -f2 | cut -d'.' -f1-2)
-   minver="${javac.socket.target}"
+# Use java_home command to check minimum Java version
+${apple.jvmver}
 
-   if [ -z "$curver" ]; then
-      curver="0.0"
-   fi
-
-   if [ $(echo "$curver>=$minver" | bc -l) -eq 0 ]; then
-      exit 1
-   fi
-}
-
-check_java
+code=$?
 
 # Kill any running versions
 kill -9 $(ps -e |grep "${build.socket.name}.jar" |grep -v grep|awk '{print $1}') > /dev/null 2>&1
-exit 0
+exit $code

@@ -35,6 +35,7 @@ keystorepath=$(echo "$keystore" | sed -e "s|$install|$installdir|g")
 makekeystore=$(echo "$makekeystore" | sed -e "s|$storepass|$password|g")
 makekeystore=$(echo "$makekeystore" | sed -e "s|$keypass|$password|g")
 makekeystore=$(echo "$makekeystore" | sed -e "s|$keystore|$keystorepath|g")
+makekeystore="${apple.jvmcmd} $makekeystore"
 
 # Cert export variable substitutions
 dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
@@ -42,6 +43,7 @@ makedercert=$(echo "$makedercert" | sed -e "s|$storepass|$password|g")
 makedercert=$(echo "$makedercert" | sed -e "s|$keypass|$password|g")
 makedercert=$(echo "$makedercert" | sed -e "s|$keystore|$keystorepath|g")
 makedercert=$(echo "$makedercert" | sed -e "s|$dercert|$dercertpath|g")
+makedercert="${apple.jvmcmd} $makedercert"
 
 # Property file containing jks signing info
 propspath=$(echo "$props" | sed -e "s|$install|$installdir|g")
