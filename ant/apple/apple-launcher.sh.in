@@ -3,5 +3,14 @@
 installpath=$(echo "$0" | rev | cut -d/ -f4- | rev)
 jarpath=$installpath/${build.socket.name}.jar
 iconpath=$installpath/${apple.resources}/${apple.icon}
-${apple.jvmcmd} java -Xdock:name="${socket.name}" -Xdock:icon="$iconpath" -jar "$jarpath"
+${apple.jvmver} > /dev/null 2>&1
+fallback=$?
+
+# Fallback on Internet Plug-Ins version if needed
+if [ $fallback -eq 0 ]; then
+	${apple.jvmcmd} java -Xdock:name="${socket.name}" -Xdock:icon="$iconpath" -jar "$jarpath"
+else
+	"${apple.jvmfallback}/java" -Xdock:name="${socket.name}" -Xdock:icon="$iconpath" -jar "$jarpath"
+fi
+
 exit $?

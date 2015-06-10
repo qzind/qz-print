@@ -19,6 +19,10 @@
 # Random password hash
 password=$(cat /dev/urandom | env LC_CTYPE=C tr -dc 'a-z0-9' | fold -w ${jks.passlength} | head -n 1)
 
+# Check for java
+${apple.jvmver} > /dev/null 2>&1
+fallback=$?
+
 makekeystore="${jks.command}"
 makedercert="${der.command}"
 installdir="${apple.installdir}"
@@ -30,13 +34,23 @@ keypass="${jks.keypass}"
 keystore="${jks.keystore}"
 dercert="${der.cert}"
 props="${jks.properties}"
+keytool="${jks.keytool}"
+keytoolfallback="${apple.jvmfallback}/${jks.keytool}"
 
 # Keystore generation variable substitutions
 keystorepath=$(echo "$keystore" | sed -e "s|$install|$installdir|g")
 makekeystore=$(echo "$makekeystore" | sed -e "s|$storepass|$password|g")
 makekeystore=$(echo "$makekeystore" | sed -e "s|$keypass|$password|g")
 makekeystore=$(echo "$makekeystore" | sed -e "s|$keystore|$keystorepath|g")
-makekeystore="${apple.jvmcmd} $makekeystore"
+
+
+if [ $fallback -eq 0 ]; then
+    # Prefix with java_home --exec
+	makekeystore="${apple.jvmcmd} $makekeystore"
+else
+    # Fallback on Internet Plug-Ins version if needed
+	makekeystore=$(echo "$makekeystore" | sed -e "s|$keytool|$keytoolfallback|g")
+fi
 
 # Cert export variable substitutions
 dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
@@ -44,7 +58,15 @@ makedercert=$(echo "$makedercert" | sed -e "s|$storepass|$password|g")
 makedercert=$(echo "$makedercert" | sed -e "s|$keypass|$password|g")
 makedercert=$(echo "$makedercert" | sed -e "s|$keystore|$keystorepath|g")
 makedercert=$(echo "$makedercert" | sed -e "s|$dercert|$dercertpath|g")
-makedercert="${apple.jvmcmd} $makedercert"
+
+if [ $fallback -eq 0 ]; then
+    # Prefix with java_home --exec
+	makedercert="${apple.jvmcmd} $makedercert"
+else
+    # Fallback on Internet Plug-Ins version if needed
+	makedercert=$(echo "$makedercert" | sed -e "s|$keytool|$keytoolfallback|g")
+fi
+
 
 # Property file containing jks signing info
 propspath=$(echo "$props" | sed -e "s|$install|$installdir|g")
