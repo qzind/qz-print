@@ -8,18 +8,30 @@
 #    3. Installs to current users home directory                              #
 #                                                                             #
 #  Usage:                                                                     #
-#    $ chmod +x linux-installer.sh                                            #
-#    $ ./linux-installer.sh                                                   #
+#    $ chmod +x ${linux.installer.name}                                            #
+#    $ sudo ./${linux.installer.name}                                              #
 #                                                                             #
 ###############################################################################
 
+if [ "$(id -u)" != "0" ]; then
+   echo -e "\nThis script must be run with root (sudo) privileges" 1>&2
+   echo -e "${bash.failure}"
+   exit 1
+fi
+
+noprompt="$1"
 destdir="${linux.installdir}"
-shortcut="$HOME/Desktop/${socket.name}.desktop"
+shortcut="/usr/share/applications/${build.socket.name}.desktop"
 jarfile="${destdir}/${build.socket.name}.jar"
 
 # Confirmation dialog
 height=8; width=41
 function confirm_dialog() {
+   # Allow bypassing via 2nd param ("y" or "Y")
+   if [ "$2" == "-y" ]; then
+      echo "Param \"$2\" was supplied to confirmation dialog, supressing..."
+      return 0
+   fi
    dialog --help > /dev/null 2>&1
    if [ $? -ne 0 ]; then
       # Legacy input fallback
@@ -65,7 +77,7 @@ function check_java() {
    fi
 }
 
-confirm_dialog "Are you sure you want to install ${socket.name}?"
+confirm_dialog "Are you sure you want to install ${socket.name}?" "$noprompt"
 
 progress_dialog 5 "Checking for Java ${javac.socket.target}+..."
 check_java
@@ -123,13 +135,27 @@ progress_dialog 70 "Generating certificate..."
 chmod +x "$destdir/auth/${linux.keygen.name}"  > /dev/null 2>&1
 "$destdir/auth/${linux.keygen.name}"
 
-progress_dialog 80 "Importing Firefox certificate..."
+progress_dialog 75 "Importing Firefox certificate..."
 chmod +x "$destdir/auth/firefox/${firefoxcert.name}"  > /dev/null 2>&1
-sudo "$destdir/auth/firefox/${firefoxcert.name}"
+"$destdir/auth/firefox/${firefoxcert.name}"
+
+progress_dialog 80 "Checking for certutil..."
+which certutil > /dev/null 1>&2
+if [ $? -ne 0 ]; then
+    confirm_dialog "Certutil not found. Attempt to fetch now?" "$noprompt"
+    apt-get install -y libnss3-tools > /dev/null 2>&1
+    which certutil > /dev/null 1>&2
+    if [ $? -ne 0 ]; then
+       echo -e "\t- Success"
+    else
+       echo -e "\t- Failed"
+    fi
+fi
 
 cd "${destdir}"
 progress_dialog 90 "Installation complete... Starting ${socket.name}..."
-nohup "java" -jar "${jarfile}" > /dev/null 2>&1 &
+# Start ${socket.name} as the user that's logged in
+sudo -u $(logname) nohup "java" -jar "${jarfile}" > /dev/null 2>&1 &
 progress_dialog 100 "Finished.  QZ Tray should start automatically."
 echo
 exit 0

@@ -10,7 +10,7 @@
 #    java (sudo apt-get install openjdk-7-jre)                                #
 #                                                                             #
 #  Usage:                                                                     #
-#    $ ./linux-keygen.sh                                                      #
+#    $ ./${linux.keygen.name}                                                      #
 #                                                                             #
 ###############################################################################
 

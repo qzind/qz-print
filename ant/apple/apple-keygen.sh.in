@@ -11,7 +11,8 @@
 #    java                                                                     #
 #                                                                             #
 #  Usage:                                                                     #
-#    $ ./${apple.keygen.name}                                                      #
+#    $ ./${apple.keygen.name} "install"                                            #
+#    $ ./${apple.keygen.name} "uninstall"                                          #
 #                                                                             #
 ###############################################################################
 
