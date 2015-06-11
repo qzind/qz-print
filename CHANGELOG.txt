@@ -1,3 +1,11 @@
+Changes 1.9.1 (6/15/2015)
+ - Adds improved applet fallback support when using websockets (#34)
+ - Prevent race condition when appending data via async: false (#41)
+ - Fixes loading issue with Internet Explorer (#39)
+ - Fixes installation problems on Apple (#37)
+ - Fixes issue with printToHost() (#33)
+ - Adds silent installer option for Linux via sudo qz-tray-1.9.x.run -- -y
+ - Searches for certutil tool on Linux, attempts to install if missing (needed for Chrome)
 Changes 1.9.0 (6/3/2015)
  - Fixes findPrinter() when printer name starts with "\\"
  - Added better messaging when certificate is invalid
