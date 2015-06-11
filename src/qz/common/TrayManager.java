@@ -26,7 +26,8 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import qz.auth.Certificate;
-import qz.deploy.ShortcutUtilities;
+import qz.deploy.DeployUtilities;
+import qz.deploy.WindowsDeploy;
 import qz.ui.*;
 import qz.deploy.LinuxCertificate;
 import qz.utils.FileUtilities;
@@ -77,7 +78,7 @@ public class TrayManager {
     private final String name;
 
     // The shortcut and startup helper
-    private final ShortcutUtilities shortcutCreator;
+    private final DeployUtilities shortcutCreator;
 
     // Action to run when reload is triggered
     private Thread reloadThread;
@@ -93,7 +94,7 @@ public class TrayManager {
         addLogHandler(trayLogger);
 
         // Setup the shortcut name so that the UI components can use it
-        shortcutCreator = ShortcutUtilities.getSystemShortcutCreator();
+        shortcutCreator = DeployUtilities.getSystemShortcutCreator();
         shortcutCreator.setShortcutName(Constants.ABOUT_TITLE);
 
         // Initialize a custom Swing system tray that hides after a timeout
@@ -110,6 +111,9 @@ public class TrayManager {
             UbuntuUtilities.fixTrayIcons(iconCache);
             // Install cert into user's nssdb for Chrome, etc
             LinuxCertificate.installCertificate();
+        } else if (SystemUtilities.isWindows()) {
+            // Configure IE intranet zone via registry to allow websockets
+            WindowsDeploy.configureIntranetZone();
         }
 
         // The allow/block dialog
@@ -245,7 +249,7 @@ public class TrayManager {
 
     private final ActionListener desktopListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            shortcutToggle(e, ShortcutUtilities.ToggleType.DESKTOP);
+            shortcutToggle(e, DeployUtilities.ToggleType.DESKTOP);
         }
     };
 
@@ -282,7 +286,7 @@ public class TrayManager {
 
     private final ActionListener startupListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            shortcutToggle(e, ShortcutUtilities.ToggleType.STARTUP);
+            shortcutToggle(e, DeployUtilities.ToggleType.STARTUP);
         }
     };
 
@@ -329,7 +333,7 @@ public class TrayManager {
      * @param toggleType Either ShortcutUtilities.TOGGLE_TYPE_STARTUP or
      *                   ShortcutUtilities.TOGGLE_TYPE_DESKTOP
      */
-    private void shortcutToggle(ActionEvent e, ShortcutUtilities.ToggleType toggleType) {
+    private void shortcutToggle(ActionEvent e, DeployUtilities.ToggleType toggleType) {
         // Assume true in case its a regular JMenuItem
         boolean checkBoxState = true;
         if (e.getSource() instanceof JCheckBoxMenuItem) {

@@ -23,10 +23,8 @@ import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import qz.common.TrayManager;
-import qz.deploy.ShortcutUtilities;
+import qz.deploy.DeployUtilities;
 
-import java.io.File;
-import java.io.IOException;
 import java.net.BindException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,7 +52,7 @@ public class PrintWebSocketServer {
     public static void runServer() {
         final AtomicBoolean running = new AtomicBoolean(false);
         final AtomicInteger portIndex = new AtomicInteger(-1);
-        Properties sslProperties = ShortcutUtilities.loadSSLProperties();
+        Properties sslProperties = DeployUtilities.loadSSLProperties();
 
 
         while (!running.get() && portIndex.getAndIncrement() < ports.length) {

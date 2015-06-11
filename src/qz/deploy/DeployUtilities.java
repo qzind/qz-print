@@ -41,10 +41,10 @@ import java.util.logging.Logger;
  *
  * @author Tres Finocchiaro
  */
-public abstract class ShortcutUtilities {
+public abstract class DeployUtilities {
 
     // System logger
-    static final Logger log = Logger.getLogger(ShortcutUtilities.class.getName());
+    static final Logger log = Logger.getLogger(DeployUtilities.class.getName());
 
     // Default shortcut name to create
     static private final String DEFAULT_SHORTCUT_NAME = "Java Shortcut";
@@ -202,13 +202,13 @@ public abstract class ShortcutUtilities {
      * Detects the OS and creates the appropriate shortcut creator
      * @return The appropriate shortcut creator for the currently running OS
      */
-    public static ShortcutUtilities getSystemShortcutCreator() {
+    public static DeployUtilities getSystemShortcutCreator() {
         if (SystemUtilities.isWindows()) {
-            return new WindowsShortcut();
+            return new WindowsDeploy();
         } else if (SystemUtilities.isMac()) {
-            return new MacShortcut();
+            return new MacDeploy();
         } else if (SystemUtilities.isLinux()) {
-            return new LinuxShortcut();
+            return new LinuxDeploy();
         } else {
             throw new UnsupportedOperationException("Shortcut creation for this OS is not yet supported");
         }
@@ -349,7 +349,7 @@ public abstract class ShortcutUtilities {
      */
     public static Properties loadSSLProperties() {
         Properties sslProps = new Properties();
-        String sslPropertiesFile = ShortcutUtilities.detectPropertiesPath();
+        String sslPropertiesFile = DeployUtilities.detectPropertiesPath();
         log.info("SSL properties file from " + sslPropertiesFile);
 
         try {
@@ -371,7 +371,7 @@ public abstract class ShortcutUtilities {
      */
     public static final String detectJarPath() {
         try {
-            return new File(ShortcutUtilities.class.getProtectionDomain()
+            return new File(DeployUtilities.class.getProtectionDomain()
                     .getCodeSource().getLocation().getPath()).getCanonicalPath();
         } catch (IOException ex) {
             log.log(Level.SEVERE, "Unable to determine Jar path", ex);

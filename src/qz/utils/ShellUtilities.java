@@ -150,26 +150,66 @@ public class ShellUtilities {
                 new String[] {searchValue1, searchValue2}).isEmpty();
     }
 
+    public static boolean setRegistryDWORD(String keyPath, String name, int data) {
+        if (!SystemUtilities.isWindows()) {
+            log.log(Level.SEVERE, "Reg commands can only be invoked from Windows");
+            return false;
+        }
+        String reg = System.getenv("windir") + "\\system32\\reg.exe";
+        return execute(
+                new String[] {
+                        reg, "add", keyPath, "/f", "/v", name, "/t", "REG_DWORD", "/d", "" + data
+                }
+        );
+    }
+
+    public static int getRegistryDWORD(String keyPath, String name) {
+        String match = "0x";
+        if (!SystemUtilities.isWindows()) {
+            log.log(Level.SEVERE, "Reg commands can only be invoked from Windows");
+            return -1;
+        }
+        String reg = System.getenv("windir") + "\\system32\\reg.exe";
+        String stdout = execute(
+                new String[] {
+                        reg, "query", keyPath, "/v", name
+                },
+                new String[]{match}
+        );
+
+        // Parse stdout looking for hex (i.e. "0x1B")
+        if (stdout != "") {
+            for (String part : stdout.split(" ")) {
+                if (part.startsWith(match)) {
+                    try {
+                        return Integer.parseInt(part.trim().split(match)[1], 16);
+                    } catch (NumberFormatException ignore) {}
+                }
+            }
+        }
+        return -1;
+    }
+
     /**
      * Executes a native Registry delete/query command against the OS
      * @param keyPath The path to the containing registry key
      * @param function "delete", or "query"
-     * @param value the registry value to add, delete or query
+     * @param name the registry name to add, delete or query
      * @return true if the return code is zero
      */
-    public static boolean executeRegScript(String keyPath, String function, String value) {
-        return executeRegScript(keyPath, function, value, null);
+    public static boolean executeRegScript(String keyPath, String function, String name) {
+        return executeRegScript(keyPath, function, name, null);
     }
 
     /**
      * Executes a native Registry add/delete/query command against the OS
      * @param keyPath The path to the containing registry key
      * @param function "add", "delete", or "query"
-     * @param value the registry value to add, delete or query
+     * @param name the registry name to add, delete or query
      * @param data the registry data to add when using the "add" function
      * @return true if the return code is zero
      */
-    public static boolean executeRegScript(String keyPath, String function, String value, String data) {
+    public static boolean executeRegScript(String keyPath, String function, String name, String data) {
         if (!SystemUtilities.isWindows()) {
             log.log(Level.SEVERE, "Reg commands can only be invoked from Windows");
             return false;
@@ -177,15 +217,15 @@ public class ShellUtilities {
         String reg = System.getenv("windir") + "\\system32\\reg.exe";
         if (function.equals("delete")) {
             return execute(new String[]{
-                reg, function, keyPath, "/v", value, "/f"
+                reg, function, keyPath, "/v", name, "/f"
             });
         } else if (function.equals("add")) {
             return execute(new String[]{
-                reg, function, keyPath, "/v", value, "/d", data, "/f"
+                reg, function, keyPath, "/v", name, "/d", data, "/f"
             });
         } else if (function.equals("query")) {
             return execute(new String[]{
-                reg, function, keyPath, "/v", value
+                reg, function, keyPath, "/v", name
             });
         } else {
             log.log(Level.SEVERE, "Reg operation {0} not supported.", function);

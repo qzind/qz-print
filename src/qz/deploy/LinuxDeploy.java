@@ -32,7 +32,7 @@ import java.util.logging.Level;
  *
  * @author Tres Finocchiaro
  */
-public class LinuxShortcut extends ShortcutUtilities {
+public class LinuxDeploy extends DeployUtilities {
     // Try using ${linux.icon} first, if it exists
     private static String qzIcon = System.getenv("HOME") + "/" + Constants.ABOUT_TITLE + "/linux-icon.svg";
     private static String defaultIcon = "printer";

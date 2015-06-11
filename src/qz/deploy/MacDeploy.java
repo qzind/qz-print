@@ -33,7 +33,7 @@ import java.util.logging.Level;
  *
  * @author Tres Finocchiaro
  */
-public class MacShortcut extends ShortcutUtilities {
+public class MacDeploy extends DeployUtilities {
 
     @Override
     public boolean hasStartupShortcut() {

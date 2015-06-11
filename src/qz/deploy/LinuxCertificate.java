@@ -42,7 +42,7 @@ public class LinuxCertificate {
 
     private static String getCertificatePath() {
 	// We assume that if the keystore is "qz-tray.jks", the cert must be "qz-tray.crt" 
-	Properties sslProperties = ShortcutUtilities.loadSSLProperties();
+	Properties sslProperties = DeployUtilities.loadSSLProperties();
         if (sslProperties != null) {
             return sslProperties.getProperty("wss.keystore").replaceAll("\\.jks$", ".crt");
         }

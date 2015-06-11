@@ -22,7 +22,7 @@
 
 package qz.utils;
 
-import qz.deploy.ShortcutUtilities;
+import qz.deploy.DeployUtilities;
 import qz.ui.IconCache;
 
 import java.awt.Color;
@@ -34,7 +34,7 @@ import java.util.logging.Logger;
  */
 public class UbuntuUtilities {
     // System logger
-    static final Logger log = Logger.getLogger(ShortcutUtilities.class.getName());
+    static final Logger log = Logger.getLogger(DeployUtilities.class.getName());
 
     static Color trayColor;
 

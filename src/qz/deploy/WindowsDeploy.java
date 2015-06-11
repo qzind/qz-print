@@ -29,7 +29,7 @@ import qz.utils.ShellUtilities;
  *
  * @author Tres Finocchiaro
  */
-public class WindowsShortcut extends ShortcutUtilities {
+public class WindowsDeploy extends DeployUtilities {
     // Try using ${windows.icon} first, if it exists
     private static String qzIcon = System.getenv("programfiles").replace(" (x86)", "") + "\\" + Constants.ABOUT_TITLE + "\\windows-icon.ico";
     private static String defaultIcon = System.getenv("windir") + "\\system32\\SHELL32.dll";
@@ -84,6 +84,26 @@ public class WindowsShortcut extends ShortcutUtilities {
     public boolean hasDesktopShortcut() {
         return fileExists(System.getenv("userprofile") + "\\Desktop\\" +
                 getShortcutName() + ".url");
+    }
+
+    /**
+     * Enabled websockets in IE by treating "localhost" the same as an internet zone
+     * This setting must be unchecked in order for websockets to communicate back to localhost via:
+     *    - Internet Options > Security > Local Intranet > Sites > [ ] Include (intranet) sites not listed in other zones
+     * Note, the IE settings dialog won't reflect this change until after a browser restart
+     * @return true if successful
+     */
+    public static boolean configureIntranetZone() {
+        String path = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\1";
+        String name = "Flags";
+        int mask = 16;
+
+        // If the above mask exists, remove it using XOR, thus disabling this default setting
+        int data = ShellUtilities.getRegistryDWORD(path, name);
+        if (data != -1 && (data & mask) == mask) {
+            return ShellUtilities.setRegistryDWORD(path, name, data ^ mask);
+        }
+        return true;
     }
     
     /**
