@@ -40,6 +40,7 @@ function getCertificate(callback) {
     $.ajax({
         method: 'GET',
         url: 'assets/auth/public-key.txt',
+        async: false,
         success: callback // Data returned from ajax call should be the site certificate
     });
     */
@@ -112,6 +113,7 @@ function signRequest(toSign, callback) {
     $.ajax({
         method: 'GET',
         url: '/secure/url/for/sign-message.php?request=' + toSign,
+        async: false,
         success: callback // Data returned from ajax call should be the signature
     });
     */
