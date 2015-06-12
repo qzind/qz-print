@@ -96,8 +96,9 @@ function connectWebsocket(port) {
         };
 
     } else {
-        console.log('Websocket connection failed');
+        console.warn('Websocket connection failed');
         websocket = null;
+        qzNoConnection();
     }
 }
 

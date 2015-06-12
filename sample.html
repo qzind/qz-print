@@ -167,6 +167,20 @@ function qzSocketClose(event) {
 
 function qzNoConnection() {
     alert("Unable to connect to QZ, is it running?");
+
+    //run deploy applet After page load
+    var content = '';
+    var oldWrite = document.write;
+    document.write = function(text) {
+        content += text;
+    };
+    deployQZApplet();
+
+    var newElem = document.createElement('del');
+    newElem.innerHTML = content;
+
+    document.write = oldWrite;
+    document.body.appendChild(newElem);
 }
 
 /**
