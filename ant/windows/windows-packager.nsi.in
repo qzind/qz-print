@@ -76,6 +76,7 @@ Section
 
   keygen:
   ; Exports a self-signed certificate and properties file
+  DetailPrint "Generating a unique certificate for HTTPS support..."
   nsExec::ExecToLog "cscript.exe //NoLogo //E:jscript $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" install"
   Pop $0
   ; Secure websockets is required, handle errors

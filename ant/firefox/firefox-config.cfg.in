@@ -1,23 +1,42 @@
 //##############################################################################
-//#     Firefox AutoConfig for ${socket.name} Software ${vendor.website}        #
+//#     Firefox AutoConfig for ${socket.name} Software ${vendor.website}                  #
 //##############################################################################
 //# NOTE:  This certificate is unique and private to THIS PC ONLY.  It was     #
 //# created on-the-fly at install time for secure websockets to function with  #
 //# ${socket.name} software.                                                          #
-//# For questions please visit ${vendor.website}/support                 #
+//# For questions please visit ${vendor.website}/support                           #
 //##############################################################################
 
 // Get NSS certdb object
 var certdb = getCertDB();
 
-// Search for certificate by nickname, delete if already exists
-if (certExists()) {
-    certdb.deleteCertificate(certdb.findCertByNickname(null, "${jks.cn} - ${vendor.company}"));
+if (needsUninstall()) {
+    deleteCertificate();
+} else if (needsCert()) {
+    deleteCertificate();
+    installCertificate();
 }
 
-// Add certificate using base64 encoded data
-if (needsCert()) {
+// Compares the timestamp embedded in this script against that stored in the browser's about:config
+function needsCert() {
+    try {
+        return getPref("${build.socket.name}.installer.timestamp") != getInstallerTimestamp();
+    } catch (notfound) {}
+    return true;
+}
+
+// Installs the embedded base64 certificate into the browser
+function installCertificate() {
     certdb.addCertFromBase64(getCertData(), "C,C,C", "${jks.cn} - ${vendor.company}");
+    pref("${build.socket.name}.installer.timestamp", getInstallerTimestamp());
+}
+
+// Deletes the certificate, if it exists
+function deleteCertificate() {
+    if (certExists()) {
+        certdb.deleteCertificate(certdb.findCertByNickname(null, "${jks.cn} - ${vendor.company}"));
+    }
+    pref("${build.socket.name}.installer.timestamp", "-1");
 }
 
 // Returns true if the certificate already exists
@@ -47,7 +66,19 @@ function getCertData() {
     return "${certData}";
 }
 
-// Whether or not the cert install should occur, flagged by the installer/uninstaller
-function needsCert() {
-    return ${needsCert};
+// The timestamp created by the desktop installer
+function getInstallerTimestamp() {
+    return "${timestamp}";
+}
+
+// Whether or not an uninstall should occur, flagged by the installer/uninstaller
+function needsUninstall() {
+    try {
+        if (getPref("${build.socket.name}.installer.timestamp") == "-1") {
+            return false;
+        }
+    } catch (notfound) {
+        return false;
+    }
+    return ${uninstall};
 }

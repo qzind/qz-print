@@ -364,7 +364,7 @@ function deleteFirefoxCertificate() {
     // Variable replacements for Firefox config file
     var replacements = {
         "${certData}" : "",
-        "${needsCert}" : "false"
+        "${uninstall}" : "true"
     };
 
     // 1. readPlainCert() reads in certificate, stripping non-base64 content
@@ -383,7 +383,8 @@ function installFirefoxCertificate() {
     // Variable replacements for Firefox config file
     var replacements = {
         "${certData}" : readPlainCert(derCert),
-        "${needsCert}" : "true"
+        "${uninstall}" : "false",
+        "${timestamp}" : new Date().getTime()
     };
 
     // 1. readPlainCert() reads in certificate, stripping non-base64 content

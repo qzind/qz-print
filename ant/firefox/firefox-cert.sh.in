@@ -103,7 +103,7 @@ if [ "$1" == "uninstall" ]; then
         # Replace ${certData} with the base64 string
         perl -pi -e "s#\\\${certData}##g" "$bindir/${firefoxconfig.name}"
         ret1=$?
-        perl -pi -e "s#\\\${needsCert}#false#g" "$bindir/${firefoxconfig.name}"
+        perl -pi -e "s#\\\${uninstall}#true#g" "$bindir/${firefoxconfig.name}"
         ret2=$?
         if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ]; then
             echo -e "${bash.success} Certificate removed successfully"
@@ -169,15 +169,18 @@ certdata=$(cat "$dercertpath" |tr -d '\n'|tr -d '\r')
 # Strip all non-base64 data
 certdata=$(echo "$certdata" | sed -e "s|$bcert|$blank|g")
 certdata=$(echo "$certdata" | sed -e "s|$ecert|$blank|g")
+timestamp=$(date +%s)
 
 if [ -f "$bindir/${firefoxconfig.name}" ]; then
 	echo -e "${bash.success} Check ${socket.name} AutoConfig exists"
 	# Replace ${certData} with the base64 string
     perl -pi -e "s#\\\${certData}#$certdata#g" "$bindir/${firefoxconfig.name}"
     ret1=$?
-    perl -pi -e "s#\\\${needsCert}#true#g" "$bindir/${firefoxconfig.name}"
+    perl -pi -e "s#\\\${uninstall}#false#g" "$bindir/${firefoxconfig.name}"
     ret2=$?
-    if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ]; then
+    perl -pi -e "s#\\\${timestamp}#$timestamp#g" "$bindir/${firefoxconfig.name}"
+    ret3=$?
+    if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ]; then
         echo -e "${bash.success} Certificate installed"
     else
         echo -e "${bash.failure} Certificate installation failed"
