@@ -33,7 +33,8 @@ import java.io.File;
 public class SystemUtilities {
     // Name of the os, i.e. "Windows XP", "Mac OS X"
     private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
-    private static String linuxVersion;
+    private static String uname;
+    private static String linuxRelease;
     
      /**
      * Returns a lowercase version of the Operating system name identified by
@@ -122,22 +123,52 @@ public class SystemUtilities {
      * @return <code>true</code> if this OS is Ubuntu
      */
     public static boolean isUbuntu() {
-        String linuxVersion = getLinuxVersion();
-        return linuxVersion != null && getLinuxVersion().contains("Ubuntu");
+        getUname();
+        return uname != null && uname.contains("Ubuntu");
+    }
+
+    /**
+     * Returns whether the output of <code>cat /etc/redhat-release/code> shell command contains "Fedora"
+     * @return <code>true</code> if this OS is Fedora
+     */
+    public static boolean isFedora() {
+        getLinuxRelease();
+        return linuxRelease != null && linuxRelease.contains("Fedora");
+    }
+
+    /**
+     * Returns the output of <code>cat /etc/lsb-release</code> or equivalent
+     * @return the output of the command or null if not running Linux
+     */
+    public static String getLinuxRelease()  {
+        if (isLinux() && linuxRelease == null) {
+            String[] releases = {"/etc/lsb-release", "/etc/redhat-release"};
+            for (String release : releases) {
+                String result = ShellUtilities.execute(
+                        new String[]{"cat", release},
+                        null
+                );
+                if (result != null && !result.isEmpty()) {
+                    linuxRelease = result;
+                    break;
+                }
+            }
+        }
+        return linuxRelease;
     }
 
     /**
      * Returns the output of <code>uname -a</code> shell command, useful for parsing the Linux Version
-     * @return the output of <code>uname -a</code>, of null if not running Linux
+     * @return the output of <code>uname -a</code>, or null if not running Linux
      */
-    public static String getLinuxVersion() {
-        if (isLinux() && linuxVersion == null) {
-            linuxVersion = ShellUtilities.execute(
+    public static String getUname() {
+        if (isLinux() && uname == null) {
+            uname = ShellUtilities.execute(
                     new String[]{"uname", "-a"},
                     null
             );
         }
-        return linuxVersion;
+        return uname;
     }
     
 }

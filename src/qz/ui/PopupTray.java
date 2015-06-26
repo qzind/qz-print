@@ -26,7 +26,7 @@ import qz.utils.SystemUtilities;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
+import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -157,29 +157,47 @@ public class PopupTray extends JPopupMenu {
     private TrayIcon createTrayIcon() {
         // Create an empty tray icon
         TrayIcon newTrayIcon = new TrayIcon(new ImageIcon(new byte[1]).getImage());
-
-        // Attach a mouse listener to the tray icon to show a JPopupMenu rather
-        // than a PopupMenu
-        newTrayIcon.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseReleased(MouseEvent e) {
-                setInvoker(PopupTray.this);
-                setVisible(true);
-                /**
-                 * Location must be set after setVisible() or it won't
-                 * be able to determine its own height.
-                 *
-                 * Don't call getHeight() on Apple per Oracle Bug #232610
-                 * Don't call getHeight() on Ubuntu per incorrect placement
-                 */
-               setLocation(e.getX(), e.getY() -
-                       ( SystemUtilities.isWindows() ? getHeight() : 0));
-            }
-        });
-
+        addTrayListener();
         newTrayIcon.setImageAutoSize(true);
         return newTrayIcon;
     }
+
+    /**
+     * Functional equivalent of a <code>MouseAdapter</code>, but accommodates an edge-cases in Gnome3 where the tray
+     * icon cannot listen on mouse events.
+     *
+     * Since there's no component to listen on, show popup only when
+     * <code>MouseEvent.getComponent()</code> is <code>null</code>
+     */
+    private void addTrayListener() {
+        Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Override
+            public void eventDispatched(AWTEvent e) {
+                if (e instanceof MouseEvent) {
+                    MouseEvent me = (MouseEvent)e;
+                    if ((me.getComponent() == null || SystemUtilities.isFedora()) && e.getID() == MouseEvent.MOUSE_RELEASED) {
+                        setInvoker(PopupTray.this);
+                        setVisible(true);
+                        /**
+                         * Location must be set after setVisible() or it won't
+                         * be able to determine its own height.
+                         *
+                         * Don't call getHeight() on Apple per Oracle Bug #232610
+                         * Don't call getHeight() on Ubuntu per incorrect placement
+                         */
+                        if (SystemUtilities.isFedora()) {
+                            Point p = MouseInfo.getPointerInfo().getLocation();
+                            setLocation((int)p.getY(), (int)p.getY() - getHeight());
+                        } else {
+                            setLocation(me.getX(), me.getY() -
+                                    (SystemUtilities.isWindows() ? getHeight() : 0));
+                        }
+                    }
+                }
+            }
+        }, MouseEvent.MOUSE_EVENT_MASK);
+    }
+
 
     /**
      * Convenience method for getTrayIcon().displayMessage(...).
