@@ -255,6 +255,10 @@
             <fileset file="${basedir}/LICENSE.txt"/>
         </copy>
 
+        <copy todir="${dist.socket.dir}">
+            <fileset dir="${dist.applet.dir}" includes="${name.applet.jar},${name.applet.jnlp},${lib.dir}/*"/>
+        </copy>
+
     </target>
 
     <!--
