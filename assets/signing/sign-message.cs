@@ -23,11 +23,12 @@ public void SignMessage(String message)
      // #########################################################
 
     // Sample key.  Replace with one used for CSR generation
-	var KEY = "private-key.pem";
+    // How to associate a private key with the X509Certificate2 class in .net
+    // openssl pkcs12 -export -in private-key.pem -inkey digital-certificate.txt -out private-key.pfx
+	var KEY = "private-key.pfx";
 	var PASS = "S3cur3P@ssw0rd";
 
-	var pem = System.IO.File.ReadAllText( KEY );
-	var cert = new X509Certificate2( GetBytesFromPEM( pem, "RSA PRIVATE", PASS );
+	var cert = new X509Certificate2( KEY, PASS );
 	RSACryptoServiceProvider csp = (RSACryptoServiceProvider)cert.PrivateKey;
 
 	byte[] data = new ASCIIEncoding().GetBytes(message);
@@ -37,19 +38,4 @@ public void SignMessage(String message)
 	Response.ContentType = "text/plain";
 	Response.Write(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1")));  
 	Environment.Exit(0)
-}
-
-/**
- * Get PEM certificate data using C#
- */
-private byte[] GetBytesFromPEM( string pemString, string section )
-{
-    var header = String.Format("-----BEGIN {0}-----", section);
-    var footer = String.Format("-----END {0}-----", section);
-	
-    var start = pemString.IndexOf(header, StringComparison.Ordinal) + header.Length;
-    var end = pemString.IndexOf(footer, start, StringComparison.Ordinal) - start;
-    
-	return start < 0 || end < 0 ? null : 
-		Convert.FromBase64String( pemString.Substring( start, end ) );
 }
