@@ -30,7 +30,7 @@ public void SignMessage(String message)
 	var cert = new X509Certificate2( GetBytesFromPEM( pem, "RSA PRIVATE", PASS );
 	RSACryptoServiceProvider csp = (RSACryptoServiceProvider)cert.PrivateKey;
 
-	byte[] data = new UnicodeEncoding().GetBytes(message);
+	byte[] data = new ASCIIEncoding().GetBytes(message);
 
 	byte[] hash = new SHA1Managed().ComputeHash(data);
 
