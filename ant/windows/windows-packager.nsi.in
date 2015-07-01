@@ -36,10 +36,16 @@ InstallDir "$PROGRAMFILES\${socket.name}"
 ;------------------------------
 
 Section
+  ; Sets the context of shell folders to "All Users"
+  SetShellVarContext all
+
   ; Kills any running ${socket.name} processes
   nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+
   ; Cleanup for wmic on Windows XP
+  SetShellVarContext current
   Delete "$DESKTOP\TempWmicBatchFile.bat"
+  SetShellVarContext all
 
   SetOutPath "$INSTDIR"
 
@@ -112,6 +118,9 @@ SectionEnd
 ;-------------------------------
 
 Section "Uninstall"
+  ; Sets the context of shell folders to "All Users"
+  SetShellVarContext all
+
   ; Kills any running ${socket.name} processes
   nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
   ; Cleanup for wmic on Windows XP
@@ -133,6 +142,12 @@ Section "Uninstall"
 
   Delete "$DESKTOP\${socket.name}.url"
   Delete "$DESKTOP\${socket.name}.lnk"
+
+  ; Sets the context of shell folders to current user
+  SetShellVarContext current
+  Delete "$DESKTOP\${socket.name}.url"
+  Delete "$DESKTOP\${socket.name}.lnk"
+  Delete "$SMPROGRAMS\${socket.name}.lnk"
 SectionEnd
 
 ;-------------------------------
