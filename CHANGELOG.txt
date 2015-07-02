@@ -1,3 +1,7 @@
+Changes 1.9.3 (7/1/2105)
+ - Improved signing examples, added Node.js, J#, Java, Classic ASP
+ - Fix Windows installer issue when being run as non-admin use
+
 Changes 1.9.2 (6/16/2015)
  - Better HTTPS certificate installation for Firefox (#46)
 Changes 1.9.1 (6/15/2015)
