@@ -321,6 +321,14 @@ public class PrintFunction extends Applet {
         return this.paperSize.getOrientationDescription();
     }
 
+    public void setOrientation(String orientation) {
+        if (this.paperSize == null) {
+            log.warning("A paper size must be specified before setting orientation!");
+        } else {
+            this.paperSize.setOrientation(orientation);
+        }
+    }
+
     public void printToFile() {
         printToFile(null);
     }
