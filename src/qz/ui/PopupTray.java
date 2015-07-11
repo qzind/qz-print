@@ -173,29 +173,29 @@ public class PopupTray extends JPopupMenu {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
             @Override
             public void eventDispatched(AWTEvent e) {
-                if (e instanceof MouseEvent) {
+                if (isTrayEvent(e)) {
                     MouseEvent me = (MouseEvent)e;
-                    if ((me.getComponent() == null || SystemUtilities.isFedora()) && e.getID() == MouseEvent.MOUSE_RELEASED) {
+                    // X11 bug
+                    if (me.getComponent() != null) {
+                        show(me.getComponent(),0,0);
+                    } else {
                         setInvoker(PopupTray.this);
                         setVisible(true);
-                        /**
-                         * Location must be set after setVisible() or it won't
-                         * be able to determine its own height.
-                         *
-                         * Don't call getHeight() on Apple per Oracle Bug #232610
-                         * Don't call getHeight() on Ubuntu per incorrect placement
-                         */
-                        if (SystemUtilities.isFedora()) {
-                            Point p = MouseInfo.getPointerInfo().getLocation();
-                            setLocation((int)p.getY(), (int)p.getY() - getHeight());
-                        } else {
-                            setLocation(me.getX(), me.getY() -
-                                    (SystemUtilities.isWindows() ? getHeight() : 0));
-                        }
+                        setLocation(me.getX(), me.getY() - (SystemUtilities.isWindows() ? getHeight() : 0));
                     }
                 }
             }
         }, MouseEvent.MOUSE_EVENT_MASK);
+    }
+
+    private boolean isTrayEvent(AWTEvent e) {
+	if (e instanceof MouseEvent) {
+		MouseEvent me = (MouseEvent)e;
+		if (me.getID() == MouseEvent.MOUSE_RELEASED || me.getSource() != null) {
+			return me.getSource().getClass().getName().contains("TrayIcon");
+		}
+	}
+	return false;
     }
 
 
@@ -219,20 +219,21 @@ public class PopupTray extends JPopupMenu {
      * Attaches the specified TrayIcon to the SystemTray
      * @param trayIcon The TrayIcon to attach
      */
-    private void attachSystemTray(TrayIcon trayIcon) {
-        try {
-            if (getSystemTray() != null) {
-                getSystemTray().add(trayIcon);
-            }
-        } catch (AWTException e) {
-            Logger.getLogger(getClass().getName()).log(Level.WARNING,
-                "Tray menu could not be added: {0}", e.getLocalizedMessage());
-            if (SystemUtilities.isLinux()) {
-                Logger.getLogger(getClass().getName()).log(Level.WARNING,
-                "Ubuntu users:  If the tray icon does not appear try running the following:\n\n" +
-                        "    $ gsettings set com.canonical.Unity.Panel systray-whitelist \"['all']\"\n\n" +
-                        "... then log out and log back in to restart Unity.");
-            }
+    private void attachSystemTray(final TrayIcon trayIcon) {
+        if (getSystemTray() != null) {
+                    try{
+                        getSystemTray().add(trayIcon);
+                    } catch (AWTException e){
+                        Logger.getLogger(getClass().getName()).log(Level.WARNING,
+                            "Tray menu could not be added: {0}", e.getLocalizedMessage());
+                        if (SystemUtilities.isLinux()) {
+                            Logger.getLogger(getClass().getName()).log(Level.WARNING,
+                                "Ubuntu users:  If the tray icon does not appear try running the following:\n\n" +
+                                "    $ gsettings set com.canonical.Unity.Panel systray-whitelist \"['all']\"\n\n" +
+                                "... then log out and log back in to restart Unity.");
+                        }
+                    }
+                
         }
     }
 
