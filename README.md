@@ -16,5 +16,5 @@ Free browser applet for sending documents and raw commands to a printer.
   * See our [most recent releases](../../releases)
 
 ##Java Developer Resources
-  * [Install dependencies](Install Dependencies)
-  * [Compile, Package](Compiling)
+  * [Install dependencies](../../wiki/install-dependencies)
+  * [Compile, Package](../../wiki/compiling)
