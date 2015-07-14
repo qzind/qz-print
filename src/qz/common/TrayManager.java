@@ -102,7 +102,7 @@ public class TrayManager {
         tray.setToolTipText(name);
 
         // Iterates over all images denoted by IconCache.getTypes() and caches them
-        iconCache = new IconCache(tray.getTrayIcon().getSize());
+        iconCache = new IconCache(tray.getIconSize());
         tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
 
         // Linux spcecific tasks
@@ -125,27 +125,29 @@ public class TrayManager {
         addMenuItems(tray);
         //tray.displayMessage(name, name + " is running.", Level.INFO);
 
-        tray.getTrayIcon().addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (e.getClickCount() == 2) {
-                    tray.setVisible(false);
-                    aboutListener.actionPerformed(new ActionEvent(e.getSource(),e.getID(),null));
+	if (tray.getTrayIcon()!=null){
+            tray.getTrayIcon().addMouseListener(new MouseListener() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        tray.setVisible(false);
+                        aboutListener.actionPerformed(new ActionEvent(e.getSource(),e.getID(),null));
+                    }
                 }
-            }
 
-            @Override
-            public void mousePressed(MouseEvent e) {}
+                @Override
+                public void mousePressed(MouseEvent e) {}
 
-            @Override
-            public void mouseReleased(MouseEvent e) {}
+                @Override
+                public void mouseReleased(MouseEvent e) {}
 
-            @Override
-            public void mouseEntered(MouseEvent e) {}
+                @Override
+                public void mouseEntered(MouseEvent e) {}
 
-            @Override
-            public void mouseExited(MouseEvent e) {}
-        });
+                @Override
+                public void mouseExited(MouseEvent e) {}
+            });
+	}
     }
 
     /**
