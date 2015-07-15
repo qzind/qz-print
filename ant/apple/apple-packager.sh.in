@@ -24,14 +24,26 @@ chmod +x "${apple.keygen.out}"
 security add-certificates "${apple.packager.cert}"
 security add-certificates "${apple.intermediate.cert}"
 
-pkgbuild --identifier "${build.socket.name}" \
-	--root "${dist.socket.dir}" \
-	--install-location "${apple.installdir}" \
-	--scripts "${apple.scripts}" \
-	--version "${build.version}" \
-	--sign "P5DMU6659X" \
-	"${out.dir}/${build.socket.name}-${build.version}.pkg"
+# Checks if we have an Apple code signing cert
+security find-identity -v |grep "(${apple.packager.signid})"
+
+if [ $? ==  0 ]; then
+	signing="--sign \"${apple.packager.signid}\""
+	suffix=""
+else
+	signing=""
+	suffix="-unsigned"
+fi
+
+eval "pkgbuild --identifier \"${build.socket.name}\" \
+	--root \"${dist.socket.dir}\" \
+	--install-location \"${apple.installdir}\" \
+	--scripts \"${apple.scripts}\" \
+	--version \"${build.version}\" \
+	${signing}\
+	\"${out.dir}/${build.socket.name}-${build.version}${suffix}.pkg\""
 code=$?
+
 echo
 echo "============================================"
 echo "                 Finished                   "

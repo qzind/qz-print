@@ -28,55 +28,37 @@ appnames=("Firefox")	# "Firefox" "IceWeasel" "etc
 conflicts=("general.config.filename")
 
 #
-# Calls lsregister -dump and parses the output for "/Firefox.app", etc.  Returns the very first result found.
-#
-function get_osx_ffdir()
-{
-	# OSX Array of possible lsregister command locations
-	lsregs=("/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister")
-
-	for i in "${lsregs[@]}"; do
-		for j in ${appnames[@]}; do
-			if [ -f $i ]; then
-				ffdir=$($i -dump |grep -E "/$j.app$" |cut -d'/' -f2- |head -1)
-				ffdir="/$ffdir"
-				return 0
-			fi
-		done
-	done
-	return 1
-}
-
-#
 # Uses "which" and "readlink" to locate firefox on Linux, etc
 #
 function get_ffdir()
 {
 	for i in "${appnames[@]}"; do
-		# Convert "Firefox" to "firefox", etc
-		lower=$(echo "$i" |tr '[:upper:]' '[:lower:]')
-		exec=$(readlink -f "$(which $lower)")
-		ffdir=$(echo "$exec" |rev |cut -d'/' -f2- |rev)
-		if [ -f "$ffdir" ]; then
+		ffdirtemp=$($locationdir/${locator.name} $i)
+		if [ $? == 0 ]; then
+			ffdir=$ffdirtemp
 			return 0
 		fi
 	done
 	return 1
 }
 
-
 echo "Searching for Firefox..."
 
 ffdir=""
 if [[ "$OSTYPE" == "darwin"* ]]; then
 	# Mac OSX
-	get_osx_ffdir
+	locationdir=$(cd "$(dirname "$0")"; pwd)
+	get_ffdir
+
 	bindir="$ffdir/Contents/Resources/"
 	prefdir="$ffdir/Contents/Resources/defaults/pref"
 	installdir="${apple.installdir}"
 else
 	# Linux, etc
+	location=$(readlink -f "$0")
+	locationdir=$(dirname "$location")
 	get_ffdir
+
 	bindir="$ffdir"
 	prefdir="$ffdir/defaults/pref"
 	installdir="${linux.installdir}"

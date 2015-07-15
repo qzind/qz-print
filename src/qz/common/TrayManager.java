@@ -34,6 +34,7 @@ import qz.utils.FileUtilities;
 import qz.utils.MacUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
+import qz.utils.ShellUtilities;
 import qz.ws.PrintSocket;
 
 import javax.swing.*;
@@ -241,8 +242,15 @@ public class TrayManager {
     private final ActionListener openListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             try {
-                Desktop d = Desktop.getDesktop();
-                d.open(new File(shortcutCreator.getParentDirectory()));
+                // to get Macs to open the package's contents rather than launching it, we -R the package's auth folder to 
+                // select it in finder. Thus we are opening auth's parent folder rather than the package.
+                if (SystemUtilities.isMac()) {
+                    //You cannot pass an 'open' command through exec that contains spaces (QZ Tray) unless you use an array
+                    ShellUtilities.execute(new String[] {"open", "-R", shortcutCreator.getJarPath()});
+                } else {
+                    Desktop d = Desktop.getDesktop();
+                    d.open(new File(shortcutCreator.getParentDirectory()));
+                }
             }
             catch(Exception ex) {
                 showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());

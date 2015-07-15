@@ -139,6 +139,10 @@ progress_dialog 75 "Importing Firefox certificate..."
 chmod +x "$destdir/auth/firefox/${firefoxcert.name}"  > /dev/null 2>&1
 "$destdir/auth/firefox/${firefoxcert.name}"
 
+progress_dialog 75 "Importing Firefox locator..."
+chmod +x "$destdir/auth/firefox/${locator.name}"  > /dev/null 2>&1
+"$destdir/auth/firefox/${locator.name}"
+
 progress_dialog 80 "Checking for certutil..."
 which certutil > /dev/null 1>&2
 if [ $? -ne 0 ]; then

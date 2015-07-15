@@ -192,7 +192,7 @@ public class PopupTray extends JPopupMenu {
                 if (isTrayEvent(e)) {
                     MouseEvent me = (MouseEvent)e;
                     // X11 bug
-                    if (me.getComponent() != null) {
+                    if (SystemUtilities.isFedora()) {
                         show(me.getComponent(),0,0);
                     } else {
                         setInvoker(PopupTray.this);
@@ -205,13 +205,13 @@ public class PopupTray extends JPopupMenu {
     }
 
     private boolean isTrayEvent(AWTEvent e) {
-	if (e instanceof MouseEvent) {
-		MouseEvent me = (MouseEvent)e;
-		if (me.getID() == MouseEvent.MOUSE_RELEASED || me.getSource() != null) {
-			return me.getSource().getClass().getName().contains("TrayIcon");
-		}
-	}
-	return false;
+        if (e instanceof MouseEvent) { 
+            MouseEvent me = (MouseEvent)e;
+            if (me.getID() == MouseEvent.MOUSE_RELEASED && me.getSource() != null) {
+                return me.getSource().getClass().getName().contains("TrayIcon");
+            }
+        }
+        return false;
     }
 
 
