@@ -189,29 +189,29 @@ public class PopupTray extends JPopupMenu {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
             @Override
             public void eventDispatched(AWTEvent e) {
-                if (e instanceof MouseEvent) {
+                if (isTrayEvent(e)) {
                     MouseEvent me = (MouseEvent)e;
-                    if ((me.getComponent() == null || SystemUtilities.isFedora()) && e.getID() == MouseEvent.MOUSE_RELEASED) {
+                    // X11 bug
+                    if (me.getComponent() != null) {
+                        show(me.getComponent(),0,0);
+                    } else {
                         setInvoker(PopupTray.this);
                         setVisible(true);
-                        /**
-                         * Location must be set after setVisible() or it won't
-                         * be able to determine its own height.
-                         *
-                         * Don't call getHeight() on Apple per Oracle Bug #232610
-                         * Don't call getHeight() on Ubuntu per incorrect placement
-                         */
-                        if (SystemUtilities.isFedora()) {
-                            Point p = MouseInfo.getPointerInfo().getLocation();
-                            setLocation((int)p.getY(), (int)p.getY() - getHeight());
-                        } else {
-                            setLocation(me.getX(), me.getY() -
-                                    (SystemUtilities.isWindows() ? getHeight() : 0));
-                        }
+                        setLocation(me.getX(), me.getY() - (SystemUtilities.isWindows() ? getHeight() : 0));
                     }
                 }
             }
         }, MouseEvent.MOUSE_EVENT_MASK);
+    }
+
+    private boolean isTrayEvent(AWTEvent e) {
+	if (e instanceof MouseEvent) {
+		MouseEvent me = (MouseEvent)e;
+		if (me.getID() == MouseEvent.MOUSE_RELEASED || me.getSource() != null) {
+			return me.getSource().getClass().getName().contains("TrayIcon");
+		}
+	}
+	return false;
     }
 
 
