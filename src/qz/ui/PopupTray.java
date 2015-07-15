@@ -101,7 +101,7 @@ public class PopupTray extends JPopupMenu {
      * @param image The image to set the TrayIcon to
      */
     public final void setImage(Image image) {
-        if (image != null) {
+        if (image != null && trayIcon != null) {
             trayIcon.setImage(image);
         }
     }
@@ -113,7 +113,9 @@ public class PopupTray extends JPopupMenu {
      */
     @Override
     public final void setToolTipText(String toolTipText) {
-        trayIcon.setToolTip(toolTipText);
+	if (trayIcon != null){
+            trayIcon.setToolTip(toolTipText);
+	}
     }
 
     /**
@@ -129,7 +131,7 @@ public class PopupTray extends JPopupMenu {
      * @return Width measurement in pixels
      */
     public int getTrayWidth() {
-        return (int)trayIcon.getSize().getWidth();
+        return (trayIcon != null)?(int)trayIcon.getSize().getWidth():1;
     }
 
     /**
@@ -137,7 +139,18 @@ public class PopupTray extends JPopupMenu {
      * @return Height measurement in pixels
      */
     public int getTrayHeight() {
-        return (int)trayIcon.getSize().getHeight();
+        return (trayIcon != null)?(int)trayIcon.getSize().getHeight():1;
+    }
+
+    /**
+     * Returns the size of the TrayIcons
+     * @return Height measurement in pixels
+     */
+    public Dimension getIconSize() {
+	if (trayIcon != null){
+            return trayIcon.getSize();
+	}
+	return new Dimension(1,1);
     }
 
     /**
@@ -156,10 +169,13 @@ public class PopupTray extends JPopupMenu {
      */
     private TrayIcon createTrayIcon() {
         // Create an empty tray icon
-        TrayIcon newTrayIcon = new TrayIcon(new ImageIcon(new byte[1]).getImage());
-        addTrayListener();
-        newTrayIcon.setImageAutoSize(true);
-        return newTrayIcon;
+	if (SystemTray.isSupported()){
+            TrayIcon newTrayIcon = new TrayIcon(new ImageIcon(new byte[1]).getImage());
+            addTrayListener();
+            newTrayIcon.setImageAutoSize(true);
+            return newTrayIcon;
+	}
+	return null;
     }
 
     /**
@@ -211,7 +227,9 @@ public class PopupTray extends JPopupMenu {
      * <code>null</code>
      */
     public void displayMessage(String caption, String text, Level level) {
-        trayIcon.displayMessage(caption, text, convert(level));
+	if (trayIcon != null){
+            trayIcon.displayMessage(caption, text, convert(level));
+	}
     }
 
 
