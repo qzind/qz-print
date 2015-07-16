@@ -21,9 +21,7 @@
  */
 package qz;
 
-import com.sun.pdfview.PDFFile;
-import com.sun.pdfview.PDFPage;
-import com.sun.pdfview.PDFRenderer;
+import org.apache.pdfbox.pdmodel.PDDocument;
 import qz.common.LogIt;
 import qz.printer.PaperFormat;
 
@@ -54,7 +52,7 @@ public class PrintPostScript implements Printable {
 
     private final AtomicReference<BufferedImage> bufferedImage = new AtomicReference<BufferedImage>(null);
     private final AtomicReference<ByteBuffer> bufferedPDF = new AtomicReference<ByteBuffer>(null);
-    private final AtomicReference<PDFFile> pdfFile = new AtomicReference<PDFFile>(null);
+    private final AtomicReference<PDDocument> pdfFile = new AtomicReference<PDDocument>(null);
     private final AtomicReference<PrintService> printServiceAtomicReference = new AtomicReference<PrintService>(null);
     private final AtomicReference<String> jobName = new AtomicReference<String>("jZebra 2D Printing");
     private final AtomicReference<Paper> paper = new AtomicReference<Paper>(null);
@@ -115,10 +113,10 @@ public class PrintPostScript implements Printable {
         if (this.bufferedImage.get() != null) {
             width = bufferedImage.get().getWidth();
             height = bufferedImage.get().getHeight();
-        } else if (this.getPDFFile() != null) {
-            width = (int) getPDFFile().getPage(1).getWidth();
-            height = (int) getPDFFile().getPage(1).getHeight();
-        } else {
+        } else if (this.getPDF() != null) {
+            printPDF(job);
+            return;
+        }  else {
             throw new PrinterException("Corrupt or missing file supplied.");
         }
 
@@ -181,6 +179,24 @@ public class PrintPostScript implements Printable {
         pdfFile.set(null);
     }
 
+    public  void printPDF(PrinterJob job) {
+        try {
+            job.setPrintService(printServiceAtomicReference.get());
+            pdfFile.get().silentPrint(job);
+        } catch (PrinterException p) {
+            LogIt.log("Error printing PDF file", p);
+        } finally {
+            try {
+                if (pdfFile.get() != null) {
+                    pdfFile.get().close();
+                }
+            } catch (IOException e) {
+                LogIt.log("Error closing PDF File", e);
+            }
+        }
+        pdfFile.set(null);
+    }
+
     @SuppressWarnings("UnusedDeclaration")//Need to see if this should be deleted or implemented properly
     public void setPaper(Paper paper) {
         this.paper.set(paper);
@@ -205,12 +221,12 @@ public class PrintPostScript implements Printable {
         if (this.bufferedImage.get() != null) {
             return printImage(graphics, pageFormat, pageIndex);
         } else if (this.bufferedPDF.get() != null) {
-            // PDF-Renderer plugin
-            if (isClass("com.sun.pdfview.PDFFile")) {
-                return printPDFRenderer(graphics, pageFormat, pageIndex);
-            } else {
-                throw new PrinterException("No suitable PDF render was found in the 'lib' directory.");
+            // we shouldn't ever get here
+            if (isClass("org.apache.pdfbox")) {
+                LogIt.log("org.apache.pdfbox");
+
             }
+            return 0;
         } else {
             throw new PrinterException("Unupported file/data type was supplied");
         }
@@ -272,7 +288,7 @@ public class PrintPostScript implements Printable {
      printImage(graphics, pageFormat, pageIndex);
      }
 
-     }*/
+     }*
     private int printPDFRenderer(Graphics graphics, @SuppressWarnings("UnusedParameters") PageFormat pageFormat, int pageIndex) throws PrinterException {
         //Suppressing unused parameter warning. Need to see if it should actually be passed/used or not.
         //TOASK: Should we use pageFormat when printing PDFs?
@@ -320,9 +336,9 @@ public class PrintPostScript implements Printable {
 
         // render the page
         //Rectangle imgbounds = new Rectangle(currentPage, currentPage)
-        PDFRenderer pgs = new PDFRenderer(page, graphics2D, page.getPageBox().getBounds(), page.getBBox(), null);
+        // PDFRenderer pgs = new PDFRenderer(page, graphics2D, page.getPageBox().getBounds(), page.getBBox(), null);
         //PDFRenderer pgs = new PDFRenderer(page, graphics2D, getImageableRectangle(pageFormat), page.getBBox(), null);
-        try {
+        /*try {
             page.waitForFinish();
 
             pgs.run();
@@ -381,7 +397,7 @@ public class PrintPostScript implements Printable {
          *
          */
 
-    }
+    /*}*/
 
     private int printImage(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
         /* Graphics and pageFormat are required.  Page index is zero-based */
@@ -496,7 +512,7 @@ public class PrintPostScript implements Printable {
      return null;
      }
 
-     */
+     *
     private PDFFile getPDFFile() throws PrinterException {
 
         if (pdfFile.get() == null && bufferedPDF.get() != null) {
@@ -507,7 +523,7 @@ public class PrintPostScript implements Printable {
             }
         }
         return pdfFile.get();
-    }
+    }*/
 
     public void setImage(byte[] imgData) throws IOException {
         InputStream in = new ByteArrayInputStream(imgData);
@@ -518,14 +534,12 @@ public class PrintPostScript implements Printable {
         this.bufferedImage.set(bufferedImage);
     }
 
-    public void setPDF(ByteBuffer bufferedPDF) {
-        this.bufferedPDF.set(bufferedPDF);
+    public void setPDF(PDDocument pdfFile) {
+        this.pdfFile.set(pdfFile);
     }
 
-    //TOASK: Unused, delete?
-    @SuppressWarnings("UnusedDeclaration")
-    public ByteBuffer getPDF() {
-        return this.bufferedPDF.get();
+    public PDDocument getPDF() {
+        return this.pdfFile.get();
     }
 
     public BufferedImage getImage() {

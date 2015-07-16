@@ -1,5 +1,6 @@
 package qz;
 
+import org.apache.pdfbox.pdmodel.PDDocument;
 import qz.common.*;
 import qz.exception.InvalidFileTypeException;
 import qz.exception.NullPrintServiceException;
@@ -193,7 +194,7 @@ public class PrintFunction extends Applet {
         this.file = file;
 
         try{
-            getPrintPS().setPDF(ByteBuffer.wrap(ByteUtilities.readBinaryFile(file)));
+            getPrintPS().setPDF(PDDocument.load(new URL(file)));
         } catch (Exception e) {
             log.log(Level.SEVERE, "Error appending data", e);
             set(e);
