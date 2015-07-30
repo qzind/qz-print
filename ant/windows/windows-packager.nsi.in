@@ -138,14 +138,14 @@ Section "Uninstall"
 
   ; Prevent launching exe from SysWOW64
   ${If} ${RunningX64}
-  ${EnableX64FSRedirection}
+  ${DisableX64FSRedirection}
   ${EndIf}
   
   ; Remove ${vendor.company} certificates
   nsExec::ExecToLog "cscript.exe //NoLogo //E:jscript $\"$INSTDIR\auth\${windows.keygen.name}$\" $\"$INSTDIR$\" uninstall"
 
   ${If} ${RunningX64}
-  ${DisableX64FSRedirection}
+  ${EnableX64FSRedirection}
   ${EndIf}
   
   ; Delete matching firewall rules
