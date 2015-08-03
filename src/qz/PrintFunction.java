@@ -138,6 +138,11 @@ public class PrintFunction extends Applet {
     public void appendHTML(String html) {
         getPrintHTML().append(html);
     }
+	
+	//3RD PARTY CHANGE
+	public void appendHTML(String html, String m_orientationString) {
+        getPrintHTML().append(html, m_orientationString);
+    }
 
     /**
      * Gets the first xml node identified by <code>tagName</code>, reads its

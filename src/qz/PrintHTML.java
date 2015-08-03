@@ -47,6 +47,10 @@ public class PrintHTML extends JLabel implements Printable {
     private final AtomicReference<String> jobName = new AtomicReference<String>("QZ-PRINT 2D Printing");
     private final AtomicInteger orientation = new AtomicInteger(PageFormat.PORTRAIT);
     private final AtomicReference<String> htmlData = new AtomicReference<String>(null);
+	
+	//3RD PARTY CHANGE
+	public String orientationString;
+	
     //private final AtomicReference<Paper> paper = new AtomicReference<Paper>(null);
     //private JLabel label;
 
@@ -60,6 +64,12 @@ public class PrintHTML extends JLabel implements Printable {
 
     public void append(String html) {
           htmlData.set(htmlData.get() == null ? html : htmlData.get() + html);
+    }
+	
+	//3RD PARTY CHANGE
+	public void append(String html, String m_orientationString) {
+          htmlData.set(htmlData.get() == null ? html : htmlData.get() + html);
+		  orientationString = m_orientationString;
     }
 
     //public void append(String html) {
@@ -182,6 +192,16 @@ public class PrintHTML extends JLabel implements Printable {
 
         Graphics2D graphics2D = (Graphics2D) graphics;
         graphics2D.translate(format.getImageableX(), format.getImageableY());
+		
+		//3RD PARTY CHANGE
+		if (orientationString.equals("landscape"))
+        {
+            //g2d.translate(-770, -240);
+            graphics2D.rotate(Math.toRadians(-90));
+            graphics2D.translate(-841, -8);
+            //g2d.translate(paper.getImageableX(), paper.getImageableY());
+        }
+		
         //g2d.translate(paper.getImageableX(), paper.getImageableY());
         this.paint(graphics2D);
         super.setDoubleBuffered(doubleBuffered);
