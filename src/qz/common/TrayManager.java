@@ -114,6 +114,7 @@ public class TrayManager {
         } else if (SystemUtilities.isWindows()) {
             // Configure IE intranet zone via registry to allow websockets
             WindowsDeploy.configureIntranetZone();
+            WindowsDeploy.configureEdgeLoopback();
         }
 
         // The allow/block dialog

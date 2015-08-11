@@ -87,7 +87,7 @@ public class WindowsDeploy extends DeployUtilities {
     }
 
     /**
-     * Enabled websockets in IE by treating "localhost" the same as an internet zone
+     * Enables websockets in IE by treating "localhost" the same as an internet zone
      * This setting must be unchecked in order for websockets to communicate back to localhost via:
      *    - Internet Options > Security > Local Intranet > Sites > [ ] Include (intranet) sites not listed in other zones
      * Note, the IE settings dialog won't reflect this change until after a browser restart
@@ -97,6 +97,26 @@ public class WindowsDeploy extends DeployUtilities {
         String path = "HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Internet Settings\\Zones\\1";
         String name = "Flags";
         int mask = 16;
+
+        // If the above mask exists, remove it using XOR, thus disabling this default setting
+        int data = ShellUtilities.getRegistryDWORD(path, name);
+        if (data != -1 && (data & mask) == mask) {
+            return ShellUtilities.setRegistryDWORD(path, name, data ^ mask);
+        }
+        return true;
+    }
+
+    /**
+     * Enables websockets in Microsoft Edge by allowing loopback connections to  "localhost"
+     * This setting must be unchecked in order for websockets to communicate back to localhost via:
+     *    - about:flags > Developer Settings > Allow localhost loopback (this might put your device at risk)
+     * Due to the volatility of this registry path, this registry key path may need to change over time
+     * @return true if successful
+     */
+    public static boolean configureEdgeLoopback() {
+        String path = "HKCU\\Software\\Classes\\Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppContainer\\Storage\\microsoft.microsoftedge_8wekyb3d8bbwe\\MicrosoftEdge\\ExperimentalFeatures";
+        String name = "AllowLocalhostLoopback";
+        int mask = 1;
 
         // If the above mask exists, remove it using XOR, thus disabling this default setting
         int data = ShellUtilities.getRegistryDWORD(path, name);
