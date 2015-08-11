@@ -666,13 +666,6 @@ public class PrintApplet extends PrintFunction implements Runnable {
         public void stop() {
         running = false;
         thisThread.set(null);
-        if (serialIO != null) {
-            try {
-                serialIO.close();
-            } catch (Throwable t) {
-                log.log(Level.SEVERE, "Could not close port [" + serialIO.getPortName() + "].", t);
-            }
-        }
         super.stop();
     }
 

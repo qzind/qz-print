@@ -996,4 +996,15 @@ public class PrintFunction extends Applet {
                 + paperSize.getHeight() + paperSize.getUnitDescription());
     }
 
+    @Override
+    public void stop() {
+        if (serialIO != null) {
+            try {
+                serialIO.close();
+            } catch (Throwable t) {
+                log.log(Level.SEVERE, "Could not close port [" + serialIO.getPortName() + "].", t);
+            }
+        }
+        super.stop();
+    }
 }
