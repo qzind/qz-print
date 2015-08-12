@@ -31,6 +31,6 @@ class PrintingController < ActionController::Base
     signed   = pkey.sign(digest, params[:request])
     encoded  = Base64.encode64(signed)
 
-    render json: {signature: encoded}
+    render text: encoded
   end
 end
