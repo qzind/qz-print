@@ -108,7 +108,7 @@ public class WindowsDeploy extends DeployUtilities {
 
     /**
      * Enables websockets in Microsoft Edge by allowing loopback connections to  "localhost"
-     * This setting must be unchecked in order for websockets to communicate back to localhost via:
+     * This setting must be checked in order for websockets to communicate back to localhost via:
      *    - about:flags > Developer Settings > Allow localhost loopback (this might put your device at risk)
      * Due to the volatility of this registry path, this registry key path may need to change over time
      * @return true if successful
@@ -120,8 +120,8 @@ public class WindowsDeploy extends DeployUtilities {
 
         // If the above mask exists, remove it using XOR, thus disabling this default setting
         int data = ShellUtilities.getRegistryDWORD(path, name);
-        if (data != -1 && (data & mask) == mask) {
-            return ShellUtilities.setRegistryDWORD(path, name, data ^ mask);
+        if (data != -1 && (data & mask) != mask) {
+            return ShellUtilities.setRegistryDWORD(path, name, data | mask);
         }
         return true;
     }
