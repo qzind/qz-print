@@ -384,6 +384,11 @@
         </copy>
         <chmod perm="u+x" file="${firefoxcert.out}"/>
 
+        <copy file="${locator.in}" tofile="${locator.out}" >
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${locator.out}"/>
+
         <exec executable="${apple.packager.out}" failonerror="true" />
 
         <!-- Cleanup lingering resources for other installer targets -->
@@ -425,6 +430,11 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
         <chmod perm="u+x" file="${firefoxcert.out}"/>
+
+	<copy file="${locator.in}" tofile="${locator.out}" >
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+        <chmod perm="u+x" file="${locator.out}"/>
 
         <exec executable="${linux.packager.out}" failonerror="true" />
 
