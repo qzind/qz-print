@@ -102,11 +102,25 @@ function connectWebsocket(port) {
     }
 }
 
+// Prototype-safe JSON.stringify
+function stringify(o) {
+    if (Array.prototype.toJSON) {
+        console.warn("Overriding Array.prototype.toJSON");
+        var result = null;
+        var tmp = Array.prototype.toJSON;
+        delete Array.prototype.toJSON;
+        result = JSON.stringify(o);
+        Array.prototype.toJSON = tmp;
+        return result;
+    }
+    return JSON.stringify(o);
+}
+
 function connectionSuccess(websocket) {
     console.log('Websocket connection successful');
 
     websocket.sendObj = function(objMsg) {
-        var msg = JSON.stringify(objMsg);
+        var msg = stringify(objMsg);
 
         console.log("Sending " + msg);
         var ws = this;
