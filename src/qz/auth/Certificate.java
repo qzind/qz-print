@@ -188,6 +188,10 @@ public class Certificate {
      * @return true if signature valid, false if not
      */
     public boolean isSignatureValid(String signature, String data) {
+        if (signature.length() == 0) {
+            return false;
+        }
+
         RSATool tool = RSAToolFactory.getRSATool();
         RSAKey thePublicKey = new RSAKeyImpl(theCertificate.getPublicKey());
 
