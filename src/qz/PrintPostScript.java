@@ -37,6 +37,7 @@ import javax.print.attribute.standard.MediaSize;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
+import java.awt.image.ColorModel;
 import java.awt.print.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,6 +45,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Logger;
+import java.util.Arrays;
 
 
 /**
@@ -417,18 +419,22 @@ public class PrintPostScript implements Printable {
 
         // FIXME:  Temporary fix for OS X 10.10 hard crash.
         // See https://github.com/qzind/qz-print/issues/75
-        if (SystemUtilities.isMac() && (imgToPrint.getType() == BufferedImage.TYPE_BYTE_BINARY)){
-            BufferedImage sanitizedImage = null;
-            try{
-                //This should be a safe cast for type binary and indexed
-                IndexColorModel icm = (IndexColorModel)(imgToPrint.getColorModel()); 
-                sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, icm);
-            } catch (Exception e){
-                //But just in case it isn't
-                sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_BYTE_INDEXED);
+        if (SystemUtilities.isMac()){
+            //Add more bad types here as they come up.
+            Integer[] badTypes = {BufferedImage.TYPE_BYTE_BINARY,BufferedImage.TYPE_CUSTOM};
+            if (Arrays.asList(badTypes).contains(imgToPrint.getType())){
+                BufferedImage sanitizedImage = null;
+                ColorModel cm = imgToPrint.getColorModel(); 
+                if (cm instanceof IndexColorModel){
+                    log.info("Image converted to 256 colors for OSX 10.10 Workaround");
+                    sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, (IndexColorModel)cm);
+                } else {
+                    log.info("Image converted to ARGB for OSX 10.10 Workaround");
+                    sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_INT_ARGB);
+                }
+                sanitizedImage.createGraphics().drawImage(imgToPrint, 0, 0, null);
+                imgToPrint = sanitizedImage;
             }
-            sanitizedImage.createGraphics().drawImage(imgToPrint, 0, 0, null);
-            imgToPrint = sanitizedImage;
         }
         /* Now we perform our rendering */
         graphics2D.drawImage(imgToPrint, 0, 0, (int) pageFormat.getImageableWidth(), (int) pageFormat.getImageableHeight(), imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
