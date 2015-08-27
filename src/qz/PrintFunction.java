@@ -903,11 +903,7 @@ public class PrintFunction extends Applet {
 
     protected void logAndPrint(PrintPostScript printPS) throws PrinterException {
         logCommands("    <<" + file + ">>");
-        // Fix GitHub Bug #24
-        if (paperSize != null) {
-            printPS.setPaperSize(paperSize);
-        }
-        // Fix GitHub Bug #30, #31
+        printPS.setPaperSize(paperSize);
         if (copies > 0) {
             printPS.setCopies(copies);
         } else {
@@ -915,6 +911,7 @@ public class PrintFunction extends Applet {
         }
         printPS.print();
         psPrint = false;
+        paperSize = null;
     }
 
     protected void logAndPrint(PrintHTML printHTML) throws PrinterException {
