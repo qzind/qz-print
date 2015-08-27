@@ -26,6 +26,7 @@ import com.sun.pdfview.PDFPage;
 import com.sun.pdfview.PDFRenderer;
 import qz.common.LogIt;
 import qz.printer.PaperFormat;
+import qz.utils.SystemUtilities;
 
 import javax.imageio.ImageIO;
 import javax.print.PrintService;
@@ -35,6 +36,7 @@ import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.awt.image.IndexColorModel;
 import java.awt.print.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -412,8 +414,24 @@ public class PrintPostScript implements Printable {
 
         graphics2D.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
         BufferedImage imgToPrint = bufferedImage.get();
+
+        // FIXME:  Temporary fix for OS X 10.10 hard crash.
+        // See https://github.com/qzind/qz-print/issues/75
+        if (SystemUtilities.isMac() && (imgToPrint.getType() == BufferedImage.TYPE_BYTE_BINARY)){
+            BufferedImage sanitizedImage = null;
+            try{
+                //This should be a safe cast for type binary and indexed
+                IndexColorModel icm = (IndexColorModel)(imgToPrint.getColorModel()); 
+                sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, icm);
+            } catch (Exception e){
+                //But just in case it isn't
+                sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_BYTE_INDEXED);
+            }
+            sanitizedImage.createGraphics().drawImage(imgToPrint, 0, 0, null);
+            imgToPrint = sanitizedImage;
+        }
         /* Now we perform our rendering */
-        graphics2D.drawImage(this.bufferedImage.get(), 0, 0, (int) pageFormat.getImageableWidth(), (int) pageFormat.getImageableHeight(), imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
+        graphics2D.drawImage(imgToPrint, 0, 0, (int) pageFormat.getImageableWidth(), (int) pageFormat.getImageableHeight(), imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
 
         /* tell the caller that this page is part of the printed document */
         return PAGE_EXISTS;
