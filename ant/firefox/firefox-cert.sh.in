@@ -73,7 +73,16 @@ else
 fi
 
 
+# Substitution variables (!install, etc)
+install="${jks.install}"
+dercert="${der.cert}"
+prefs="${firefoxprefs.install}"
+config="${firefoxconfig.install}"
 
+# Perform substitutions
+dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
+prefspath=$(echo "$prefs" | sed -e "s|$install|$installdir|g")
+configpath=$(echo "$config" | sed -e "s|$install|$installdir|g")
 
 #
 # Uninstall mode
@@ -82,12 +91,15 @@ if [ "$1" == "uninstall" ]; then
     echo "Searching for ${socket.name} AutoConfig..."
     if [ -f "$bindir/${firefoxconfig.name}" ]; then
         echo -e "${bash.success} Check Firefox config exists"
-        # Replace ${certData} with the base64 string
+        cp "$configpath" "$bindir/${firefoxconfig.name}"
+        # Replace ${certData} with the blank string
         perl -pi -e "s#\\\${certData}##g" "$bindir/${firefoxconfig.name}"
         ret1=$?
         perl -pi -e "s#\\\${uninstall}#true#g" "$bindir/${firefoxconfig.name}"
         ret2=$?
-        if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ]; then
+        perl -pi -e "s#\\\${timestamp}#-1#g" "$bindir/${firefoxconfig.name}"
+        ret3=$?
+        if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ]; then
             echo -e "${bash.success} Certificate removed successfully"
         else
             echo -e "${bash.failure} ${socket.name} Certificate removal failed"
@@ -125,17 +137,7 @@ done
 
 echo -e "${bash.success} No conflicts found"
 
-# Substitution variables (!install, etc)
-install="${jks.install}"
-dercert="${der.cert}"
-prefs="${firefoxprefs.install}"
-config="${firefoxconfig.install}"
 
-# Perform substitutions
-
-dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
-prefspath=$(echo "$prefs" | sed -e "s|$install|$installdir|g")
-configpath=$(echo "$config" | sed -e "s|$install|$installdir|g")
 
 echo -e "\nRegistering with Firefox..."
 cp "$prefspath" "$prefdir/${firefoxprefs.name}"

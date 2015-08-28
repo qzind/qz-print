@@ -33,16 +33,25 @@ function installCertificate() {
 
 // Deletes the certificate, if it exists
 function deleteCertificate() {
-    if (certExists()) {
-        certdb.deleteCertificate(certdb.findCertByNickname(null, "${jks.cn} - ${vendor.company}"));
+    var nick1 = "${jks.cn} - ${vendor.company}";
+    var nick2 = "${jks.cn} - ${vendor.company} #2";
+    if (certExists(nick1)) {
+        certdb.deleteCertificate(certdb.findCertByNickname(null, nick1));
     }
-    pref("${build.socket.name}.installer.timestamp", "-1");
+    if (certExists(nick2)) {
+    	certdb.deleteCertificate(certdb.findCertByNickname(null, nick2));
+    }
+    
+    // Mark as removed
+    if (!certExists(nick1) && !certExists(nick2)) {
+    	pref("${build.socket.name}.installer.timestamp", "-1");
+    }
 }
 
 // Returns true if the certificate already exists
-function certExists() {
+function certExists(nickname) {
     try {
-        certdb.findCertByNickname(null, "${jks.cn} - ${vendor.company}");
+        certdb.findCertByNickname(null, nickname);
     } catch (notfound) {
         return false;
     }
