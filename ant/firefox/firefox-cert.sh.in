@@ -33,7 +33,7 @@ conflicts=("general.config.filename")
 function get_ffdir()
 {
 	for i in "${appnames[@]}"; do
-		ffdirtemp=$($locationdir/${locator.name} $i)
+		ffdirtemp=$("$locationdir/${locator.name}" $i)
 		if [ $? == 0 ]; then
 			ffdir=$ffdirtemp
 			return 0
