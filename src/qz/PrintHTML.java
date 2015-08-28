@@ -114,18 +114,11 @@ public class PrintHTML extends JLabel implements Printable {
                 j.setVisible(false);
             }
         }
-        catch(PrinterException e){
-            throw e;
-        }
         
         finally{
             j.dispose();
             clear();
         }
-    }
-
-    public void setPrintParameters(PrintApplet applet) {
-        setPrintParameters(applet.getJobName(), applet.getCopies());
     }
 
     public void setPrintParameters(String jobName, int copies) {

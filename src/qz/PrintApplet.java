@@ -26,9 +26,7 @@ import qz.common.Constants;
 import qz.common.LogIt;
 import qz.common.SerialIO;
 import qz.exception.SerialException;
-import qz.printer.PaperFormat;
 
-import javax.print.PrintService;
 import java.awt.*;
 import java.io.UnsupportedEncodingException;
 import java.security.AccessController;
@@ -558,45 +556,6 @@ public class PrintApplet extends PrintFunction implements Runnable {
     }
 
     /**
-     * Returns the rotation as it has been recently defined
-     *
-     * @return
-     */
-    public String getRotation() {
-        return "" + getPaperSize().getRotation();
-    }
-
-    /**
-     * Sets the rotation in degrees of the image being appended (PS only)
-     * @param rotation
-     */
-    public void setRotation(String rotation) {
-        if (paperSize != null) {
-            paperSize.setRotation(Integer.parseInt(rotation));
-        } else {
-            LogIt.log(Level.WARNING, "Cannot set rotation until after setting paper size using setPaperSize(...)");
-        }
-    }
-
-    // Use this instead of calling p2d directly.  This will allow 2d graphics
-    // to only be used when absolutely needed
-    protected PrintPostScript getPrintPS() {
-        if (this.printPS == null) {
-            this.printPS = new PrintPostScript();
-            this.printPS.setPrintParameters(this);
-        }
-        return printPS;
-    }
-
-    protected PrintHTML getPrintHTML() {
-        if (this.printHTML == null) {
-            this.printHTML = new PrintHTML();
-            this.printHTML.setPrintParameters(this);
-        }
-        return printHTML;
-    }
-
-    /**
      * Performs an asyncronous print and handles the output of exceptions and
      * debugging. Important: print() clears any raw buffers after printing. Use
      * printPersistent() to save the buffer to be used/appended to later.
@@ -750,49 +709,7 @@ public class PrintApplet extends PrintFunction implements Runnable {
         return null;
     }
 
-    /**
-     * Returns the PrintRaw object associated with this applet, if any. Returns
-     * null if none is set.
-     *
-     * @return raw print object
-     */
-    protected PrintRaw getPrintRaw() {
-        if (this.printRaw == null) {
-            this.printRaw = new PrintRaw();
-            this.printRaw.setPrintParameters(this);
-        }
-        return printRaw;
-    }
-
-    // Generally called internally only after a printer is found.
-    protected void setPrintService(PrintService ps) {
-        this.ps = ps;
-        if (ps == null) {
-            log.warning("Setting null PrintService");
-            log.warning("Setting null PrintService");
-            return;
-        }
-        if (getPrintHTML() != null) {
-            printHTML.setPrintService(ps);
-        }
-        if (getPrintPS() != null) {
-            printPS.setPrintService(ps);
-        }
-        if (getPrintRaw() != null) {
-            printRaw.setPrintService(ps);
-        }
-    }
-
     public void findNetworkInfo() {
         this.startFindingNetwork = true;
     }
-
-    public void setPaperSize(float width, float height) {
-        this.paperSize = new PaperFormat(width, height);
-        log.info("Set paper size to " + paperSize.getWidth()
-                         + paperSize.getUnitDescription() + "x"
-                         + paperSize.getHeight() + paperSize.getUnitDescription());
-    }
-
-
 }

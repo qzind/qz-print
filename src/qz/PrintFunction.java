@@ -102,7 +102,7 @@ public class PrintFunction extends Applet {
 
     /**
      * Returns a comma separated list of printer names.
-     * @return
+     * @return Comma separated list containing printer names
      */
     public String getPrinters() {
         return PrintServiceMatcher.getPrinterListing();
@@ -110,7 +110,7 @@ public class PrintFunction extends Applet {
 
     /**
      * Returns a comma separated list of serial ports.
-     * @return
+     * @return Comma separated list containing serial "COM" ports
      */
     public String getPorts() {
         return getSerialIO().getSerialPorts();
@@ -991,6 +991,28 @@ public class PrintFunction extends Applet {
         log.info("Set paper size to " + paperSize.getWidth()
                 + paperSize.getUnitDescription() + "x"
                 + paperSize.getHeight() + paperSize.getUnitDescription());
+    }
+
+
+    /**
+     * Returns the rotation as it has been recently defined
+     *
+     * @return Rotation value in degrees
+     */
+    public String getRotation() {
+        return "" + getPaperSize().getRotation();
+    }
+
+    /**
+     * Sets the rotation in degrees of the image being appended (PS only)
+     * @param rotation Rotation in degrees
+     */
+    public void setRotation(String rotation) {
+        if (paperSize != null) {
+            paperSize.setRotation(Integer.parseInt(rotation));
+        } else {
+            LogIt.log(Level.WARNING, "Cannot set rotation until after setting paper size using setPaperSize(...)");
+        }
     }
 
     @Override

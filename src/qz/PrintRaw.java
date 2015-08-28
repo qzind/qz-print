@@ -522,10 +522,6 @@ public class PrintRaw {
         return this.jobName.get();
     }
 
-    public void setPrintParameters(PrintApplet rawPrintApplet) {
-        setPrintParameters(rawPrintApplet.getJobName(), rawPrintApplet.isAlternatePrinting(), rawPrintApplet.getCopies());
-    }
-
     public void setPrintParameters(String jobName, boolean alternatePrinting, int copies){
         // RKC: PROBLEM >>> this.setPrintService(rawPrintApplet.getPrintService());
         this.setJobName(jobName.replace(" ___ ", " Raw "));
