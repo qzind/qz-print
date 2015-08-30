@@ -20,6 +20,10 @@ function check_java() {
 	fi
 
 	if [ $(echo "$curver>=$minver" | bc -l) -eq 0 ]; then
+		osascript -e "tell app \"Installer\" to display dialog \"Java $minver is required for installation.\nDownload it now?\""
+		if [ $? -eq 0 ]; then
+			open "https://java.com/download/"
+		fi
 		exit 1
 	fi
 }
@@ -31,7 +35,7 @@ code=$?
 # Fallback on Internet Plug-Ins version if needed
 if [ $code -ne 0 ]; then
 	check_java
-	code=0
+	code=$?
 fi
 
 # Kill any running versions
