@@ -28,7 +28,7 @@ function get_osx_targetdir()
 
 	for i in "${lsregs[@]}"; do
 		if [ -f $i ]; then
-			targetdir=$($i -dump |grep -E "/$with_dir.app$" |cut -d'/' -f2- |head -1)
+			targetdir=$($i -dump |grep -E "/$with_dir.app$" |grep -v "/Volumes/" |grep -v "/.Trash/" |cut -d'/' -f2- |head -1)
 			targetdir="/$targetdir"
 			dir_out="$targetdir"
 			return 0
