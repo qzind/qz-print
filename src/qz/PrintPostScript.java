@@ -34,6 +34,7 @@ import javax.print.attribute.Attribute;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.standard.MediaPrintableArea;
 import javax.print.attribute.standard.MediaSize;
+import javax.print.attribute.standard.MediaSizeName;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.IndexColorModel;
@@ -133,6 +134,12 @@ public class PrintPostScript implements Printable {
 
         // Fixes 1" white border problem - May need tweaking
         HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
+        
+        // Fixes 4x6 labels on Mac OSX
+        if (paperSize.get() != null && paperSize.get().getUnits() == MediaSize.INCH &&
+                paperSize.get().getWidth() == 4 && paperSize.get().getHeight() == 6) {
+            attr.add(MediaSizeName.JAPANESE_POSTCARD);
+        }
 
         // If paper size and units are specified, use them, if not, assume the area is
         // the image's natural size on the computer screen and use the old method
