@@ -24,7 +24,7 @@ public void SignMessage(String message)
 
     // Sample key.  Replace with one used for CSR generation
     // How to associate a private key with the X509Certificate2 class in .net
-    // openssl pkcs12 -export -in private-key.pem -inkey digital-certificate.txt -out private-key.pfx
+    // openssl pkcs12 -export -inkey private-key.pem -in digital-certificate.txt -out private-key.pfx
 	var KEY = "private-key.pfx";
 	var PASS = "S3cur3P@ssw0rd";
 
