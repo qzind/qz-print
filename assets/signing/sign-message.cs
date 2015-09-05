@@ -36,6 +36,6 @@ public void SignMessage(String message)
 	byte[] hash = new SHA1Managed().ComputeHash(data);
 
 	Response.ContentType = "text/plain";
-	Response.Write(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1")));  
+	Response.Write(Convert.ToBase64String(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1"))));
 	Environment.Exit(0)
 }
