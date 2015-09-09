@@ -27,7 +27,7 @@ var qzConfig = {
 function deployQZ() {
     console.log(WebSocket);
 
-    //Old standard of WebSocket used const CLOSED as 2, new standards use const CLOSED as 3, we need the newer standard for jetty
+    // Old standard of WebSocket used const CLOSED as 2, new standards use const CLOSED as 3, we need the newer standard for jetty
     if ("WebSocket" in window && WebSocket.CLOSED != null && WebSocket.CLOSED > 2) {
         console.log('Starting deploy of qz');
 
@@ -71,6 +71,10 @@ function connectWebsocket(port) {
         websocket.onclose = function(event) {
             if (websocket.valid || qzConfig.portIndex >= qzConfig.ports.length) {
                 qzSocketClose(event);
+            }
+            // Safari compatibility fix to raise error event
+            if (!websocket.valid && navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+                websocket.onerror();
             }
         };
 
