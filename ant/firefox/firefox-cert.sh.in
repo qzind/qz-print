@@ -35,7 +35,7 @@ function get_ffdir()
 	for i in "${appnames[@]}"; do
 		ffdirtemp=$("$locationdir/${locator.name}" $i)
 		if [ $? == 0 ]; then
-			ffdir=$ffdirtemp
+			ffdir="$ffdirtemp"
 			return 0
 		fi
 	done
