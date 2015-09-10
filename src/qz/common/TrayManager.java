@@ -390,28 +390,48 @@ public class TrayManager {
         JOptionPane.showMessageDialog(tray, message, name, JOptionPane.ERROR_MESSAGE);
     }
 
-    public boolean showGatewayDialog(Certificate cert) {
+    public boolean showGatewayDialog(final Certificate cert) {
         if (cert == null) {
             displayErrorMessage("Invalid certificate");
             return false;
         }
-        else if (gatewayDialog.prompt("%s wants to access local resources", cert)) {
-            trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
-            if (gatewayDialog.isPersistent()) {
-                whiteList(cert);
-            }
-        } else {
-            trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from accessing local resources");
-            if (gatewayDialog.isPersistent()) {
-                blackList(cert);
-            }
+        else {
+            try{
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        gatewayDialog.prompt("%s wants to access local resources", cert);
+                    }
+                });
+            }catch(Exception ignore){}
+
+            if (gatewayDialog.isApproved()) {
+                trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
+                if (gatewayDialog.isPersistent()) {
+                    whiteList(cert);
+                }
+            } else {
+                trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from accessing local resources");
+                if (gatewayDialog.isPersistent()) {
+                    blackList(cert);
+                }
+            }            
         }
 
         return gatewayDialog.isApproved();
     }
 
-    public boolean showPrintDialog(Certificate cert, String printer) {
-        if (gatewayDialog.prompt("%s wants to print to " + printer, cert)) {
+    public boolean showPrintDialog(final Certificate cert, final String printer) {
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    gatewayDialog.prompt("%s wants to print to " + printer, cert);
+                }
+            });
+        } catch(Exception ignore) {}
+
+        if (gatewayDialog.isApproved()) {
             trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to print to " + printer);
             if (gatewayDialog.isPersistent()) {
                 whiteList(cert);

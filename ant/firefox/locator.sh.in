@@ -25,16 +25,33 @@ function get_osx_targetdir()
 {
 	# OSX Array of possible lsregister command locations
 	lsregs=("/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister")
-
+	return_val=1
 	for i in "${lsregs[@]}"; do
 		if [ -f $i ]; then
-			targetdir=$($i -dump |grep -E "/$with_dir.app$" |grep -v "/Volumes/" |grep -v "/.Trash/" |cut -d'/' -f2- |head -1)
-			targetdir="/$targetdir"
-			dir_out="$targetdir"
-			return 0
+			IFS_backup=$IFS
+			#The filenames may have spaces, use the newline to seperate the array items
+			IFS=$'\n'
+			#"/$with_dir.app$", the first $ is the bash variable marker and the second is a wildcard meaning "is the end of the line"
+			targetdir=$($i -dump |grep -E "/$with_dir.app$" |grep -v "/Volumes/" |grep -v "/.Trash/" |cut -d'/' -f2-)
+			IFS=$IFS_backup
+			for r in "${targetdir[@]}"; do
+				#If it matches our top priority location, return. We are done.
+				if [[ "/$r" == "/Applications"* ]]; then
+					dir_out="/$r"
+					return 0
+				#If it matches our second priority, remember it and continue. (remembers last instance)
+				elif [[ "/$r" == "$HOME/Applications"* ]]; then
+					dir_out="/$r"
+					return_val=0
+				#If nothing else, remember it if we don't have anything else yet 
+				elif [ dir_out == "" ]; then
+					dir_out="/$r"
+					return_val=0
+				fi
+			done
 		fi
 	done
-	return 1
+	return $return_val
 }
 
 #
@@ -48,13 +65,13 @@ function get_targetdir()
 	location=$(readlink -f "$(which $lowerdir)")
 	targetdir=$(dirname "$location")
 	if [ -f "$targetdir/$lowerbin" ]; then
-		dir_out=$targetdir
+		dir_out="$targetdir"
 		return 0
 	else
 		for d in "${secondarylocations[@]}"; do
 			targetdir=$(echo "$d")
 			if [ -f "$targetdir/$lowerdir/$lowerbin" ]; then
-				dir_out=$targetdir/$lowerdir
+				dir_out="$targetdir/$lowerdir"
 				return 0
 			fi
 		done
@@ -87,6 +104,7 @@ else
 	# Linux, etc
 	get_targetdir
 fi
+
 echo "$dir_out"
 
 # Firefox was not found, skip Firefox certificate installation
