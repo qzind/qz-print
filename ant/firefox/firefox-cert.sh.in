@@ -27,6 +27,8 @@ appnames=("Firefox")	# "Firefox" "IceWeasel" "etc
 # Array of possible pref tag conflicts
 conflicts=("general.config.filename")
 
+mask=755
+
 #
 # Uses "which" and "readlink" to locate firefox on Linux, etc
 #
@@ -92,6 +94,7 @@ if [ "$1" == "uninstall" ]; then
     if [ -f "$bindir/${firefoxconfig.name}" ]; then
         echo -e "${bash.success} Check Firefox config exists"
         cp "$configpath" "$bindir/${firefoxconfig.name}"
+        chmod $mask "$bindir/${firefoxconfig.name}"
         # Replace ${certData} with the blank string
         perl -pi -e "s#\\\${certData}##g" "$bindir/${firefoxconfig.name}"
         ret1=$?
@@ -142,6 +145,8 @@ echo -e "${bash.success} No conflicts found"
 echo -e "\nRegistering with Firefox..."
 cp "$prefspath" "$prefdir/${firefoxprefs.name}"
 cp "$configpath" "$bindir/${firefoxconfig.name}"
+chmod $mask "$prefdir/${firefoxprefs.name}"
+chmod $mask "$bindir/${firefoxconfig.name}"
 
 bcert="-----BEGIN CERTIFICATE-----"
 ecert="-----END CERTIFICATE-----"

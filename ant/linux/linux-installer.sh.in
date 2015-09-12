@@ -20,6 +20,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 noprompt="$1"
+mask=755
 destdir="${linux.installdir}"
 shortcut="/usr/share/applications/${project.filename}.desktop"
 jarfile="${destdir}/${project.filename}.jar"
@@ -104,7 +105,7 @@ Path=${destdir}
 Icon=${destdir}/${linux.icon}
 Terminal=false
 Comment=${project.name}" > "${shortcut}"
-chmod +x "${shortcut}"
+chmod $mask "${shortcut}"
 
 # Ubuntu process restarter
 function restart_it() {
@@ -132,18 +133,18 @@ if [ $? -eq 0 ]; then
 fi
 
 progress_dialog 70 "Generating certificate..."
-chmod +x "$destdir/auth/${linux.keygen.name}"  > /dev/null 2>&1
+chmod $mask "$destdir/auth/${linux.keygen.name}"  > /dev/null 2>&1
 "$destdir/auth/${linux.keygen.name}"
 
-progress_dialog 75 "Importing Firefox certificate..."
-chmod +x "$destdir/auth/firefox/${firefoxcert.name}"  > /dev/null 2>&1
-"$destdir/auth/firefox/${firefoxcert.name}"
-
 progress_dialog 75 "Importing Firefox locator..."
-chmod +x "$destdir/auth/firefox/${locator.name}"  > /dev/null 2>&1
+chmod $mask "$destdir/auth/firefox/${locator.name}"  > /dev/null 2>&1
 "$destdir/auth/firefox/${locator.name}"
 
-progress_dialog 80 "Checking for certutil..."
+progress_dialog 80 "Importing Firefox certificate..."
+chmod $mask "$destdir/auth/firefox/${firefoxcert.name}"  > /dev/null 2>&1
+"$destdir/auth/firefox/${firefoxcert.name}"
+
+progress_dialog 85 "Checking for certutil..."
 which certutil > /dev/null 1>&2
 if [ $? -ne 0 ]; then
     confirm_dialog "Certutil not found. Attempt to fetch now?" "$noprompt"
@@ -156,8 +157,11 @@ if [ $? -ne 0 ]; then
     fi
 fi
 
+progress_dialog 90 "Setting permissions..."
+chmod -R $mask "${destdir}" 
+
 cd "${destdir}"
-progress_dialog 90 "Installation complete... Starting ${project.name}..."
+progress_dialog 95 "Installation complete... Starting ${project.name}..."
 # Start ${project.name} as the user that's logged in
 sudo -u $(logname) nohup "java" -jar "${jarfile}" > /dev/null 2>&1 &
 progress_dialog 100 "Finished.  QZ Tray should start automatically."
