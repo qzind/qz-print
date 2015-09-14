@@ -69,13 +69,15 @@ function connectWebsocket(port) {
         };
 
         websocket.onclose = function(event) {
-            if (websocket.valid || qzConfig.portIndex >= qzConfig.ports.length) {
-                qzSocketClose(event);
-            }
-            // Safari compatibility fix to raise error event
-            if (!websocket.valid && navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
-                websocket.onerror();
-            }
+            try {
+                if (websocket.valid || qzConfig.portIndex >= qzConfig.ports.length) {
+                    qzSocketClose(event);
+                }
+                // Safari compatibility fix to raise error event
+                if (!websocket.valid && navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+                    websocket.onerror();
+                }
+            } catch (ignore) {}
         };
 
         websocket.onerror = function(event) {
