@@ -36,6 +36,6 @@ Public Sub SignMessage(String message)
 	Dim hash As Byte() = New SHA1Managed().ComputeHash(data)
 	
 	Response.ContentType = "text/plain"
-	Response.Write(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1")))
+	Response.Write(Convert.ToBase64String(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1"))))
 	Environment.[Exit](0)
 End Sub
