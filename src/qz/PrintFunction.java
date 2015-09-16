@@ -339,7 +339,7 @@ public class PrintFunction extends Applet {
 
     public void printToHost(String host, String port) {
         try {
-            printToHost(host, Integer.parseInt(host));
+            printToHost(host, Integer.parseInt(port));
         } catch (Throwable t) {
             this.set(t);
         }

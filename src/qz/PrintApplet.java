@@ -565,6 +565,19 @@ public class PrintApplet extends PrintFunction implements Runnable {
         reprint = false;
     }
 
+    public void printToHost(String host) {
+        printToHost(host, 9100);
+    }
+
+    public void printToHost(String host, String port) {
+        printToHost(host, Integer.parseInt(port));
+    }
+
+    public void printToHost(String host, int port) {
+        getPrintRaw().setOutputSocket(host, port);
+        print();
+    }
+
     public void printHTML() {
         htmlPrint = true;
         print();
