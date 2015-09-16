@@ -278,9 +278,16 @@ function printToFile() {
         window['qzDoneFinding'] = function() {
             // Send characters/raw commands to qz using "append"
             // Hint:  Carriage Return = \r, New Line = \n, Escape Double Quotes= \"
-            qz.append("A590,1600,2,3,1,1,N,\"QZ Print Plugin " + qz.getVersion() + " sample.html\"\n");
-            qz.append("A590,1570,2,3,1,1,N,\"Testing qz.printToFile() function\"\n");
-            qz.append("P1\n");
+            qz.append('\nN\n');
+			qz.append('q609\n');
+			qz.append('Q203,26\n');
+			qz.append('B5,26,0,1A,3,7,152,B,"1234"\n');
+			qz.append('A310,26,0,3,1,1,N,"SKU 00000 MFG 0000"\n');
+			qz.append('A310,56,0,3,1,1,N,"QZ PRINT APPLET"\n');
+			qz.append('A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n');
+			qz.append('A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n');
+			qz.append('A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n');
+			qz.append('P1\n');
 
             // Send characters/raw commands to file
             // i.e.  qz.printToFile("\\\\server\\printer");
@@ -308,10 +315,16 @@ function printToHost() {
         window['qzDoneFinding'] = function() {
             // Send characters/raw commands to qz using "append"
             // Hint:  Carriage Return = \r, New Line = \n, Escape Double Quotes= \"
-            qz.append("A590,1600,2,3,1,1,N,\"QZ Print Plugin " + qz.getVersion() + " sample.html\"\n");
-            qz.append("A590,1570,2,3,1,1,N,\"Testing qz.printToHost() function\"\n");
-            qz.append("P1\n");
-
+            qz.append('\nN\n');
+			qz.append('q609\n');
+			qz.append('Q203,26\n');
+			qz.append('B5,26,0,1A,3,7,152,B,"1234"\n');
+			qz.append('A310,26,0,3,1,1,N,"SKU 00000 MFG 0000"\n');
+			qz.append('A310,56,0,3,1,1,N,"QZ PRINT APPLET"\n');
+			qz.append('A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n');
+			qz.append('A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n');
+			qz.append('A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n');
+			qz.append('P1\n');
             // qz.printToHost(String hostName, int portNumber);
             // qz.printToHost("192.168.254.254");   // Defaults to 9100
             qz.printToHost("192.168.1.254", 9100);
