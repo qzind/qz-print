@@ -66,6 +66,8 @@ public class PrintApplet extends PrintFunction implements Runnable {
     private boolean startOpeningPort;
     private boolean startClosingPort;
 
+    // Used for forcing findPrinters()
+    private String bogusPrinter = "\\{bogus_printer\\}";
     private boolean autoSetSerialProperties = false;
     private String serialPortName;
     private int serialPortIndex = -1;
@@ -166,7 +168,11 @@ public class PrintApplet extends PrintFunction implements Runnable {
                     setDoneClosingPort(true);
                 }
                 if (startFindingPrinters) {
-                    super.findPrinter(printer);
+                    if (printer.equals(bogusPrinter)) {
+                        super.findPrinters();
+                    } else {
+                        super.findPrinter(printer);
+                    }
 
                     startFindingPrinters = false;
                     setDoneFindingPrinters(true);
@@ -657,6 +663,13 @@ public class PrintApplet extends PrintFunction implements Runnable {
         this.startFindingPrinters = true;
         this.doneFindingPrinters = false;
         this.printer = printer;
+    }
+
+    /**
+     * Iterates through printers, populating a CSV variable of printer names
+     */
+    public void findPrinters() {
+        findPrinter(bogusPrinter);
     }
 
     /**
