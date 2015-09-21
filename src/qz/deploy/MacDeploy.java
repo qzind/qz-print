@@ -83,8 +83,16 @@ public class MacDeploy extends DeployUtilities {
 
     @Override
     public boolean createDesktopShortcut() {
+    	String target = getJarPath();
+    	if (target.contains("/Applications/")) {
+    		// Use the parent folder instead i.e. "/Applications/QZ Tray.app"
+    		File f = new File(getJarPath());
+    		if (f.getParent() != null) {
+    			target = f.getParent();
+    		}
+    	}
         return ShellUtilities.execute(new String[]{
-            "ln", "-sf", getJarPath(),
+            "ln", "-sf", target,
             System.getProperty("user.home") + "/Desktop/" + getShortcutName()
         });
     }
