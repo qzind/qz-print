@@ -216,7 +216,7 @@ public class TrayManager {
         aboutDialog.addPanelButton(sitesItem);
         aboutDialog.addPanelButton(logItem);
         aboutDialog.addPanelButton(openItem);
-        
+
         if (SystemUtilities.isMac()) {
             MacUtilities.registerAboutDialog(aboutDialog);
         }
@@ -242,7 +242,7 @@ public class TrayManager {
     private final ActionListener openListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             try {
-                // to get Macs to open the package's contents rather than launching it, we -R the package's auth folder to 
+                // to get Macs to open the package's contents rather than launching it, we -R the package's auth folder to
                 // select it in finder. Thus we are opening auth's parent folder rather than the package.
                 if (SystemUtilities.isMac()) {
                     //You cannot pass an 'open' command through exec that contains spaces (QZ Tray) unless you use an array
@@ -445,9 +445,10 @@ public class TrayManager {
      *
      * @param server    The Server instance contain to bind the reload action to
      * @param running   Object used to notify PrintSocket to reiterate its main while loop
-     * @param portIndex Object used to notify PrintSocket to reset its port array counter
+     * @param securePortIndex Object used to notify PrintSocket to reset its port array counter
+     * @param insecurePortIndex Object used to notify PrintSocket to reset its port array counter
      */
-    public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger portIndex) {
+    public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger securePortIndex, final AtomicInteger insecurePortIndex) {
         if (server != null && server.getConnectors().length > 0) {
             displayInfoMessage("Server started on port(s) " + TrayManager.getPorts(server));
             aboutDialog.setServer(server);
@@ -460,7 +461,8 @@ public class TrayManager {
                         setDangerIcon();
                         server.stop();
                         running.set(false);
-                        portIndex.set(-1);
+                        securePortIndex.set(-1);
+                        insecurePortIndex.set(-1);
                     }
                     catch(Exception e) {
                         displayErrorMessage("Error stopping print socket: " + e.getLocalizedMessage());

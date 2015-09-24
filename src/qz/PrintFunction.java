@@ -33,6 +33,7 @@ import java.util.LinkedList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+@Deprecated
 public class PrintFunction extends Applet {
 
     private static final Logger log = Logger.getLogger(PrintFunction.class.getName());

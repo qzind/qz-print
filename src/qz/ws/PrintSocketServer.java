@@ -36,18 +36,20 @@ import java.util.logging.Logger;
  * Created by robert on 9/9/2014.
  */
 
-public class PrintWebSocketServer {
+public class PrintSocketServer {
+
+    private static final Logger log = Logger.getLogger(PrintSocketServer.class.getName());
 
     private static final int MAX_MESSAGE_SIZE = Integer.MAX_VALUE;
+    private static final Integer[] SECURE_PORTS = new Integer[] {8181, 8282, 8383, 8484};
+    private static final Integer[] INSECURE_PORTS = new Integer[] {8182, 8283, 8384, 8485};
 
-    private static final Logger log = Logger.getLogger(PrintWebSocketServer.class.getName());
-
-    private static final Integer[] ports = new Integer[]{8181, 8282, 8383, 8484};
 
     private static TrayManager trayManager;
 
+
     public static void main(String[] args) {
-        try{
+        try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
@@ -55,25 +57,24 @@ public class PrintWebSocketServer {
                 }
             });
             runServer();
-        }catch(Exception e){
-            log.severe("Could not start tray manager");        
+        }
+        catch(Exception e) {
+            log.severe("Could not start tray manager");
         }
     }
 
     public static void runServer() {
         final AtomicBoolean running = new AtomicBoolean(false);
-        final AtomicInteger portIndex = new AtomicInteger(-1);
+        final AtomicInteger securePortIndex = new AtomicInteger(0);
+        final AtomicInteger insecurePortIndex = new AtomicInteger(0);
+
         Properties sslProperties = DeployUtilities.loadSSLProperties();
 
-
-        while (!running.get() && portIndex.getAndIncrement() < ports.length) {
-            Server server;
-
-            // Always start on port + 1 (i.e. 8182) to allow insecure socket
-            server = new Server(ports[portIndex.get()] + 1);
+        while(!running.get() && securePortIndex.get() < SECURE_PORTS.length && insecurePortIndex.get() < INSECURE_PORTS.length) {
+            Server server = new Server(INSECURE_PORTS[insecurePortIndex.get()]);
 
             if (sslProperties != null) {
-                // Bind the secure socket on the proper port number (i.e. 8181), add it as an additional connector
+                // Bind the secure socket on the proper port number (i.e. 9341), add it as an additional connector
                 SslContextFactory sslContextFactory = new SslContextFactory();
                 sslContextFactory.setKeyStorePath(sslProperties.getProperty("wss.keystore"));
                 sslContextFactory.setKeyStorePassword(sslProperties.getProperty("wss.storepass"));
@@ -83,19 +84,17 @@ public class PrintWebSocketServer {
 
                 ServerConnector connector = new ServerConnector(server, sslConnection, httpConnection);
                 connector.setHost("localhost");
-                connector.setPort(ports[portIndex.get()]);
+                connector.setPort(SECURE_PORTS[securePortIndex.get()]);
                 server.addConnector(connector);
-            }  else {
+            } else {
                 log.warning("Could not start secure WebSocket");
             }
 
-            trayManager.setWarningIcon();
             try {
-
                 final WebSocketHandler wsHandler = new WebSocketHandler() {
                     @Override
                     public void configure(WebSocketServletFactory factory) {
-                        factory.register(PrintSocket.class);
+                        factory.register(PrintSocketClient.class);
                         factory.getPolicy().setMaxTextMessageSize(MAX_MESSAGE_SIZE);
                     }
                 };
@@ -104,17 +103,21 @@ public class PrintWebSocketServer {
                 server.start();
 
                 running.set(true);
-                trayManager.setServer(server, running, portIndex);
+                trayManager.setServer(server, running, securePortIndex, insecurePortIndex);
                 log.info("Server started on port(s) " + TrayManager.getPorts(server));
 
                 server.join();
 
                 // Don't remove this next line or while loop will seize on restart
+                //TODO - find out why
                 log.info("Shutting down server");
-
-            } catch (BindException e) {
-                log.warning("Port(s) already in use " + ports[portIndex.get()] + " or " + (ports[portIndex.get()] + 1));
-            } catch (Exception e) {
+            }
+            catch(BindException e) {
+                //TODO - check which port has problems, increment only that one and retry
+                securePortIndex.incrementAndGet();
+                insecurePortIndex.incrementAndGet();
+            }
+            catch(Exception e) {
                 e.printStackTrace();
             }
         }
@@ -122,6 +125,7 @@ public class PrintWebSocketServer {
 
     /**
      * Get the TrayManager instance for this SocketServer
+     *
      * @return The TrayManager instance
      */
     public static TrayManager getTrayManager() {

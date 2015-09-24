@@ -46,7 +46,7 @@ import java.util.logging.Logger;
 /**
  * Created by robert on 9/9/2014.
  */
-@WebSocket
+@Deprecated
 public class PrintSocket {
 
     private final Logger log = Logger.getLogger(PrintSocket.class.getName());
@@ -79,7 +79,7 @@ public class PrintSocket {
     private final List<String> privilegedMethods = Arrays.asList("findNetworkInfo", "closePort", "findPrinter", "findPrinters",
             "findPorts", "openPort", "send", "setSerialProperties", "setSerialBegin", "setSerialEnd", "getSerialIO");
 
-    private final TrayManager trayManager = PrintWebSocketServer.getTrayManager();
+    private final TrayManager trayManager = PrintSocketServer.getTrayManager();
 
     private static JSONArray methods = null;
 

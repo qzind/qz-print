@@ -1,0 +1,46 @@
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+
+    <title>QZ Tray Sample Page</title>
+</head>
+
+<script type="text/javascript" src="js/3rdparty/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="js/3rdparty/rsvp-3.1.0.min.js"></script>
+<script type="text/javascript" src="js/qzTray.js"></script>
+
+<body>
+
+<div>
+    Connection: <span id="status">Initializing</span>
+</div>
+<div>
+    <button type="button" onclick="startConnection();">Connect</button>
+    <button type="button" onclick="endConnection();">Disconnect</button>
+</div>
+
+<!--TODO - recreate old sample page with new API-->
+
+</body>
+
+<script>
+    function startConnection() {
+        qz.websocket.connect({ usingSecure: false }).then(function() {
+            $("#status").html("Connected");
+        }).catch(function(err) {
+            $("#status").html("Failure");
+            console.log(err);
+        });
+    }
+
+    function endConnection() {
+        qz.websocket.disconnect().then(function() {
+            $("#status").html("Not Connected");
+        });
+    }
+
+
+    startConnection();
+</script>
+
+</html>

@@ -43,6 +43,7 @@ import java.util.logging.Logger;
  *
  * @author A. Tres Finocchiaro
  */
+@Deprecated
 public class PrintApplet extends PrintFunction implements Runnable {
 
     private static final Logger log = Logger.getLogger(PrintApplet.class.getName());
@@ -82,7 +83,7 @@ public class PrintApplet extends PrintFunction implements Runnable {
      */
     //@Override
     public void run() {
-        window = netscape.javascript.JSObject.getWindow(this);
+        //window = netscape.javascript.JSObject.getWindow(this);
         log.info("QZ-PRINT " + Constants.VERSION);
         log.info("===== JAVASCRIPT LISTENER THREAD STARTED =====");
         try {
