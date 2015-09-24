@@ -19,6 +19,7 @@ package qz.ws;
 
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.util.MultiException;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
@@ -60,7 +61,10 @@ public class PrintSocketServer {
         }
         catch(Exception e) {
             log.severe("Could not start tray manager");
+            e.printStackTrace();
         }
+
+        log.warning("The web socket server is no longer running");
     }
 
     public static void runServer() {
@@ -112,10 +116,17 @@ public class PrintSocketServer {
                 //TODO - find out why
                 log.info("Shutting down server");
             }
-            catch(BindException e) {
-                //TODO - check which port has problems, increment only that one and retry
-                securePortIndex.incrementAndGet();
-                insecurePortIndex.incrementAndGet();
+            catch(BindException | MultiException e) {
+                //order of getConnectors is the order we added them -> insecure first
+                if (server.getConnectors()[0].isFailed()) {
+                    insecurePortIndex.incrementAndGet();
+                }
+                if (server.getConnectors().length > 1 && server.getConnectors()[1].isFailed()) {
+                    securePortIndex.incrementAndGet();
+                }
+
+                //explicitly stop the server, because if only 1 port has an exception the other will still be opened
+                try{ server.stop(); }catch(Exception ignore){ ignore.printStackTrace(); }
             }
             catch(Exception e) {
                 e.printStackTrace();
