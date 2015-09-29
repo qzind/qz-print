@@ -168,7 +168,7 @@ public class PrintApplet extends PrintFunction implements Runnable {
                     setDoneClosingPort(true);
                 }
                 if (startFindingPrinters) {
-                    if (printer.equals(bogusPrinter)) {
+                    if (printer != null && printer.equals(bogusPrinter)) {
                         super.findPrinters();
                     } else {
                         super.findPrinter(printer);
@@ -663,6 +663,13 @@ public class PrintApplet extends PrintFunction implements Runnable {
         this.startFindingPrinters = true;
         this.doneFindingPrinters = false;
         this.printer = printer;
+    }
+
+    /**
+     * Creates the print service by getting the default printer
+     */
+    public void findPrinter() {
+        findPrinter(null);
     }
 
     /**
