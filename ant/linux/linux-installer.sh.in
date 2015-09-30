@@ -9,7 +9,7 @@
 #                                                                             #
 #  Usage:                                                                     #
 #    $ chmod +x ${linux.installer.name}                                            #
-#    $ sudo ./${linux.installer.name}                                              #
+#    $ sudo ./${linux.installer.name} [noprompt] [hostname]                        #
 #                                                                             #
 ###############################################################################
 
@@ -20,6 +20,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 noprompt="$1"
+cname="$2"
 mask=755
 destdir="${linux.installdir}"
 shortcut="/usr/share/applications/${build.socket.name}.desktop"
@@ -134,7 +135,7 @@ fi
 
 progress_dialog 70 "Generating certificate..."
 chmod $mask "$destdir/auth/${linux.keygen.name}"  > /dev/null 2>&1
-"$destdir/auth/${linux.keygen.name}"
+"$destdir/auth/${linux.keygen.name}" "$cname"
 
 progress_dialog 75 "Importing Firefox locator..."
 chmod $mask "$destdir/auth/firefox/${locator.name}"  > /dev/null 2>&1
@@ -142,7 +143,7 @@ chmod $mask "$destdir/auth/firefox/${locator.name}"  > /dev/null 2>&1
 
 progress_dialog 80 "Importing Firefox certificate..."
 chmod $mask "$destdir/auth/firefox/${firefoxcert.name}"  > /dev/null 2>&1
-"$destdir/auth/firefox/${firefoxcert.name}"
+"$destdir/auth/firefox/${firefoxcert.name}" "install" "$cname"
 
 progress_dialog 85 "Checking for certutil..."
 which certutil > /dev/null 1>&2
