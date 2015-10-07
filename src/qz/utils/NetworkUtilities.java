@@ -21,6 +21,9 @@
  */
 package qz.utils;
 
+import com.sun.org.apache.bcel.internal.generic.NEW;
+import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import qz.reflection.Reflect;
 import qz.reflection.ReflectException;
 
@@ -36,50 +39,75 @@ public class NetworkUtilities {
 
     private static final Logger log = Logger.getLogger(NetworkUtilities.class.getName());
 
+    private static NetworkUtilities instance;
+
     private String ipAddress;
     private String macAddress;
-    private String hostname = "www.google.com";
-    private int port = 80;
 
-    public NetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
-        try {
-            gatherNetworkInfo();
-        } catch (IOException e) {
-            e.printStackTrace();
+
+    public static NetworkUtilities getInstance() {
+        return getInstance("google.com", 80); //TODO - make sure still works with s protocol
+    }
+
+    public static NetworkUtilities getInstance(String hostname, int port) {
+        if (instance == null) {
+            try {
+                instance = new NetworkUtilities(hostname, port);
+            }
+            catch(Exception e) {
+                e.printStackTrace();
+            }
         }
-    }
-    
-    public void setHostname(String hostname) {
-        this.hostname = hostname;
-    }
-    
-    public void setPort(int port) {
-        this.port = port;
+
+        return instance;
     }
 
-    public void gatherNetworkInfo() throws IOException, ReflectException {
-        Socket socket = new Socket();
-        log.info("Initiating a temporary connection to \"" + hostname + ":" +
-                port + "\" to determine main Network Interface");
+    private NetworkUtilities(String hostname, int port) throws IOException, ReflectException {
+        gatherNetworkInfo(hostname, port);
+    }
+
+    private void gatherNetworkInfo(String hostname, int port) throws IOException, ReflectException {
+        log.info("Initiating a temporary connection to \"" + hostname + ":" + port
+                         + "\" to determine main Network Interface");
+
         SocketAddress endpoint = new InetSocketAddress(hostname, port);
+        Socket socket = new Socket();
         socket.connect(endpoint);
+
         InetAddress localAddress = socket.getLocalAddress();
-        this.ipAddress = localAddress.getHostAddress();
+        ipAddress = localAddress.getHostAddress();
         socket.close();
-        System.out.println(localAddress.getHostAddress());
+
+
         NetworkInterface networkInterface = NetworkInterface.getByInetAddress(localAddress);
         Reflect r = Reflect.on(networkInterface);
         byte[] b = r.call("getHardwareAddress").get();
         if (b != null && b.length > 0) {
-            this.macAddress = ByteUtilities.bytesToHex(b);
+            macAddress = ByteUtilities.bytesToHex(b);
         }
     }
 
+
     public String getHardwareAddress() {
-        return this.macAddress;
+        return macAddress;
     }
 
     public String getInetAddress() {
-        return this.ipAddress;
+        return ipAddress;
+    }
+
+
+    public static JSONObject getNetworkJSON() throws JSONException {
+        JSONObject network = new JSONObject();
+
+        NetworkUtilities netUtil = getInstance();
+        if (netUtil != null) {
+            network.put("ipAddress", netUtil.getInetAddress());
+            network.put("macAddress", netUtil.getHardwareAddress());
+        } else {
+            network.put("error", "Unable to initialize network utilities");
+        }
+
+        return network;
     }
 }

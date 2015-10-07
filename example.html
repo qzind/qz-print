@@ -9,38 +9,493 @@
 <script type="text/javascript" src="js/3rdparty/rsvp-3.1.0.min.js"></script>
 <script type="text/javascript" src="js/qzTray.js"></script>
 
-<body>
+<style>
+    td {
+        padding: 0.5em;
+    }
 
-<div>
-    Connection: <span id="status">Initializing</span>
-</div>
-<div>
-    <button type="button" onclick="startConnection();">Connect</button>
-    <button type="button" onclick="endConnection();">Disconnect</button>
+    button, input {
+        display: block;
+        margin: 0.25em 0;
+    }
+</style>
+
+
+<body id="qz-page" style="background-color: #FFF1D0;">
+
+<div style="margin: 0 1em;">
+    <h1 id="title" style="margin:0;">QZ Print Plugin <span id="qz-version"></span></h1>
 </div>
 
-<!--TODO - recreate old sample page with new API-->
+<table border="1px" cellpadding="5px" cellspacing="0px">
+    <tr>
+        <td valign="top">
+            <h2>Connection</h2>
+
+            <button type="button" onclick="startConnection();">Connect</button>
+            <button type="button" onclick="endConnection();">Disconnect</button>
+
+            <hr />
+            <button type="button" onclick="listNetworkInfo();">List Network Info</button>
+        </td>
+        <td valign="top">
+            <h2>Detection</h2>
+
+            <label for="printerName">Search</label>
+            <input type="text" id="printerName" value="zebra" />
+            <button type="button" onclick="findPrinter($('#printerName').val());">Find Printer</button>
+            <br />
+
+            <button type="button" onclick="findDefaultPrinter();">Find Default Printer</button>
+            <br />
+            <button type="button" onclick="findPrinters();">List All Printers</button>
+        </td>
+
+        <td valign="top">
+            <h2>Raw Printers Only</h2>
+
+            <a href="https://qz.io/wiki/What-is-Raw-Printing" target="new">What is Raw Printing?</a>
+            <br />
+
+            <button type="button" onClick="printEPL();">Print EPL</button>
+            <button type="button" onClick="printZPL();">Print ZPL</button>
+            <br />
+
+            <button type="button" onClick="printESCP();">Print ESCP</button>
+            <div>
+                <a href="javascript:findPrinter('Epson');">Epson</a>&nbsp;
+                <a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp;
+                <a href="javascript:findPrinter('Star');">Star</a>&nbsp;
+            </div>
+            <br />
+
+            <button type="button" onClick="printEPCL();">Print EPCL</button>
+            (Zebra Card Printer)<br />
+            <br />
+
+            <button type="button" onClick="print64();">Print Base64</button>
+            <button type="button" onClick="printXML();">Print XML</button>
+            <button type="button" onClick="printHex();">Print Hex</button>
+            <br />
+
+            <button type="button" onClick="printFile('zpl_sample.txt');">Print zpl_sample.txt</button>
+            <button type="button" onClick="printFile('fgl_sample.txt');">Print fgl_sample.txt</button>
+            <button type="button" onClick="printFile('epl_sample.txt');">Print epl_sample.txt</button>
+            <br />
+
+            <!--<button type="button" onClick="printToFile();">Print To File</button>-->
+            <!--<button type="button" onClick="printToHost();">Print To Host</button>-->
+            <!--<br />-->
+
+            <!--<button type="button" onClick="printPages();">Print Spooling Every 2</button><br />-->
+            <!--<button type="button" onClick="useAlternatePrinting();">Use Alternate Printing</button><br />-->
+        </td>
+
+        <td valign="top">
+            <h2>PostScript Printers Only</h2>
+
+            <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is PostScript Printing?</a>
+
+            <p>
+                <a href="javascript:findPrinter('XPS');">Microsoft XPS</a>&nbsp;
+                <a href="javascript:findPrinter('PDF');">PDF</a>&nbsp;
+            </p>
+
+            <label for="printCopies">Copies</label>
+            <input type="number" id="printCopies" value="1" />
+            <br />
+
+            <button type="button" onClick="printHTML();">Print HTML</button>
+            <button type="button" onClick="printHTML5();">Print Current Page</button>
+            <br />
+
+            <button type="button" onClick="printPDF();">Print PDF</button>
+            <br />
+
+            <button type="button" onClick="printImage(false);">Print PostScript Image</button>
+            <button type="button" onClick="printImage(true);">Print Scaled PostScript Image</button>
+            <br />
+
+            <!--<button type="button" onClick="logFeatures();">Log Printer Features on Print</button><br />-->
+        </td>
+
+        <td valign="top">
+            <h2>Serial</h2>
+
+            <button type="button" onclick="listSerialPorts();">List Ports</button>
+            <br />
+
+            <label for="serialPort">Port Number:</label>
+            <input type="text" id="serialPort" value="" />
+            <br />
+
+            <button type="button" onclick="openSerialPort();">Open Port</button>
+            <button type="button" onclick="sendSerialData();">Send Command</button>
+            <button type="button" onclick="closeSerialPort();">Close Port</button>
+        </td>
+    </tr>
+</table>
 
 </body>
 
+
+<!--TODO - better commenting-->
+<!--TODO - checks for open-->
 <script>
+    /// Connection ///
     function startConnection() {
         qz.websocket.connect({ usingSecure: false }).then(function() {
-            $("#status").html("Connected");
-        }).catch(function(err) {
-            $("#status").html("Failure");
-            console.log(err);
-        });
+            $("#qz-page").css('background-color', '#FFFFFF');
+        }).catch(handleError);
     }
 
     function endConnection() {
         qz.websocket.disconnect().then(function() {
-            $("#status").html("Not Connected");
-        });
+            $("#qz-page").css('background-color', '#B1B1B1');
+        }).catch(handleError);
+    }
+
+    function findNetworkInfo() {
+        qz.websocket.getNetworkInfo().then(function(data) {
+            var macFormatted = '';
+            for(var i = 0; i < data.macAddress.length; i++) {
+                macFormatted += data.macAddress[i];
+                if (i % 2 == 1 && i < data.macAddress.length - 1) {
+                    macFormatted += ":";
+                }
+            }
+
+            alert("IP: " + data.ipAddress + "\nPhysical Address: " + macFormatted);
+        }).catch(function(err) { console.error(err); });
     }
 
 
-    startConnection();
+    /// Detection ///
+    function findPrinter(query) {
+        qz.printers.find(query).then(function(data) {
+            alert("Found: " + data);
+        }).catch(function(err) { console.error(err); });
+    }
+
+    function findDefaultPrinter() {
+        qz.printers.getDefault().then(function(data) {
+            alert("Found: " + data);
+        }).catch(function(err) { console.error(err); });
+    }
+
+    function findPrinters() {
+        qz.printers.find().then(function(data) {
+            var list = '';
+            for(var i = 0; i < data.length; i++) {
+                list += data[i] + "\n";
+            }
+
+            alert("Available printers:\n\n" + list);
+        }).catch(function(err) { console.error(err); });
+    }
+
+
+    /// Raw Printers ///
+    function printEPL() {
+        var printData = [
+            '\nN\n',
+            'q609\n',
+            'Q203,26\n',
+            'B5,26,0,1A,3,7,152,B,"1234"\n',
+            'A310,26,0,3,1,1,N,"SKU 00000 MFG 0000"\n',
+            'A310,56,0,3,1,1,N,"QZ PRINT APPLET"\n',
+            'A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n',
+            'A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n',
+            'A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n',
+            { type: 'image', src: getPath() + '/assets/img/image_sample_bw.png', options: { lang: 'EPL', xLoc: 150, yLoc: 300 } },
+            '\nP1,1\n'
+        ];
+
+        qz.print(getConfig(), printData);
+    }
+
+    function printZPL() {
+        var printData = [
+            '^XA\n',
+            '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n',
+            { type: 'image', src: getPath() + '/assets/img/image_sample_bw.png', options: { lang: 'ZPLII' } },
+            '^F5\n',
+            '^XZ\n'
+        ];
+
+        qz.print(getConfig(), printData);
+    }
+
+    function printESCP() {
+        var printData = [
+            { type: 'image', src: getPath() + '/assets/img/image_sample_bw.png', options: { lang: 'ESCP', dotDensity: 'single' } },
+            { type: 'raw', src: '\nPrinted using qz-print plugin.\n\n\n\n\n\n' }
+        ];
+
+        qz.print(getConfig(), printData);
+    }
+
+    function printEPCL() {
+        var printData = [];
+        Array.prototype.push.apply(printData, _convertEPCL('+RIB 4'));      // Monochrome ribbon
+        Array.prototype.push.apply(printData, _convertEPCL('F'));           // Clear monochrome print buffer
+        Array.prototype.push.apply(printData, _convertEPCL('+C 8'));        // Adjust monochrome intensity
+        Array.prototype.push.apply(printData, _convertEPCL('&R'));          // Reset magnetic encoder
+        Array.prototype.push.apply(printData, _convertEPCL('&CDEW 0 0'));   // Set R/W encoder to ISO default
+        Array.prototype.push.apply(printData, _convertEPCL('&CDER 0 0'));   // Set R/W encoder to ISO default
+        Array.prototype.push.apply(printData, _convertEPCL('&SVM 0'));      // Disable magnetic encoding verifications
+        Array.prototype.push.apply(printData, _convertEPCL('T 80 600 0 1 0 45 1 QZ INDUSTRIES'));   // Write text buffer
+        Array.prototype.push.apply(printData, _convertEPCL('&B 1 123456^INDUSTRIES/QZ^789012'));	// Write mag strip buffer
+        Array.prototype.push.apply(printData, _convertEPCL('&E*'));         // Encode magnetic data
+        Array.prototype.push.apply(printData, _convertEPCL('I 10'));        // Print card (10 returns to print ready pos.)
+        Array.prototype.push.apply(printData, _convertEPCL('MO'));          // Move card to output hopper
+
+        qz.print(getConfig(), printData);
+    }
+
+    /**
+     * EPCL helper function that appends a single line of EPCL data, taking into account
+     * special EPCL NUL characters, data length, escape character and carriage return
+     */
+    function _convertEPCL(data) {
+        if (data == null || data.length == 0) {
+            log.warn('Empty EPCL data, skipping');
+        }
+
+        // Data length for this command, in 2 character Hex (base 16) format
+        var len = (data.length + 2).toString(16);
+        if (len.length < 2) { len = '0' + len; }
+
+        return [
+            { type: 'hex', src: 'x00x00x00' },  // Append 3 NULs
+            { type: 'hex', src: 'x' + len },    // Append our command length, in base16
+            data,                               // Append our command
+            '\r'                                // Append carriage return
+        ];
+    }
+
+    function printBase64() {
+        // Send base64 encoded characters/raw commands to qz using data type 'base64'.
+        // This will automatically convert provided base64 encoded text into text/ascii/bytes, etc.
+        // This example is for EPL and contains an embedded image.
+        // Please adapt to your printer language.
+
+        //noinspection SpellCheckingInspection
+        var printData = [
+            {
+                type: 'base64',
+                src: 'Ck4KcTYwOQpRMjAzLDI2CkI1LDI2LDAsMUEsMyw3LDE1MixCLCIxMjM0IgpBMzEwLDI2LDAsMywx' +
+                'LDEsTiwiU0tVIDAwMDAwIE1GRyAwMDAwIgpBMzEwLDU2LDAsMywxLDEsTiwiUVogUFJJTlQgQVBQ' +
+                'TEVUIgpBMzEwLDg2LDAsMywxLDEsTiwiVEVTVCBQUklOVCBTVUNDRVNTRlVMIgpBMzEwLDExNiww' +
+                'LDMsMSwxLE4sIkZST00gU0FNUExFLkhUTUwiCkEzMTAsMTQ2LDAsMywxLDEsTiwiUVpJTkRVU1RS' +
+                'SUVTLkNPTSIKR1cxNTAsMzAwLDMyLDEyOCz/////////6SSSX///////////////////////////' +
+                '//////////6UlUqX////////////////////////////////////8kqkpKP/////////////////' +
+                '//////////////////6JUpJSVf//////////////////////////////////9KpKVVU+////////' +
+                '//////////////////////////8KSSlJJf5/////////////////////////////////9KUqpVU/' +
+                '/7////////////////////////////////9KqUkokf//P///////////////////////////////' +
+                '+VKUqpZP//+P///////////////////////////////ElKUlSf///9f/////////////////////' +
+                '////////+ipSkqin////y/////////////////////////////+lVUpUlX/////r////////////' +
+                '/////////////////qlJKUql/////+n////////////////////////////BFKVKUl//////8v//' +
+                '/////////////////////////zVSlKUp///////0f//////////////////////////wiSlSUpf/' +
+                '//////q///////////////////////////KqlJUpV///////+R//////////////////////////' +
+                '4UlKSpSX///////9T/////////6L///////////////BKlKpSqP///////1X////////0qg/23/V' +
+                'VVVVVVf//8CSlJKklf///////kv///////+pS0/JP8AAAAAAB///wFSlSSpV///////+pf//////' +
+                '/pUoq+qfwAAAAAAH//+AClSqpUT///////9S///////8pJUlkr+AAAAAAA///4AFJSSSUv//////' +
+                '/yl///////KVUpTUv8AAAAAAH///gBKSqlVU////////lX//////6UkqoiU/wAAAAAA///+ABKpJ' +
+                'Uko////////JH//////UpIiqlJ/AAAAAAD///wACkSUpJX///////6q//////6pVVSqiv4AAAAAA' +
+                'f///AAJVVIqpP///////pI//////pSVtSSq/wAAAAAD///8AAJSlVJVf///////Sp/////8Sq//U' +
+                'qL/ttttoAP///wAAUpVSpJ///////+pT/////qkn//UlH/////AB////AABKUSpSX///////5Sn/' +
+                '///+lJ//+pS/////4AP///8AABKUkpVP///////ylP////1Kv//+qr/////AA////4AAKVVJUl//' +
+                '/////+lKf////KS///8kv////8AH////gAAKSSpJR///////9Kq////9Kv///5Kf////gAf///+A' +
+                'AAUlUqov///////1JT////lS////qn////8AD////4AABKpKSqf///////Skj///+kr////JH///' +
+                '/wAf////wAACkqUlK///////8pKv///ypf///9V////+AD/////AAAFKUVSj///////wqlP///JT' +
+                '////yR////wAP////8AAAFKqkpv///////JSlf//9Sv////U/////AB/////4AAAVIpKRf//////' +
+                '+ElV///pS////8of///4AP/////gAAASZVKr///////4qkj///Sn////0v////AA//////AAABUS' +
+                'VJH///////glJn//8pP////KH///8AH/////+AAACtUlVf//////+ClRP//qV////9K////gA///' +
+                '///4AAACEpJK///////8BSqf/+lX////yr///8AD//////wAAAVUqVH///////gUlU//5Rf////R' +
+                'P///gAf//////gAAApKqTP//////8AVSV//pU////6qf//+AD//////+AAAAqkki//////8AEpVL' +
+                '/+qP////1L///wAP//////4AAACSVVB/////+AFUpKX/9KP////Sv//+AB///////AAAAEqSgH//' +
+                '//+ACkpSUv/lV////6k///4AP//////+AAAAUlSgf////gAJKRUpf/ST////1J///AA///////4A' +
+                'AAAVJVB////gAtVFUpV/8lX///+Vf//4AH///////gAAABKSSD///wASSVVJSR/1Vf///8kf//gA' +
+                '///////+AAAABVUof//4AElUpKqqv/SL////1L//8AD///////4AAAABJJQ//8AFVJKVKSSP+qj/' +
+                '///Kv//gAf///////gAAAAKSpT/+ACkqSlKUkqf5Rf///6S//+AD///////+AAAAAKqpP/ABJKVS' +
+                'klKqU/xUf///qp//wAP///////4AAAAAkko+gASVKUlVKlKX/VK///9Sf/+AB////////gAAAACp' +
+                'UrgAKqVKVJKSlKf+Sl///0kf/4AP///////+AAAAABSVIAFJUlKqSUpKV/0pX//8qr//AA//////' +
+                '//8AAAAACklACSopKSVUqVKX/qpH//okv/4AH////////gAAAAAVVKBUpUqUkkpKSk//SSv/xVK/' +
+                '/AAAAAAD////AAAAAAJKWSUpVKVVUqVSp/+qqH9SlR/8AAAAAAH///4AAAAABSUklJSSlJJKUkpf' +
+                '/8klQFSo//gAAAAAA////wAAAAABVKqlUkqlSqkqqU//6pUqkkof8AAAAAAB/r//AAAAAAElEpSK' +
+                'qSlSSpJKL//pUqpVKr/wAAAAAAP8v/8AAAAAAJLKUqkkpSqkqSVf//yUkpKSv+AAAAAAAfqf/wAA' +
+                'AAAAVClKVVUoklUqqp///UpKVVS/wAAAAAAD+S//AAAAAAAlpSkkkpVKkpKSX///JVKTpR+AAAAA' +
+                'AAH9X/8AAAAAABRUpVJUqqSpSUlf///SSk/Sv4AAAAAAA/y//wAAAAAAFSVUlSUkUkpUqr////VS' +
+                'v9S/AAAAAAAB/3//AAAAAAAFUkpSlJMqqUpJP////13/pT////////////8AAAAAAAEpJSlSqUkk' +
+                'pVS////////Un////////////wAAAAAABJVSlSpUqpUpJX///////8q/////////////gAAAAAAC' +
+                'pSqkkpKSUpSSP///////5L////////////+AAAAAAACSkVVKSklKpVV///////+SX///////////' +
+                '/4AAAAAAAFSqJKlSqqiVSX///////9U/////////////gAAAAAAASpVSlSkklVJU////////yr//' +
+                '//////////+AAAAAAAAkpJSklKpKSUp////////kn////////////4AAAAAAABJSqlKqkqUqVf//' +
+                '/////5K/////////////gAAAAAAACpUlKpJKUqlI////////1L////////////+AAAAAAAAFSVKS' +
+                'SqkpFKX////////SX////////////4AAAAAAAAiklKlSSpTKKv///////9U/////////////wAAA' +
+                'AAAABSpSlSqlSiVJ////////pV/////////////AAAAAAAAVUpSkklSlUqX////////Uv///////' +
+                '/////8AAAAAAAAkqUpVJJSqpVf///////8pf////////////4AAAAAAAFJKUpKqUpJUT////////' +
+                '4r/////////////wAAAAAAAKqVKVKUqSSVX///////+Uv/////////////gAAAAAAASUlKSkpKql' +
+                'S////////+qf/////////////AAAAAAAEkpKUlUpJJCn////////iH///////////wAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAH/4B+A8AH/AAAAA' +
+                'AAAAAAAAAAAAAA//AAfwD4H4HwAAf/4H4DwB//gAAAAAAAAAAAAAAAAAD/+AB/APgfgfAAB//wfw' +
+                'PAf/+AAAAAAAAAAAAAgAAAAP/8AH8AfB+D4AAH//B/g8D//4AAAAAAAAAAAADwAAAA//4A/4B8H4' +
+                'PgAAfB+H+DwP4HgAAAAAAAAAAAAPwAAAD4fgD/gHw/w+AAB8D4f8PB+AGAAAAAAAAAAAAA/wAAAP' +
+                'g+Af/AfD/D4AAHwPh/48HwAAAAAAAAAAAAAAB/4AAA+D4B98A+P8PAAAfA+Hvjw+AAAAAAAAAAAA' +
+                'AAAB/4AAD4PgH3wD4/x8AAB8H4e/PD4AAAAAAAAAAAAAAAB/8AAPh8A+PgPn/nwAAH//B5+8Pg/4' +
+                'AH/j/x/4/8f+AA/8AA//wD4+A+eefAAAf/4Hj7w+D/gAf+P/H/j/x/4AA/wAD/+APj4B5554AAB/' +
+                '/AeP/D4P+AB/4/8f+P/H/gAD/AAP/wB8HwH3nvgAAH/wB4f8Pw/4AH/j/x/4/8f+AA/8AA//AH//' +
+                'Af+f+AAAfAAHg/wfAPgAAAAAAAAAAAAAf/AAD5+A//+B/w/4AAB8AAeD/B+A+AAAAAAAAAAAAAH/' +
+                'gAAPj8D//4D/D/AAAHwAB4H8H+D4AAAAAAAAAAAAB/4AAA+H4P//gP8P8AAAfAAHgPwP//gAAAAA' +
+                'AAAAAAAP8AAAD4fh+A/A/w/wAAB8AAeA/Af/+AAAAAAAAAAAAA/AAAAPg/HwB8B+B+AAAHwAB4B8' +
+                'Af/4AAAAAAAAAAAADwAAAA+B+fAHwH4H4AAAfAAHgHwAf4AAAAAAAAAAAAAIAAAAD4H/8Afgfgfg' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' +
+                'AAAAAAAAAAAAAAAAAAAAAAAAClAxLDEK'
+            }
+        ];
+
+        qz.print(getConfig(), printData);
+    }
+
+    function printXML() {
+        var printData = [
+            { type: 'xml', src: getPath() + '/assets/zpl_sample.xml', options: { xmlTag: 'v7:Image' } }
+        ];
+
+        qz.print(getConfig(), printData);
+    }
+
+    function printHex() {
+        var printData = [
+            { type: 'hex', src: '4e0d0a713630390d0a513230332c32360d0a42352c32362c' },
+            { type: 'hex', src: '302c31412c332c372c3135322c422c2231323334220d0a41' },
+            { type: 'hex', src: '3331302c32362c302c332c312c312c4e2c22534b55203030' },
+            { type: 'hex', src: '303030204d46472030303030220d0a413331302c35362c30' },
+            { type: 'hex', src: '2c332c312c312c4e2c22515a205072696e7420506c756769' },
+            { type: 'hex', src: '6e220d0a413331302c38362c302c332c312c312c4e2c2254' },
+            { type: 'hex', src: '657374207072696e74207375636365737366756c220d0a41' },
+            { type: 'hex', src: '3331302c3131362c302c332c312c312c4e2c2266726f6d20' },
+            { type: 'hex', src: '73616d706c652e68746d6c220d0a413331302c3134362c30' },
+            { type: 'hex', src: '2c332c312c312c4e2c227072696e7448657828292066756e' },
+            { type: 'hex', src: '6374696f6e2e220d0a50312c310d0a' }
+        ];
+
+        qz.print(getConfig(), printData);
+    }
+
+    function printFile(file) {
+        var printData = [
+            { type: 'file', src: getPath() + '/assets/' + file }
+        ];
+
+        qz.print(getConfig(), printData);
+    }
+
+
+    /// PS Printers ///
+    function printHTML() {
+        var colA = '<h2>*&nbsp; QZ Print Plugin HTML Printing &nbsp;*</h2>' +
+                '<span style="color: #F00;">Version:</span> ' + qz.getVersion() + '<br/>' +
+                '<span style="color: #F00;">Visit:</span> https://qz.io/';
+        var colB = '<img src="' + getPath() + '/assets/img/image_sample.png">';
+
+        var printData = [
+            {
+                type: 'html',
+                src: '<html>' +
+                '   <table style="font-family: monospace; border: 1px;">' +
+                '       <tr style="height: 6cm;">' +
+                '           <td valign="top">' + colA + '</td>' +
+                '           <td valign="top">' + colB + '</td>' +
+                '       </tr>' +
+                '   </table>' +
+                '</html>'
+            }
+        ];
+
+        qz.print(getConfig(true), printData);
+    }
+
+    function printHTML5() {
+        console.warn("Not Implemented!"); //TODO
+    }
+
+    function printPDF() {
+        var printData = [
+            { type: 'pdf', src: getPath() + '/assets/pdf_sample.pdf' }
+        ];
+
+        qz.print(getConfig(true), printData);
+    }
+
+    function printImage(scaling) {
+        if (scaling) {
+            //TODO - set some extra properties
+        }
+
+        var printData = [
+            { type: 'image', src: getPath() + '/assets/img/image_sample.png' }
+        ];
+
+        qz.print(getConfig(true), printData);
+    }
+
+
+    /// Serial ///
+    function listSerialPorts() {
+        console.warn("Not Implemented!"); //TODO
+    }
+
+    function openSerialPort() {
+        console.warn("Not Implemented!"); //TODO
+    }
+
+    function sendSerialData() {
+        console.warn("Not Implemented!"); //TODO
+    }
+
+    function closeSerialPort() {
+        console.warn("Not Implemented!"); //TODO
+    }
+
+
+    /// Page load ///
+    $(document).ready(function() {
+        startConnection();
+    });
+
+    qz.websocket.setClosedCallbacks(function(evt) {
+        $("#qz-page").css('background-color', '#B1B1B1');
+        console.log(evt);
+    });
+
+    qz.websocket.setErrorCallbacks(handleError);
+
+
+    /// Helpers ///
+    function handleError(err) {
+        $("#qz-page").css('background-color', '#F5A9A9');
+        console.error(err);
+    }
+
+    function getPath() {
+        var path = window.location.href;
+        return path.substring(0, path.lastIndexOf("/"));
+    }
+
+    function getConfig(options) {
+        return qz.configs.create($("#printerName").val(), options);
+    }
 </script>
 
 </html>

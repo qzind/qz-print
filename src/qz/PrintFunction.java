@@ -106,7 +106,8 @@ public class PrintFunction extends Applet {
      * @return Comma separated list containing printer names
      */
     public String getPrinters() {
-        return PrintServiceMatcher.getPrinterListing();
+        return "";
+        //return PrintServiceMatcher.getPrinterListing();
     }
 
     /**
@@ -526,7 +527,7 @@ public class PrintFunction extends Applet {
     }
 
     public void findPrinters() {
-        PrintServiceMatcher.getPrinterArray(true);
+        PrintServiceMatcher.findPrinters(true);
     }
 
     public void findPrinter() {
@@ -709,9 +710,9 @@ public class PrintFunction extends Applet {
     }
 
     protected NetworkUtilities getNetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
-        if (this.networkUtilities == null) {
-            this.networkUtilities = new NetworkUtilities();
-        }
+        //if (this.networkUtilities == null) {
+        //    this.networkUtilities = new NetworkUtilities();
+        //}
         return this.networkUtilities;
     }
 
@@ -805,7 +806,7 @@ public class PrintFunction extends Applet {
     }
 
     public void setPrinter(int index) {
-        setPrintService(PrintServiceMatcher.getPrinterList()[index]);
+        setPrintService(PrintServiceMatcher.findPrinters()[index]);
         log.info("Printer set to index: " + index + ",  Name: " + ps.getName());
 
         //PrinterState state = (PrinterState)this.ps.getAttribute(PrinterState.class);
@@ -843,18 +844,18 @@ public class PrintFunction extends Applet {
         log.info("===== GATHERING NETWORK INFORMATION =====");
 
         //getNetworkHashMap().clear();
-        try {
+        //try {
             // Gather the network information and store in a custom HashMap
             //for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
             //    getNetworkHashMap().put(en.nextElement());
             //}
-            getNetworkUtilities().gatherNetworkInfo();
-        } catch (IOException e) {
-            set(e);
-        } catch (ReflectException e) {
-            log.log(Level.SEVERE, "getHardwareAddress not supported on Java 1.5", e);
-            set(e);
-        }
+            //getNetworkUtilities().gatherNetworkInfo();
+        //} catch (IOException e) {
+        //    set(e);
+        //} catch (ReflectException e) {
+        //    log.log(Level.SEVERE, "getHardwareAddress not supported on Java 1.5", e);
+        //    set(e);
+        //}
 
         //getNetworkUtilities().fetchNetworkInfo();
     }

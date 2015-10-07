@@ -27,9 +27,20 @@
  * * * * * * * */
 
 
+///// POLYFILLS /////
+
+if (!Array.isArray) {
+    Array.isArray = function(arg) {
+        return Object.prototype.toString.call(arg) === '[object Array]';
+    };
+}
+
+
 ///// PRIVATE METHODS /////
 
 var _qz = {
+    DEBUG: false,
+
     connection: null,
     connectConfig: {
         host: "localhost",
@@ -66,15 +77,21 @@ var _qz = {
             _qz.connection.established = false;
 
             _qz.connection.onopen = function(evt) {
+                if (_qz.DEBUG) { console.trace(evt); }
                 console.info("Established connection with QZ Tray on " + address);
-                console.trace(evt);
 
                 _qz.setupWebsocket();
 
                 //TODO - send some certificates
 
+
                 if (config.keepAlive > 0) {
-                    _qz.connectConfig.interval = window.setInterval(function() {
+                    var interval = window.setInterval(function() {
+                        if (_qz.connection == null) {
+                            clearInterval(interval);
+                            return;
+                        }
+
                         _qz.connection.send("ping");
                     }, config.keepAlive * 1000);
                 }
@@ -90,17 +107,17 @@ var _qz = {
             };
 
             _qz.connection.onerror = function(evt) {
-                console.error(evt);
+                if (_qz.DEBUG) { console.error(evt); }
 
                 config.port.usingIndex++;
 
                 if (config.usingSecure) {
-                    if (config.port.usingIndex > config.port.secure.length) {
+                    if (config.port.usingIndex >= config.port.secure.length) {
                         config.usingSecure = false;
                         config.port.usingIndex = 0;
                     }
                 } else {
-                    if (config.port.usingIndex > config.port.insecure.length) {
+                    if (config.port.usingIndex >= config.port.insecure.length) {
                         //give up, all hope is lost
                         reject(new Error("Unable to establish connection with QZ"));
                         return;
@@ -121,22 +138,21 @@ var _qz = {
 
         //called when an open connection is closed
         _qz.connection.onclose = function(evt) {
-            console.trace(evt);
+            if (_qz.DEBUG) { console.trace(evt); }
+            console.info("Closed connection with QZ Tray");
 
             //if this is set, then an explicit close call was made
             if (_qz.connection.promise != undefined) {
                 _qz.connection.promise.resolve();
             }
 
-            _qz.callClose();
+            _qz.callClose(evt);
             _qz.connection = null;
         };
 
         //called for any errors with an open connection
         _qz.connection.onerror = function(evt) {
-            console.error(evt);
-
-            _qz.callError();
+            _qz.callError(evt);
         };
 
         //send objects to qz
@@ -163,12 +179,19 @@ var _qz = {
 
         //receive message from qz
         _qz.connection.onmessage = function(evt) {
-            var result = $.parseJSON(evt.data);
+            var returned = $.parseJSON(evt.data);
 
-            var promise = _qz.pendingCalls[result.uid];
-            promise.resolve(result.value);
+            //TODO - no uid = generic error call
 
-            delete _qz.pendingCalls[result.uid];
+            var promise = _qz.pendingCalls[returned.uid];
+
+            if (returned.error != undefined) {
+                promise.reject(new Error(returned.error));
+            } else {
+                promise.resolve(returned.result);
+            }
+
+            delete _qz.pendingCalls[returned.uid];
         };
     },
 
@@ -198,17 +221,60 @@ var _qz = {
 
 
     errorCallbacks: [],
-    callError: function() {},
+    callError: function(evt) {
+        if (typeof _qz.errorCallbacks == 'function') {
+            _qz.errorCallbacks(evt);
+        } else {
+            for(var i = 0; i < _qz.errorCallbacks.length; i++) {
+                _qz.errorCallbacks[i](evt);
+            }
+        }
+    },
 
     closedCallbacks: [],
-    callClose: function() {},
+    callClose: function(evt) {
+        if (typeof _qz.closedCallbacks == 'function') {
+            _qz.closedCallbacks(evt);
+        } else {
+            for(var i = 0; i < _qz.closedCallbacks.length; i++) {
+                _qz.closedCallbacks[i](evt);
+            }
+        }
+    },
 
 
     certCallbacks: [],
     callCert: function() {},
 
+    //TODO - what message parts get signed ?? - pre-sign compatible !!
     signCallbacks: [],
-    callSign: function() {}
+    callSign: function(toSign) {}
+};
+
+
+//our Config "class"
+//TODO - docs
+function Config(printerName, opts) {
+    var printer = printerName;
+    var config = opts;
+
+
+    this.setPrinter = function(printerName) {
+        printer = printerName;
+    };
+    this.getPrinter = function() {
+        return printer;
+    };
+
+    this.reconfigure = function(opts) {
+        $.extend(config, opts);
+    };
+    this.getConfig = function() {
+        return config;
+    };
+}
+Config.prototype.print = function(data) {
+    qz.print(this, data);
 };
 
 
@@ -256,8 +322,6 @@ window.qz = {
                 if (_qz.connection != null) {
                     _qz.connection.close();
                     _qz.connection.promise = { resolve: resolve, reject: reject };
-
-                    clearInterval(_qz.connectConfig.interval);
                 } else {
                     reject(new Error("No open connection with QZ Tray"))
                 }
@@ -268,7 +332,7 @@ window.qz = {
          * List of functions called for any connections errors outside of an API call.<br/>
          * Also called if {@link websocket#connect} fails to connect.
          *
-         * @param {Function|Array<Function>} calls Functions to be called on event.
+         * @param {Function|Array<Function>} calls Single or array of Function(Event) calls.
          */
         setErrorCallbacks: function(calls) {
             _qz.errorCallbacks = calls;
@@ -278,7 +342,7 @@ window.qz = {
          * List of functions called for any connection closing event outside of an API call.<br/>
          * Also called when {@link websocket#disconnect} is called.
          *
-         * @param {Function|Array<Function>} calls Functions to be called on event.
+         * @param {Function|Array<Function>} calls Single or array of Function(Event) calls.
          */
         setClosedCallbacks: function(calls) {
             _qz.closedCallbacks = calls;
@@ -296,7 +360,7 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.send(msg);
+                _qz.connection.sendData(msg);
             });
         }
 
@@ -329,16 +393,17 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.send(msg);
+                _qz.connection.sendData(msg);
             });
         },
 
         /**
-         * @param {string} [name] Search for a specific printer. All printers are returned if not provided.
+         * @param {string} [query] Search for a specific printer. All printers are returned if not provided.
          *
-         * @returns {Promise<Array<string>|Error>} Printer names found on connected system.
+         * @returns {Promise<Array<string>|string|Error>} The matched printer name if `query` is provided.
+         *                                                Otherwise an array of printers found on the connected system.
          */
-        find: function(name) {
+        find: function(query) {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
                     call: 'findPrinters',
@@ -346,17 +411,17 @@ window.qz = {
                         resolve: resolve, reject: reject
                     },
                     params: {
-                        name: name
+                        query: query
                     }
                 };
 
-                _qz.connection.send(msg);
+                _qz.connection.sendData(msg);
             });
         }
     },
 
     /** Calls related to setting up new printer configurations. */
-    config: {
+    configs: {
         /**
          * Default options used by new configs if not overridden.<br/>
          * Setting a value to NULL will use the printer's default options.<br/>
@@ -398,22 +463,31 @@ window.qz = {
          *  @param {string} [printer.port] Port used by printer.host.
          * @param {Object} [options] Override any of the default options for this config only.
          *
-         * @returns {Promise<Object|Error>} The new config.
+         * @returns {Promise<Object<Config>|Error>} The new config.
          */
         create: function(printer, options) {
             return new RSVP.Promise(function(resolve, reject) {
-                var myOpt = $.extend(true, {}, _qz.defaultConfig, options);
+                var myOpts = $.extend(true, {}, _qz.defaultConfig, options);
 
-
+                qz.printers.find(printer).then(function(data) {
+                    if (data.length > 0) {
+                        resolve(new Config(printer, myOpts));
+                    } else {
+                        reject(new Error("No printer with name " + printer + " found"));
+                    }
+                }).catch(function(err) {
+                    reject(err);
+                });
             });
         }
     },
 
 
     /**
-     * Send data to selected config for printing.
+     * Send data to selected config for printing.<br/>
+     * The promise for this method will resolve when the document has been sent to the printer. Actual printing may not be complete.
      *
-     * @param {Object} config Previously created config object.
+     * @param {Object<Config>} config Previously created config object.
      * @param {Array<Object|string>} data Array of data being sent to the printer. String elements are interpreted the same as the object [raw] type.
      *  @param {string} data.type Valid values [raw|image|hex|base64|file|pdf|html|xml].
      *  @param {string} data.src
@@ -432,7 +506,17 @@ window.qz = {
      */
     print: function(config, data) {
         return new RSVP.Promise(function(resolve, reject) {
+            var msg = {
+                call: 'print',
+                promise: {
+                    resolve: resolve, reject: reject
+                },
+                params: {
+                    // ??
+                }
+            };
 
+            _qz.connection.sendData(msg);
         });
     },
 
@@ -444,10 +528,16 @@ window.qz = {
          */
         findPorts: function() {
             return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'findSerialPorts',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    }
+                };
 
+                _qz.connection.sendData(msg);
             });
-        }
-        ,
+        },
 
         /**
          * @param {string|int} port Name|Number of port to open.
@@ -456,7 +546,17 @@ window.qz = {
          */
         openPort: function(port) {
             return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'openSerialPort',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        port: port
+                    }
+                };
 
+                _qz.connection.sendData(msg);
             });
         },
 
@@ -480,7 +580,18 @@ window.qz = {
          */
         sendData: function(port, options) {
             return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'sendSerialData',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        port: port
+                        // ??
+                    }
+                };
 
+                _qz.connection.sendData(msg);
             });
         },
 
@@ -491,7 +602,17 @@ window.qz = {
          */
         closePort: function(port) {
             return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'closeSerialPort',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        port: port
+                    }
+                };
 
+                _qz.connection.sendData(msg);
             });
         }
     },
@@ -500,22 +621,36 @@ window.qz = {
     /** Calls related to signing connection requests. */
     signing: {
         /**
-         * List of functions called when requesting a public certificate for signing requests.
+         * List of functions called when requesting a public certificate for signing requests.<br/>
+         * Should return a public certificate as a string.
          *
-         * @param {Function|Array<Function>} calls Functions to be called on event.
+         * @param {Function|Array<Function>} calls Single or array of Function() calls.
          */
         setCertificateCallbacks: function(calls) {
-            _qz.certCallbacks = calls;
+            if (typeof calls == 'function' || Array.isArray(calls)) {
+                _qz.certCallbacks = calls;
+            } else {
+                throw new Error('Invalid argument');
+            }
         },
 
         /**
-         * List of functions called to sign a request to the connection.
+         * List of functions called to sign a request to the connection.<br/>
+         * Should return just the signed string of the passed `stringToSign` param.
          *
-         * @param {Function|Array<Function>} calls Functions to be called on event.
+         * @param {Function|Array<Function>} calls Single or array of Function(stringToSign) calls.
          */
         setSigningCallbacks: function(calls) {
-            _qz.signCallbacks = calls;
+            if (typeof calls == 'function' || Array.isArray(calls)) {
+                _qz.signCallbacks = calls;
+            } else {
+                throw new Error('Invalid argument');
+            }
         }
+    },
+
+    getVersion: function() {
+        return '2.0'; //FIXME - pull from server
     }
 
 };
