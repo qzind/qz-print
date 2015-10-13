@@ -4,24 +4,24 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.auth.Certificate;
 import qz.common.TrayManager;
 import qz.printer.PrintServiceMatcher;
 import qz.printer.Printing;
 import qz.utils.NetworkUtilities;
 
-import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Logger;
 
 
 @WebSocket
 public class PrintSocketClient {
 
-    private static final Logger log = Logger.getLogger(PrintSocketClient.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(PrintSocketClient.class);
 
     private final TrayManager trayManager = PrintSocketServer.getTrayManager();
 
@@ -44,7 +44,7 @@ public class PrintSocketClient {
 
     @OnWebSocketError
     public void onError(Session session, Throwable error) {
-        log.warning("Connection error: " + error.getMessage());
+        log.warn("Connection error: " + error.getMessage());
         trayManager.displayErrorMessage(error.getMessage());
     }
 

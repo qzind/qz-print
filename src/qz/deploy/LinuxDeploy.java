@@ -22,17 +22,20 @@
 
 package qz.deploy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.common.Constants;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.logging.Level;
 
 /**
- *
  * @author Tres Finocchiaro
  */
 public class LinuxDeploy extends DeployUtilities {
+
+    private static final Logger log = LoggerFactory.getLogger(LinuxDeploy.class);
+
     // Try using ${linux.icon} first, if it exists
     private static String qzIcon = System.getenv("HOME") + "/" + Constants.ABOUT_TITLE + "/linux-icon.svg";
     private static String defaultIcon = "printer";
@@ -51,26 +54,26 @@ public class LinuxDeploy extends DeployUtilities {
     @Override
     public boolean removeStartupShortcut() {
         return deleteFile(System.getProperty("user.home") +
-                "/.config/autostart/" + getShortcutName() + ".desktop");
+                                  "/.config/autostart/" + getShortcutName() + ".desktop");
     }
 
     @Override
     public boolean removeDesktopShortcut() {
         return deleteFile(System.getProperty("user.home") + "/Desktop/" +
-                getShortcutName() + ".desktop");
+                                  getShortcutName() + ".desktop");
     }
 
 
     @Override
     public boolean hasStartupShortcut() {
         return fileExists(System.getProperty("user.home") + "/.config/autostart/" +
-                getShortcutName() + ".desktop");
+                                  getShortcutName() + ".desktop");
     }
 
     @Override
     public boolean hasDesktopShortcut() {
         return fileExists(System.getProperty("user.home") + "/Desktop/" +
-                getShortcutName() + ".desktop");
+                                  getShortcutName() + ".desktop");
     }
 
     @Override
@@ -78,9 +81,9 @@ public class LinuxDeploy extends DeployUtilities {
         String jarPath = super.getJarPath();
         try {
             jarPath = URLDecoder.decode(jarPath, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            log.log(Level.WARNING, "Error decoding URL: {0}{1}",
-                    new Object[]{jarPath, e.getLocalizedMessage()});
+        }
+        catch(UnsupportedEncodingException e) {
+            log.error("Error decoding URL: {}", jarPath, e);
         }
         return jarPath;
     }
@@ -88,7 +91,7 @@ public class LinuxDeploy extends DeployUtilities {
     /**
      * Creates a Linux ".desktop" shortcut
      *
-     * @param jarPath Absolute path to a jar file
+     * @param folderPath Absolute path to a jar file
      * @return Whether or not the shortcut was created successfully
      */
     private boolean createShortcut(String folderPath) {
@@ -96,16 +99,16 @@ public class LinuxDeploy extends DeployUtilities {
         String shortcutPath = folderPath + getShortcutName() + ".desktop";
 
         // Create the shortcut's parent folder if it does not exist
-        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[]{
-            "[Desktop Entry]",
-            "Type=Application",
-            "Name=" + getShortcutName(),
-            "Exec=java -jar \"" + getJarPath() + "\"",
-            workingPath.trim().equals("") ? "" : "Path=" + workingPath,
-            //"IconIndex=" + iconIndex,
-            "Icon=" + (useQzIcon ? qzIcon : defaultIcon),
-            "Terminal=false",
-            "Comment=" + getShortcutName()
+        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[] {
+                "[Desktop Entry]",
+                "Type=Application",
+                "Name=" + getShortcutName(),
+                "Exec=java -jar \"" + getJarPath() + "\"",
+                workingPath.trim().equals("")? "":"Path=" + workingPath,
+                //"IconIndex=" + iconIndex,
+                "Icon=" + (useQzIcon? qzIcon:defaultIcon),
+                "Terminal=false",
+                "Comment=" + getShortcutName()
         });
     }
 }

@@ -22,18 +22,14 @@
 
 package qz.deploy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.common.Constants;
 import qz.utils.SystemUtilities;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Utility class for creating, querying and removing startup shortcuts and
@@ -44,13 +40,13 @@ import java.util.logging.Logger;
 public abstract class DeployUtilities {
 
     // System logger
-    static final Logger log = Logger.getLogger(DeployUtilities.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(DeployUtilities.class);
 
     // Default shortcut name to create
     static private final String DEFAULT_SHORTCUT_NAME = "Java Shortcut";
 
     // Newline character, which changes between Unix and Windows
-    static private final String NEWLINE = SystemUtilities.isWindows() ? "\r\n" : "\n";
+    static private final String NEWLINE = SystemUtilities.isWindows()? "\r\n":"\n";
 
     private String jarPath;
     private String shortcutName;
@@ -67,13 +63,15 @@ public abstract class DeployUtilities {
     /**
      * Test whether or not a startup shortcut for the specified shortcutName
      * exists on this system
+     *
      * @return true if a startup shortcut exists on this system, false otherwise
      */
     public abstract boolean hasStartupShortcut();
 
-     /**
+    /**
      * Test whether or not a desktop shortcut for the specified shortcutName
      * exists on this system
+     *
      * @return true if a desktop shortcut exists on this system, false otherwise
      */
     public abstract boolean hasDesktopShortcut();
@@ -105,29 +103,31 @@ public abstract class DeployUtilities {
 
     /**
      * Single function to be used to dynamically create various shortcut types
+     *
      * @param toggleType ToggleType.STARTUP or ToggleType.DESKTOP
      * @return Whether or not the shortcut creation was successful
      */
     public boolean createShortcut(ToggleType toggleType) {
-        switch (toggleType) {
+        switch(toggleType) {
             case STARTUP:
-                return !hasShortcut(ToggleType.STARTUP) ? createStartupShortcut() : true;
+                return hasShortcut(ToggleType.STARTUP) || createStartupShortcut();
             case DESKTOP:
-                return !hasShortcut(ToggleType.DESKTOP) ? createDesktopShortcut() : true;
+                return hasShortcut(ToggleType.DESKTOP) || createDesktopShortcut();
             default:
-                log.log(Level.WARNING, "Sorry, creating {0} shortcuts are not yet supported", toggleType);
+                log.warn("Sorry, creating {} shortcuts are not yet supported", toggleType);
                 return false;
         }
     }
 
     /**
      * Single function to be used to dynamically check if a shortcut already exists
+     *
      * @param toggleType Shortcut type, i.e. <code>ToggleType.STARTUP</code> or <code>ToggleType.DESKTOP</code>
      * @return Whether or not the shortcut already exists
      */
     public boolean hasShortcut(ToggleType toggleType) {
         boolean hasShortcut = false;
-        switch (toggleType) {
+        switch(toggleType) {
             case STARTUP:
                 hasShortcut = hasStartupShortcut();
                 break;
@@ -135,12 +135,11 @@ public abstract class DeployUtilities {
                 hasShortcut = hasDesktopShortcut();
                 break;
             default:
-                log.log(Level.WARNING, "Sorry, checking for {0} shortcuts are not yet supported", toggleType);
+                log.warn("Sorry, checking for {} shortcuts are not yet supported", toggleType);
         }
 
         if (hasShortcut) {
-            log.log(Level.INFO, "The {0} shortcut for {1} ({2}) exists",
-                    new Object[]{ toggleType, getShortcutName(), getJarPath() });
+            log.info("The {} shortcut for {} ({}) exists", toggleType, getShortcutName(), getJarPath());
         }
 
         return hasShortcut;
@@ -148,17 +147,18 @@ public abstract class DeployUtilities {
 
     /**
      * Single function to be used to dynamically remove various shortcut types
+     *
      * @param toggleType ToggleType.STARTUP or ToggleType.DESKTOP
      * @return Whether or not the shortcut removal was successful
      */
     public boolean removeShortcut(ToggleType toggleType) {
-        switch (toggleType) {
+        switch(toggleType) {
             case STARTUP:
-                return hasShortcut(ToggleType.STARTUP) ? removeStartupShortcut() : true;
+                return !hasShortcut(ToggleType.STARTUP) || removeStartupShortcut();
             case DESKTOP:
-                return hasShortcut(ToggleType.DESKTOP) ? removeDesktopShortcut() : true;
+                return !hasShortcut(ToggleType.DESKTOP) || removeDesktopShortcut();
             default:
-                log.log(Level.WARNING, "Sorry, removing {0} shortcuts are not yet supported", toggleType);
+                log.warn("Sorry, removing {} shortcuts are not yet supported", toggleType);
                 return false;
         }
     }
@@ -166,21 +166,21 @@ public abstract class DeployUtilities {
     /**
      * Parses the parent directory from an absolute file URL. This will not work
      * with relative paths.<code>
-     *    // Good:
-     *    getWorkingPath("C:\Folder\MyFile.jar");
-     *
-     *    // Bad:
-     *    getWorkingPath("C:\Folder\SubFolder\..\MyFile.jar");
+     * // Good:
+     * getWorkingPath("C:\Folder\MyFile.jar");
+     * <p/>
+     * // Bad:
+     * getWorkingPath("C:\Folder\SubFolder\..\MyFile.jar");
      * </code>
      *
      * @param filePath Absolute path to a jar file
      * @return The calculated working path value, or an empty string if one
      * could not be determined
      */
-    static final String getParentDirectory(String filePath) {
+    static String getParentDirectory(String filePath) {
         // Working path should always default to the JARs parent folder
         int lastSlash = filePath.lastIndexOf(File.separator);
-        return lastSlash < 0 ? "" : filePath.substring(0, lastSlash);
+        return lastSlash < 0? "":filePath.substring(0, lastSlash);
     }
 
     public String getParentDirectory() {
@@ -195,11 +195,12 @@ public abstract class DeployUtilities {
     }
 
     public String getShortcutName() {
-        return shortcutName == null ? DEFAULT_SHORTCUT_NAME : shortcutName;
+        return shortcutName == null? DEFAULT_SHORTCUT_NAME:shortcutName;
     }
 
     /**
      * Detects the OS and creates the appropriate shortcut creator
+     *
      * @return The appropriate shortcut creator for the currently running OS
      */
     public static DeployUtilities getSystemShortcutCreator() {
@@ -220,30 +221,31 @@ public abstract class DeployUtilities {
      * @param filePath The file in which to create parent directories for
      * @return Whether or not the parent folder creation was successful
      */
-    static final boolean createParentFolder(String filePath) {
+    static boolean createParentFolder(String filePath) {
         String parentDirectory = getParentDirectory(filePath);
         File f = new File(parentDirectory);
         try {
             f.mkdirs();
             return f.exists();
-        } catch (SecurityException e) {
-            log.log(Level.SEVERE, "Error while creating parent directories for: {0} {1}",
-                    new Object[]{filePath, e.getLocalizedMessage()});
+        }
+        catch(SecurityException e) {
+            log.error("Error while creating parent directories for: {}", filePath, e);
         }
         return false;
     }
 
     /**
      * Returns whether or not a file exists
+     *
      * @param filePath The full path to a file
      * @return True if the specified filePath exists.  False otherwise.
      */
-    static final boolean fileExists(String filePath) {
+    static boolean fileExists(String filePath) {
         try {
             return new File(filePath).exists();
-        } catch (SecurityException e) {
-            log.log(Level.WARNING, "SecurityException while checking for file {0}{1}",
-                    new Object[]{filePath, e.getLocalizedMessage()});
+        }
+        catch(SecurityException e) {
+            log.error("SecurityException while checking for file {}", filePath, e);
             return false;
         }
     }
@@ -254,13 +256,13 @@ public abstract class DeployUtilities {
      * @param filePath The full file path to be deleted
      * @return Whether or not the file deletion was successful
      */
-    static final boolean deleteFile(String filePath) {
+    static boolean deleteFile(String filePath) {
         File f = new File(filePath);
         try {
             return f.delete();
-        } catch (SecurityException e) {
-            log.log(Level.SEVERE, "Error while deleting: {0} {1}",
-                    new Object[]{filePath, e.getLocalizedMessage()});
+        }
+        catch(SecurityException e) {
+            log.error("Error while deleting: {}", filePath, e);
         }
         return false;
     }
@@ -271,31 +273,31 @@ public abstract class DeployUtilities {
      * Windows and Linux taking OS-specific newlines into account
      *
      * @param filePath Absolute file path to be written to
-     * @param array Array of lines to be written
+     * @param array    Array of lines to be written
      * @return Whether or not the write was successful
      */
-    static final boolean writeArrayToFile(String filePath, String[] array) {
-        log.log(Level.INFO, "Writing array contents to file: {0}: \n{1}",
-                new Object[]{filePath, Arrays.toString(array)});
+    static boolean writeArrayToFile(String filePath, String[] array) {
+        log.info("Writing array contents to file: {}: \n{}", filePath, Arrays.toString(array));
         BufferedWriter writer = null;
         boolean returnVal = false;
         try {
             writer = new BufferedWriter(new FileWriter(new File(filePath)));
-            for (String line : array) {
+            for(String line : array) {
                 writer.write(line + NEWLINE);
             }
             returnVal = true;
-        } catch (IOException e) {
-            log.log(Level.SEVERE, "Could not write file: {0}{1}",
-                    new Object[]{filePath, e.getLocalizedMessage()});
-        } finally {
+        }
+        catch(IOException e) {
+            log.error("Could not write file: {}", filePath, e);
+        }
+        finally {
             try {
                 if (writer != null) {
                     writer.close();
                 }
                 setExecutable(filePath);
-            } catch (IOException e) {
             }
+            catch(IOException ignore) { }
         }
         return returnVal;
     }
@@ -307,15 +309,15 @@ public abstract class DeployUtilities {
      * @param filePath The full file path to set the execute flag on
      * @return <code>true</code> if successful, <code>false</code> otherwise
      */
-    static final boolean setExecutable(String filePath) {
+    static boolean setExecutable(String filePath) {
         if (!SystemUtilities.isWindows()) {
             try {
                 File f = new File(filePath);
                 f.setExecutable(true);
                 return true;
-            } catch (SecurityException e) {
-                log.log(Level.SEVERE, "Unable to set file as executable: {0} {1}",
-                        new Object[]{filePath, e.getLocalizedMessage()});
+            }
+            catch(SecurityException e) {
+                log.error("Unable to set file as executable: {}", filePath, e);
             }
         } else {
             return true;
@@ -325,9 +327,8 @@ public abstract class DeployUtilities {
 
     /**
      * Gets the path to qz-tray.properties
-     * @return
      */
-    public static final String detectPropertiesPath() {
+    public static String detectPropertiesPath() {
         // Use supplied path from IDE or command line
         // i.e  -DsslPropertiesFile=C:\qz-tray.properties
         String override = System.getProperty("sslPropertiesFile");
@@ -345,7 +346,6 @@ public abstract class DeployUtilities {
 
     /**
      * Returns a properties object containing the SSL properties infor
-     * @return
      */
     public static Properties loadSSLProperties() {
         Properties sslProps = new Properties();
@@ -357,30 +357,34 @@ public abstract class DeployUtilities {
             FileInputStream inputStream = new FileInputStream(propsFile);
             sslProps.load(inputStream);
             return sslProps;
-        } catch (IOException e) {
+        }
+        catch(IOException e) {
             e.printStackTrace();
-            log.warning("Failed to load properties file!");
+            log.warn("Failed to load properties file!");
             return null;
         }
     }
 
     /**
      * Determines the currently running Jar's absolute path on the local filesystem
+     *
      * @return A String value representing the absolute path to the currently running
      * jar
      */
-    public static final String detectJarPath() {
+    public static String detectJarPath() {
         try {
             return new File(DeployUtilities.class.getProtectionDomain()
-                    .getCodeSource().getLocation().getPath()).getCanonicalPath();
-        } catch (IOException ex) {
-            log.log(Level.SEVERE, "Unable to determine Jar path", ex);
+                                    .getCodeSource().getLocation().getPath()).getCanonicalPath();
+        }
+        catch(IOException ex) {
+            log.error("Unable to determine Jar path", ex);
         }
         return null;
     }
 
     /**
      * Returns the jar which we will create a shortcut for
+     *
      * @return The path to the jar path which has been set
      */
     public String getJarPath() {
@@ -392,6 +396,7 @@ public abstract class DeployUtilities {
 
     /**
      * Set the jar path for which we will create a shortcut for
+     *
      * @param jarPath The full file path of the jar file
      */
     public void setJarPath(String jarPath) {
@@ -403,8 +408,10 @@ public abstract class DeployUtilities {
      */
     public enum ToggleType {
         STARTUP, DESKTOP;
+
         /**
          * Returns the English description of this object
+         *
          * @return The string "startup" or "desktop"
          */
         @Override
@@ -414,17 +421,19 @@ public abstract class DeployUtilities {
 
         /**
          * Returns the English description of this object
+         *
          * @return The string "startup" or "desktop"
          */
         public String getName() {
-            return this.name() == null ? null : this.name().toLowerCase();
+            return this.name() == null? null:this.name().toLowerCase();
         }
     }
-      
+
     /**
      * Attempts to correct URL path conversions that occur on old JREs and older
-     * Windows versions.  For now, just addresses %20 spaces, but 
+     * Windows versions.  For now, just addresses %20 spaces, but
      * there could be other URLs which will need special consideration.
+     *
      * @param filePath The absolute file path to convert
      * @return The converted path
      */

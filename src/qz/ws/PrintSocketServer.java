@@ -23,6 +23,8 @@ import org.eclipse.jetty.util.MultiException;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.common.TrayManager;
 import qz.deploy.DeployUtilities;
 
@@ -31,7 +33,6 @@ import java.net.BindException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Logger;
 
 /**
  * Created by robert on 9/9/2014.
@@ -39,7 +40,7 @@ import java.util.logging.Logger;
 
 public class PrintSocketServer {
 
-    private static final Logger log = Logger.getLogger(PrintSocketServer.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(PrintSocketServer.class);
 
     private static final int MAX_MESSAGE_SIZE = Integer.MAX_VALUE;
     private static final Integer[] SECURE_PORTS = new Integer[] {8181, 8282, 8383, 8484};
@@ -60,11 +61,10 @@ public class PrintSocketServer {
             runServer();
         }
         catch(Exception e) {
-            log.severe("Could not start tray manager");
-            e.printStackTrace();
+            log.error("Could not start tray manager", e);
         }
 
-        log.warning("The web socket server is no longer running");
+        log.warn("The web socket server is no longer running");
     }
 
     public static void runServer() {
@@ -91,7 +91,7 @@ public class PrintSocketServer {
                 connector.setPort(SECURE_PORTS[securePortIndex.get()]);
                 server.addConnector(connector);
             } else {
-                log.warning("Could not start secure WebSocket");
+                log.warn("Could not start secure WebSocket");
             }
 
             try {

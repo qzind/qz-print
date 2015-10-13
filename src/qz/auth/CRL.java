@@ -1,13 +1,12 @@
 package qz.auth;
 
-import qz.common.TrayManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Wrapper class for the Certificate Revocation List
@@ -15,8 +14,9 @@ import java.util.logging.Logger;
  */
 public class CRL {
 
+    private static final Logger log = LoggerFactory.getLogger(CRL.class);
+
     private static CRL instance = null;
-    private static final Logger log = Logger.getLogger(TrayManager.class.getName());
 
     /**
      * The URL to the QZ CRL. Should not be changed except for dev tests
@@ -37,7 +37,7 @@ public class CRL {
                 public void run() {
                     BufferedReader br = null;
 
-                    log.log(Level.INFO, "Loading CRL " + CRL_URL + "...");
+                    log.info("Loading CRL {}...", CRL_URL);
 
                     try {
                         URL qzCRL = new URL(CRL_URL);
@@ -55,10 +55,10 @@ public class CRL {
                         }
 
                         instance.loaded = true;
-                        log.log(Level.INFO, "Successfully loaded " + instance.revokedHashes.size() + " CRL entries from " + CRL_URL);
+                        log.info("Successfully loaded {} CRL entries from {}", instance.revokedHashes.size(), CRL_URL);
                     }
                     catch(Exception e) {
-                        log.log(Level.WARNING, "Error loading CRL " + CRL_URL, e);
+                        log.error("Error loading CRL {}", CRL_URL, e);
                     }
                     finally {
                         if (br != null) {
