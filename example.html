@@ -10,131 +10,327 @@
 <script type="text/javascript" src="js/qzTray.js"></script>
 
 <style>
-    td {
-        padding: 0.5em;
+    .row {
+        display: block;
+        margin-bottom: 2em;
+        text-align: justify;
+
+        width: 100%;
     }
 
-    button, input {
+    .row div {
+        text-align: left;
+    }
+
+    .row.spread:after {
+        content: "";
+        display: inline-block;
+        width: 100%;
+    }
+
+    fieldset {
+        display: inline-block;
+        vertical-align: top;
+        margin: 0 1%;
+        padding: .5em;
+
+        width: 25%;
+        height: 12em;
+        overflow-y: auto;
+    }
+
+    fieldset.wide {
+        width: 45%;
+    }
+
+    fieldset.tall {
+        height: auto;
+    }
+
+    fieldset div.columns-2 {
+        width: 45%;
+        float: left;
+        padding: 2.5%;
+    }
+
+    fieldset div.columns-3 {
+        width: 30%;
+        float: left;
+        padding: 1.3%;
+    }
+
+    legend {
+        font-weight: bold;
+        font-family: sans-serif;
+    }
+
+    h4 {
+        margin-top: -2.5em;
+    }
+
+    label {
         display: block;
-        margin: 0.25em 0;
+        margin: .25em;
+    }
+
+    button, input[type=text], input[type=number], select {
+        display: block;
+        width: 100%;
+        margin: .25em 0;
+    }
+
+    .inline {
+        display: inline-block;
+    }
+
+    .inline label {
+        display: inline-block;
+        width: 30%;
+        margin: 0;
+    }
+
+    .inline input {
+        display: inline-block;
+        width: 65%;
+        margin: 0;
     }
 </style>
 
 
-<body id="qz-page" style="background-color: #FFF1D0;">
+<body id="qz-page" style="background-color: #F1F1F1;">
 
-<div style="margin: 0 1em;">
+<div class="row">
     <h1 id="title" style="margin:0;">QZ Print Plugin <span id="qz-version"></span></h1>
 </div>
 
-<table border="1px" cellpadding="5px" cellspacing="0px">
-    <tr>
-        <td valign="top">
-            <h2>Connection</h2>
+<div class="row spread">
+    <fieldset id="connection">
+        <legend>Connection</legend>
 
-            <button type="button" onclick="startConnection();">Connect</button>
-            <button type="button" onclick="endConnection();">Disconnect</button>
-
-            <hr />
-            <button type="button" onclick="listNetworkInfo();">List Network Info</button>
-        </td>
-        <td valign="top">
-            <h2>Detection</h2>
-
-            <label for="printerName">Search</label>
-            <input type="text" id="printerName" value="zebra" />
-            <button type="button" onclick="findPrinter($('#printerName').val());">Find Printer</button>
-            <br />
-
-            <button type="button" onclick="findDefaultPrinter();">Find Default Printer</button>
-            <br />
-            <button type="button" onclick="findPrinters();">List All Printers</button>
-        </td>
-
-        <td valign="top">
-            <h2>Raw Printers Only</h2>
-
-            <a href="https://qz.io/wiki/What-is-Raw-Printing" target="new">What is Raw Printing?</a>
-            <br />
-
-            <button type="button" onClick="printEPL();">Print EPL</button>
-            <button type="button" onClick="printZPL();">Print ZPL</button>
-            <br />
-
-            <button type="button" onClick="printESCP();">Print ESCP</button>
-            <div>
-                <a href="javascript:findPrinter('Epson');">Epson</a>&nbsp;
-                <a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp;
-                <a href="javascript:findPrinter('Star');">Star</a>&nbsp;
+        <div>
+            <div class="columns-2">
+                <button type="button" onclick="startConnection();">Connect</button>
+                <button type="button" onclick="endConnection();">Disconnect</button>
             </div>
-            <br />
+            <div class="columns-2">
+                <button type="button" onclick="listNetworkInfo();">List Network Info</button>
+            </div>
+        </div>
+    </fieldset>
 
-            <button type="button" onClick="printEPCL();">Print EPCL</button>
-            (Zebra Card Printer)<br />
-            <br />
+    <fieldset id="detection">
+        <legend>Printer</legend>
 
-            <button type="button" onClick="print64();">Print Base64</button>
-            <button type="button" onClick="printXML();">Print XML</button>
-            <button type="button" onClick="printHex();">Print Hex</button>
-            <br />
+        <div>
+            <div class="columns-2">
+                <label for="printerSearch">Search:</label>
+                <input type="text" id="printerSearch" value="zebra" />
+                <button type="button" onclick="findPrinter($('#printerSearch').val());">Find Printer</button>
+                <button type="button" onclick="findDefaultPrinter();">Find Default Printer</button>
+                <button type="button" onclick="findPrinters();">List All Printers</button>
+            </div>
 
-            <button type="button" onClick="printFile('zpl_sample.txt');">Print zpl_sample.txt</button>
-            <button type="button" onClick="printFile('fgl_sample.txt');">Print fgl_sample.txt</button>
-            <button type="button" onClick="printFile('epl_sample.txt');">Print epl_sample.txt</button>
-            <br />
+            <div class="columns-2">
+                <span>Current printer:</span>
 
-            <!--<button type="button" onClick="printToFile();">Print To File</button>-->
-            <!--<button type="button" onClick="printToHost();">Print To Host</button>-->
-            <!--<br />-->
+                <div id="configPrinter" style="font-weight: bold;">NONE</div>
 
-            <!--<button type="button" onClick="printPages();">Print Spooling Every 2</button><br />-->
-            <!--<button type="button" onClick="useAlternatePrinting();">Use Alternate Printing</button><br />-->
-        </td>
+                <button type="button" onclick="setPrinter($('#printerSearch').val());">Set To Searched Printer</button>
+                <button type="button" onclick="askForFile();">Set To File</button>
+                <button type="button" onclick="askForHost();">Set To Host</button>
+            </div>
+        </div>
+    </fieldset>
 
-        <td valign="top">
-            <h2>PostScript Printers Only</h2>
+    <fieldset id="serial">
+        <legend>Serial</legend>
 
-            <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is PostScript Printing?</a>
+        <div>
+            <div class="columns-2">
+                <button type="button" onclick="listSerialPorts();">List Ports</button>
 
-            <p>
-                <a href="javascript:findPrinter('XPS');">Microsoft XPS</a>&nbsp;
-                <a href="javascript:findPrinter('PDF');">PDF</a>&nbsp;
-            </p>
+                <label for="serialPort">Port Number</label>
+                <input type="text" id="serialPort" value="" />
+            </div>
 
-            <label for="printCopies">Copies</label>
-            <input type="number" id="printCopies" value="1" />
-            <br />
+            <div class="columns-2">
+                <button type="button" onclick="openSerialPort();">Open Port</button>
+                <button type="button" onclick="sendSerialData();">Send Command</button>
+                <button type="button" onclick="closeSerialPort();">Close Port</button>
+            </div>
+        </div>
+    </fieldset>
+</div>
 
-            <button type="button" onClick="printHTML();">Print HTML</button>
-            <button type="button" onClick="printHTML5();">Print Current Page</button>
-            <br />
+<div class="row spread">
+    <fieldset id="raw" class="wide tall">
+        <legend>Raw Printing</legend>
 
-            <button type="button" onClick="printPDF();">Print PDF</button>
-            <br />
+        <div>
+            <div class="row">
+                <a href="https://qz.io/wiki/What-is-Raw-Printing" target="new">What is Raw Printing?</a>
 
-            <button type="button" onClick="printImage(false);">Print PostScript Image</button>
-            <button type="button" onClick="printImage(true);">Print Scaled PostScript Image</button>
-            <br />
+                <span style="float: right;">
+                    <a href="javascript:findPrinter('Epson');">Epson</a>&nbsp;
+                    <a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp;
+                    <a href="javascript:findPrinter('Star');">Star</a>&nbsp;
+                </span>
+            </div>
 
-            <!--<button type="button" onClick="logFeatures();">Log Printer Features on Print</button><br />-->
-        </td>
+            <div class="row">
+                <div class="columns-3">
+                    <button type="button" onClick="printEPL();">Print EPL</button>
+                    <button type="button" onClick="printZPL();">Print ZPL</button>
+                    <br />
 
-        <td valign="top">
-            <h2>Serial</h2>
+                    <button type="button" onClick="printESCP();">Print ESCP</button>
+                    <br />
 
-            <button type="button" onclick="listSerialPorts();">List Ports</button>
-            <br />
+                    <button type="button" onClick="printEPCL();">Print EPCL</button>
+                    (Zebra Card Printer)<br />
+                </div>
 
-            <label for="serialPort">Port Number:</label>
-            <input type="text" id="serialPort" value="" />
-            <br />
+                <div class="columns-3">
+                    <button type="button" onClick="print64();">Print Base64</button>
+                    <button type="button" onClick="printXML();">Print XML</button>
+                    <button type="button" onClick="printHex();">Print Hex</button>
+                    <br />
 
-            <button type="button" onclick="openSerialPort();">Open Port</button>
-            <button type="button" onclick="sendSerialData();">Send Command</button>
-            <button type="button" onclick="closeSerialPort();">Close Port</button>
-        </td>
-    </tr>
-</table>
+                    <button type="button" onClick="printFile('zpl_sample.txt');">Print zpl_sample.txt</button>
+                    <button type="button" onClick="printFile('fgl_sample.txt');">Print fgl_sample.txt</button>
+                    <button type="button" onClick="printFile('epl_sample.txt');">Print epl_sample.txt</button>
+                    <br />
+                </div>
+
+                <div class="columns-3" style="border-left: 1px dashed #CCC;">
+                    <h4>Options</h4>
+
+                    <label for="rawPerSpool">Per Spool</label>
+                    <input type="number" id="rawPerSpool" />
+
+                    <label for="rawLanguage">Language</label>
+                    <input type="text" id="rawLanguage" />
+
+                    <label for="rawEncoding">Encoding</label>
+                    <input type="text" id="rawEncoding" />
+
+                    <label for="rawEndOfDoc">End Of Doc</label>
+                    <input type="text" id="rawEndOfDoc" />
+
+                    <label for="rawPrinterTray">Printer Tray</label>
+                    <input type="text" id="rawPrinterTray" />
+
+                    <label for="rawAltPrinting">
+                        Alternate Printing:
+                        <input type="checkbox" id="rawAltPrinting" />
+                    </label>
+
+                    <button type="button" onclick="resetRawOptions();">Reset</button>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset id="postscript" class="wide tall">
+        <legend>Postscript Printing</legend>
+
+        <div>
+            <div class="row">
+                <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Postsript Printing?</a>
+
+                <span style="float: right;">
+                    <a href="javascript:findPrinter('XPS');">Microsoft XPS</a>&nbsp;
+                    <a href="javascript:findPrinter('PDF');">PDF</a>&nbsp;
+                </span>
+            </div>
+
+            <div class="row">
+                <div class="columns-3">
+                    <button type="button" onClick="printHTML();">Print HTML</button>
+                    <button type="button" onClick="printHTML5();">Print Current Page</button>
+                    <br />
+
+                    <button type="button" onClick="printPDF();">Print PDF</button>
+                    <br />
+
+                    <button type="button" onClick="printImage(false);">Print PostScript Image</button>
+                    <button type="button" onClick="printImage(true);">Print Scaled PostScript Image</button>
+                </div>
+
+                <div class="columns-3" style="border-left: 1px dashed #CCC;">
+                    <h4>Options</h4>
+
+                    <label for="psDuplex">
+                        Duplex:
+                        <input type="checkbox" id="psDuplex" />
+                    </label>
+
+                    <label for="psOrientation">Orientation</label>
+                    <select id="psOrientation">
+                        <option value="">Default</option>
+                        <option value="portrait">Portrait</option>
+                        <option value="landscape">Landscape</option>
+                        <option value="landscape-reverse">Landscape - Reverse</option>
+                    </select>
+
+                    <label for="psRotation">Rotation</label>
+                    <input type="number" id="psRotation" />
+
+                    <label for="psPaperThickness">Paper Thickness</label>
+                    <input type="number" id="psPaperThickness" />
+
+                    <label for="psColorType">Color Type</label>
+                    <select id="psColorType">
+                        <option value="color">Color</option>
+                        <option value="greyscale">Greyscale</option>
+                        <option value="blackwhite">Black & White</option>
+                    </select>
+
+                    <label for="psCopies">Copies</label>
+                    <input type="number" id="psCopies" />
+
+                    <button type="button" onclick="resetPSOptions();">Reset</button>
+                </div>
+
+                <div class="columns-3">
+                    <label class="inline">Size</label>
+                    (
+                    <label for="psSizeActive" class="inline">Enable:</label>
+                    <input type="checkbox" id="psSizeActive" onclick="checkSizeActive();" />
+                    )
+                    <span class="inline" id="psSizeGroup">
+                        <label for="psSizeWidth">Width:</label>
+                        <input type="number" id="psSizeWidth" />
+                        <label for="psSizeHeight">Height:</label>
+                        <input type="number" id="psSizeHeight" />
+                        <label for="psSizeUnits">Units:</label>
+                        <input type="text" id="psSizeUnits" />
+                        <label for="psSizeAuto">Auto:</label>
+                        <input type="checkbox" id="psSizeAuto" />
+                    </span>
+                    <br />
+
+                    <label for="psMargins">Margins</label>
+                    (
+                    <label for="psMarginsActive" class="inline">Individual:</label>
+                    <input type="checkbox" id="psMarginsActive" onclick="checkMarginsActive();">
+                    )
+                    <input type="number" id="psMargins" />
+                    <span class="inline" id="psMarginsGroup">
+                        <label for="psMarginsTop">Top:</label>
+                        <input type="number" id="psMarginsTop" />
+                        <label for="psMarginsRight">Right:</label>
+                        <input type="number" id="psMarginsRight" />
+                        <label for="psMarginsBottom">Bottom:</label>
+                        <input type="number" id="psMarginsBottom" />
+                        <label for="psMarginsLeft">Left:</label>
+                        <input type="number" id="psMarginsLeft" />
+                    </span>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+</div>
 
 </body>
 
@@ -145,13 +341,14 @@
     /// Connection ///
     function startConnection() {
         qz.websocket.connect({ usingSecure: false }).then(function() {
-            $("#qz-page").css('background-color', '#FFFFFF');
+            setBackground('#FFFFFF');
+            $("#qz-version").html(qz.getVersion());
         }).catch(handleError);
     }
 
     function endConnection() {
         qz.websocket.disconnect().then(function() {
-            $("#qz-page").css('background-color', '#B1B1B1');
+            setBackground('#B1B1B1');
         }).catch(handleError);
     }
 
@@ -172,6 +369,7 @@
 
     /// Detection ///
     function findPrinter(query) {
+        $("#printerSearch").val(query);
         qz.printers.find(query).then(function(data) {
             alert("Found: " + data);
         }).catch(function(err) { console.error(err); });
@@ -197,6 +395,9 @@
 
     /// Raw Printers ///
     function printEPL() {
+        $("#rawLanguage").val("EPL");
+        var config = getUpdatedConfig();
+
         var printData = [
             '\nN\n',
             'q609\n',
@@ -207,50 +408,58 @@
             'A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n',
             'A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n',
             'A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n',
-            { type: 'image', src: getPath() + '/assets/img/image_sample_bw.png', options: { lang: 'EPL', xLoc: 150, yLoc: 300 } },
+            { type: 'image', data: getPath() + '/assets/img/image_sample_bw.png', options: { x: 150, y: 300 } },
             '\nP1,1\n'
         ];
 
-        qz.print(getConfig(), printData);
+        qz.print(config, printData);
     }
 
     function printZPL() {
+        $("#rawLanguage").val("ZPLII");
+        var config = getUpdatedConfig();
+
         var printData = [
             '^XA\n',
             '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n',
-            { type: 'image', src: getPath() + '/assets/img/image_sample_bw.png', options: { lang: 'ZPLII' } },
+            { type: 'image', data: getPath() + '/assets/img/image_sample_bw.png' },
             '^F5\n',
             '^XZ\n'
         ];
 
-        qz.print(getConfig(), printData);
+        qz.print(config, printData);
     }
 
     function printESCP() {
+        $("#rawLanguage").val("ESCP");
+        var config = getUpdatedConfig();
+
         var printData = [
-            { type: 'image', src: getPath() + '/assets/img/image_sample_bw.png', options: { lang: 'ESCP', dotDensity: 'single' } },
-            { type: 'raw', src: '\nPrinted using qz-print plugin.\n\n\n\n\n\n' }
+            { type: 'image', data: getPath() + '/assets/img/image_sample_bw.png', options: { dotDensity: 'single' } },
+            { type: 'raw', data: '\nPrinted using qz-print plugin.\n\n\n\n\n\n' }
         ];
 
-        qz.print(getConfig(), printData);
+        qz.print(config, printData);
     }
 
     function printEPCL() {
-        var printData = [];
-        Array.prototype.push.apply(printData, _convertEPCL('+RIB 4'));      // Monochrome ribbon
-        Array.prototype.push.apply(printData, _convertEPCL('F'));           // Clear monochrome print buffer
-        Array.prototype.push.apply(printData, _convertEPCL('+C 8'));        // Adjust monochrome intensity
-        Array.prototype.push.apply(printData, _convertEPCL('&R'));          // Reset magnetic encoder
-        Array.prototype.push.apply(printData, _convertEPCL('&CDEW 0 0'));   // Set R/W encoder to ISO default
-        Array.prototype.push.apply(printData, _convertEPCL('&CDER 0 0'));   // Set R/W encoder to ISO default
-        Array.prototype.push.apply(printData, _convertEPCL('&SVM 0'));      // Disable magnetic encoding verifications
-        Array.prototype.push.apply(printData, _convertEPCL('T 80 600 0 1 0 45 1 QZ INDUSTRIES'));   // Write text buffer
-        Array.prototype.push.apply(printData, _convertEPCL('&B 1 123456^INDUSTRIES/QZ^789012'));	// Write mag strip buffer
-        Array.prototype.push.apply(printData, _convertEPCL('&E*'));         // Encode magnetic data
-        Array.prototype.push.apply(printData, _convertEPCL('I 10'));        // Print card (10 returns to print ready pos.)
-        Array.prototype.push.apply(printData, _convertEPCL('MO'));          // Move card to output hopper
+        var config = getUpdatedConfig();
 
-        qz.print(getConfig(), printData);
+        var printData = [];
+        $.merge(printData, _convertEPCL('+RIB 4'));     // Monochrome ribbon
+        $.merge(printData, _convertEPCL('F'));          // Clear monochrome print buffer
+        $.merge(printData, _convertEPCL('+C 8'));       // Adjust monochrome intensity
+        $.merge(printData, _convertEPCL('&R'));         // Reset magnetic encoder
+        $.merge(printData, _convertEPCL('&CDEW 0 0'));  // Set R/W encoder to ISO default
+        $.merge(printData, _convertEPCL('&CDER 0 0'));  // Set R/W encoder to ISO default
+        $.merge(printData, _convertEPCL('&SVM 0'));     // Disable magnetic encoding verifications
+        $.merge(printData, _convertEPCL('T 80 600 0 1 0 45 1 QZ INDUSTRIES'));  // Write text buffer
+        $.merge(printData, _convertEPCL('&B 1 123456^INDUSTRIES/QZ^789012'));	// Write mag strip buffer
+        $.merge(printData, _convertEPCL('&E*'));        // Encode magnetic data
+        $.merge(printData, _convertEPCL('I 10'));       // Print card (10 returns to print ready pos.)
+        $.merge(printData, _convertEPCL('MO'));         // Move card to output hopper
+
+        qz.print(config, printData);
     }
 
     /**
@@ -267,14 +476,16 @@
         if (len.length < 2) { len = '0' + len; }
 
         return [
-            { type: 'hex', src: 'x00x00x00' },  // Append 3 NULs
-            { type: 'hex', src: 'x' + len },    // Append our command length, in base16
+            { type: 'hex', data: 'x00x00x00' },  // Append 3 NULs
+            { type: 'hex', data: 'x' + len },    // Append our command length, in base16
             data,                               // Append our command
             '\r'                                // Append carriage return
         ];
     }
 
     function printBase64() {
+        var config = getUpdatedConfig();
+
         // Send base64 encoded characters/raw commands to qz using data type 'base64'.
         // This will automatically convert provided base64 encoded text into text/ascii/bytes, etc.
         // This example is for EPL and contains an embedded image.
@@ -284,7 +495,7 @@
         var printData = [
             {
                 type: 'base64',
-                src: 'Ck4KcTYwOQpRMjAzLDI2CkI1LDI2LDAsMUEsMyw3LDE1MixCLCIxMjM0IgpBMzEwLDI2LDAsMywx' +
+                data: 'Ck4KcTYwOQpRMjAzLDI2CkI1LDI2LDAsMUEsMyw3LDE1MixCLCIxMjM0IgpBMzEwLDI2LDAsMywx' +
                 'LDEsTiwiU0tVIDAwMDAwIE1GRyAwMDAwIgpBMzEwLDU2LDAsMywxLDEsTiwiUVogUFJJTlQgQVBQ' +
                 'TEVUIgpBMzEwLDg2LDAsMywxLDEsTiwiVEVTVCBQUklOVCBTVUNDRVNTRlVMIgpBMzEwLDExNiww' +
                 'LDMsMSwxLE4sIkZST00gU0FNUExFLkhUTUwiCkEzMTAsMTQ2LDAsMywxLDEsTiwiUVpJTkRVU1RS' +
@@ -364,46 +575,54 @@
             }
         ];
 
-        qz.print(getConfig(), printData);
+        qz.print(config, printData);
     }
 
     function printXML() {
+        var config = getUpdatedConfig();
+
         var printData = [
-            { type: 'xml', src: getPath() + '/assets/zpl_sample.xml', options: { xmlTag: 'v7:Image' } }
+            { type: 'xml', data: getPath() + '/assets/zpl_sample.xml', options: { xmlTag: 'v7:Image' } }
         ];
 
-        qz.print(getConfig(), printData);
+        qz.print(config, printData);
     }
 
     function printHex() {
+        var config = getUpdatedConfig();
+
         var printData = [
-            { type: 'hex', src: '4e0d0a713630390d0a513230332c32360d0a42352c32362c' },
-            { type: 'hex', src: '302c31412c332c372c3135322c422c2231323334220d0a41' },
-            { type: 'hex', src: '3331302c32362c302c332c312c312c4e2c22534b55203030' },
-            { type: 'hex', src: '303030204d46472030303030220d0a413331302c35362c30' },
-            { type: 'hex', src: '2c332c312c312c4e2c22515a205072696e7420506c756769' },
-            { type: 'hex', src: '6e220d0a413331302c38362c302c332c312c312c4e2c2254' },
-            { type: 'hex', src: '657374207072696e74207375636365737366756c220d0a41' },
-            { type: 'hex', src: '3331302c3131362c302c332c312c312c4e2c2266726f6d20' },
-            { type: 'hex', src: '73616d706c652e68746d6c220d0a413331302c3134362c30' },
-            { type: 'hex', src: '2c332c312c312c4e2c227072696e7448657828292066756e' },
-            { type: 'hex', src: '6374696f6e2e220d0a50312c310d0a' }
+            { type: 'hex', data: '4e0d0a713630390d0a513230332c32360d0a42352c32362c' },
+            { type: 'hex', data: '302c31412c332c372c3135322c422c2231323334220d0a41' },
+            { type: 'hex', data: '3331302c32362c302c332c312c312c4e2c22534b55203030' },
+            { type: 'hex', data: '303030204d46472030303030220d0a413331302c35362c30' },
+            { type: 'hex', data: '2c332c312c312c4e2c22515a205072696e7420506c756769' },
+            { type: 'hex', data: '6e220d0a413331302c38362c302c332c312c312c4e2c2254' },
+            { type: 'hex', data: '657374207072696e74207375636365737366756c220d0a41' },
+            { type: 'hex', data: '3331302c3131362c302c332c312c312c4e2c2266726f6d20' },
+            { type: 'hex', data: '73616d706c652e68746d6c220d0a413331302c3134362c30' },
+            { type: 'hex', data: '2c332c312c312c4e2c227072696e7448657828292066756e' },
+            { type: 'hex', data: '6374696f6e2e220d0a50312c310d0a' }
         ];
 
-        qz.print(getConfig(), printData);
+        qz.print(config, printData);
     }
 
     function printFile(file) {
+        var config = getUpdatedConfig();
+
         var printData = [
-            { type: 'file', src: getPath() + '/assets/' + file }
+            { type: 'file', data: getPath() + '/assets/' + file }
         ];
 
-        qz.print(getConfig(), printData);
+        qz.print(config, printData);
     }
 
 
     /// PS Printers ///
     function printHTML() {
+        var config = getUpdatedConfig();
+
         var colA = '<h2>*&nbsp; QZ Print Plugin HTML Printing &nbsp;*</h2>' +
                 '<span style="color: #F00;">Version:</span> ' + qz.getVersion() + '<br/>' +
                 '<span style="color: #F00;">Visit:</span> https://qz.io/';
@@ -412,7 +631,7 @@
         var printData = [
             {
                 type: 'html',
-                src: '<html>' +
+                data: '<html>' +
                 '   <table style="font-family: monospace; border: 1px;">' +
                 '       <tr style="height: 6cm;">' +
                 '           <td valign="top">' + colA + '</td>' +
@@ -423,7 +642,7 @@
             }
         ];
 
-        qz.print(getConfig(true), printData);
+        qz.print(config, printData);
     }
 
     function printHTML5() {
@@ -431,23 +650,28 @@
     }
 
     function printPDF() {
+        var config = getUpdatedConfig();
+
         var printData = [
-            { type: 'pdf', src: getPath() + '/assets/pdf_sample.pdf' }
+            { type: 'pdf', data: getPath() + '/assets/pdf_sample.pdf' }
         ];
 
-        qz.print(getConfig(true), printData);
+        qz.print(config, printData);
     }
 
     function printImage(scaling) {
+
+        var config = getUpdatedConfig();
+
         if (scaling) {
-            //TODO - set some extra properties
+            config.reconfigure({ size: { width: 8.5, height: 11.0, auto: true } });
         }
 
         var printData = [
-            { type: 'image', src: getPath() + '/assets/img/image_sample.png' }
+            { type: 'image', data: getPath() + '/assets/img/image_sample.png' }
         ];
 
-        qz.print(getConfig(true), printData);
+        qz.print(config, printData);
     }
 
 
@@ -469,13 +693,70 @@
     }
 
 
+    /// Resets ///
+    function resetRawOptions() {
+        $("#rawPerSpool").val(1);
+        $("#rawLanguage").val(null);
+        $("#rawEncoding").val(null);
+        $("#rawEndOfDoc").val(null);
+        $("#rawPrinterTray").val(null);
+        $("#rawAltPrinting").prop('checked', false);
+    }
+
+    function resetPSOptions() {
+        $("#psSizeWidth").val(0);
+        $("#psSizeHeight").val(0);
+        $("#psSizeUnits").val("in");
+        $("#psSizeAuto").prop('checked', false);
+        $("#psSizeActive").prop('checked', false);
+        $("#psSizeGroup").css('display', 'none');
+
+        $("#psMargins").val(0).css('display', '');
+        $("#psMarginsTop").val(0);
+        $("#psMarginsRight").val(0);
+        $("#psMarginsBottom").val(0);
+        $("#psMarginsLeft").val(0);
+        $("#psMarginsActive").prop('checked', false);
+        $("#psMarginsGroup").css('display', 'none');
+
+        $("#psDuplex").prop('checked', false);
+        $("#psOrientation").val("");
+        $("#psRotation").val(0);
+        $("#psPaperThickness").val(null);
+        $("#psColorType").val("color");
+        $("#psCopies").val(1);
+    }
+
+    function checkSizeActive() {
+        if (valu("psSizeActive", true)) {
+            $("#psSizeGroup").css('display', '');
+        } else {
+            $("#psSizeGroup").css('display', 'none');
+        }
+    }
+
+    function checkMarginsActive() {
+        if (valu("psMarginsActive", true)) {
+            $("#psMarginsGroup").css('display', '');
+            $("#psMargins").css('display', 'none');
+        } else {
+            $("#psMarginsGroup").css('display', 'none');
+            $("#psMargins").css('display', '');
+        }
+    }
+
+
     /// Page load ///
     $(document).ready(function() {
+        setBackground('#FFF1D0');
+        resetRawOptions();
+        resetPSOptions();
+
         startConnection();
     });
 
     qz.websocket.setClosedCallbacks(function(evt) {
-        $("#qz-page").css('background-color', '#B1B1B1');
+        setBackground('#B1B1B1');
         console.log(evt);
     });
 
@@ -484,8 +765,12 @@
 
     /// Helpers ///
     function handleError(err) {
-        $("#qz-page").css('background-color', '#F5A9A9');
+        setBackground('#F5A9A9');
         console.error(err);
+    }
+
+    function setBackground(color) {
+        $("#qz-page").children().children("fieldset").css("background-color", color);
     }
 
     function getPath() {
@@ -493,8 +778,111 @@
         return path.substring(0, path.lastIndexOf("/"));
     }
 
-    function getConfig(options) {
-        return qz.configs.create($("#printerName").val(), options);
+    function valu(id, isCheckbox) {
+        if (id[0] != '#') { id = '#' + id; }
+
+        if (!isCheckbox) {
+            var is = $(id).val();
+            if (is === "") { is = null; }
+            return is;
+        } else {
+            return $(id).prop("checked");
+        }
+    }
+
+
+    /// QZ Config ///
+    var cfg = null;
+    function getUpdatedConfig() {
+        if (cfg == null) {
+            cfg = qz.configs.create(null);
+        }
+
+        updateConfig();
+        return cfg
+    }
+
+    function updateConfig() {
+        var psSize = null;
+        if (valu("psSize", true)) {
+            psSize = {
+                width: valu("psSizeWidth"),
+                height: valu("psSizeHeight"),
+                units: valu("psSizeUnits"),
+                auto: valu("psSizeAuto", true)
+            };
+        }
+
+        var psMargins = valu("psMargins");
+        if (valu("psMarginsActive", true)) {
+            psMargins = {
+                top: valu("psMarginsTop"),
+                right: valu("psMarginsRight"),
+                bottom: valu("psMarginsBottom"),
+                left: valu("psMarginsLeft")
+            };
+        }
+
+        cfg.reconfigure({
+            perSpool: valu("rawPerSpool"),
+            language: valu("rawLanguage"),
+            encoding: valu("rawEncoding"),
+            endOfDoc: valu("rawEndOfDoc"),
+            printerTray: valu("rawPrinterTray"),
+            altPrinting: valu("rawAltPrinting", true),
+
+            size: psSize,
+            margins: psMargins,
+            duplex: valu("psDuplex", true),
+            orientation: valu("psOrientation"),
+            rotation: valu("psRotation"),
+            paperThickness: valu("psPaperThickness"),
+            colorType: valu("psColorType"),
+            copies: valu("psCopies")
+        });
+    }
+
+    function askForFile() {
+        var file = prompt("Print to file:", "C:\\tmp\\test-file.txt");
+
+        setPrinter({ file: file });
+    }
+
+    function askForHost() {
+        var host = prompt("Print to host:", "192.168.1.254");
+        var port = prompt("Use port:", "9100");
+
+        setPrinter({ host: host, port: port });
+    }
+
+    function setPrinter(printer) {
+        var cf = getUpdatedConfig();
+        cf.setPrinter(printer);
+
+        if (typeof printer === 'object' && printer.name == undefined) {
+            var shown;
+            if (printer.file != undefined) {
+                shown = "FILE: " + printer.file;
+            }
+            if (printer.host != undefined) {
+                shown = "HOST: " + printer.host + ":" + printer.port;
+            }
+
+            $("#configPrinter").html(shown);
+        } else {
+            if (printer.name != undefined) {
+                printer = printer.name;
+            }
+
+            qz.printers.find(printer).then(function(data) {
+                if (data == undefined) {
+                    data = 'NONE';
+                }
+                $("#configPrinter").html(data);
+            }).catch(function(err) {
+                console.error(err);
+            });
+        }
     }
 </script>
 

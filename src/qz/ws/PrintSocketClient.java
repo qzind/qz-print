@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.auth.Certificate;
 import qz.common.TrayManager;
+import qz.printer.PrintOptions;
 import qz.printer.PrintServiceMatcher;
 import qz.printer.Printing;
 import qz.utils.NetworkUtilities;
@@ -65,7 +66,11 @@ public class PrintSocketClient {
         }
         catch(JSONException e) {
             sendError(session, e.getMessage());
-            e.printStackTrace();
+            log.error("Bad JSON: {}", e.getMessage());
+        }
+        catch(Exception e) {
+            sendError(session, e.getMessage());
+            log.error("Problem processing message", e);
         }
     }
 
@@ -78,13 +83,13 @@ public class PrintSocketClient {
         //TODO - gateway dialog
 
         switch(call) {
-            case "getNetworkInfo":
+            case "websocket.getNetworkInfo":
                 sendResult(session, UID, NetworkUtilities.getNetworkJSON());
                 break;
-            case "getDefaultPrinter":
+            case "printers.getDefault":
                 sendResult(session, UID, PrintServiceLookup.lookupDefaultPrintService().getName());
                 break;
-            case "findPrinters":
+            case "printers.find":
                 if (params.has("query")) {
                     sendResult(session, UID, PrintServiceMatcher.getPrinterJSON(params.getString("query")));
                 } else {
@@ -93,15 +98,15 @@ public class PrintSocketClient {
                 break;
 
             case "print":
-                Printing.parseAndRun(json);
+                PrintOptions options = new PrintOptions(json.getJSONObject("params").getJSONObject("options"));
                 sendResult(session, UID, null);
                 break;
 
             //TODO
-            //case "findSerialPorts": break;
-            //case "openSerialPort": break;
-            //case "sendSerialData": break;
-            //case "closeSerialPort": break;
+            //case "serial.findPorts": break;
+            //case "serial.openPort": break;
+            //case "serial.sendData": break;
+            //case "serial.closePort": break;
 
             default:
                 sendError(session, UID, "Invalid function call: " + call);

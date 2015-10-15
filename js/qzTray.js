@@ -205,12 +205,13 @@ var _qz = {
     defaultConfig: {
         size: null,
         margins: 0,
-        doubleSided: false,
+        duplex: false,
         orientation: null,
         rotation: 0,
         paperThickness: null,
         color: true,
         copies: 1,
+
         perSpool: 1,
         language: null,
         encoding: null,
@@ -255,22 +256,22 @@ var _qz = {
 //our Config "class"
 //TODO - docs
 function Config(printerName, opts) {
-    var printer = printerName;
-    var config = opts;
+    this.printer = printerName;
+    this.config = opts;
 
 
     this.setPrinter = function(printerName) {
-        printer = printerName;
+        this.printer = printerName;
     };
     this.getPrinter = function() {
-        return printer;
+        return this.printer;
     };
 
     this.reconfigure = function(opts) {
-        $.extend(config, opts);
+        $.extend(this.config, opts);
     };
-    this.getConfig = function() {
-        return config;
+    this.getOptions = function() {
+        return this.config;
     };
 }
 Config.prototype.print = function(data) {
@@ -290,7 +291,7 @@ window.qz = {
          * Call to setup connection with QZ Tray on user's system.
          *
          * @param {Object} [options] Configuration options for the web socket connection.
-         *  @param {string} [options.host=localhost] Host running the QZ Tray software.
+         *  @param {string} [options.host='localhost'] Host running the QZ Tray software.
          *  @param {boolean} [options.usingSecure=true] If the web socket should try to use secure ports for connecting.
          *  @param {int} [options.keepAlive=60] Seconds between keep-alive pings to keep connection open. Set to 0 to disable.
          *
@@ -354,7 +355,7 @@ window.qz = {
         getNetworkInfo: function() {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
-                    call: 'getNetworkInfo',
+                    call: 'websocket.getNetworkInfo',
                     promise: {
                         resolve: resolve, reject: reject
                     }
@@ -387,7 +388,7 @@ window.qz = {
         getDefault: function() {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
-                    call: 'getDefaultPrinter',
+                    call: 'printers.getDefault',
                     promise: {
                         resolve: resolve, reject: reject
                     }
@@ -406,7 +407,7 @@ window.qz = {
         find: function(query) {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
-                    call: 'findPrinters',
+                    call: 'printers.find',
                     promise: {
                         resolve: resolve, reject: reject
                     },
@@ -428,25 +429,29 @@ window.qz = {
          * Updating these will not update the options on any created config.
          *
          * @param {Object} options Default options used by printer configs if not overridden.
-         *  @param {Object|string} [options.size=null]
-         *   @param {string|number} [options.size.width]
-         *   @param {string|number} [options.size.height]
+         *
+         *  @param {Object} [options.size=null] Paper size.
+         *   @param {number} [options.size.width=0]
+         *   @param {number} [options.size.height=0]
+         *   @param {string} [options.size.units='in']
+         *   @param {boolean} [options.size.auto=false] Can only be specified if a paper size is included as well.
          *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides.
-         *   @param {number} [options.margins.top]
-         *   @param {number} [options.margins.right]
-         *   @param {number} [options.margins.bottom]
-         *   @param {number} [options.margins.left]
-         *  @param {boolean} [options.doubleSided=false]
-         *  @param {string} [options.orientation=null] Valid values [portrait|landscape].
-         *  @param {string|number} [options.rotation=0]
+         *   @param {number} [options.margins.top=0]
+         *   @param {number} [options.margins.right=0]
+         *   @param {number} [options.margins.bottom=0]
+         *   @param {number} [options.margins.left=0]
+         *  @param {boolean} [options.duplex=false]
+         *  @param {string} [options.orientation=null] Valid values [portrait|landscape|landscape-reverse]
+         *  @param {number} [options.rotation=0] In degrees.
          *  @param {number} [options.paperThickness=null]
-         *  @param {boolean} [options.color=true] Whether printing in color or black/white.
+         *  @param {string} [options.colorType='color'] Valid values [color|greyscale|blackwhite]
          *  @param {int} [options.copies=1] Number of copies to be printed.
+         *
          *  @param {int} [options.perSpool=1] Number of pages per spool.
          *  @param {string} [options.language=null]
          *  @param {string} [options.encoding=null]
          *  @param {string} [options.endOfDoc=null]
-         *  @Param {string} [options.printerTray=null]
+         *  @Param {string} [options.printerTray=null] //TODO - string?
          *  @param {boolean} [options.altPrinting=false]
          */
         setDefaults: function(options) {
@@ -457,28 +462,17 @@ window.qz = {
          * Creates new printer config to be used in printing.
          *
          * @param {string|object} printer Name of printer. Use object type to specify printing to file or host.
-         *  @param {string} [printer.name] Name of printer if using Object type.
+         *  @param {string} [printer.name] Name of printer to send printing.
          *  @param {string} [printer.file] Name of file to send printing.
          *  @param {string} [printer.host] Name of host to send printing.
-         *  @param {string} [printer.port] Port used by printer.host.
+         *  @param {string} [printer.port] Port used by &lt;printer.host>.
          * @param {Object} [options] Override any of the default options for this config only.
          *
-         * @returns {Promise<Object<Config>|Error>} The new config.
+         * @returns {Config} The new config.
          */
         create: function(printer, options) {
-            return new RSVP.Promise(function(resolve, reject) {
-                var myOpts = $.extend(true, {}, _qz.defaultConfig, options);
-
-                qz.printers.find(printer).then(function(data) {
-                    if (data.length > 0) {
-                        resolve(new Config(printer, myOpts));
-                    } else {
-                        reject(new Error("No printer with name " + printer + " found"));
-                    }
-                }).catch(function(err) {
-                    reject(err);
-                });
-            });
+            var myOpts = $.extend(true, {}, _qz.defaultConfig, options);
+            return new Config(printer, myOpts);
         }
     },
 
@@ -490,11 +484,10 @@ window.qz = {
      * @param {Object<Config>} config Previously created config object.
      * @param {Array<Object|string>} data Array of data being sent to the printer. String elements are interpreted the same as the object [raw] type.
      *  @param {string} data.type Valid values [raw|image|hex|base64|file|pdf|html|xml].
-     *  @param {string} data.src
+     *  @param {string} data.data
      *  @param {Object} [data.options]
-     *   @param {string} [data.options.lang] Used only with [image] type.
-     *   @param {int} [data.options.xLoc] Used only with [image] type.
-     *   @param {int} [data.options.yLoc] Used only with [image] type.
+     *   @param {int} [data.options.x] Used only with [image] type.
+     *   @param {int} [data.options.y] Used only with [image] type.
      *   @param {string|int} [data.options.dotDensity] Used only with image type.
      *   @param {string} [data.options.xmlTag] Required if using [xml] type.
      *  @param {boolean} [data.signed] Indicate if the data is already signed. Will call signing methods if false.
@@ -512,7 +505,9 @@ window.qz = {
                     resolve: resolve, reject: reject
                 },
                 params: {
-                    // ??
+                    printer: config.getPrinter(),
+                    options: config.getOptions(),
+                    data: data
                 }
             };
 
@@ -529,7 +524,7 @@ window.qz = {
         findPorts: function() {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
-                    call: 'findSerialPorts',
+                    call: 'serial.findPorts',
                     promise: {
                         resolve: resolve, reject: reject
                     }
@@ -547,7 +542,7 @@ window.qz = {
         openPort: function(port) {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
-                    call: 'openSerialPort',
+                    call: 'serial.openPort',
                     promise: {
                         resolve: resolve, reject: reject
                     },
@@ -581,7 +576,7 @@ window.qz = {
         sendData: function(port, options) {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
-                    call: 'sendSerialData',
+                    call: 'serial.sendData',
                     promise: {
                         resolve: resolve, reject: reject
                     },
@@ -603,7 +598,7 @@ window.qz = {
         closePort: function(port) {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
-                    call: 'closeSerialPort',
+                    call: 'serial.closePort',
                     promise: {
                         resolve: resolve, reject: reject
                     },
