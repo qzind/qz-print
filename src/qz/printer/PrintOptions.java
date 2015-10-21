@@ -5,6 +5,11 @@ import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.print.attribute.standard.Chromaticity;
+import javax.print.attribute.standard.MediaSize;
+import javax.print.attribute.standard.OrientationRequested;
+import java.awt.print.PageFormat;
+
 public class PrintOptions {
 
     private static final Logger log = LoggerFactory.getLogger(PrintOptions.class);
@@ -13,14 +18,14 @@ public class PrintOptions {
     private Raw rawOptions = new Raw();
 
 
+    /**
+     * Parses the provided JSON Object into relevant Postscript and Raw options
+     */
     public PrintOptions(JSONObject options) {
         //check for raw options
-        if (!options.isNull("perSpool")) {
-            try { rawOptions.perSpool = options.getInt("perSpool"); }
-            catch(JSONException e) { log.warn("integer", "perSpool", options.opt("perSpool")); }
-        }
-        if (!options.isNull("language")) {
-            rawOptions.language = options.optString("language");
+        if (!options.isNull("altPrinting")) {
+            try { rawOptions.altPrinting = options.getBoolean("altPrinting"); }
+            catch(JSONException e) { warn("boolean", "altPrinting", options.opt("altPrinting")); }
         }
         if (!options.isNull("encoding")) {
             rawOptions.encoding = options.optString("encoding");
@@ -28,75 +33,19 @@ public class PrintOptions {
         if (!options.isNull("endOfDoc")) {
             rawOptions.endOfDoc = options.optString("endOfDoc");
         }
+        if (!options.isNull("language")) {
+            rawOptions.language = options.optString("language");
+        }
+        if (!options.isNull("perSpool")) {
+            try { rawOptions.perSpool = options.getInt("perSpool"); }
+            catch(JSONException e) { log.warn("integer", "perSpool", options.opt("perSpool")); }
+        }
         if (!options.isNull("printerTray")) {
             rawOptions.printerTray = options.optString("printerTray");
-        }
-        if (!options.isNull("altPrinting")) {
-            try { rawOptions.altPrinting = options.getBoolean("altPrinting"); }
-            catch(JSONException e) { warn("boolean", "altPrinting", options.opt("altPrinting")); }
         }
 
 
         //check for postscript options
-        if (!options.isNull("size")) {
-            Size s = new Size();
-            JSONObject subSize = options.optJSONObject("size");
-            if (subSize != null) {
-                try { s.width = subSize.getDouble("width"); }
-                catch(JSONException e) { warn("double", "size.width", subSize.opt("width")); }
-                try { s.height = subSize.getDouble("height"); }
-                catch(JSONException e) { warn("double", "size.height", subSize.opt("height")); }
-
-                s.units = subSize.optString("units");
-
-                try { s.auto = subSize.getBoolean("auto"); }
-                catch(JSONException e) { warn("boolean", "size.auto", subSize.opt("auto")); }
-
-                psOptions.size = s;
-            } else {
-                warn("JSONObject", "size", options.opt("size"));
-            }
-        }
-        if (!options.isNull("margins")) {
-            Margins m = new Margins();
-            JSONObject subMargins = options.optJSONObject("margins");
-            if (subMargins != null) {
-                //each individually
-                try { m.top = subMargins.getDouble("top"); }
-                catch(JSONException e) { warn("double", "margins.top", subMargins.opt("top")); }
-                try { m.right = subMargins.getDouble("right"); }
-                catch(JSONException e) { warn("double", "margins.right", subMargins.opt("right")); }
-                try { m.bottom = subMargins.getDouble("bottom"); }
-                catch(JSONException e) { warn("double", "margins.bottom", subMargins.opt("bottom")); }
-                try { m.left = subMargins.getDouble("left"); }
-                catch(JSONException e) { warn("double", "margins.left", subMargins.opt("left")); }
-
-                psOptions.margins = m;
-            } else {
-                try { m.setAll(options.getDouble("margins")); }
-                catch(JSONException e) { warn("double", "margins", options.opt("margins")); }
-            }
-        }
-        if (!options.isNull("duplex")) {
-            try { psOptions.duplex = options.getBoolean("duplex"); }
-            catch(JSONException e) { warn("boolean", "duplex", options.opt("duplex")); }
-        }
-        if (!options.isNull("orientation")) {
-            try {
-                psOptions.orientation = Orientation.valueOf(options.optString("orientation").toUpperCase());
-            }
-            catch(IllegalArgumentException e) {
-                warn("valid value", "orientation", options.opt("orientation"));
-            }
-        }
-        if (!options.isNull("rotation")) {
-            try { psOptions.rotation = options.getDouble("rotation"); }
-            catch(JSONException e) { warn("double", "rotation", options.opt("rotation")); }
-        }
-        if (!options.isNull("paperThickness")) {
-            try { psOptions.paperThickness = options.getDouble("paperThickness"); }
-            catch(JSONException e) { warn("double", "paperThickness", options.opt("paperThickness")); }
-        }
         if (!options.isNull("colorType")) {
             try {
                 psOptions.colorType = ColorType.valueOf(options.optString("colorType").toUpperCase());
@@ -108,11 +57,117 @@ public class PrintOptions {
         if (!options.isNull("copies")) {
             try { psOptions.copies = options.getInt("copies"); }
             catch(JSONException e) { warn("integer", "copies", options.opt("copies")); }
+            if (psOptions.copies < 1) {
+                log.warn("Cannot have less than one copy");
+                psOptions.copies = 1;
+            }
+        }
+        if (!options.isNull("dpi")) {
+            try { psOptions.dpi = options.getInt("dpi"); }
+            catch(JSONException e) { warn("integer", "dpi", options.opt("dpi")); }
+        }
+        if (!options.isNull("duplex")) {
+            try { psOptions.duplex = options.getBoolean("duplex"); }
+            catch(JSONException e) { warn("boolean", "duplex", options.opt("duplex")); }
+        }
+        if (!options.isNull("margins")) {
+            Margins m = new Margins();
+            JSONObject subMargins = options.optJSONObject("margins");
+            if (subMargins != null) {
+                //each individually
+                if (!subMargins.isNull("top")) {
+                    try { m.top = subMargins.getDouble("top"); }
+                    catch(JSONException e) { warn("double", "margins.top", subMargins.opt("top")); }
+                }
+                if (!subMargins.isNull("right")) {
+                    try { m.right = subMargins.getDouble("right"); }
+                    catch(JSONException e) { warn("double", "margins.right", subMargins.opt("right")); }
+                }
+                if (!subMargins.isNull("bottom")) {
+                    try { m.bottom = subMargins.getDouble("bottom"); }
+                    catch(JSONException e) { warn("double", "margins.bottom", subMargins.opt("bottom")); }
+                }
+                if (!subMargins.isNull("left")) {
+                    try { m.left = subMargins.getDouble("left"); }
+                    catch(JSONException e) { warn("double", "margins.left", subMargins.opt("left")); }
+                }
+
+                if (!subMargins.isNull("units")) {
+                    if ("mm".equals(subMargins.optString("units"))) {
+                        m.units = MediaSize.MM;
+                    } else if ("in".equals(subMargins.optString("units"))) {
+                        m.units = MediaSize.INCH;
+                    } else {
+                        warn("valid value", "size.units", subMargins.opt("units"));
+                    }
+                }
+            } else {
+                try { m.setAll(options.getDouble("margins")); }
+                catch(JSONException e) { warn("double", "margins", options.opt("margins")); }
+            }
+
+            psOptions.margins = m;
+        }
+        if (!options.isNull("orientation")) {
+            try {
+                psOptions.orientation = Orientation.valueOf(options.optString("orientation").replaceAll("\\-", "_").toUpperCase());
+            }
+            catch(IllegalArgumentException e) {
+                warn("valid value", "orientation", options.opt("orientation"));
+            }
+        }
+        if (!options.isNull("paperThickness")) {
+            try { psOptions.paperThickness = options.getDouble("paperThickness"); }
+            catch(JSONException e) { warn("double", "paperThickness", options.opt("paperThickness")); }
+        }
+        if (!options.isNull("rotation")) {
+            try { psOptions.rotation = options.getDouble("rotation"); }
+            catch(JSONException e) { warn("double", "rotation", options.opt("rotation")); }
+        }
+        if (!options.isNull("size")) {
+            Size s = new Size();
+            JSONObject subSize = options.optJSONObject("size");
+            if (subSize != null) {
+                if (!subSize.isNull("width")) {
+                    try { s.width = subSize.getDouble("width"); }
+                    catch(JSONException e) { warn("double", "size.width", subSize.opt("width")); }
+                }
+                if (!subSize.isNull("height")) {
+                    try { s.height = subSize.getDouble("height"); }
+                    catch(JSONException e) { warn("double", "size.height", subSize.opt("height")); }
+                }
+
+                if (!subSize.isNull("units")) {
+                    if ("mm".equals(subSize.optString("units"))) {
+                        s.units = MediaSize.MM;
+                    } else if ("in".equals(subSize.optString("units"))) {
+                        s.units = MediaSize.INCH;
+                    } else {
+                        warn("valid value", "size.units", subSize.opt("units"));
+                    }
+                }
+
+                if (!subSize.isNull("scaleImage")) {
+                    try { s.fitImage = subSize.getBoolean("scaleImage"); }
+                    catch(JSONException e) { warn("boolean", "size.scaleImage", subSize.opt("scaleImage")); }
+                }
+
+                psOptions.size = s;
+            } else {
+                warn("JSONObject", "size", options.opt("size"));
+            }
         }
     }
 
+    /**
+     * Helper method for parse warnings
+     *
+     * @param expectedType Expected entry type
+     * @param name         Option name
+     * @param actualValue  Invalid value passed
+     */
     private static void warn(String expectedType, String name, Object actualValue) {
-        log.warn("Cannot read {} as an {} for {}", actualValue, expectedType, name);
+        log.warn("Cannot read {} as an {} for {}, using default", actualValue, expectedType, name);
     }
 
 
@@ -127,55 +182,232 @@ public class PrintOptions {
 
     // Option groups //
 
+    /** Raw printing options */
     public class Raw {
-        int perSpool = 1;
-        String language = null;
-        String encoding = null;
-        String endOfDoc = null;
-        String printerTray = null;
-        boolean altPrinting = false;
+        private boolean altPrinting = false;    //Alternate printing for linux systems
+        private String encoding = null;         //Text encoding / charset
+        private String endOfDoc = null;         //End of document character
+        private String language = null;         //Printer language
+        private int perSpool = 1;               //Pages per spool
+        private String printerTray = null;      //Printer tray to use
+
+        public boolean isDefault() {
+            return !altPrinting
+                    && encoding == null
+                    && endOfDoc == null
+                    && language == null
+                    && perSpool == 1
+                    && printerTray == null;
+        }
+
+
+        public int getPerSpool() {
+            return perSpool;
+        }
+
+        public String getLanguage() {
+            return language;
+        }
+
+        public String getEncoding() {
+            return encoding;
+        }
+
+        public String getEndOfDoc() {
+            return endOfDoc;
+        }
+
+        public String getPrinterTray() {
+            return printerTray;
+        }
+
+        public boolean isAltPrinting() {
+            return altPrinting;
+        }
     }
 
+    /** Postscript printing options */
     public class Postscript {
-        Size size = null;
-        Margins margins = new Margins();
-        boolean duplex = false;
-        Orientation orientation = Orientation.DEFAULT;
-        double rotation = 0;
-        double paperThickness = -1;
-        ColorType colorType = ColorType.COLOR;
-        int copies = 1;
+        private ColorType colorType = ColorType.COLOR;  //Color / black&white
+        private int copies = 1;                         //Job copies
+        private int dpi = 72;                           //Pixel density
+        private boolean duplex = false;                 //Double/single sided
+        private Margins margins = new Margins();        //Page margins
+        private Orientation orientation = null;         //Page orientation
+        private double paperThickness = -1;             //Paper thickness
+        private double rotation = 0;                    //Image rotation
+        private Size size = null;                       //Paper size
+
+        public boolean isDefault() {
+            return colorType == ColorType.COLOR
+                    && copies == 1
+                    && dpi == 72
+                    && !duplex
+                    && margins.isDefault()
+                    && orientation == null
+                    && paperThickness == -1
+                    && rotation == 0
+                    && size == null;
+        }
+
+
+        public Size getSize() {
+            return size;
+        }
+
+        public Margins getMargins() {
+            return margins;
+        }
+
+        public int getDpi() {
+            return dpi;
+        }
+
+        public boolean isDuplex() {
+            return duplex;
+        }
+
+        public Orientation getOrientation() {
+            return orientation;
+        }
+
+        public double getRotation() {
+            return rotation;
+        }
+
+        public double getPaperThickness() {
+            return paperThickness;
+        }
+
+        public ColorType getColorType() {
+            return colorType;
+        }
+
+        public int getCopies() {
+            return copies;
+        }
     }
 
     // Sub options //
 
-    private class Size {
-        double width = -1;
-        double height = -1;
-        String units = "in";
-        boolean auto = false;
+    /** Postscript page size options */
+    public class Size {
+        private double width = -1;          //Page width
+        private double height = -1;         //Page height
+        private boolean fitImage = false;   //Adjust paper size for best image fit
+        private int units = MediaSize.INCH; //Units for size
+
+        public boolean isDefault() {
+            return width == -1
+                    && height == -1
+                    && units == MediaSize.INCH
+                    && !fitImage;
+        }
+
+
+        public double getWidth() {
+            return width;
+        }
+
+        public double getHeight() {
+            return height;
+        }
+
+        public int getUnits() {
+            return units;
+        }
+
+        public boolean isFitImage() {
+            return fitImage;
+        }
     }
 
-    private class Margins {
-        double top = 0;
-        double right = 0;
-        double bottom = 0;
-        double left = 0;
+    /** Postscript page margins options */
+    public class Margins {
+        private double top = 0;             //Top page margin
+        private double right = 0;           //Right page margin
+        private double bottom = 0;          //Bottom page margin
+        private double left = 0;            //Left page margin
+        private int units = MediaSize.INCH; //Units for margins
 
-        void setAll(double margin) {
+        private void setAll(double margin) {
             top = margin;
             right = margin;
             bottom = margin;
             left = margin;
         }
+
+        public boolean isDefault() {
+            return top == 0
+                    && right == 0
+                    && bottom == 0
+                    && left == 0
+                    && units == MediaSize.INCH;
+        }
+
+
+        public double top() {
+            return top;
+        }
+
+        public double right() {
+            return right;
+        }
+
+        public double bottom() {
+            return bottom;
+        }
+
+        public double left() {
+            return left;
+        }
+
+        public int getUnits() {
+            return units;
+        }
     }
 
-    private enum Orientation {
-        DEFAULT, PORTRAIT, LANDSCAPE, LANDSCAPE_REVERSE
+    /** Postscript page orientation option */
+    public enum Orientation {
+        PORTRAIT(OrientationRequested.PORTRAIT, PageFormat.PORTRAIT),
+        REVERSE_PORTRAIT(OrientationRequested.PORTRAIT, PageFormat.PORTRAIT),
+        LANDSCAPE(OrientationRequested.LANDSCAPE, PageFormat.LANDSCAPE),
+        REVERSE_LANDSCAPE(OrientationRequested.REVERSE_LANDSCAPE, PageFormat.REVERSE_LANDSCAPE);
+
+        private final OrientationRequested asAttribute; //OrientationRequested const
+        private final int asFormat; //PageFormat const
+
+        Orientation(OrientationRequested asAttribute, int asFormat) {
+            this.asAttribute = asAttribute;
+            this.asFormat = asFormat;
+        }
+
+
+        public OrientationRequested getAsAttribute() {
+            return asAttribute;
+        }
+
+        public int getAsFormat() {
+            return asFormat;
+        }
     }
 
-    private enum ColorType {
-        COLOR, GREYSCALE, BLACKWHITE
+    /** Postscript page color option */
+    public enum ColorType {
+        COLOR(Chromaticity.COLOR),
+        GREYSCALE(Chromaticity.MONOCHROME),
+        BLACKWHITE(Chromaticity.MONOCHROME);
+
+        private Chromaticity chromatic;
+
+        ColorType(Chromaticity chromatic) {
+            this.chromatic = chromatic;
+        }
+
+
+        public Chromaticity getChromatic() {
+            return chromatic;
+        }
     }
 
 }

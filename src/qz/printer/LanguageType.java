@@ -21,6 +21,10 @@
  */
 package qz.printer;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Enum for print languages, such as ZPL, EPL, etc.
  *
@@ -28,84 +32,58 @@ package qz.printer;
  */
 public enum LanguageType {
 
-    ZPLII, ZPL, EPL2, EPL, CPCL, ESCP, ESCP2, UNKNOWN;
+    ZPLII(false, false, "ZEBRA", "ZPL2"),
+    ZPL(false, false),
+    EPL2(true, true, "EPLII"),
+    EPL(true, true),
+    CPCL(false, true),
+    ESCP(false, false, "ESC", "ESC/P", "ESC/POS", "ESC\\P", "EPSON"),
+    ESCP2(false, false, "ESC/P2"),
+    UNKNOWN(false, false);
 
-    LanguageType() {
+
+    private boolean imgOutputInvert = false;
+    private boolean imgWidthValidated = false;
+    private List<String> altNames;
+
+    LanguageType(boolean imgOutputInvert, boolean imgWidthValidated, String... altNames) {
+        this.imgOutputInvert = imgOutputInvert;
+        this.imgWidthValidated = imgWidthValidated;
+
+        this.altNames = new ArrayList<>();
+        Collections.addAll(this.altNames, altNames);
     }
 
     public static LanguageType getType(String type) {
-        for (LanguageType languageType : LanguageType.values()) {
-            if (type.equalsIgnoreCase(languageType.name())) {
-                return languageType;
+        for(LanguageType lang : LanguageType.values()) {
+            if (type.equalsIgnoreCase(lang.name()) || lang.altNames.contains(type)) {
+                return lang;
             }
         }
-        if (type.equalsIgnoreCase("ZEBRA")) {
-            return ZPLII;
-        } else if (type.equalsIgnoreCase("ZPL2")) {
-            return ZPLII;
-        } else if (type.equalsIgnoreCase("EPLII")) {
-            return EPL2;
-        } else if (type.equalsIgnoreCase("ESC")) {
-            return ESCP;
-        } else if (type.equalsIgnoreCase("ESC/P")) {
-            return ESCP;
-        } else if (type.equalsIgnoreCase("ESC/POS")) {
-            return ESCP;
-        } else if (type.equalsIgnoreCase("ESC\\P")) {
-            return ESCP;
-        } else if (type.equalsIgnoreCase("ESC/P2")) {
-            return ESCP2;
-        } else if (type.equalsIgnoreCase("EPSON")) {
-            return ESCP;
-        }
+
         return UNKNOWN;
     }
 
-    /**
-     * Returns whether or not the specified <code>LanguageType</code> flips 
-     * inverts the black and white pixels before sending to the printer.
-     * @param languageType language type of the printer
-     * @return true if language type flips black and white pixels
-     */
-    private static boolean requiresImageOutputInverted(LanguageType languageType) {
-        switch (languageType) {
-            case EPL:
-            case EPL2:
-                return true;
-            default:
-                return false;
-        }
-    }
 
     /**
-     * Returns whether or not this <code>LanguageType</code> flips 
+     * Returns whether or not this {@code LanguageType}
      * inverts the black and white pixels before sending to the printer.
-     * @return true if language type flips black and white pixels
+     *
+     * @return {@code true} if language type flips black and white pixels
      */
     public boolean requiresImageOutputInverted() {
-        return LanguageType.requiresImageOutputInverted(this);
+        return imgOutputInvert;
     }
 
     /**
-     * Returns whether or not the specified <code>LanguageType</code> requires 
+     * Returns whether or not the specified {@code LanguageType} requires
      * the image width to be validated prior to processing output.  This
      * is required for image formats that normally require the image width to
      * be a multiple of 8
-     * @param languageType language type of the printer
-     * @return true if the printer requires image width validation
+     *
+     * @return {@code true} if the printer requires image width validation
      */
-    private static boolean requiresImageWidthValidated(LanguageType languageType) {
-        switch (languageType) {
-            case CPCL:
-            case EPL:
-            case EPL2:
-                return true;
-            default:
-                return false;
-        }
-    }
-
     public boolean requiresImageWidthValidated() {
-        return LanguageType.requiresImageWidthValidated(this);
+        return imgWidthValidated;
     }
 }

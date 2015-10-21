@@ -10,9 +10,11 @@ import qz.auth.Certificate;
 import qz.common.TrayManager;
 import qz.printer.PrintOptions;
 import qz.printer.PrintServiceMatcher;
-import qz.printer.Printing;
+import qz.printer.action.PrintProcessor;
 import qz.utils.NetworkUtilities;
+import qz.utils.PrintingUtilities;
 
+import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import java.io.IOException;
 import java.util.HashMap;
@@ -45,35 +47,43 @@ public class PrintSocketClient {
 
     @OnWebSocketError
     public void onError(Session session, Throwable error) {
-        log.warn("Connection error: " + error.getMessage());
+        log.error("Connection error", error);
         trayManager.displayErrorMessage(error.getMessage());
     }
 
     @OnWebSocketMessage
     public void onMessage(Session session, String message) {
         if (message == null || message.isEmpty()) {
-            sendError(session, "Message is empty");
+            sendError(session, null, "Message is empty");
         }
         if ("ping".equals(message)) { return; } //keep-alive call / no need to process
 
+        String uid = null;
         try {
-            log.info("Message: " + message);
+            log.debug("Message: " + message);
             JSONObject json = new JSONObject(message);
+            uid = json.getString("uid");
 
             //TODO - check certificates / signing
 
             processMessage(session, json);
         }
         catch(JSONException e) {
-            sendError(session, e.getMessage());
+            sendError(session, uid, e.getMessage());
             log.error("Bad JSON: {}", e.getMessage());
         }
         catch(Exception e) {
-            sendError(session, e.getMessage());
+            sendError(session, uid, e.getMessage());
             log.error("Problem processing message", e);
         }
     }
 
+    /**
+     * Determine which method was called from web API
+     *
+     * @param session WebSocket session
+     * @param json    JSON received from web API
+     */
     private void processMessage(Session session, JSONObject json) throws JSONException {
         String UID = json.getString("uid");
         String call = json.getString("call");
@@ -98,8 +108,7 @@ public class PrintSocketClient {
                 break;
 
             case "print":
-                PrintOptions options = new PrintOptions(json.getJSONObject("params").getJSONObject("options"));
-                sendResult(session, UID, null);
+                processPrintRequest(session, UID, params);
                 break;
 
             //TODO
@@ -114,7 +123,41 @@ public class PrintSocketClient {
         }
     }
 
+    /**
+     * Determine print variables and send data to printer
+     *
+     * @param session WebSocket session
+     * @param UID     ID of call from web API
+     * @param params  Params of call from web API
+     */
+    private void processPrintRequest(Session session, String UID, JSONObject params) throws JSONException {
+        PrintService service = PrintServiceMatcher.findPrinter(params.getString("printer"));
+        if (service == null) {
+            sendError(session, UID, "Cannot find printer " + params.getString("printer"));
+            return;
+        }
+        PrintOptions options = new PrintOptions(params.getJSONObject("options"));
 
+        try {
+            PrintProcessor processor = PrintingUtilities.determineProcessor(params.getJSONArray("data"), options.getRawOptions());
+            processor.parseData(params.getJSONArray("data"));
+            processor.print(service, options);
+
+            sendResult(session, UID, null);
+        }
+        catch(Exception e) {
+            sendError(session, UID, "Printing failed: " + e.getMessage());
+        }
+    }
+
+
+    /**
+     * Send JSON reply to web API for call {@code messageUID}
+     *
+     * @param session     WebSocket session
+     * @param messageUID  ID of call from web API
+     * @param returnValue Return value of method call, can be {@code null}
+     */
     private void sendResult(Session session, String messageUID, Object returnValue) {
         try {
             JSONObject reply = new JSONObject();
@@ -127,10 +170,13 @@ public class PrintSocketClient {
         }
     }
 
-    private void sendError(Session session, String errorMsg) {
-        sendError(session, null, errorMsg);
-    }
-
+    /**
+     * Send JSON error reply to web API for call {@code messageUID}
+     *
+     * @param session    WebSocket session
+     * @param messageUID ID of call from web API
+     * @param errorMsg   Error from method call
+     */
     private void sendError(Session session, String messageUID, String errorMsg) {
         try {
             JSONObject reply = new JSONObject();
@@ -143,6 +189,12 @@ public class PrintSocketClient {
         }
     }
 
+    /**
+     * Raw send method for replies
+     *
+     * @param session WebSocket session
+     * @param reply   JSON Object of reply to web API
+     */
     private void send(Session session, JSONObject reply) {
         try {
             session.getRemote().sendString(reply.toString());

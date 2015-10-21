@@ -23,7 +23,6 @@
  To be done
  ----------
  > examples in docs
- > actual implementation of methods
  * * * * * * * */
 
 
@@ -203,21 +202,22 @@ var _qz = {
 
 
     defaultConfig: {
-        size: null,
-        margins: 0,
-        duplex: false,
-        orientation: null,
-        rotation: 0,
-        paperThickness: null,
         color: true,
         copies: 1,
+        dpi: 72,
+        duplex: false,
+        margins: 0,
+        orientation: null,
+        paperThickness: null,
+        rotation: 0,
+        size: null,
 
-        perSpool: 1,
-        language: null,
+        altPrinting: false,
         encoding: null,
         endOfDoc: null,
-        printerTray: null,
-        altPrinting: false
+        language: null,
+        perSpool: 1,
+        printerTray: null
     },
 
 
@@ -430,29 +430,31 @@ window.qz = {
          *
          * @param {Object} options Default options used by printer configs if not overridden.
          *
-         *  @param {Object} [options.size=null] Paper size.
-         *   @param {number} [options.size.width=0]
-         *   @param {number} [options.size.height=0]
-         *   @param {string} [options.size.units='in']
-         *   @param {boolean} [options.size.auto=false] Can only be specified if a paper size is included as well.
-         *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides.
+         *  @param {string} [options.colorType='color'] Valid values [color|greyscale|blackwhite]
+         *  @param {int} [options.copies=1] Number of copies to be printed.
+         *  @param {number} [options.dpi=72] Pixel density
+         *  @param {boolean} [options.duplex=false] Double sided printing
+         *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides in inches.
          *   @param {number} [options.margins.top=0]
          *   @param {number} [options.margins.right=0]
          *   @param {number} [options.margins.bottom=0]
          *   @param {number} [options.margins.left=0]
-         *  @param {boolean} [options.duplex=false]
-         *  @param {string} [options.orientation=null] Valid values [portrait|landscape|landscape-reverse]
-         *  @param {number} [options.rotation=0] In degrees.
+         *   @param {string} [options.margins.units='in']
+         *  @param {string} [options.orientation=null] Valid values [portrait|landscape|reverse-landscape]
          *  @param {number} [options.paperThickness=null]
-         *  @param {string} [options.colorType='color'] Valid values [color|greyscale|blackwhite]
-         *  @param {int} [options.copies=1] Number of copies to be printed.
+         *  @param {number} [options.rotation=0] Image rotation in degrees.
+         *  @param {Object} [options.size=null] Paper size.
+         *   @param {number} [options.size.width=null] Page width.
+         *   @param {number} [options.size.height=null] Page height.
+         *   @param {string} [options.size.units='in'] Valid values [in|mm]
+         *   @param {boolean} [options.size.scaleImage=false] Scales image to page size, keeping ratio.
          *
-         *  @param {int} [options.perSpool=1] Number of pages per spool.
-         *  @param {string} [options.language=null]
-         *  @param {string} [options.encoding=null]
-         *  @param {string} [options.endOfDoc=null]
-         *  @Param {string} [options.printerTray=null] //TODO - string?
          *  @param {boolean} [options.altPrinting=false]
+         *  @param {string} [options.encoding=null] Character set
+         *  @param {string} [options.endOfDoc=null]
+         *  @param {string} [options.language=null] Printer language
+         *  @param {int} [options.perSpool=1] Number of pages per spool.
+         *  @param {string} [options.printerTray=null] //TODO - string?
          */
         setDefaults: function(options) {
             $.extend(true, _qz.defaultConfig, options);
@@ -469,6 +471,8 @@ window.qz = {
          * @param {Object} [options] Override any of the default options for this config only.
          *
          * @returns {Config} The new config.
+         *
+         * @see config.setDefaults
          */
         create: function(printer, options) {
             var myOpts = $.extend(true, {}, _qz.defaultConfig, options);
@@ -486,18 +490,17 @@ window.qz = {
      *  @param {string} data.type Valid values [raw|image|hex|base64|file|pdf|html|xml].
      *  @param {string} data.data
      *  @param {Object} [data.options]
-     *   @param {int} [data.options.x] Used only with [image] type.
-     *   @param {int} [data.options.y] Used only with [image] type.
-     *   @param {string|int} [data.options.dotDensity] Used only with image type.
-     *   @param {string} [data.options.xmlTag] Required if using [xml] type.
-     *  @param {boolean} [data.signed] Indicate if the data is already signed. Will call signing methods if false.
+     *   @param {int} [data.options.x] Used only with [image] type. The X position of the image.
+     *   @param {int} [data.options.y] Used only with [image] type. The Y position of the image.
+     *   @param {string|int} [data.options.dotDensity] Used only with [image] type.
+     *   @param {string} [data.options.xmlTag] Required if using [xml] type. Tag name containing base64 formatted data.
+     * @param {boolean} [signed] Indicate if the data is already signed. Will call signing methods if false.
      *
      * @returns {Promise<null|Error>}
      *
      * @see config.create
-     * @see config.setDefaults
      */
-    print: function(config, data) {
+    print: function(config, data, signed) {
         return new RSVP.Promise(function(resolve, reject) {
             var msg = {
                 call: 'print',
@@ -507,7 +510,8 @@ window.qz = {
                 params: {
                     printer: config.getPrinter(),
                     options: config.getOptions(),
-                    data: data
+                    data: data,
+                    signed: signed
                 }
             };
 

@@ -1,25 +1,25 @@
 /*
- * 
+ *
  * Copyright (C) 2013 Tres Finocchiaro, QZ Industries
  * Copyright (C) 2013 Antoni Ten Monro's
- * 
+ *
  * IMPORTANT:  This software is dual-licensed
- * 
+ *
  * LGPL 2.1
- * This is free software.  This software and source code are released under 
- * the "LGPL 2.1 License".  A copy of this license should be distributed with 
+ * This is free software.  This software and source code are released under
+ * the "LGPL 2.1 License".  A copy of this license should be distributed with
  * this software. http://www.gnu.org/licenses/lgpl-2.1.html
- * 
+ *
  * QZ INDUSTRIES SOURCE CODE LICENSE
- * This software and source code *may* instead be distributed under the 
- * "QZ Industries Source Code License", available by request ONLY.  If source 
+ * This software and source code *may* instead be distributed under the
+ * "QZ Industries Source Code License", available by request ONLY.  If source
  * code for this project is to be made proprietary for an individual and/or a
  * commercial entity, written permission via a copy of the "QZ Industries Source
- * Code License" must be obtained first.  If you've obtained a copy of the 
- * proprietary license, the terms and conditions of the license apply only to 
+ * Code License" must be obtained first.  If you've obtained a copy of the
+ * proprietary license, the terms and conditions of the license apply only to
  * the licensee identified in the agreement.  Only THEN may the LGPL 2.1 license
  * be voided.
- * 
+ *
  */
 package qz.printer;
 
@@ -39,12 +39,12 @@ import java.util.logging.Logger;
  * @author Tres Finocchiaro
  * @author Antoni Ten Monro's
  *
- * Changelog: 
- * 
+ * Changelog:
+ *
  * 20130805 (Tres Finocchiaro) Merged Antoni's changes with original keeping
  * Antoni's better instantiation, "black" pixel logic, removing class abstraction
  * (uses LanguageType Enum switching instead for smaller codebase)
- * 
+ *
  * 20130710 (Antoni Ten Monro's) Refactored the original, to have the
  * actual implementation of the different ImageWrapper classes in derived
  * classes, while leaving common functionality here.
@@ -76,7 +76,7 @@ public class ImageWrapper {
      * discarded.
      */
     public static final int CHECK_ALPHA = 2;
-    
+
     private int lumaThreshold = 127;
     private boolean[] imageAsBooleanArray;        //Image representation as an array of boolean, with true values representing imageAsBooleanArray dots
     private int[] imageAsIntArray;                //Image representation as an array of ints, with each bit representing a imageAsBooleanArray dot
@@ -104,7 +104,7 @@ public class ImageWrapper {
         log.info(
                 "Dimensions: " + bufferedImage.getWidth() + "x" + bufferedImage.getHeight());
         init();
-        
+
         if (languageType.requiresImageWidthValidated()) {
             validateImageWidth();
         }
@@ -199,11 +199,11 @@ public class ImageWrapper {
     public void setAlphaThreshold(int alphaThreshold) {
         this.alphaThreshold = alphaThreshold;
     }
-    
+
     public int getDotDensity() {
         return dotDensity;
     }
-    
+
     public void setDotDensity(int dotDensity) {
         this.dotDensity = dotDensity;
     }
@@ -225,9 +225,9 @@ public class ImageWrapper {
     }
 
     /**
-     * Tests if a given pixel should be black. Multiple quantization algorythms
+     * Tests if a given pixel should be black. Multiple quantization algorithms
      * are available. The quantization method should be adjusted with
-     * setQuantizationMethod. Should an invalied value be set as the
+     * setQuantizationMethod. Should an invalid value be set as the
      * quantization method, CHECK_BLACK will be used
      *
      * @param rgbPixel the color of the pixel as defined in getRGB()
@@ -250,7 +250,7 @@ public class ImageWrapper {
             case CHECK_ALPHA:
                 return a > getAlphaThreshold();         //pixels that are more opaque than the threshold are black
             case CHECK_BLACK:
-                //only fully black pizels are black
+                //only fully black pixels are black
             default:
                 return color.equals(Color.BLACK);              //The default
 
@@ -278,7 +278,7 @@ public class ImageWrapper {
         * See also: https://support.zebra.com/cpws/docs/eltron/gw_command.htm
         */
         for (int rgbpixel : rgbPixels) {
-            pixels[i++] = languageType.requiresImageOutputInverted() ? !isBlack(rgbpixel) : 
+            pixels[i++] = languageType.requiresImageOutputInverted() ? !isBlack(rgbpixel) :
                     isBlack(rgbpixel);
         }
         setImageAsBooleanArray(pixels);
@@ -292,7 +292,7 @@ public class ImageWrapper {
      */
     private byte[] getBytes() {
         log.info("Generating byte array");
-        int[] ints = this.getImageAsIntArray();
+        int[] ints = getImageAsIntArray();
         byte[] bytes = new byte[ints.length];
         for (int i = 0; i < ints.length; i++) {
             bytes[i] = (byte) ints[i];
@@ -319,12 +319,12 @@ public class ImageWrapper {
      * sent to the printer
      */
     public byte[] getImageCommand() throws InvalidRawImageException, UnsupportedEncodingException {
-        this.getByteBuffer().clear();
-        
+        getByteBuffer().clear();
+
         switch (languageType) {
             case ESCP:
             case ESCP2:
-                appendEpsonSlices(this.getByteBuffer());
+                appendEpsonSlices(getByteBuffer());
                 break;
             case ZPL:
             case ZPLII:
@@ -334,8 +334,8 @@ public class ImageWrapper {
                 StringBuilder zpl = new StringBuilder("^GFA,")
                         .append(byteLen).append(",").append(byteLen).append(",")
                         .append(perRow).append(",").append(zplHexAsString);
-                
-                this.getByteBuffer().append(zpl, charset);
+
+                getByteBuffer().append(zpl, charset);
                 break;
             case EPL:
             case EPL2:
@@ -344,8 +344,8 @@ public class ImageWrapper {
                         .append(getyPos()).append(",")
                         .append(getWidth()/8).append(",")
                         .append(getHeight()).append(",");
-                
-                this.getByteBuffer().append(epl, charset).append(getBytes());
+
+                getByteBuffer().append(epl, charset).append(getBytes());
                 break;
             case CPCL:
                 String cpclHexAsString = ByteUtilities.getHexString(getImageAsIntArray());
@@ -355,27 +355,27 @@ public class ImageWrapper {
                         .append(getxPos()).append(" ")
                         .append(getyPos()).append(" ")
                         .append(cpclHexAsString);
-                
-                this.getByteBuffer().append(cpcl, charset);
+
+                getByteBuffer().append(cpcl, charset);
                 break;
             default:
                 throw new InvalidRawImageException(charset.name() + " image conversion is not yet supported.");
         }
-        return this.getByteBuffer().getByteArray();
+        return getByteBuffer().getByteArray();
     }
 
     /**
      * @return the width of the image
      */
     public int getWidth() {
-        return this.bufferedImage.getWidth();
+        return bufferedImage.getWidth();
     }
 
     /**
      * @return the height of the image
      */
     public int getHeight() {
-        return this.bufferedImage.getHeight();
+        return bufferedImage.getHeight();
     }
 
     /**
@@ -445,9 +445,9 @@ public class ImageWrapper {
      * @param buffer the buffer to set
      */
     private void setBufferedImage(BufferedImage buffer) {
-        this.bufferedImage = buffer;
+        bufferedImage = buffer;
     }
-    
+
     /**
      * http://android-essential-devtopics.blogspot.com/2013/02/sending-bit-image-to-epson-printer.html
      * @param builder the ByteArrayBuilder to use
@@ -455,8 +455,8 @@ public class ImageWrapper {
     private void appendEpsonSlices(ByteArrayBuilder builder) {
 //        BitSet dots = data.getDots();
 //        outputStream.write(PrinterCommands.INIT);
- 
- 
+
+
         // So we have our bitmap data sitting in a bit array called "dots."
         // This is one long array of 1s (black) and 0s (white) pixels arranged
         // as if we had scanned the bitmap from top to bottom, left to right.
@@ -465,14 +465,14 @@ public class ImageWrapper {
         // bytes, and send them to the printer, then keep increasing x. If our
         // image is more than 24 dots high, we have to send a second bit image
         // command to draw the next slice of 24 dots in the image.
- 
+
         // Set the line spacing to 24 dots, the height of each "stripe" of the
         // image that we're drawing. If we don't do this, and we need to
         // draw the bitmap in multiple passes, then we'll end up with some
         // whitespace between slices of the image since the default line
         // height--how much the printer moves on a newline--is 30 dots.
         builder.append(new byte[] {0x1B, 0x33, 24});
- 
+
         // OK. So, starting from x = 0, read 24 bits down and send that data
         // to the printer. The offset variable keeps track of our global 'y'
         // position in the image. For example, if we were drawing a bitmap
@@ -482,7 +482,7 @@ public class ImageWrapper {
         // these 24-dot stripes until we've execute past the height of the
         // bitmap.
         int offset = 0;
- 
+
         while (offset < getHeight()) {
             // The third and fourth parameters to the bit image command are
             // 'nL' and 'nH'. The 'L' and the 'H' refer to 'low' and 'high', respectively.
@@ -494,14 +494,14 @@ public class ImageWrapper {
             byte nL = (byte)((int)(getWidth() % 256));
             byte nH = (byte)((int)(getWidth()/256));
             builder.append(new byte[] {0x1B, 0x2A, (byte)dotDensity, nL , nH});
- 
+
             for (int x = 0; x < getWidth(); ++x) {
                 // Remember, 24 dots = 24 bits = 3 bytes.
                 // The 'k' variable keeps track of which of those
                 // three bytes that we're currently scribbling into.
                 for (int k = 0; k < 3; ++k) {
                     byte slice = 0;
- 
+
                     // A byte is 8 bits. The 'b' variable keeps track
                     // of which bit in the byte we're recording.
                     for (int b = 0; b < 8; ++b) {
@@ -512,18 +512,18 @@ public class ImageWrapper {
                         // offset to that, multiple by 8 to get it in terms
                         // of bits again, and add our bit offset to it.
                         int y = (((offset / 8) + k) * 8) + b;
- 
+
                         // Calculate the location of the pixel we want in the bit array.
                         // It'll be at (y * width) + x.
                         int i = (y * getWidth()) + x;
- 
+
                         // If the image (or this stripe of the image)
                         // is shorter than 24 dots, pad with zero.
                         boolean v = false;
                         if (i < getImageAsBooleanArray().length) {
                             v = getImageAsBooleanArray()[i];
                         }
- 
+
                         // Finally, store our bit in the byte that we're currently
                         // scribbling to. Our current 'b' is actually the exact
                         // opposite of where we want it to be in the byte, so
@@ -531,41 +531,41 @@ public class ImageWrapper {
                         // byte, and OR it with the target byte to get it into there.
                         slice |= (byte) ((v ? 1 : 0) << (7 - b));
                     }
- 
+
                     // Phew! Write the damn byte to the buffer
                     builder.append(new byte[] {slice});
                 }
             }
- 
+
             // We're done with this 24-dot high pass. Render a newline
             // to bump the print head down to the next line
             // and keep on trucking.
             offset += 24;
             builder.append(new byte[] {10});
         }
- 
+
         // Restore the line spacing to the default of 30 dots.
         builder.append(new byte[] {0x1B, 0x33, 30});
 
     }
-    
+
     /**
-     * Checks if the image width is a multiple of 8, and if it's not, 
+     * Checks if the image width is a multiple of 8, and if it's not,
      * pads the image on the right side with blank pixels. <br />
-     * Due to limitations on the EPL2 language, image widths must be a multiple 
+     * Due to limitations on the EPL2 language, image widths must be a multiple
      * of 8.
      */
     private void validateImageWidth()
     {
-        BufferedImage oldBufferedImage = this.bufferedImage;
+        BufferedImage oldBufferedImage = bufferedImage;
         int height=oldBufferedImage.getHeight();
         int width=oldBufferedImage.getWidth();
-        if(width%8!=0) 
+        if(width%8!=0)
         {
             int newWidth=(width/8+1)*8;
             BufferedImage newBufferedImage=new BufferedImage(newWidth, height,
                     BufferedImage.TYPE_INT_ARGB);
-            
+
             Graphics2D g = newBufferedImage.createGraphics();
             g.drawImage(oldBufferedImage, 0, 0, null);
             g.dispose();

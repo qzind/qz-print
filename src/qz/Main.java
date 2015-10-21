@@ -42,7 +42,7 @@ public class Main {
                 System.exit(0);
             }
         }
-        JOptionPane.showMessageDialog(null, "This program cannot be run interactively.  Please visit: https://qz.io/", "Error", JOptionPane.ERROR_MESSAGE);
-        System.exit(0);
+
+        JOptionPane.showMessageDialog(null, "This program cannot be ran interactively.  Please visit: https://qz.io/", "Error", JOptionPane.ERROR_MESSAGE);
     }
 }

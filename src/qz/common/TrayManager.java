@@ -35,7 +35,7 @@ import qz.utils.MacUtilities;
 import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
 import qz.utils.ShellUtilities;
-import qz.ws.PrintSocket;
+//import qz.ws.PrintSocket; //FIXME
 
 import javax.swing.*;
 import java.awt.*;
@@ -181,7 +181,7 @@ public class TrayManager {
 
         anonymousItem = new JCheckBoxMenuItem("Block Anonymous Requests");
         anonymousItem.setMnemonic(KeyEvent.VK_K);
-        anonymousItem.setState(PrintSocket.UNSIGNED.isBlocked());
+        //anonymousItem.setState(PrintSocket.UNSIGNED.isBlocked());
         anonymousItem.addActionListener(anonymousListener);
 
         JMenuItem logItem = new JMenuItem("View Logs...", iconCache.getIcon(IconCache.Icon.LOG_ICON));
@@ -281,9 +281,9 @@ public class TrayManager {
             System.out.println("Block unsigned: " + checkBoxState);
 
             if (checkBoxState) {
-                blackList(PrintSocket.UNSIGNED);
+                //blackList(PrintSocket.UNSIGNED);
             } else {
-                FileUtilities.deleteFromFile(Constants.BLOCK_FILE, PrintSocket.UNSIGNED.data());
+                //FileUtilities.deleteFromFile(Constants.BLOCK_FILE, PrintSocket.UNSIGNED.data());
             }
         }
     };
@@ -419,11 +419,11 @@ public class TrayManager {
         } else {
             trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from printing to " + printer);
             if (gatewayDialog.isPersistent()) {
-                if (PrintSocket.UNSIGNED.equals(cert)) {
-                    anonymousItem.doClick(); // if always block anonymous requests -> flag menu item
-                } else {
-                    blackList(cert);
-                }
+                //if (PrintSocket.UNSIGNED.equals(cert)) {
+                //    anonymousItem.doClick(); // if always block anonymous requests -> flag menu item
+                //} else {
+                //    blackList(cert);
+                //}
             }
         }
 

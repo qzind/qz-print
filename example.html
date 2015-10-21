@@ -205,11 +205,10 @@
                 <div class="columns-3" style="border-left: 1px dashed #CCC;">
                     <h4>Options</h4>
 
-                    <label for="rawPerSpool">Per Spool</label>
-                    <input type="number" id="rawPerSpool" />
-
-                    <label for="rawLanguage">Language</label>
-                    <input type="text" id="rawLanguage" />
+                    <label for="rawAltPrinting">
+                        Alternate Printing:
+                        <input type="checkbox" id="rawAltPrinting" />
+                    </label>
 
                     <label for="rawEncoding">Encoding</label>
                     <input type="text" id="rawEncoding" />
@@ -217,13 +216,14 @@
                     <label for="rawEndOfDoc">End Of Doc</label>
                     <input type="text" id="rawEndOfDoc" />
 
+                    <label for="rawLanguage">Language</label>
+                    <input type="text" id="rawLanguage" />
+
+                    <label for="rawPerSpool">Per Spool</label>
+                    <input type="number" id="rawPerSpool" />
+
                     <label for="rawPrinterTray">Printer Tray</label>
                     <input type="text" id="rawPrinterTray" />
-
-                    <label for="rawAltPrinting">
-                        Alternate Printing:
-                        <input type="checkbox" id="rawAltPrinting" />
-                    </label>
 
                     <button type="button" onclick="resetRawOptions();">Reset</button>
                 </div>
@@ -260,25 +260,6 @@
                 <div class="columns-3" style="border-left: 1px dashed #CCC;">
                     <h4>Options</h4>
 
-                    <label for="psDuplex">
-                        Duplex:
-                        <input type="checkbox" id="psDuplex" />
-                    </label>
-
-                    <label for="psOrientation">Orientation</label>
-                    <select id="psOrientation">
-                        <option value="">Default</option>
-                        <option value="portrait">Portrait</option>
-                        <option value="landscape">Landscape</option>
-                        <option value="landscape-reverse">Landscape - Reverse</option>
-                    </select>
-
-                    <label for="psRotation">Rotation</label>
-                    <input type="number" id="psRotation" />
-
-                    <label for="psPaperThickness">Paper Thickness</label>
-                    <input type="number" id="psPaperThickness" />
-
                     <label for="psColorType">Color Type</label>
                     <select id="psColorType">
                         <option value="color">Color</option>
@@ -289,27 +270,32 @@
                     <label for="psCopies">Copies</label>
                     <input type="number" id="psCopies" />
 
+                    <label for="psDPI">DPI</label>
+                    <input type="number" id="psDPI" />
+
+                    <label for="psDuplex">
+                        Duplex:
+                        <input type="checkbox" id="psDuplex" />
+                    </label>
+
+                    <label for="psOrientation">Orientation</label>
+                    <select id="psOrientation">
+                        <option value="">Default</option>
+                        <option value="portrait">Portrait</option>
+                        <option value="landscape">Landscape</option>
+                        <option value="reverse-landscape">Landscape - Reverse</option>
+                    </select>
+
+                    <label for="psPaperThickness">Paper Thickness</label>
+                    <input type="number" id="psPaperThickness" />
+
+                    <label for="psRotation">Rotation</label>
+                    <input type="number" id="psRotation" />
+
                     <button type="button" onclick="resetPSOptions();">Reset</button>
                 </div>
 
                 <div class="columns-3">
-                    <label class="inline">Size</label>
-                    (
-                    <label for="psSizeActive" class="inline">Enable:</label>
-                    <input type="checkbox" id="psSizeActive" onclick="checkSizeActive();" />
-                    )
-                    <span class="inline" id="psSizeGroup">
-                        <label for="psSizeWidth">Width:</label>
-                        <input type="number" id="psSizeWidth" />
-                        <label for="psSizeHeight">Height:</label>
-                        <input type="number" id="psSizeHeight" />
-                        <label for="psSizeUnits">Units:</label>
-                        <input type="text" id="psSizeUnits" />
-                        <label for="psSizeAuto">Auto:</label>
-                        <input type="checkbox" id="psSizeAuto" />
-                    </span>
-                    <br />
-
                     <label for="psMargins">Margins</label>
                     (
                     <label for="psMarginsActive" class="inline">Individual:</label>
@@ -325,6 +311,25 @@
                         <input type="number" id="psMarginsBottom" />
                         <label for="psMarginsLeft">Left:</label>
                         <input type="number" id="psMarginsLeft" />
+                    </span>
+                    <!-- TODO - units (radios) -->
+                    <br />
+
+                    <label class="inline">Size</label>
+                    (
+                    <label for="psSizeActive" class="inline">Enable:</label>
+                    <input type="checkbox" id="psSizeActive" onclick="checkSizeActive();" />
+                    )
+                    <span class="inline" id="psSizeGroup">
+                        <label for="psSizeWidth">Width:</label>
+                        <input type="number" id="psSizeWidth" />
+                        <label for="psSizeHeight">Height:</label>
+                        <input type="number" id="psSizeHeight" />
+                        <!-- FIXME - radios -->
+                        <label for="psSizeUnits">Units:</label>
+                        <input type="text" id="psSizeUnits" />
+                        <label for="psSizeScale">Scale Image:</label>
+                        <input type="checkbox" id="psSizeScale" />
                     </span>
                 </div>
             </div>
@@ -660,12 +665,10 @@
     }
 
     function printImage(scaling) {
-
-        var config = getUpdatedConfig();
-
         if (scaling) {
-            config.reconfigure({ size: { width: 8.5, height: 11.0, auto: true } });
+            $("psSizeScale").prop('checked', true);
         }
+        var config = getUpdatedConfig();
 
         var printData = [
             { type: 'image', data: getPath() + '/assets/img/image_sample.png' }
@@ -704,12 +707,13 @@
     }
 
     function resetPSOptions() {
-        $("#psSizeWidth").val(0);
-        $("#psSizeHeight").val(0);
-        $("#psSizeUnits").val("in");
-        $("#psSizeAuto").prop('checked', false);
-        $("#psSizeActive").prop('checked', false);
-        $("#psSizeGroup").css('display', 'none');
+        $("#psColorType").val("color");
+        $("#psCopies").val(1);
+        $("#psDPI").val(72);
+        $("#psDuplex").prop('checked', false);
+        $("#psOrientation").val("");
+        $("#psPaperThickness").val(null);
+        $("#psRotation").val(0);
 
         $("#psMargins").val(0).css('display', '');
         $("#psMarginsTop").val(0);
@@ -719,12 +723,12 @@
         $("#psMarginsActive").prop('checked', false);
         $("#psMarginsGroup").css('display', 'none');
 
-        $("#psDuplex").prop('checked', false);
-        $("#psOrientation").val("");
-        $("#psRotation").val(0);
-        $("#psPaperThickness").val(null);
-        $("#psColorType").val("color");
-        $("#psCopies").val(1);
+        $("#psSizeWidth").val('');
+        $("#psSizeHeight").val('');
+        $("#psSizeUnits").val("in");
+        $("#psSizeScale").prop('checked', false);
+        $("#psSizeActive").prop('checked', false);
+        $("#psSizeGroup").css('display', 'none');
     }
 
     function checkSizeActive() {
@@ -804,12 +808,12 @@
 
     function updateConfig() {
         var psSize = null;
-        if (valu("psSize", true)) {
+        if (valu("psSizeActive", true)) {
             psSize = {
                 width: valu("psSizeWidth"),
                 height: valu("psSizeHeight"),
                 units: valu("psSizeUnits"),
-                auto: valu("psSizeAuto", true)
+                scaleImage: valu("psSizeScale", true)
             };
         }
 
@@ -824,21 +828,22 @@
         }
 
         cfg.reconfigure({
-            perSpool: valu("rawPerSpool"),
-            language: valu("rawLanguage"),
+            altPrinting: valu("rawAltPrinting", true),
             encoding: valu("rawEncoding"),
             endOfDoc: valu("rawEndOfDoc"),
+            language: valu("rawLanguage"),
+            perSpool: valu("rawPerSpool"),
             printerTray: valu("rawPrinterTray"),
-            altPrinting: valu("rawAltPrinting", true),
 
-            size: psSize,
-            margins: psMargins,
-            duplex: valu("psDuplex", true),
-            orientation: valu("psOrientation"),
-            rotation: valu("psRotation"),
-            paperThickness: valu("psPaperThickness"),
             colorType: valu("psColorType"),
-            copies: valu("psCopies")
+            copies: valu("psCopies"),
+            dpi: valu("psDPI"),
+            duplex: valu("psDuplex", true),
+            margins: psMargins,
+            orientation: valu("psOrientation"),
+            paperThickness: valu("psPaperThickness"),
+            rotation: valu("psRotation"),
+            size: psSize
         });
     }
 

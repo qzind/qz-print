@@ -26,17 +26,18 @@ package qz.printer;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import javax.print.attribute.standard.PrinterName;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class PrintServiceMatcher {
 
-    private static final Logger log = Logger.getLogger(PrintServiceMatcher.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(PrintServiceMatcher.class);
 
     private static PrintService[] printers = null;
 
@@ -48,7 +49,7 @@ public class PrintServiceMatcher {
     public static PrintService[] findPrinters(boolean forceSearch) {
         if (forceSearch || printers == null || printers.length == 0) {
             printers = PrintServiceLookup.lookupPrintServices(null, null);
-            log.info("Found " + printers.length + " printers");
+            log.info("Found {} printers", printers.length);
         }
 
         return printers;
@@ -84,8 +85,7 @@ public class PrintServiceMatcher {
         // Get print service list
         findPrinters();
 
-        log.info("Found " + printers.length + " attached printers.");
-        log.info("Printer specified: " + printerName);
+        log.debug("Printer specified: {}", printerName);
 
         Pattern patternExact = Pattern.compile("\\b" + printerName + "\\b", Pattern.CASE_INSENSITIVE);
         Pattern patternStart = Pattern.compile("\\b" + printerName, Pattern.CASE_INSENSITIVE);
@@ -101,30 +101,30 @@ public class PrintServiceMatcher {
 
             if (matchExact.find()) {
                 exact = ps;
-                log.info("Printer name match: " + sysPrinter);
+                log.trace("Printer name match: {}", sysPrinter);
             } else if (matchStart.find()) {
                 begins = ps;
-                log.info("Printer name beginning match: " + sysPrinter);
+                log.trace("Printer name beginning match: {}", sysPrinter);
             } else if (matchPartial.find()) {
                 partial = ps;
-                log.info("Printer name partial match: " + sysPrinter);
+                log.trace("Printer name partial match: {}", sysPrinter);
             }
         }
 
         // Return closest match
         if (exact != null) {
-            log.info("Using best match: " + exact.getName());
+            log.info("Using best match: {}", exact.getName());
             return exact;
         } else if (begins != null) {
-            log.info("Using best match: " + begins.getName());
+            log.info("Using best match: {}", begins.getName());
             return begins;
         } else if (partial != null) {
-            log.info("Using best match: " + partial.getName());
+            log.info("Using best match: {}", partial.getName());
             return partial;
         }
 
         // Couldn't find printer
-        log.warning("Printer not found: " + printerName);
+        log.warn("Printer not found: {}", printerName);
         return null;
     }
 
