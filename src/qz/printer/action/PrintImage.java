@@ -127,6 +127,10 @@ public class PrintImage implements PrintProcessor, Printable {
         }
 
         pageMargins = psOpts.getMargins();
+        if (psOpts.getMargins().getUnits() == MediaSize.MM) {
+            dpi /= 25.4;
+        }
+
         imageRotation = psOpts.getRotation();
 
         log.trace("{}", Arrays.toString(attributes.toArray()));
@@ -187,8 +191,7 @@ public class PrintImage implements PrintProcessor, Printable {
             }
         }
 
-        //FIXME - margins are in in/mm not pixels
-        log.debug("Margins: {},{}:{},{}", pageMargins.left(), pageMargins.top(), pageMargins.right(), pageMargins.bottom());
+        log.debug("Margins: {},{}:{},{}", pageMargins.left() * dpi, pageMargins.top() * dpi, pageMargins.right() * dpi, pageMargins.bottom() * dpi);
 
         // apply custom margins
         double boundX = pageFormat.getImageableX() + (pageMargins.left() * dpi);
