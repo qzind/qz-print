@@ -432,22 +432,21 @@ window.qz = {
          *
          *  @param {string} [options.colorType='color'] Valid values [color|greyscale|blackwhite]
          *  @param {int} [options.copies=1] Number of copies to be printed.
-         *  @param {number} [options.dpi=72] Pixel density
+         *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on [options.units]).
          *  @param {boolean} [options.duplex=false] Double sided printing
-         *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides in inches.
+         *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides.
          *   @param {number} [options.margins.top=0]
          *   @param {number} [options.margins.right=0]
          *   @param {number} [options.margins.bottom=0]
          *   @param {number} [options.margins.left=0]
-         *   @param {string} [options.margins.units='in']
          *  @param {string} [options.orientation=null] Valid values [portrait|landscape|reverse-landscape]
          *  @param {number} [options.paperThickness=null]
          *  @param {number} [options.rotation=0] Image rotation in degrees.
          *  @param {Object} [options.size=null] Paper size.
          *   @param {number} [options.size.width=null] Page width.
          *   @param {number} [options.size.height=null] Page height.
-         *   @param {string} [options.size.units='in'] Valid values [in|mm]
          *   @param {boolean} [options.size.scaleImage=false] Scales image to page size, keeping ratio.
+         *  @param {string} [options.units] Page units, applies to paper size, margins, and density. Valid value [in|cm|mm]
          *
          *  @param {boolean} [options.altPrinting=false]
          *  @param {string} [options.encoding=null] Character set
@@ -490,9 +489,9 @@ window.qz = {
      *  @param {string} data.type Valid values [raw|image|hex|base64|file|pdf|html|xml].
      *  @param {string} data.data
      *  @param {Object} [data.options]
-     *   @param {int} [data.options.x] Used only with [image] type. The X position of the image.
-     *   @param {int} [data.options.y] Used only with [image] type. The Y position of the image.
-     *   @param {string|int} [data.options.dotDensity] Used only with [image] type.
+     *   @param {int} [data.options.x] Used only with raw printing [image] type. The X position of the image.
+     *   @param {int} [data.options.y] Used only with raw printing [image] type. The Y position of the image.
+     *   @param {string|int} [data.options.dotDensity] Used only with raw printing [image] type.
      *   @param {string} [data.options.xmlTag] Required if using [xml] type. Tag name containing base64 formatted data.
      * @param {boolean} [signed] Indicate if the data is already signed. Will call signing methods if false.
      *

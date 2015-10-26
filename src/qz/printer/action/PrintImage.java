@@ -33,10 +33,8 @@ import qz.utils.SystemUtilities;
 
 import javax.imageio.ImageIO;
 import javax.print.PrintService;
-import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
-import javax.print.attribute.ResolutionSyntax;
-import javax.print.attribute.standard.*;
+import javax.print.attribute.standard.MediaSizeName;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -56,7 +54,7 @@ import java.util.List;
 /**
  * @author Tres Finocchiaro, Anton Mezerny
  */
-public class PrintImage implements PrintProcessor, Printable {
+public class PrintImage extends PrintPostScript implements PrintProcessor, Printable {
 
     private static final Logger log = LoggerFactory.getLogger(PrintImage.class);
 
@@ -66,10 +64,8 @@ public class PrintImage implements PrintProcessor, Printable {
 
     private List<BufferedImage> images;
 
-    private int dpi = 72;
     private boolean scaleImage = false;
     private double imageRotation = 0;
-    private PrintOptions.Margins pageMargins = null;
 
 
     public PrintImage() {
@@ -96,39 +92,18 @@ public class PrintImage implements PrintProcessor, Printable {
     @Override
     public void print(PrintService service, PrintOptions options) throws PrinterException {
         PrinterJob job = PrinterJob.getPrinterJob();
-        PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
+        PageFormat page = job.getPageFormat(null);
 
         PrintOptions.Postscript psOpts = options.getPSOptions();
-        if (psOpts.getColorType() != null) {
-            attributes.add(psOpts.getColorType().getChromatic());
-        }
-        if (psOpts.isDuplex()) {
-            attributes.add(Sides.DUPLEX);
-        }
-        if (psOpts.getOrientation() != null) {
-            attributes.add(psOpts.getOrientation().getAsAttribute());
-        }
-
-        attributes.add(new PrinterResolution(psOpts.getDpi(), psOpts.getDpi(), ResolutionSyntax.DPI)); //TODO - might not be doing anything ..
-        dpi = psOpts.getDpi();
-
-        //TODO - set paper thickness
+        PrintRequestAttributeSet attributes = applyDefaultSettings(psOpts, page);
 
         if (psOpts.getSize() != null) {
-            if (psOpts.getSize().getWidth() > 0 && psOpts.getSize().getHeight() > 0) {
-                attributes.add(new MediaPrintableArea(0f, 0f, (float)psOpts.getSize().getWidth(), (float)psOpts.getSize().getHeight(), psOpts.getSize().getUnits()));
-            }
-            scaleImage = psOpts.getSize().isFitImage();
-
             // Fixes 4x6 labels on Mac OSX
-            if (psOpts.getSize().getUnits() == MediaSize.INCH && psOpts.getSize().getWidth() == 4 && psOpts.getSize().getHeight() == 6) {
+            if (psOpts.getUnits() == PrintOptions.Unit.INCH && psOpts.getSize().getWidth() == 4 && psOpts.getSize().getHeight() == 6) {
                 attributes.add(MediaSizeName.JAPANESE_POSTCARD);
             }
-        }
 
-        pageMargins = psOpts.getMargins();
-        if (psOpts.getMargins().getUnits() == MediaSize.MM) {
-            dpi /= 25.4;
+            scaleImage = options.getPSOptions().getSize().isFitImage();
         }
 
         imageRotation = psOpts.getRotation();
@@ -137,7 +112,7 @@ public class PrintImage implements PrintProcessor, Printable {
 
         job.setJobName(JOB_NAME);
         job.setPrintService(service);
-        job.setPrintable(this);
+        job.setPrintable(this, page);
 
         log.info("Starting image printing ({} copies)", psOpts.getCopies());
         for(int i = 0; i < psOpts.getCopies(); i++) {
@@ -162,9 +137,8 @@ public class PrintImage implements PrintProcessor, Printable {
             imgToPrint = rotate(imgToPrint, imageRotation);
         }
 
-        // Get our graphics and translate to avoid clipping outside of margins
+
         Graphics2D graphics2D = (Graphics2D)graphics;
-        //graphics2D.translate(pageFormat.getImageableX(), pageFormat.getImageableY());
 
         // Suggested by Bahadir 8/23/2012
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
@@ -191,16 +165,10 @@ public class PrintImage implements PrintProcessor, Printable {
             }
         }
 
-        log.debug("Margins: {},{}:{},{}", pageMargins.left() * dpi, pageMargins.top() * dpi, pageMargins.right() * dpi, pageMargins.bottom() * dpi);
+        // apply image scaling
+        double boundW = pageFormat.getImageableWidth();
+        double boundH = pageFormat.getImageableHeight();
 
-        // apply custom margins
-        double boundX = pageFormat.getImageableX() + (pageMargins.left() * dpi);
-        double boundY = pageFormat.getImageableY() + (pageMargins.top() * dpi);
-        double boundW = (pageFormat.getImageableWidth() - ((pageMargins.right() + pageMargins.left()) * dpi));
-        double boundH = (pageFormat.getImageableHeight() - ((pageMargins.bottom() + pageMargins.top()) * dpi));
-
-        int imgX = imgToPrint.getMinX();
-        int imgY = imgToPrint.getMinY();
         int imgW = imgToPrint.getWidth();
         int imgH = imgToPrint.getHeight();
 
@@ -215,11 +183,12 @@ public class PrintImage implements PrintProcessor, Printable {
             }
         }
 
+        double boundX = pageFormat.getImageableX();
+        double boundY = pageFormat.getImageableY();
         log.debug("Paper area: {},{}:{},{}", (int)boundX, (int)boundY, (int)boundW, (int)boundH);
-        log.debug("Image area: {},{}:{},{}", imgX, imgY, imgW, imgH);
 
         // Now we perform our rendering
-        graphics2D.drawImage(imgToPrint, (int)boundX + imgX, (int)boundY + imgY, (int)boundX + imgW, (int)boundY + imgH,
+        graphics2D.drawImage(imgToPrint, (int)boundX + imgToPrint.getMinX(), (int)boundY + imgToPrint.getMinY(), (int)boundX + imgW, (int)boundY + imgH,
                              imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
 
         // Valid page

@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.print.attribute.standard.Chromaticity;
-import javax.print.attribute.standard.MediaSize;
 import javax.print.attribute.standard.OrientationRequested;
 import java.awt.print.PageFormat;
 
@@ -62,9 +61,9 @@ public class PrintOptions {
                 psOptions.copies = 1;
             }
         }
-        if (!options.isNull("dpi")) {
-            try { psOptions.dpi = options.getInt("dpi"); }
-            catch(JSONException e) { warn("integer", "dpi", options.opt("dpi")); }
+        if (!options.isNull("density")) {
+            try { psOptions.density = options.getInt("density"); }
+            catch(JSONException e) { warn("integer", "density", options.opt("density")); }
         }
         if (!options.isNull("duplex")) {
             try { psOptions.duplex = options.getBoolean("duplex"); }
@@ -90,16 +89,6 @@ public class PrintOptions {
                 if (!subMargins.isNull("left")) {
                     try { m.left = subMargins.getDouble("left"); }
                     catch(JSONException e) { warn("double", "margins.left", subMargins.opt("left")); }
-                }
-
-                if (!subMargins.isNull("units")) {
-                    if ("mm".equals(subMargins.optString("units"))) {
-                        m.units = MediaSize.MM;
-                    } else if ("in".equals(subMargins.optString("units"))) {
-                        m.units = MediaSize.INCH;
-                    } else {
-                        warn("valid value", "size.units", subMargins.opt("units"));
-                    }
                 }
             } else {
                 try { m.setAll(options.getDouble("margins")); }
@@ -137,16 +126,6 @@ public class PrintOptions {
                     catch(JSONException e) { warn("double", "size.height", subSize.opt("height")); }
                 }
 
-                if (!subSize.isNull("units")) {
-                    if ("mm".equals(subSize.optString("units"))) {
-                        s.units = MediaSize.MM;
-                    } else if ("in".equals(subSize.optString("units"))) {
-                        s.units = MediaSize.INCH;
-                    } else {
-                        warn("valid value", "size.units", subSize.opt("units"));
-                    }
-                }
-
                 if (!subSize.isNull("scaleImage")) {
                     try { s.fitImage = subSize.getBoolean("scaleImage"); }
                     catch(JSONException e) { warn("boolean", "size.scaleImage", subSize.opt("scaleImage")); }
@@ -155,6 +134,18 @@ public class PrintOptions {
                 psOptions.size = s;
             } else {
                 warn("JSONObject", "size", options.opt("size"));
+            }
+        }
+        if (!options.isNull("units")) {
+            switch(options.optString("units")) {
+                case "mm":
+                    psOptions.units = Unit.MM; break;
+                case "cm":
+                    psOptions.units = Unit.CM; break;
+                case "in":
+                    psOptions.units = Unit.INCH; break;
+                default:
+                    warn("valid value", "size.units", options.opt("units")); break;
             }
         }
     }
@@ -201,12 +192,8 @@ public class PrintOptions {
         }
 
 
-        public int getPerSpool() {
-            return perSpool;
-        }
-
-        public String getLanguage() {
-            return language;
+        public boolean isAltPrinting() {
+            return altPrinting;
         }
 
         public String getEncoding() {
@@ -217,12 +204,16 @@ public class PrintOptions {
             return endOfDoc;
         }
 
-        public String getPrinterTray() {
-            return printerTray;
+        public String getLanguage() {
+            return language;
         }
 
-        public boolean isAltPrinting() {
-            return altPrinting;
+        public int getPerSpool() {
+            return perSpool;
+        }
+
+        public String getPrinterTray() {
+            return printerTray;
         }
     }
 
@@ -230,54 +221,28 @@ public class PrintOptions {
     public class Postscript {
         private ColorType colorType = ColorType.COLOR;  //Color / black&white
         private int copies = 1;                         //Job copies
-        private int dpi = 72;                           //Pixel density
+        private int density = 72;                       //Pixel density (DPI or DPMM)
         private boolean duplex = false;                 //Double/single sided
         private Margins margins = new Margins();        //Page margins
         private Orientation orientation = null;         //Page orientation
         private double paperThickness = -1;             //Paper thickness
         private double rotation = 0;                    //Image rotation
         private Size size = null;                       //Paper size
+        private Unit units = Unit.INCH;                 //Units for density, margins, size
 
         public boolean isDefault() {
             return colorType == ColorType.COLOR
                     && copies == 1
-                    && dpi == 72
+                    && density == 72
                     && !duplex
                     && margins.isDefault()
                     && orientation == null
                     && paperThickness == -1
                     && rotation == 0
-                    && size == null;
+                    && size == null
+                    && units == Unit.INCH;
         }
 
-
-        public Size getSize() {
-            return size;
-        }
-
-        public Margins getMargins() {
-            return margins;
-        }
-
-        public int getDpi() {
-            return dpi;
-        }
-
-        public boolean isDuplex() {
-            return duplex;
-        }
-
-        public Orientation getOrientation() {
-            return orientation;
-        }
-
-        public double getRotation() {
-            return rotation;
-        }
-
-        public double getPaperThickness() {
-            return paperThickness;
-        }
 
         public ColorType getColorType() {
             return colorType;
@@ -285,6 +250,38 @@ public class PrintOptions {
 
         public int getCopies() {
             return copies;
+        }
+
+        public int getDensity() {
+            return density;
+        }
+
+        public boolean isDuplex() {
+            return duplex;
+        }
+
+        public Margins getMargins() {
+            return margins;
+        }
+
+        public Orientation getOrientation() {
+            return orientation;
+        }
+
+        public double getPaperThickness() {
+            return paperThickness;
+        }
+
+        public double getRotation() {
+            return rotation;
+        }
+
+        public Size getSize() {
+            return size;
+        }
+
+        public Unit getUnits() {
+            return units;
         }
     }
 
@@ -295,12 +292,10 @@ public class PrintOptions {
         private double width = -1;          //Page width
         private double height = -1;         //Page height
         private boolean fitImage = false;   //Adjust paper size for best image fit
-        private int units = MediaSize.INCH; //Units for size
 
         public boolean isDefault() {
             return width == -1
                     && height == -1
-                    && units == MediaSize.INCH
                     && !fitImage;
         }
 
@@ -311,10 +306,6 @@ public class PrintOptions {
 
         public double getHeight() {
             return height;
-        }
-
-        public int getUnits() {
-            return units;
         }
 
         public boolean isFitImage() {
@@ -328,7 +319,6 @@ public class PrintOptions {
         private double right = 0;           //Right page margin
         private double bottom = 0;          //Bottom page margin
         private double left = 0;            //Left page margin
-        private int units = MediaSize.INCH; //Units for margins
 
         private void setAll(double margin) {
             top = margin;
@@ -341,8 +331,7 @@ public class PrintOptions {
             return top == 0
                     && right == 0
                     && bottom == 0
-                    && left == 0
-                    && units == MediaSize.INCH;
+                    && left == 0;
         }
 
 
@@ -361,9 +350,22 @@ public class PrintOptions {
         public double left() {
             return left;
         }
+    }
 
-        public int getUnits() {
-            return units;
+    /** Postscript dimension values */
+    public enum Unit {
+        INCH(1.0f),
+        CM(2.54f),
+        MM(25.4f);
+
+        private final float toInch; //multiplicand to convert to inches
+
+        Unit(float toIN) {
+            toInch = toIN;
+        }
+
+        public float asInch() {
+            return toInch;
         }
     }
 

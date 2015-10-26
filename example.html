@@ -225,7 +225,7 @@
                     <label for="rawPrinterTray">Printer Tray</label>
                     <input type="text" id="rawPrinterTray" />
 
-                    <button type="button" style="margin-top: 1em; color: #F00;" onclick="resetRawOptions();">Reset</button>
+                    <button type="button" style="margin-top: 2em; color: #F00;" onclick="resetRawOptions();">Reset</button>
                 </div>
             </div>
         </div>
@@ -270,8 +270,8 @@
                     <label for="psCopies">Copies</label>
                     <input type="number" id="psCopies" />
 
-                    <label for="psDPI">DPI</label>
-                    <input type="number" id="psDPI" />
+                    <label for="psDensity">Density</label>
+                    <input type="number" id="psDensity" />
 
                     <label for="psDuplex">
                         Duplex:
@@ -292,10 +292,27 @@
                     <label for="psRotation">Rotation</label>
                     <input type="number" step="any" id="psRotation" />
 
-                    <button type="button" style="margin-top: 1em; color: #F00;" onclick="resetPSOptions();">Reset</button>
+                    <button type="button" style="margin-top: 2em; color: #F00;" onclick="resetPSOptions();">Reset</button>
                 </div>
 
                 <div class="columns-3">
+                    <label>Units</label>
+                    <span>
+                        <label style="float: left;">
+                            <input type="radio" name="psUnits" id="psUnitsIN" value="in" />
+                            IN
+                        </label>
+                        <label style="float: left;">
+                            <input type="radio" name="psUnits" id="psUnitsMM" value="mm" />
+                            MM
+                        </label>
+                        <label style="float: left;">
+                            <input type="radio" name="psUnits" id="psUnitsCM" value="cm" />
+                            CM
+                        </label>
+                        <label style="clear: both;"></label>
+                    </span>
+
                     <label for="psMargins">Margins</label>
                     (
                     <label for="psMarginsActive" class="inline">Individual:</label>
@@ -311,17 +328,6 @@
                         <input type="number" step="any" id="psMarginsBottom" />
                         <label for="psMarginsLeft">Left:</label>
                         <input type="number" step="any" id="psMarginsLeft" />
-                        <label>Units:</label>
-                        <span>
-                            <label>
-                                <input type="radio" name="psMarginsUnits" id="psMarginsUnitsIN" value="in" />
-                                IN
-                            </label>
-                            <label>
-                                <input type="radio" name="psMarginsUnits" id="psMarginsUnitsMM" value="mm" />
-                                MM
-                            </label>
-                        </span>
                     </span>
                     <br />
 
@@ -335,17 +341,6 @@
                         <input type="number" step="any" id="psSizeWidth" />
                         <label for="psSizeHeight">Height:</label>
                         <input type="number" step="any" id="psSizeHeight" />
-                        <label>Units:</label>
-                        <span>
-                            <label>
-                                <input type="radio" name="psSizeUnits" id="psSizeUnitsIN" value="in" />
-                                IN
-                            </label>
-                            <label>
-                                <input type="radio" name="psSizeUnits" id="psSizeUnitsMM" value="mm" />
-                                MM
-                            </label>
-                        </span>
                         <label for="psSizeScale">Scale Image:</label>
                         <input type="checkbox" id="psSizeScale" />
                     </span>
@@ -470,18 +465,18 @@
         var config = getUpdatedConfig();
 
         var printData = [];
-        $.merge(printData, _convertEPCL('+RIB 4'));     // Monochrome ribbon
-        $.merge(printData, _convertEPCL('F'));          // Clear monochrome print buffer
-        $.merge(printData, _convertEPCL('+C 8'));       // Adjust monochrome intensity
-        $.merge(printData, _convertEPCL('&R'));         // Reset magnetic encoder
-        $.merge(printData, _convertEPCL('&CDEW 0 0'));  // Set R/W encoder to ISO default
-        $.merge(printData, _convertEPCL('&CDER 0 0'));  // Set R/W encoder to ISO default
-        $.merge(printData, _convertEPCL('&SVM 0'));     // Disable magnetic encoding verifications
-        $.merge(printData, _convertEPCL('T 80 600 0 1 0 45 1 QZ INDUSTRIES'));  // Write text buffer
-        $.merge(printData, _convertEPCL('&B 1 123456^INDUSTRIES/QZ^789012'));	// Write mag strip buffer
-        $.merge(printData, _convertEPCL('&E*'));        // Encode magnetic data
-        $.merge(printData, _convertEPCL('I 10'));       // Print card (10 returns to print ready pos.)
-        $.merge(printData, _convertEPCL('MO'));         // Move card to output hopper
+        $.merge(printData, convertEPCL('+RIB 4'));     // Monochrome ribbon
+        $.merge(printData, convertEPCL('F'));          // Clear monochrome print buffer
+        $.merge(printData, convertEPCL('+C 8'));       // Adjust monochrome intensity
+        $.merge(printData, convertEPCL('&R'));         // Reset magnetic encoder
+        $.merge(printData, convertEPCL('&CDEW 0 0'));  // Set R/W encoder to ISO default
+        $.merge(printData, convertEPCL('&CDER 0 0'));  // Set R/W encoder to ISO default
+        $.merge(printData, convertEPCL('&SVM 0'));     // Disable magnetic encoding verifications
+        $.merge(printData, convertEPCL('T 80 600 0 1 0 45 1 QZ INDUSTRIES'));   // Write text buffer
+        $.merge(printData, convertEPCL('&B 1 123456^INDUSTRIES/QZ^789012'));	// Write mag strip buffer
+        $.merge(printData, convertEPCL('&E*'));        // Encode magnetic data
+        $.merge(printData, convertEPCL('I 10'));       // Print card (10 returns to print ready pos.)
+        $.merge(printData, convertEPCL('MO'));         // Move card to output hopper
 
         qz.print(config, printData);
     }
@@ -490,7 +485,7 @@
      * EPCL helper function that appends a single line of EPCL data, taking into account
      * special EPCL NUL characters, data length, escape character and carriage return
      */
-    function _convertEPCL(data) {
+    function convertEPCL(data) {
         if (data == null || data.length == 0) {
             log.warn('Empty EPCL data, skipping');
         }
@@ -685,7 +680,9 @@
 
     function printImage(scaling) {
         if (scaling) {
-            $("psSizeScale").prop('checked', true);
+            $("#psSizeActive").prop('checked', true);
+            $("#psSizeScale").prop('checked', true);
+            checkSizeActive();
         }
         var config = getUpdatedConfig();
 
@@ -728,24 +725,23 @@
     function resetPSOptions() {
         $("#psColorType").val("color");
         $("#psCopies").val(1);
-        $("#psDPI").val(72);
+        $("#psDensity").val(72);
         $("#psDuplex").prop('checked', false);
         $("#psOrientation").val("");
         $("#psPaperThickness").val(null);
         $("#psRotation").val(0);
+        $("#psUnitsIN").prop('checked', true);
 
         $("#psMargins").val(0).css('display', '');
         $("#psMarginsTop").val(0);
         $("#psMarginsRight").val(0);
         $("#psMarginsBottom").val(0);
         $("#psMarginsLeft").val(0);
-        $("#psMarginsUnitsIN").prop('checked', true);
         $("#psMarginsActive").prop('checked', false);
         $("#psMarginsGroup").css('display', 'none');
 
         $("#psSizeWidth").val('');
         $("#psSizeHeight").val('');
-        $("#psSizeUnitsIN").prop('checked', true);
         $("#psSizeScale").prop('checked', false);
         $("#psSizeActive").prop('checked', false);
         $("#psSizeGroup").css('display', 'none');
@@ -836,7 +832,6 @@
             psSize = {
                 width: valu("psSizeWidth"),
                 height: valu("psSizeHeight"),
-                units: valu("", true, "psSizeUnits"),
                 scaleImage: valu("psSizeScale", true)
             };
         }
@@ -848,7 +843,6 @@
                 right: valu("psMarginsRight"),
                 bottom: valu("psMarginsBottom"),
                 left: valu("psMarginsLeft"),
-                units: valu("", true, "psMarginsUnits")
             };
         }
 
@@ -862,13 +856,14 @@
 
             colorType: valu("psColorType"),
             copies: valu("psCopies"),
-            dpi: valu("psDPI"),
+            density: valu("psDensity"),
             duplex: valu("psDuplex", true),
             margins: psMargins,
             orientation: valu("psOrientation"),
             paperThickness: valu("psPaperThickness"),
             rotation: valu("psRotation"),
-            size: psSize
+            size: psSize,
+            units: valu("", true, "psUnits")
         });
     }
 

@@ -16,6 +16,7 @@ import qz.utils.PrintingUtilities;
 
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
+import java.awt.print.PrinterAbortException;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -139,13 +140,21 @@ public class PrintSocketClient {
         PrintOptions options = new PrintOptions(params.getJSONObject("options"));
 
         try {
-            PrintProcessor processor = PrintingUtilities.determineProcessor(params.getJSONArray("data"), options.getRawOptions());
+            PrintProcessor processor = PrintingUtilities.getPrintProcessor(params.getJSONArray("data"), options.getRawOptions());
+            log.debug("Using {} to print", processor.getClass().getName());
+
             processor.parseData(params.getJSONArray("data"));
             processor.print(service, options);
+            log.info("Printing complete");
 
             sendResult(session, UID, null);
         }
+        catch(PrinterAbortException e) {
+            log.warn("Printing cancelled");
+            sendError(session, UID, "Printing cancelled");
+        }
         catch(Exception e) {
+            log.error("Failed to print", e);
             sendError(session, UID, "Printing failed: " + e.getMessage());
         }
     }
