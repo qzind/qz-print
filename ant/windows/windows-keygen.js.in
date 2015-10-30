@@ -36,7 +36,7 @@ var fso = new ActiveXObject("Scripting.FileSystemObject");
 var newLine = "\r\n";
 
 // Uses passed-in parameter as install location.  Will fallback to registry if not provided.
-var qzInstall = getArg(0, getRegValue("HKLM\\Software\\${socket.name}\\"));
+var qzInstall = getArg(0, getRegValue("HKLM\\Software\\${project.name}\\"));
 var installMode = getArg(1, "install");
 
 if (installMode == "install") {
@@ -45,9 +45,9 @@ if (installMode == "install") {
         try { installWindowsCertificate(); }
         catch (err) { installWindowsXPCertificate(); }
         if (hasFirefoxConflict()) {
-            alert("WARNING: ${socket.name} installation would conflict with an existing Firefox AutoConfig rule.\n\n" +
+            alert("WARNING: ${project.name} installation would conflict with an existing Firefox AutoConfig rule.\n\n" +
                 "Please notify your administrator of this warning.\n\n" +
-                "The installer will continue, but ${socket.name} will not function with Firefox until this conflict is resolved.",
+                "The installer will continue, but ${project.name} will not function with Firefox until this conflict is resolved.",
                 "Firefox AutoConfig Warning");
         } else {
             if (firefoxInstall) {
@@ -208,7 +208,7 @@ function createJavaKeystore() {
     }
 
     if (qzInstall == "") {
-        die("Can't find ${socket.name} installation path. Secure websockets will not work.", "${windows.err.install}");
+        die("Can't find ${project.name} installation path. Secure websockets will not work.", "${windows.err.install}");
     }
 
 
@@ -269,7 +269,7 @@ function installWindowsXPCertificate() {
         "     4.  Browse to \"Trusted Root Certificate Authorities\"\n" +
         "     5.  Click \"Finish\"\n" +
         "     6.  Click \"Yes\" on thumbprint Security Warning\n\n" +
-        "Click OK to automatically launch the certificate import wizard now.\n", 0, "Warning - ${socket.name}", 48);
+        "Click OK to automatically launch the certificate import wizard now.\n", 0, "Warning - ${project.name}", 48);
 
     // Do not wrap quotes around derCert, or this next line will fail
     shell.Run("rundll32.exe cryptext.dll,CryptExtAddCER " + derCert, 1, true);
@@ -296,7 +296,7 @@ function getFirefoxInstall() {
 }
 
 /*
- * Iterates over the installed preferences file looking for a non-${socket.name} AutoConfig rule
+ * Iterates over the installed preferences file looking for a non-${project.name} AutoConfig rule
  */
 function hasFirefoxConflict() {
     if (!getFirefoxInstall()) { return false; }
@@ -305,7 +305,7 @@ function hasFirefoxConflict() {
     // AutoConfig rule conflicts to search for
     var conflicts = ["general.config.filename"];
 
-    // White-listed preference files, used for ${socket.name} deployment
+    // White-listed preference files, used for ${project.name} deployment
     var exceptions = ["${firefoxprefs.name}"];
     var folder = fso.GetFolder(firefoxInstall + "\\..\\defaults\\pref");
     var o = new Enumerator(folder.Files);
@@ -313,7 +313,7 @@ function hasFirefoxConflict() {
         var whitelist = false;
         for (var i in exceptions) {
             if (exceptions[i] == o.item().Name) {
-                debug(" - [skipping] ${socket.name} config file: " + exceptions[i]);
+                debug(" - [skipping] ${project.name} config file: " + exceptions[i]);
                 whitelist = true;
             }
         }
@@ -439,7 +439,7 @@ function deleteWindowsXPCertificate() {
         "     3.  Click \"Certificates\"\n" +
         "     4.  Browse to \"${jks.cn}, ${vendor.company}\"\n" +
         "     5.  Right Click, \"Delete\"\n" +
-        "Click OK to automatically launch the certificate manager.\n", 0, "Warning - ${socket.name}", 48);
+        "Click OK to automatically launch the certificate manager.\n", 0, "Warning - ${project.name}", 48);
 
     // Do not wrap quotes around derCert, or this next line will fail
     shell.Run("mmc.exe certmgr.msc", 1, true);

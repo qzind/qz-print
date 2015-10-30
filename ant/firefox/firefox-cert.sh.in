@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#           ${socket.name} Linux / Unix Firefox Certificate Utility                  #
+#           ${project.name} Linux / Unix Firefox Certificate Utility                  #
 ###############################################################################
 #  Description:                                                               #
 #   INSTALL:                                                                  #
@@ -88,7 +88,7 @@ configpath=$(echo "$config" | sed -e "s|$install|$installdir|g")
 # Uninstall mode
 #
 if [ "$1" == "uninstall" ]; then
-    echo "Searching for ${socket.name} AutoConfig..."
+    echo "Searching for ${project.name} AutoConfig..."
     if [ -f "$bindir/${firefoxconfig.name}" ]; then
         echo -e "${bash.success} Check Firefox config exists"
         cp "$configpath" "$bindir/${firefoxconfig.name}"
@@ -102,11 +102,11 @@ if [ "$1" == "uninstall" ]; then
         if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ]; then
             echo -e "${bash.success} Certificate removed successfully"
         else
-            echo -e "${bash.failure} ${socket.name} Certificate removal failed"
+            echo -e "${bash.failure} ${project.name} Certificate removal failed"
             exit 1
         fi
     else
-        echo -e "${bash.skipped} ${socket.name} AutoConfig not found"
+        echo -e "${bash.skipped} ${project.name} AutoConfig not found"
     fi
     exit 0
 fi
@@ -119,8 +119,8 @@ echo -e "\nSearching for Firefox AutoConfig conflicts..."
 # Iterate over each preference file looking for conflicts
 for i in $prefdir/*; do
 	if [ "$i" == "$prefdir/${firefoxprefs.name}" ]; then
-		# skip, ${socket.name} preferences
-		echo -e "${bash.skipped} Ignoring ${socket.name} preference file \"${firefoxprefs.name}\""
+		# skip, ${project.name} preferences
+		echo -e "${bash.skipped} Ignoring ${project.name} preference file \"${firefoxprefs.name}\""
 		continue
 	fi
 	for j in "${conflicts[@]}"; do
@@ -156,7 +156,7 @@ certdata=$(echo "$certdata" | sed -e "s|$ecert|$blank|g")
 timestamp=$(date +%s)
 
 if [ -f "$bindir/${firefoxconfig.name}" ]; then
-	echo -e "${bash.success} Check ${socket.name} AutoConfig exists"
+	echo -e "${bash.success} Check ${project.name} AutoConfig exists"
 	# Replace ${certData} with the base64 string
     perl -pi -e "s#\\\${certData}#$certdata#g" "$bindir/${firefoxconfig.name}"
     ret1=$?
@@ -170,7 +170,7 @@ if [ -f "$bindir/${firefoxconfig.name}" ]; then
         echo -e "${bash.failure} Certificate installation failed"
     fi
 else
-	echo -e "${bash.failure} Cannot locate ${socket.name} AutoConfig"
+	echo -e "${bash.failure} Cannot locate ${project.name} AutoConfig"
 	exit 1
 fi
 

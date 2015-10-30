@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#                  ${socket.name} Linux KeyGen Utility                               #
+#                  ${project.name} Linux KeyGen Utility                               #
 ###############################################################################
 #  Description:                                                               #
 #     1. Creates a self-signed Java Keystore for jetty wss://localhost        #

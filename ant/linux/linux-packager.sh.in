@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#                         ${socket.name} Linux Packager                              #
+#                         ${project.name} Linux Packager                              #
 ###############################################################################
 #  Description:                                                               #
 #    1. Packages software for Linux self extracting archive and installer     #
@@ -15,11 +15,11 @@
 ###############################################################################
 echo
 echo "============================================"
-echo "            Packaging ${socket.name}"
+echo "            Packaging ${project.name}"
 echo "============================================"
 echo
 chmod +x "${linux.installer.out}"
-makeself "${dist.socket.dir}" "${out.dir}/${build.socket.name}-${build.version}.run" "${socket.name} Installer" "./${linux.installer.name}"
+makeself "${dist.dir}" "${out.dir}/${project.filename}-${build.version}.run" "${project.name} Installer" "./${linux.installer.name}"
 code=$?
 echo
 echo "============================================"

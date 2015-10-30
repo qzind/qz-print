@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#                         ${socket.name} Apple OS X Preinstall                       #
+#                         ${project.name} Apple OS X Preinstall                       #
 ###############################################################################
 #  Description:                                                               #
 #    1. Checks for minimum Java version                                       #
@@ -39,5 +39,5 @@ if [ $code -ne 0 ]; then
 fi
 
 # Kill any running versions
-kill -9 $(ps -e |grep "${build.socket.name}.jar" |grep -v grep|awk '{print $1}') > /dev/null 2>&1
+kill -9 $(ps -e |grep "${project.filename}.jar" |grep -v grep|awk '{print $1}') > /dev/null 2>&1
 exit $code

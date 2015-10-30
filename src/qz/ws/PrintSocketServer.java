@@ -25,6 +25,7 @@ import org.eclipse.jetty.websocket.server.WebSocketHandler;
 import org.eclipse.jetty.websocket.servlet.WebSocketServletFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qz.common.Constants;
 import qz.common.TrayManager;
 import qz.deploy.DeployUtilities;
 
@@ -51,6 +52,13 @@ public class PrintSocketServer {
 
 
     public static void main(String[] args) {
+        for (String s : args) {
+            // Print version information and exit
+            if ("-v".equals(s) || "--version".equals(s)) {
+                System.out.println(Constants.VERSION);
+                System.exit(0);
+            }
+        }
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override

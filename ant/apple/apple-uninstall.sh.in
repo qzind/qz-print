@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#                         ${socket.name} Apple OS X Postinstall                      #
+#                         ${project.name} Apple OS X Postinstall                      #
 ###############################################################################
 #  Description:                                                               #
 #    1. Generates and installs certificate for secure websockets              #
@@ -16,7 +16,7 @@ if [ "$(id -u)" != "0" ]; then
    exit 1
 fi
 
-# Uninstall ${socket.name} system certificates
+# Uninstall ${project.name} system certificates
 "${apple.installdir}/auth/${apple.keygen.name}" "uninstall"
 
 if [ $? -eq 0 ]; then
@@ -28,4 +28,4 @@ echo -e "Cleanup is complete.  Removing ${apple.installdir}..."
 rm -rf "${apple.installdir}"
 echo -e "${bash.success}"
 
-echo -e "\nUninstall of ${socket.name} complete.\n"
+echo -e "\nUninstall of ${project.name} complete.\n"

@@ -4,11 +4,11 @@
     <key>CFBundleDevelopmentRegion</key><string>English</string>
     <key>CFBundleIconFile</key><string>${apple.icon}</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleGetInfoString</key><string>${socket.name} ${build.version}</string>
-    <key>CFBundleSignature</key><string>${socket.name}</string>
-    <key>CFBundleExecutable</key><string>${socket.name}</string>
+    <key>CFBundleGetInfoString</key><string>${project.name} ${build.version}</string>
+    <key>CFBundleSignature</key><string>${project.name}</string>
+    <key>CFBundleExecutable</key><string>${project.name}</string>
     <key>CFBundleVersion</key><string>${build.version}</string>
     <key>CFBundleShortVersionString</key><string>${build.version}</string>
-    <key>CFBundleName</key><string>${socket.name}</string>
+    <key>CFBundleName</key><string>${project.name}</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
 </dict></plist>

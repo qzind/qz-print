@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#                         ${socket.name} Apple OS X Postinstall                      #
+#                         ${project.name} Apple OS X Postinstall                      #
 ###############################################################################
 #  Description:                                                               #
 #    1. Generates and installs certificate for secure websockets              #
@@ -10,7 +10,7 @@
 #    $ ./preinstall                                                           #
 ###############################################################################
 
-# Install ${socket.name} certificate
+# Install ${project.name} certificate
 "${apple.installdir}/auth/${apple.keygen.name}" "install"
 
 if [ $? -eq 0 ]; then
@@ -18,6 +18,6 @@ if [ $? -eq 0 ]; then
     "${apple.installdir}/auth/firefox/${firefoxcert.name}" "install"
 fi
 
-# Start ${socket.name}
-echo -e "\nStarting ${socket.name} as $USER..."
-su $USER -c "open -a \"${socket.name}\""
+# Start ${project.name}
+echo -e "\nStarting ${project.name} as $USER..."
+su $USER -c "open -a \"${project.name}\""

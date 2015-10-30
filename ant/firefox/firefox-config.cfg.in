@@ -1,9 +1,9 @@
 //##############################################################################
-//#     Firefox AutoConfig for ${socket.name} Software ${vendor.website}                  #
+//#     Firefox AutoConfig for ${project.name} Software ${vendor.website}                  #
 //##############################################################################
 //# NOTE:  This certificate is unique and private to THIS PC ONLY.  It was     #
 //# created on-the-fly at install time for secure websockets to function with  #
-//# ${socket.name} software.                                                          #
+//# ${project.name} software.                                                          #
 //# For questions please visit ${vendor.website}/support                           #
 //##############################################################################
 
@@ -20,7 +20,7 @@ if (needsUninstall()) {
 // Compares the timestamp embedded in this script against that stored in the browser's about:config
 function needsCert() {
     try {
-        return getPref("${build.socket.name}.installer.timestamp") != getInstallerTimestamp();
+        return getPref("${project.filename}.installer.timestamp") != getInstallerTimestamp();
     } catch (notfound) {}
     return true;
 }
@@ -28,7 +28,7 @@ function needsCert() {
 // Installs the embedded base64 certificate into the browser
 function installCertificate() {
     certdb.addCertFromBase64(getCertData(), "C,C,C", "${jks.cn} - ${vendor.company}");
-    pref("${build.socket.name}.installer.timestamp", getInstallerTimestamp());
+    pref("${project.filename}.installer.timestamp", getInstallerTimestamp());
 }
 
 // Deletes the certificate, if it exists
@@ -44,7 +44,7 @@ function deleteCertificate() {
     
     // Mark as removed
     if (!certExists(nick1) && !certExists(nick2)) {
-    	pref("${build.socket.name}.installer.timestamp", "-1");
+    	pref("${project.filename}.installer.timestamp", "-1");
     }
 }
 
@@ -83,7 +83,7 @@ function getInstallerTimestamp() {
 // Whether or not an uninstall should occur, flagged by the installer/uninstaller
 function needsUninstall() {
     try {
-        if (getPref("${build.socket.name}.installer.timestamp") == "-1") {
+        if (getPref("${project.filename}.installer.timestamp") == "-1") {
             return false;
         }
     } catch (notfound) {

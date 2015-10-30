@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#                         ${socket.name} Apple OS X Packager                         #
+#                         ${project.name} Apple OS X Packager                         #
 ###############################################################################
 #  Description:                                                               #
 #    1. Packages software into an Apple pkg installer                         #
@@ -15,7 +15,7 @@
 ###############################################################################
 echo
 echo "============================================"
-echo "            Packaging ${socket.name}"
+echo "            Packaging ${project.name}"
 echo "============================================"
 echo
 chmod +x "${apple.keygen.out}"
@@ -35,13 +35,13 @@ else
 	suffix="-unsigned"
 fi
 
-eval "pkgbuild --identifier \"${build.socket.name}\" \
-	--root \"${dist.socket.dir}\" \
+eval "pkgbuild --identifier \"${project.filename}\" \
+	--root \"${dist.dir}\" \
 	--install-location \"${apple.installdir}\" \
 	--scripts \"${apple.scripts}\" \
 	--version \"${build.version}\" \
 	${signing}\
-	\"${out.dir}/${build.socket.name}-${build.version}${suffix}.pkg\""
+	\"${out.dir}/${project.filename}-${build.version}${suffix}.pkg\""
 code=$?
 
 echo

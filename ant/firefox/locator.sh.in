@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#           ${socket.name} Linux / Unix Program Locator                              #
+#           ${project.name} Linux / Unix Program Locator                              #
 ###############################################################################
 #  Description:                                                               #
 #   INSTALL:                                                                  #

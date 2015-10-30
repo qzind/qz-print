@@ -11,13 +11,13 @@
 !addincludedir "${windows.nsis.addons}/Include/"
 !include StdUtils.nsh
 
-Name "${socket.name}"
-OutFile "${out.dir}\${build.socket.name}-${build.version}.exe"
+Name "${project.name}"
+OutFile "${out.dir}\${project.filename}-${build.version}.exe"
 RequestExecutionLevel admin
 
 ;-------------------------------
 
-InstallDir "$PROGRAMFILES\${socket.name}"
+InstallDir "$PROGRAMFILES\${project.name}"
 
 ;-------------------------------
 
@@ -39,8 +39,8 @@ Section
   ; Sets the context of shell folders to "All Users"
   SetShellVarContext all
 
-  ; Kills any running ${socket.name} processes
-  nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+  ; Kills any running ${project.name} processes
+  nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${project.filename}.jar%'$\" call terminate"
 
   ; Cleanup for wmic on Windows XP
   SetShellVarContext current
@@ -49,27 +49,27 @@ Section
 
   SetOutPath "$INSTDIR"
 
-  File /r "${dist.socket.dir}\*"
+  File /r "${dist.dir}\*"
 
-  WriteRegStr HKLM "Software\${socket.name}" \
+  WriteRegStr HKLM "Software\${project.name}" \
                      "" "$INSTDIR"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
-                   "DisplayName" "${socket.name} ${build.version}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
+                   "DisplayName" "${project.name} ${build.version}"
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                      "Publisher" "${vendor.company}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "UninstallString" "$\"$INSTDIR\uninstall.exe$\""
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "DisplayIcon" "$INSTDIR\${windows.icon}"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "HelpLink" "${vendor.website}/support"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "URLUpdateInfo" "${vendor.website}/download"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "URLInfoAbout" "${vendor.website}/support"
-  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "DisplayVersion" "${build.version}"
-  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
+  WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "EstimatedSize" "${build.socket.size}"
 
   WriteUninstaller "$INSTDIR\uninstall.exe"
@@ -105,24 +105,24 @@ Section
           Goto keygen
         false:
           SetErrorLevel $0
-          Abort "Failed while checking for Java ${javac.socket.source}"
+          Abort "Failed while checking for Java ${javac.source}"
     ${Else}
         Abort "Installation failed.  Please check log for details."
     ${EndIf}
   ${EndIf}
 
-  CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${windows.icon}" 0
+  CreateShortCut "$SMPROGRAMS\${project.name}.lnk" "$INSTDIR\${project.filename}.jar" "" "$INSTDIR\${windows.icon}" 0
 
   ; Delete matching firewall rules
-  DetailPrint "Removing ${socket.name} firewall rules..."
-  nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${socket.name}$\""
+  DetailPrint "Removing ${project.name} firewall rules..."
+  nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${project.name}$\""
 
   ; Install new Firewall rules
-  DetailPrint "Installing ${socket.name} inbound firewall rule..."
-  nsExec::ExecToLog "netsh.exe advfirewall firewall add rule name=$\"${socket.name}$\" dir=in action=allow profile=any localport=8181,8282,8383,8484,8182,8283,8384,8485 localip=any protocol=tcp"
+  DetailPrint "Installing ${project.name} inbound firewall rule..."
+  nsExec::ExecToLog "netsh.exe advfirewall firewall add rule name=$\"${project.name}$\" dir=in action=allow profile=any localport=8181,8282,8383,8484,8182,8283,8384,8485 localip=any protocol=tcp"
 
-  ; Launch a non-elevated instance of ${socket.name}
-  ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${socket.name}.lnk" "open" ""
+  ; Launch a non-elevated instance of ${project.name}
+  ${StdUtils.ExecShellAsUser} $0 "$SMPROGRAMS\${project.name}.lnk" "open" ""
 SectionEnd
 
 ;-------------------------------
@@ -131,8 +131,8 @@ Section "Uninstall"
   ; Sets the context of shell folders to "All Users"
   SetShellVarContext all
 
-  ; Kills any running ${socket.name} processes
-  nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${build.socket.name}.jar%'$\" call terminate"
+  ; Kills any running ${project.name} processes
+  nsExec::ExecToLog "wmic.exe process where $\"Name like '%java%' and CommandLine like '%${project.filename}.jar%'$\" call terminate"
   ; Cleanup for wmic on Windows XP
   Delete "$DESKTOP\TempWmicBatchFile.bat"
 
@@ -149,24 +149,24 @@ Section "Uninstall"
   ${EndIf}
   
   ; Delete matching firewall rules
-  DetailPrint "Removing ${socket.name} firewall rules..."
-  nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${socket.name}$\""
+  DetailPrint "Removing ${project.name} firewall rules..."
+  nsExec::ExecToLog "netsh.exe advfirewall firewall delete rule name= $\"${project.name}$\""
 
-  Delete "$SMPROGRAMS\${socket.name}.lnk"
+  Delete "$SMPROGRAMS\${project.name}.lnk"
   Delete "$INSTDIR\uninstall.exe"
   RMDir /r "$INSTDIR"
 
-  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}"
-  DeleteRegKey HKLM "Software\${socket.name}"
+  DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}"
+  DeleteRegKey HKLM "Software\${project.name}"
 
-  Delete "$DESKTOP\${socket.name}.url"
-  Delete "$DESKTOP\${socket.name}.lnk"
+  Delete "$DESKTOP\${project.name}.url"
+  Delete "$DESKTOP\${project.name}.lnk"
 
   ; Sets the context of shell folders to current user
   SetShellVarContext current
-  Delete "$DESKTOP\${socket.name}.url"
-  Delete "$DESKTOP\${socket.name}.lnk"
-  Delete "$SMPROGRAMS\${socket.name}.lnk"
+  Delete "$DESKTOP\${project.name}.url"
+  Delete "$DESKTOP\${project.name}.lnk"
+  Delete "$SMPROGRAMS\${project.name}.lnk"
 SectionEnd
 
 ;-------------------------------
@@ -174,14 +174,14 @@ SectionEnd
 Function .onInit
     ${If} ${RunningX64}
         SetRegView 64
-        StrCpy $INSTDIR "$PROGRAMFILES64\${socket.name}"
+        StrCpy $INSTDIR "$PROGRAMFILES64\${project.name}"
     ${EndIf}
 FunctionEnd
 
 Function un.onInit
     ${If} ${RunningX64}
         SetRegView 64
-        StrCpy $INSTDIR "$PROGRAMFILES64\${socket.name}"
+        StrCpy $INSTDIR "$PROGRAMFILES64\${project.name}"
     ${EndIf}
 FunctionEnd
 

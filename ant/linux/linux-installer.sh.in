@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-#                         ${socket.name} Linux Installer                             #
+#                         ${project.name} Linux Installer                             #
 ###############################################################################
 #  Description:                                                               #
 #    1. Stops any existing instances                                          #
@@ -21,8 +21,8 @@ fi
 
 noprompt="$1"
 destdir="${linux.installdir}"
-shortcut="/usr/share/applications/${build.socket.name}.desktop"
-jarfile="${destdir}/${build.socket.name}.jar"
+shortcut="/usr/share/applications/${project.filename}.desktop"
+jarfile="${destdir}/${project.filenamee}.jar"
 
 # Confirmation dialog
 height=8; width=41
@@ -43,7 +43,7 @@ function confirm_dialog() {
          exit 1
       fi
    fi
-   dialog --title "Install ${socket.name}" --backtitle "Install ${socket.name}" --yesno "$1" $height $width
+   dialog --title "Install ${project.name}" --backtitle "Install ${project.name}" --yesno "$1" $height $width
    if [ $? -ne 0 ]; then
       echo -e "\n\n${bash.aborted}\n"
       exit 1
@@ -57,8 +57,8 @@ function progress_dialog() {
       # Fallback on old input prompt
       echo -e "   - $2"; return 0
    fi
-   echo "$1" | dialog --title "Install ${socket.name}" \
-    --backtitle "Install ${socket.name}" \
+   echo "$1" | dialog --title "Install ${project.name}" \
+    --backtitle "Install ${project.name}" \
     --gauge "$2" $height $width
 }
 
@@ -77,7 +77,7 @@ function check_java() {
    fi
 }
 
-confirm_dialog "Are you sure you want to install ${socket.name}?" "$noprompt"
+confirm_dialog "Are you sure you want to install ${project.name}?" "$noprompt"
 
 progress_dialog 5 "Checking for Java ${javac.socket.target}+..."
 check_java
@@ -98,12 +98,12 @@ rm "${destdir}/`basename $0`"
 progress_dialog 40 "Creating desktop shortcut..."
 echo "[Desktop Entry]
 Type=Application
-Name=${socket.name}
+Name=${project.name}
 Exec=java -jar \"${jarfile}\"
 Path=${destdir}
 Icon=${destdir}/${linux.icon}
 Terminal=false
-Comment=${socket.name}" > "${shortcut}"
+Comment=${project.name}" > "${shortcut}"
 chmod +x "${shortcut}"
 
 # Ubuntu process restarter
@@ -157,8 +157,8 @@ if [ $? -ne 0 ]; then
 fi
 
 cd "${destdir}"
-progress_dialog 90 "Installation complete... Starting ${socket.name}..."
-# Start ${socket.name} as the user that's logged in
+progress_dialog 90 "Installation complete... Starting ${project.name}..."
+# Start ${project.name} as the user that's logged in
 sudo -u $(logname) nohup "java" -jar "${jarfile}" > /dev/null 2>&1 &
 progress_dialog 100 "Finished.  QZ Tray should start automatically."
 echo
