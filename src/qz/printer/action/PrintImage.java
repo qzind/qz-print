@@ -27,18 +27,15 @@ import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.common.Base64;
+import qz.common.Constants;
 import qz.printer.PrintOptions;
 import qz.utils.ByteUtilities;
-import qz.utils.SystemUtilities;
 
 import javax.imageio.ImageIO;
 import javax.print.PrintService;
 import javax.print.attribute.PrintRequestAttributeSet;
-import javax.print.attribute.standard.MediaSizeName;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
-import java.awt.image.IndexColorModel;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
@@ -47,7 +44,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 
@@ -57,10 +53,6 @@ import java.util.List;
 public class PrintImage extends PrintPostScript implements PrintProcessor, Printable {
 
     private static final Logger log = LoggerFactory.getLogger(PrintImage.class);
-
-    private static final String JOB_NAME = "QZ-PRINT 2D Printing";
-
-    private static final List<Integer> MAC_BAD_IMAGE_TYPES = Arrays.asList(BufferedImage.TYPE_BYTE_BINARY, BufferedImage.TYPE_CUSTOM);
 
     private List<BufferedImage> images;
 
@@ -91,27 +83,25 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
 
     @Override
     public void print(PrintService service, PrintOptions options) throws PrinterException {
+        if (images.isEmpty()) {
+            log.warn("Nothing to print");
+            return;
+        }
+
         PrinterJob job = PrinterJob.getPrinterJob();
+        job.setPrintService(service);
         PageFormat page = job.getPageFormat(null);
 
         PrintOptions.Postscript psOpts = options.getPSOptions();
         PrintRequestAttributeSet attributes = applyDefaultSettings(psOpts, page);
 
         if (psOpts.getSize() != null) {
-            // Fixes 4x6 labels on Mac OSX
-            if (psOpts.getUnits() == PrintOptions.Unit.INCH && psOpts.getSize().getWidth() == 4 && psOpts.getSize().getHeight() == 6) {
-                attributes.add(MediaSizeName.JAPANESE_POSTCARD);
-            }
-
             scaleImage = options.getPSOptions().getSize().isFitImage();
         }
 
         imageRotation = psOpts.getRotation();
 
-        log.trace("{}", Arrays.toString(attributes.toArray()));
-
-        job.setJobName(JOB_NAME);
-        job.setPrintService(service);
+        job.setJobName(Constants.IMAGE_PRINT);
         job.setPrintable(this, page);
 
         log.info("Starting image printing ({} copies)", psOpts.getCopies());
@@ -133,13 +123,13 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
 
 
         BufferedImage imgToPrint = images.get(pageIndex);
+        imgToPrint = fixColorModel(imgToPrint);
         if (imageRotation % 360 != 0) {
             imgToPrint = rotate(imgToPrint, imageRotation);
         }
 
 
         Graphics2D graphics2D = (Graphics2D)graphics;
-
         // Suggested by Bahadir 8/23/2012
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
@@ -147,23 +137,6 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
 
         log.trace("{}", graphics2D.getRenderingHints());
 
-        // FIXME:  Temporary fix for OS X 10.10 hard crash.
-        // See https://github.com/qzind/qz-print/issues/75
-        if (SystemUtilities.isMac()) {
-            if (MAC_BAD_IMAGE_TYPES.contains(imgToPrint.getType())) {
-                BufferedImage sanitizedImage;
-                ColorModel cm = imgToPrint.getColorModel();
-                if (cm instanceof IndexColorModel) {
-                    log.info("Image converted to 256 colors for OSX 10.10 Workaround");
-                    sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_BYTE_INDEXED, (IndexColorModel)cm);
-                } else {
-                    log.info("Image converted to ARGB for OSX 10.10 Workaround");
-                    sanitizedImage = new BufferedImage(imgToPrint.getWidth(), imgToPrint.getHeight(), BufferedImage.TYPE_INT_ARGB);
-                }
-                sanitizedImage.createGraphics().drawImage(imgToPrint, 0, 0, null);
-                imgToPrint = sanitizedImage;
-            }
-        }
 
         // apply image scaling
         double boundW = pageFormat.getImageableWidth();

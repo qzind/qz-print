@@ -493,6 +493,7 @@ window.qz = {
      *   @param {int} [data.options.y] Used only with raw printing [image] type. The Y position of the image.
      *   @param {string|int} [data.options.dotDensity] Used only with raw printing [image] type.
      *   @param {string} [data.options.xmlTag] Required if using [xml] type. Tag name containing base64 formatted data.
+     *   @param {number} [data.options.pageWidth=1280] Used only with [html] type printing. Width of the web page to render.
      * @param {boolean} [signed] Indicate if the data is already signed. Will call signing methods if false.
      *
      * @returns {Promise<null|Error>}

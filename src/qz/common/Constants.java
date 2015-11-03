@@ -11,7 +11,7 @@ public class Constants {
     public static final int OUTPUT_STREAM_SIZE = 20480;
     public static final int BYTE_BUFFER_SIZE = 512;
     public static final int APPEND_XML = 1;
-    public static final String VERSION = "2.0";
+    public static final String VERSION = "2.0.0";
     public static final int APPEND_RAW = 2;
     public static final int APPEND_IMAGE = 3;
     public static final int APPEND_IMAGE_PS = 4;
@@ -37,11 +37,16 @@ public class Constants {
     public static final String TRUSTED_PUBLISHER = String.format("Verified by %s", Constants.ABOUT_COMPANY);
     public static final String UNTRUSTED_PUBLISHER = "Untrusted website";
 
-
     public static final String WHITE_LIST = "Permanently allowed %s to access local resources";
     public static final String BLACK_LIST = "Permanently blocked %s from accessing local resources";
 
     public static final int EXPIRY_WARN = 30;   // days
     public static final Color WARNING_COLOR = Color.RED;
     public static final Color TRUSTED_COLOR = Color.BLUE;
+
+    public static final String RAW_PRINT = ABOUT_TITLE + " Raw Print";
+    public static final String IMAGE_PRINT = ABOUT_TITLE + " 2D Print";
+    public static final String PDF_PRINT = ABOUT_TITLE + " PDF Print";
+    public static final String HTML_PRINT = ABOUT_TITLE + " HTML Print";
+
 }

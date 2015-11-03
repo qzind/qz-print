@@ -7,6 +7,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qz.common.Constants;
 import qz.printer.PrintOptions;
 
 import javax.print.PrintService;
@@ -18,14 +19,11 @@ import java.awt.print.PrinterJob;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class PrintPDF extends PrintPostScript implements PrintProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(PrintPDF.class);
-
-    private static final String JOB_NAME = "QZ-PRINT PDF Printing";
 
     private List<PDDocument> pdfs;
 
@@ -33,6 +31,7 @@ public class PrintPDF extends PrintPostScript implements PrintProcessor {
     public PrintPDF() {
         pdfs = new ArrayList<>();
     }
+
 
     @Override
     public void parseData(JSONArray printData) throws JSONException, UnsupportedOperationException {
@@ -52,21 +51,26 @@ public class PrintPDF extends PrintPostScript implements PrintProcessor {
 
     @Override
     public void print(PrintService service, PrintOptions options) throws PrinterException {
+        if (pdfs.isEmpty()) {
+            log.warn("Nothing to print");
+            return;
+        }
+
         PrinterJob job = PrinterJob.getPrinterJob();
         job.setPrintService(service);
         PageFormat page = job.getPageFormat(null);
 
         PrintRequestAttributeSet attributes = applyDefaultSettings(options.getPSOptions(), page);
-        log.trace("{}", Arrays.toString(attributes.toArray()));
 
         Book book = new Book();
         for(PDDocument doc : pdfs) {
             book.append(new PDFPrintable(doc), page, doc.getNumberOfPages());
         }
 
-        job.setJobName(JOB_NAME);
+        job.setJobName(Constants.PDF_PRINT);
         job.setPageable(book);
 
+        log.info("Starting pdf printing ({} copies)", options.getPSOptions().getCopies());
         for(int i = 0; i < options.getPSOptions().getCopies(); i++) {
             job.print(attributes);
         }

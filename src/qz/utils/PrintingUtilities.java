@@ -15,6 +15,8 @@ public class PrintingUtilities {
     private PrintingUtilities() {}
 
 
+    //FIXME - needs re-thought, [file] type can be used as sole data for all print types ..
+
     public static PrintProcessor getPrintProcessor(JSONArray printData, PrintOptions.Raw rawPrintOptions) throws JSONException {
         if (rawPrintOptions != null && !rawPrintOptions.isDefault()) {
             //return new PrintRaw();
@@ -34,7 +36,7 @@ public class PrintingUtilities {
                 case "raw": case "hex": case "xml":
                     //return new PrintRaw();
                 case "html":
-                    //return new PrintHTML();
+                    return new PrintHTML();
                 case "pdf":
                     return new PrintPDF();
                 case "image": case "base64": case "file":

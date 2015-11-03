@@ -26,107 +26,132 @@ package qz.printer.action;
 
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qz.common.Constants;
 import qz.printer.PrintOptions;
 
-import javax.print.PrintException;
 import javax.print.PrintService;
-import javax.print.attribute.HashPrintRequestAttributeSet;
-import javax.print.attribute.standard.MediaPrintableArea;
-import javax.swing.*;
+import javax.print.attribute.PrintRequestAttributeSet;
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
 import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class PrintHTML implements PrintProcessor, Printable {
+public class PrintHTML extends PrintPostScript implements PrintProcessor, Printable {
 
     private static final Logger log = LoggerFactory.getLogger(PrintHTML.class);
-    private static final String JOB_NAME = "QZ-PRINT HTML Printing";
+
+    private List<BufferedImage> snapshots;
+
+
+    public PrintHTML() {
+        snapshots = new ArrayList<>();
+    }
 
 
     @Override
     public void parseData(JSONArray printData) throws JSONException, UnsupportedOperationException {
-        //TODO
-    }
+        WebApp.initialize();
 
-    @Override
-    public void print(PrintService service, PrintOptions options) throws PrintException, PrinterException {
-        //TODO
-    }
+        for(int i = 0; i < printData.length(); i++) {
+            JSONObject data = printData.getJSONObject(i);
+            String source = data.getString("data");
 
+            double pageWidth = WebApp.DEFAULT_WIDTH;
+            JSONObject option = data.optJSONObject("options");
+            if (option != null) { pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH); }
 
-    public PrintHTML() {
-        super();
-        //add(label = new JLabel());
-        //super.setOpaque(true);
-        //super.setBackground(Color.WHITE);
-        //label.setBackground(Color.WHITE);
-    }
-
-
-    public void print() throws PrinterException {
-        /*
-        JFrame j = new JFrame(JOB_NAME.get());
-        j.setUndecorated(true);
-        j.setLayout(new FlowLayout());
-        this.setBorder(null);
-
-        try{
-            for (String s : getHTMLDataArray()) {
-                this.setText(s + "</html>");
-                j.add(this);
-
-
-                j.pack();
-                j.setExtendedState(Frame.ICONIFIED);
-                j.setVisible(true);
-
-                // Eliminate any margins
-                HashPrintRequestAttributeSet attr = new HashPrintRequestAttributeSet();
-                attr.add(new MediaPrintableArea(0f, 0f, getWidth()/ PrintPostScript.DPI, getHeight()/PrintPostScript.DPI, MediaPrintableArea.INCH));
-
-                PrinterJob job = PrinterJob.getPrinterJob();
-                job.setPrintService(ps.get());
-                job.setPrintable(this);
-                job.setJobName(JOB_NAME.get());
-                job.print(attr);
-                j.setVisible(false);
+            try {
+                if (source.startsWith("http") || source.startsWith("file")) {
+                    snapshots.add(WebApp.captureFile(source, pageWidth));
+                } else {
+                    snapshots.add(WebApp.captureHTML(source, pageWidth));
+                }
+            }
+            catch(IOException e) {
+                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", data.getString("type"), source), e);
             }
         }
 
-        finally{
-            j.dispose();
-            clear();
-        }
-        */
+        log.debug("Parsed {} html records", snapshots.size());
     }
 
+    @Override
+    public void print(PrintService service, PrintOptions options) throws PrinterException {
+        if (snapshots.isEmpty()) {
+            log.warn("Nothing to print");
+            return;
+        }
+
+        PrinterJob job = PrinterJob.getPrinterJob();
+        job.setPrintService(service);
+        PageFormat page = job.getPageFormat(null);
+
+        PrintRequestAttributeSet attributes = applyDefaultSettings(options.getPSOptions(), page);
+
+        job.setJobName(Constants.HTML_PRINT);
+        job.setPrintable(this, page);
+
+        log.info("Starting html printing ({} copies)", options.getPSOptions().getCopies());
+        for(int i = 0; i < options.getPSOptions().getCopies(); i++) {
+            job.print(attributes);
+        }
+    }
 
     @Override
     public int print(Graphics graphics, PageFormat pageFormat, int pageIndex) throws PrinterException {
         if (graphics == null) { throw new PrinterException("No graphics specified"); }
         if (pageFormat == null) { throw new PrinterException("No page format specified"); }
 
-        /*
-        boolean doubleBuffered = super.isDoubleBuffered();
-        super.setDoubleBuffered(false);
+        if (pageIndex + 1 > snapshots.size()) {
+            return NO_SUCH_PAGE;
+        }
+        log.trace("Requested page {} for printing", pageIndex);
 
-        format.setOrientation(orientation.get());
 
+        BufferedImage imgToPrint = snapshots.get(pageIndex);
+        imgToPrint = fixColorModel(imgToPrint);
 
-        Graphics2D graphics2D = (Graphics2D) graphics;
-        graphics2D.translate(format.getImageableX(), format.getImageableY());
-        //g2d.translate(paper.getImageableX(), paper.getImageableY());
-        this.paint(graphics2D);
-        super.setDoubleBuffered(doubleBuffered);
+        Graphics2D graphics2D = (Graphics2D)graphics;
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        log.trace("{}", graphics2D.getRenderingHints());
+
+        // apply image scaling
+        double boundW = pageFormat.getImageableWidth();
+        double boundH = pageFormat.getImageableHeight();
+
+        int imgW;
+        int imgH;
+
+        // scale image to smallest edge, keeping size ratio
+        if ((imgToPrint.getWidth() / imgToPrint.getHeight()) < (boundW / boundH)) {
+            imgW = (int)(imgToPrint.getWidth() / (imgToPrint.getHeight() / boundH));
+            imgH = (int)boundH;
+        } else {
+            imgW = (int)boundW;
+            imgH = (int)(imgToPrint.getHeight() / (imgToPrint.getWidth() / boundW));
+        }
+
+        double boundX = pageFormat.getImageableX();
+        double boundY = pageFormat.getImageableY();
+        log.debug("Paper area: {},{}:{},{}", (int)boundX, (int)boundY, (int)boundW, (int)boundH);
+
+        // Now we perform our rendering
+        graphics2D.drawImage(imgToPrint, (int)boundX + imgToPrint.getMinX(), (int)boundY + imgToPrint.getMinY(), (int)boundX + imgW, (int)boundY + imgH,
+                             imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
+
+        // Valid page
         return PAGE_EXISTS;
-        */
-
-        return NO_SUCH_PAGE;
     }
+
 }

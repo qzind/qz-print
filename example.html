@@ -37,6 +37,8 @@
         width: 25%;
         height: 12em;
         overflow-y: auto;
+
+        background-color: #B1B1B1;
     }
 
     fieldset.wide {
@@ -136,34 +138,34 @@
                 <div id="configPrinter" style="font-weight: bold;">NONE</div>
 
                 <button type="button" onclick="setPrinter($('#printerSearch').val());">Set To Searched Printer</button>
-                <button type="button" onclick="askForFile();">Set To File</button>
-                <button type="button" onclick="askForHost();">Set To Host</button>
+                <button disabled type="button" onclick="askForFile();">Set To File</button>
+                <button disabled type="button" onclick="askForHost();">Set To Host</button>
             </div>
         </div>
     </fieldset>
 
-    <fieldset id="serial">
+    <fieldset id="serial" class="disabled">
         <legend>Serial</legend>
 
         <div>
             <div class="columns-2">
-                <button type="button" onclick="listSerialPorts();">List Ports</button>
+                <button disabled type="button" onclick="listSerialPorts();">List Ports</button>
 
                 <label for="serialPort">Port Number</label>
-                <input type="text" id="serialPort" value="" />
+                <input disabled type="text" id="serialPort" value="" />
             </div>
 
             <div class="columns-2">
-                <button type="button" onclick="openSerialPort();">Open Port</button>
-                <button type="button" onclick="sendSerialData();">Send Command</button>
-                <button type="button" onclick="closeSerialPort();">Close Port</button>
+                <button disabled type="button" onclick="openSerialPort();">Open Port</button>
+                <button disabled type="button" onclick="sendSerialData();">Send Command</button>
+                <button disabled type="button" onclick="closeSerialPort();">Close Port</button>
             </div>
         </div>
     </fieldset>
 </div>
 
 <div class="row spread">
-    <fieldset id="raw" class="wide tall">
+    <fieldset id="raw" class="wide tall disabled">
         <legend>Raw Printing</legend>
 
         <div>
@@ -179,26 +181,26 @@
 
             <div class="row">
                 <div class="columns-3">
-                    <button type="button" onClick="printEPL();">Print EPL</button>
-                    <button type="button" onClick="printZPL();">Print ZPL</button>
+                    <button disabled type="button" onClick="printEPL();">Print EPL</button>
+                    <button disabled type="button" onClick="printZPL();">Print ZPL</button>
                     <br />
 
-                    <button type="button" onClick="printESCP();">Print ESCP</button>
+                    <button disabled type="button" onClick="printESCP();">Print ESCP</button>
                     <br />
 
-                    <button type="button" onClick="printEPCL();">Print EPCL</button>
+                    <button disabled type="button" onClick="printEPCL();">Print EPCL</button>
                     (Zebra Card Printer)<br />
                 </div>
 
                 <div class="columns-3">
-                    <button type="button" onClick="print64();">Print Base64</button>
-                    <button type="button" onClick="printXML();">Print XML</button>
-                    <button type="button" onClick="printHex();">Print Hex</button>
+                    <button disabled type="button" onClick="print64();">Print Base64</button>
+                    <button disabled type="button" onClick="printXML();">Print XML</button>
+                    <button disabled type="button" onClick="printHex();">Print Hex</button>
                     <br />
 
-                    <button type="button" onClick="printFile('zpl_sample.txt');">Print zpl_sample.txt</button>
-                    <button type="button" onClick="printFile('fgl_sample.txt');">Print fgl_sample.txt</button>
-                    <button type="button" onClick="printFile('epl_sample.txt');">Print epl_sample.txt</button>
+                    <button disabled type="button" onClick="printFile('zpl_sample.txt');">Print zpl_sample.txt</button>
+                    <button disabled type="button" onClick="printFile('fgl_sample.txt');">Print fgl_sample.txt</button>
+                    <button disabled type="button" onClick="printFile('epl_sample.txt');">Print epl_sample.txt</button>
                     <br />
                 </div>
 
@@ -207,23 +209,23 @@
 
                     <label for="rawAltPrinting">
                         Alternate Printing:
-                        <input type="checkbox" id="rawAltPrinting" />
+                        <input disabled type="checkbox" id="rawAltPrinting" />
                     </label>
 
                     <label for="rawEncoding">Encoding</label>
-                    <input type="text" id="rawEncoding" />
+                    <input disabled type="text" id="rawEncoding" />
 
                     <label for="rawEndOfDoc">End Of Doc</label>
-                    <input type="text" id="rawEndOfDoc" />
+                    <input disabled type="text" id="rawEndOfDoc" />
 
                     <label for="rawLanguage">Language</label>
-                    <input type="text" id="rawLanguage" />
+                    <input disabled type="text" id="rawLanguage" />
 
                     <label for="rawPerSpool">Per Spool</label>
-                    <input type="number" id="rawPerSpool" />
+                    <input disabled type="number" id="rawPerSpool" />
 
                     <label for="rawPrinterTray">Printer Tray</label>
-                    <input type="text" id="rawPrinterTray" />
+                    <input disabled type="text" id="rawPrinterTray" />
 
                     <button type="button" style="margin-top: 2em; color: #F00;" onclick="resetRawOptions();">Reset</button>
                 </div>
@@ -247,7 +249,7 @@
             <div class="row">
                 <div class="columns-3">
                     <button type="button" onClick="printHTML();">Print HTML</button>
-                    <button type="button" onClick="printHTML5();">Print Current Page</button>
+                    <button type="button" onClick="printPage();">Print Current Page</button>
                     <br />
 
                     <button type="button" onClick="printPDF();">Print PDF</button>
@@ -287,7 +289,7 @@
                     </select>
 
                     <label for="psPaperThickness">Paper Thickness</label>
-                    <input type="number" step="any" id="psPaperThickness" />
+                    <input disabled type="number" step="any" id="psPaperThickness" />
 
                     <label for="psRotation">Rotation</label>
                     <input type="number" step="any" id="psRotation" />
@@ -431,7 +433,7 @@
             '\nP1,1\n'
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     function printZPL() {
@@ -446,7 +448,7 @@
             '^XZ\n'
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     function printESCP() {
@@ -458,7 +460,7 @@
             { type: 'raw', data: '\nPrinted using qz-print plugin.\n\n\n\n\n\n' }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     function printEPCL() {
@@ -478,7 +480,7 @@
         $.merge(printData, convertEPCL('I 10'));       // Print card (10 returns to print ready pos.)
         $.merge(printData, convertEPCL('MO'));         // Move card to output hopper
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     /**
@@ -594,7 +596,7 @@
             }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     function printXML() {
@@ -604,7 +606,7 @@
             { type: 'xml', data: getPath() + '/assets/zpl_sample.xml', options: { xmlTag: 'v7:Image' } }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     function printHex() {
@@ -634,7 +636,7 @@
             { type: 'file', data: getPath() + '/assets/' + file }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
 
@@ -657,15 +659,22 @@
                 '           <td valign="top">' + colB + '</td>' +
                 '       </tr>' +
                 '   </table>' +
-                '</html>'
+                '</html>',
+                options: { pageWidth: 640 }
             }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
-    function printHTML5() {
-        console.warn("Not Implemented!"); //TODO
+    function printPage() {
+        var config = getUpdatedConfig();
+
+        var printData = [
+            { type: 'html', data: getPath() + '/example.html' }
+        ];
+
+        qz.print(config, printData).catch(displayError);
     }
 
     function printPDF() {
@@ -675,7 +684,7 @@
             { type: 'pdf', data: getPath() + '/assets/pdf_sample.pdf' }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     function printImage(scaling) {
@@ -690,7 +699,7 @@
             { type: 'image', data: getPath() + '/assets/img/image_sample.png' }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
 
@@ -789,8 +798,13 @@
         console.error(err);
     }
 
+    function displayError(err) {
+        alert(err);
+        console.error(err);
+    }
+
     function setBackground(color) {
-        $("#qz-page").children().children("fieldset").css("background-color", color);
+        $("#qz-page").children().children("fieldset").not(".disabled").css("background-color", color);
     }
 
     function getPath() {
@@ -842,7 +856,7 @@
                 top: valu("psMarginsTop"),
                 right: valu("psMarginsRight"),
                 bottom: valu("psMarginsBottom"),
-                left: valu("psMarginsLeft"),
+                left: valu("psMarginsLeft")
             };
         }
 

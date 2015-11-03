@@ -56,8 +56,6 @@ public class PrintRaw implements PrintProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(PrintRaw.class);
 
-    private static final String JOB_NAME = "QZ-PRINT Raw Printing";
-
     private ByteArrayBuilder commands;
 
     //private DocFlavor docFlavor = DocFlavor.BYTE_ARRAY.AUTOSENSE;
