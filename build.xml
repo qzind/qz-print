@@ -14,7 +14,7 @@
 
         <!-- Your custom code signing properties here. Feel free to change. -->
         <!-- The project will default to qz.ks if it doesn't exist -->
-        <property file="${user.home}/Desktop/Code Signing/private.properties"/>
+        <property file="${basedir}/../private/private.properties"/>
 
         <!-- The default code signing properties which uses qz.ks. -->
         <!-- Please leave this value the netbeans default as a fallback. -->
@@ -283,7 +283,9 @@
     #                    Windows Installer                         #
     ################################################################
     -->
-    <target name="nsis" depends="distribute,prepackage,nsisbin-1,nsisbin-2,nsisbin-3">
+    <target name="nsis" depends="build-exe,sign-exe-self,sign-exe-tsa"/>
+
+    <target name="build-exe" depends="distribute,prepackage,nsisbin-1,nsisbin-2,nsisbin-3">
         <echo>Creating installer using ${nsisbin}</echo>
 
         <property file="ant/windows/windows.properties"/>
@@ -319,6 +321,36 @@
     <!-- Win64 makensis -->
     <target name="nsisbin-3" depends="init" if="env.ProgramFiles(x86)">
         <property name="nsisbin" value="${env.ProgramFiles(x86)}/NSIS/makensis.exe"/>
+    </target>
+
+    <!-- As seen with signing jars, tsaurl attribute cannot be empty, so separate methods are needed to sign both exes -->
+    <target name="sign-exe-self" depends="build-exe" unless="signing.tsaurl">
+        <taskdef name="signexe" classname="net.jsign.PESignerTask" classpath="${basedir}/ant/lib/jsign-1.2.jar"/>
+
+        <echo>Signing Windows Executable: No tsaurl was provided so this exe was not timestamped. Users will not be able to validate this exe after the signer certificate's expiration date or after any future revocation date.</echo>
+        <signexe file="${out.dir}\${build.socket.name}-${build.version}.exe"
+            name="${socket.name}"
+            url="${vendor.website}"
+            keystore="${signing.keystore}"
+            alias="${signing.alias}"
+            storepass="${signing.storepass}"
+            keypass="${signing.keypass}"
+            />
+    </target>
+
+    <target name="sign-exe-tsa" depends="build-exe" if="signing.tsaurl">
+        <taskdef name="signexe" classname="net.jsign.PESignerTask" classpath="${basedir}/ant/lib/jsign-1.2.jar"/>
+
+        <echo>Signing Windows Executable:</echo>
+        <signexe file="${out.dir}\${build.socket.name}-${build.version}.exe"
+            name="${socket.name}"
+            url="${vendor.website}"
+            keystore="${signing.keystore}"
+            alias="${signing.alias}"
+            storepass="${signing.storepass}"
+            keypass="${signing.keypass}"          
+            tsaurl="${signing.tsaurl}"
+            />
     </target>
 
     <!--
