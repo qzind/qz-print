@@ -328,7 +328,7 @@
         <taskdef name="signexe" classname="net.jsign.PESignerTask" classpath="${basedir}/ant/lib/jsign-1.2.jar"/>
 
         <echo>Signing Windows Executable: No tsaurl was provided so this exe was not timestamped. Users will not be able to validate this exe after the signer certificate's expiration date or after any future revocation date.</echo>
-        <signexe file="${out.dir}\${build.socket.name}-${build.version}.exe"
+        <signexe file="${out.dir}/${build.socket.name}-${build.version}.exe"
             name="${socket.name}"
             url="${vendor.website}"
             keystore="${signing.keystore}"
@@ -342,7 +342,7 @@
         <taskdef name="signexe" classname="net.jsign.PESignerTask" classpath="${basedir}/ant/lib/jsign-1.2.jar"/>
 
         <echo>Signing Windows Executable:</echo>
-        <signexe file="${out.dir}\${build.socket.name}-${build.version}.exe"
+        <signexe file="${out.dir}/${build.socket.name}-${build.version}.exe"
             name="${socket.name}"
             url="${vendor.website}"
             keystore="${signing.keystore}"
