@@ -26,8 +26,11 @@
  *    keytool.exe (distributed with jre: http://java.com)                                     *
  *                                                                                            *
  *  Usage:                                                                                    *
- *    cscript //NoLogo ${windows.keygen.name} "C:\Program Files\QZ Tray" install [hostname]        *
- *    cscript //NoLogo ${windows.keygen.name} "C:\Program Files\QZ Tray" uninstall [hostname]      *
+ *    cscript //NoLogo ${windows.keygen.name}                                                      *
+ *            "C:\Program Files\QZ Tray" install [hostname] [portable_firefox]                *
+ *                                                                                            *
+ *    cscript //NoLogo ${windows.keygen.name}                                                 *
+ *            "C:\Program Files\QZ Tray" uninstall [hostname] [portable_firefox]                   *
  *                                                                                            *
  **********************************************************************************************/
 
@@ -39,6 +42,7 @@ var newLine = "\r\n";
 var qzInstall = getArg(0, getRegValue("HKLM\\Software\\${socket.name}\\"));
 var installMode = getArg(1, "install");
 var cn = getArg(2, "${jks.cn}");
+var firefoxPortable = getArg(3, null);
 
 if (installMode == "install") {
     var javaKey, jreHome, keyTool, keyStore, password, derCert, firefoxInstall;
@@ -285,6 +289,12 @@ function installWindowsXPCertificate() {
  * Gets the Firefox installation path, stores it a global variable "firefoxInstall"
  */
 function getFirefoxInstall() {
+    //  Use provided install directory, if supplied
+    if (firefoxPortable) {
+        firefoxInstall = firefoxPortable + "\\App\\Firefox\\firefox.exe";
+        return firefoxInstall;
+    }
+
     //  Determine if Firefox is installed
     var firefoxKey = "HKLM\\Software\\Mozilla\\Mozilla Firefox";
     var firefoxVer = getRegValue(firefoxKey + "\\");
