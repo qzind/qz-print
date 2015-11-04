@@ -3,49 +3,41 @@ package qz.utils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
-import qz.printer.PrintOptions;
-import qz.printer.action.PrintHTML;
-import qz.printer.action.PrintImage;
-import qz.printer.action.PrintPDF;
-import qz.printer.action.PrintProcessor;
-import qz.printer.action.PrintRaw;
+import qz.printer.action.*;
 
 public class PrintingUtilities {
 
     private PrintingUtilities() {}
 
+    public enum Type {
+        HTML, IMAGE, PDF, RAW
+    }
 
-    //FIXME - needs re-thought, [file] type can be used as sole data for all print types ..
+    public enum Format {
+        AUTO, BASE64, FILE, VISUAL, PLAIN, HEX, XML
+    }
 
-    public static PrintProcessor getPrintProcessor(JSONArray printData, PrintOptions.Raw rawPrintOptions) throws JSONException {
-        if (rawPrintOptions != null && !rawPrintOptions.isDefault()) {
-            //return new PrintRaw();
+
+    public static PrintProcessor getPrintProcessor(JSONArray printData) throws JSONException {
+        JSONObject data = printData.optJSONObject(0);
+
+        Type type;
+        if (data == null) {
+            type = Type.RAW;
+        } else {
+            type = Type.valueOf(data.optString("type", "RAW").toUpperCase());
         }
 
-        for(int i = 0; i < printData.length(); i++) {
-            String type;
-
-            JSONObject data = printData.optJSONObject(i);
-            if (data == null) {
-                type = "raw";
-            } else {
-                type = data.getString("type").toLowerCase();
-            }
-
-            switch(type) {
-                case "raw": case "hex": case "xml":
-                    //return new PrintRaw();
-                case "html":
-                    return new PrintHTML();
-                case "pdf":
-                    return new PrintPDF();
-                case "image": case "base64": case "file":
-                default:
-                    break; //only postscript if no other option is found
-            }
+        switch(type) {
+            case HTML:
+                return new PrintHTML();
+            case IMAGE: default:
+                return new PrintImage();
+            case PDF:
+                return new PrintPDF();
+            case RAW:
+                return new PrintRaw();
         }
-
-        return new PrintImage();
     }
 
 }

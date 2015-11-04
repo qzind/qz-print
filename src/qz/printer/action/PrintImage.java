@@ -30,6 +30,7 @@ import qz.common.Base64;
 import qz.common.Constants;
 import qz.printer.PrintOptions;
 import qz.utils.ByteUtilities;
+import qz.utils.PrintingUtilities;
 
 import javax.imageio.ImageIO;
 import javax.print.PrintService;
@@ -70,11 +71,15 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
         for(int i = 0; i < printData.length(); i++) {
             JSONObject data = printData.getJSONObject(i);
 
+            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
+            boolean fromBase64 = (format == PrintingUtilities.Format.BASE64)
+                    || (format == PrintingUtilities.Format.AUTO && ByteUtilities.isBase64Image(data.getString("data")));
+
             try {
-                images.add(readImage(data.getString("data")));
+                images.add(readImage(data.getString("data"), fromBase64));
             }
             catch(IOException e) {
-                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as an image", data.getString("type"), data.getString("data")), e);
+                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as an image", data.getString("format"), data.getString("data")), e);
             }
         }
 
@@ -175,8 +180,8 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
      * @param rawData Base^$ encoded string or URL
      * @return BufferedImage from {@code rawData}
      */
-    private static BufferedImage readImage(String rawData) throws IOException {
-        if (ByteUtilities.isBase64Image(rawData)) {
+    private static BufferedImage readImage(String rawData, boolean fromBase64) throws IOException {
+        if (fromBase64) {
             return ImageIO.read(new ByteArrayInputStream(Base64.decode(rawData)));
         } else {
             return ImageIO.read(new URL(rawData));

@@ -117,16 +117,6 @@ public class WebApp extends Application {
     }
 
 
-    /** Capture image from pure HTML */
-    public static BufferedImage captureHTML(String html, double width) throws IOException {
-        return capture(html, false, width);
-    }
-
-    /** Capture image from HTML on URL */
-    public static BufferedImage captureFile(String location, double width) throws IOException {
-        return capture(location, true, width);
-    }
-
     /**
      * Sets up capture to run on JavaFX thread and returns snapshot of rendered page
      *
@@ -134,7 +124,7 @@ public class WebApp extends Application {
      * @param fromFile If the passed {@code source} is from a url/file location
      * @return BufferedImage of the rendered html
      */
-    private static BufferedImage capture(final String source, final boolean fromFile, final double width) throws IOException {
+    public static BufferedImage capture(final String source, final boolean fromFile, final double width) throws IOException {
         final AtomicReference<BufferedImage> capture = new AtomicReference<>();
         final AtomicReference<Throwable> error = new AtomicReference<>();
 

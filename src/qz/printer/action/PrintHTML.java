@@ -31,6 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.common.Constants;
 import qz.printer.PrintOptions;
+import qz.utils.PrintingUtilities;
 
 import javax.print.PrintService;
 import javax.print.attribute.PrintRequestAttributeSet;
@@ -64,19 +65,18 @@ public class PrintHTML extends PrintPostScript implements PrintProcessor, Printa
             JSONObject data = printData.getJSONObject(i);
             String source = data.getString("data");
 
+            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
+            boolean fromFile = (format == PrintingUtilities.Format.FILE) || (format == PrintingUtilities.Format.AUTO && source.startsWith("http"));
+
             double pageWidth = WebApp.DEFAULT_WIDTH;
             JSONObject option = data.optJSONObject("options");
             if (option != null) { pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH); }
 
             try {
-                if (source.startsWith("http") || source.startsWith("file")) {
-                    snapshots.add(WebApp.captureFile(source, pageWidth));
-                } else {
-                    snapshots.add(WebApp.captureHTML(source, pageWidth));
-                }
+                snapshots.add(WebApp.capture(source, fromFile, pageWidth));
             }
             catch(IOException e) {
-                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", data.getString("type"), source), e);
+                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", data.getString("format"), source), e);
             }
         }
 

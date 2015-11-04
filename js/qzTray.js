@@ -330,7 +330,7 @@ window.qz = {
         },
 
         /**
-         * List of functions called for any connections errors outside of an API call.<br/>
+         * List of functions called for any connections errors outside of an API call.<p/>
          * Also called if {@link websocket#connect} fails to connect.
          *
          * @param {Function|Array<Function>} calls Single or array of Function(Event) calls.
@@ -340,7 +340,7 @@ window.qz = {
         },
 
         /**
-         * List of functions called for any connection closing event outside of an API call.<br/>
+         * List of functions called for any connection closing event outside of an API call.<p/>
          * Also called when {@link websocket#disconnect} is called.
          *
          * @param {Function|Array<Function>} calls Single or array of Function(Event) calls.
@@ -424,29 +424,29 @@ window.qz = {
     /** Calls related to setting up new printer configurations. */
     configs: {
         /**
-         * Default options used by new configs if not overridden.<br/>
-         * Setting a value to NULL will use the printer's default options.<br/>
+         * Default options used by new configs if not overridden.
+         * Setting a value to NULL will use the printer's default options.
          * Updating these will not update the options on any created config.
          *
          * @param {Object} options Default options used by printer configs if not overridden.
          *
-         *  @param {string} [options.colorType='color'] Valid values [color|greyscale|blackwhite]
+         *  @param {string} [options.colorType='color'] Valid values  <code>[color|greyscale|blackwhite]</code>
          *  @param {int} [options.copies=1] Number of copies to be printed.
-         *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on [options.units]).
+         *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on  <code>[options.units]</code>).
          *  @param {boolean} [options.duplex=false] Double sided printing
          *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides.
          *   @param {number} [options.margins.top=0]
          *   @param {number} [options.margins.right=0]
          *   @param {number} [options.margins.bottom=0]
          *   @param {number} [options.margins.left=0]
-         *  @param {string} [options.orientation=null] Valid values [portrait|landscape|reverse-landscape]
+         *  @param {string} [options.orientation=null] Valid values  <code>[portrait|landscape|reverse-landscape]</code>
          *  @param {number} [options.paperThickness=null]
          *  @param {number} [options.rotation=0] Image rotation in degrees.
          *  @param {Object} [options.size=null] Paper size.
          *   @param {number} [options.size.width=null] Page width.
          *   @param {number} [options.size.height=null] Page height.
          *   @param {boolean} [options.size.scaleImage=false] Scales image to page size, keeping ratio.
-         *  @param {string} [options.units] Page units, applies to paper size, margins, and density. Valid value [in|cm|mm]
+         *  @param {string} [options.units] Page units, applies to paper size, margins, and density. Valid value  <code>[in|cm|mm]</code>
          *
          *  @param {boolean} [options.altPrinting=false]
          *  @param {string} [options.encoding=null] Character set
@@ -481,19 +481,25 @@ window.qz = {
 
 
     /**
-     * Send data to selected config for printing.<br/>
+     * Send data to selected config for printing.
      * The promise for this method will resolve when the document has been sent to the printer. Actual printing may not be complete.
      *
      * @param {Object<Config>} config Previously created config object.
-     * @param {Array<Object|string>} data Array of data being sent to the printer. String elements are interpreted the same as the object [raw] type.
-     *  @param {string} data.type Valid values [raw|image|hex|base64|file|pdf|html|xml].
+     * @param {Array<Object|string>} data Array of data being sent to the printer. String values are interpreted the same as the default <code>[raw]</code> object value.
      *  @param {string} data.data
+     *  @param {string} data.type Valid values <code>[html|image|pdf|raw]</code>
+     *  @param {string} [data.format='auto'] Format of data provided. Generally only needed for raw printing<p/>
+     *      The <code>[auto]</code> format is valid for all data types.<p/>
+     *      For <code>[html]</code> types, valid formats are <code>[file|plain]</code>.<p/>
+     *      For <code>[image]</code> types, valid formats are <code>[base64|file|visual]</code>.<p/>
+     *      For <code>[pdf]</code> types, valid format is <code>[file]</code>.<p/>
+     *      For <code>[raw]</code> types, valid formats are <code>[base64|file|visual|plain|hex|xml]</code>, use of <code>[auto]</code> assumes <code>[plain]</code>.
      *  @param {Object} [data.options]
-     *   @param {int} [data.options.x] Used only with raw printing [image] type. The X position of the image.
-     *   @param {int} [data.options.y] Used only with raw printing [image] type. The Y position of the image.
-     *   @param {string|int} [data.options.dotDensity] Used only with raw printing [image] type.
-     *   @param {string} [data.options.xmlTag] Required if using [xml] type. Tag name containing base64 formatted data.
-     *   @param {number} [data.options.pageWidth=1280] Used only with [html] type printing. Width of the web page to render.
+     *   @param {int} [data.options.x] Used only with raw printing <code>[visual]</code> type. The X position of the image.
+     *   @param {int} [data.options.y] Used only with raw printing <code>[visual]</code> type. The Y position of the image.
+     *   @param {string|int} [data.options.dotDensity] Used only with raw printing <code>[visual]</code> type. //TODO - use PS 'dpi' option value ??
+     *   @param {string} [data.options.xmlTag] Required if passing xml data. Tag name containing base64 formatted data.
+     *   @param {number} [data.options.pageWidth=1280] Used only with <code>[html]</code> type printing. Width of the web page to render.
      * @param {boolean} [signed] Indicate if the data is already signed. Will call signing methods if false.
      *
      * @returns {Promise<null|Error>}
@@ -620,7 +626,7 @@ window.qz = {
     /** Calls related to signing connection requests. */
     signing: {
         /**
-         * List of functions called when requesting a public certificate for signing requests.<br/>
+         * List of functions called when requesting a public certificate for signing requests.
          * Should return a public certificate as a string.
          *
          * @param {Function|Array<Function>} calls Single or array of Function() calls.
@@ -634,7 +640,7 @@ window.qz = {
         },
 
         /**
-         * List of functions called to sign a request to the connection.<br/>
+         * List of functions called to sign a request to the connection.
          * Should return just the signed string of the passed `stringToSign` param.
          *
          * @param {Function|Array<Function>} calls Single or array of Function(stringToSign) calls.

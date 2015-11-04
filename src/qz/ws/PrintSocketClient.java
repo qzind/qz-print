@@ -140,7 +140,7 @@ public class PrintSocketClient {
         PrintOptions options = new PrintOptions(params.getJSONObject("options"));
 
         try {
-            PrintProcessor processor = PrintingUtilities.getPrintProcessor(params.getJSONArray("data"), options.getRawOptions());
+            PrintProcessor processor = PrintingUtilities.getPrintProcessor(params.getJSONArray("data"));
             log.debug("Using {} to print", processor.getClass().getName());
 
             processor.parseData(params.getJSONArray("data"));
