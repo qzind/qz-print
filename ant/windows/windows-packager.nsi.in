@@ -72,6 +72,12 @@ Section
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "EstimatedSize" "${build.socket.size}"
 
+  ; Mimetype support, e.g. ${vendor.name}:launch
+  WriteRegStr HKCR "${vendor.name}" "" "URL:${socket.name} Protocol"
+  WriteRegStr HKCR "${vendor.name}" "URL Protocol" ""
+  WriteRegStr HKCR "${vendor.name}\DefaultIcon" "" "$\"$INSTDIR\${windows.icon}$\",1"
+  WriteRegStr HKCR "${vendor.name}\shell\open\command" "" "$\"$INSTDIR\${build.socket.name}.exe$\" $\"%1$\""
+
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   ; Prevent launching exe from SysWOW64
@@ -111,7 +117,7 @@ Section
     ${EndIf}
   ${EndIf}
 
-  CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.jar" "" "$INSTDIR\${windows.icon}" 0
+  CreateShortCut "$SMPROGRAMS\${socket.name}.lnk" "$INSTDIR\${build.socket.name}.exe" "" "$INSTDIR\${windows.icon}" 0
 
   ; Delete matching firewall rules
   DetailPrint "Removing ${socket.name} firewall rules..."

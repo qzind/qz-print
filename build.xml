@@ -291,14 +291,22 @@
         <property file="ant/windows/windows.properties"/>
         <copy file="${branding.dir}/${windows.icon}" tofile="${dist.socket.dir}/${windows.icon}" />
 
-        <delete file="${windows.packager.out}"/>
-        <copy file="${windows.packager.in}" tofile="${windows.packager.out}" >
+        <copy file="${windows.packager.in}" tofile="${windows.packager.out}" overwrite="true">
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+
+        <copy file="${windows.launcher.in}" tofile="${windows.launcher.out}" overwrite="true">
             <filterchain><expandproperties/></filterchain>
         </copy>
 
         <copy file="${windows.keygen.in}" tofile="${windows.keygen.out}" >
             <filterchain><expandproperties/></filterchain>
         </copy>
+
+        <exec executable="${nsisbin}" failonerror="true" >
+            <arg value="${windows.launcher.out}"/>
+        </exec>
+        <delete file="${windows.launcher.out}"/>
 
         <exec executable="${nsisbin}" failonerror="true" >
             <arg value="${windows.packager.out}"/>
