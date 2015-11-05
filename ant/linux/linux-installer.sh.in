@@ -104,9 +104,13 @@ Name=${socket.name}
 Exec=java -jar \"${jarfile}\"
 Path=${destdir}
 Icon=${destdir}/${linux.icon}
+MimeType=application/x-qz;x-scheme-handler/qz;
 Terminal=false
 Comment=${socket.name}" > "${shortcut}"
 chmod $mask "${shortcut}"
+
+# Tell the desktop to look for new mimetypes in the background
+update-desktop-database > /dev/null 2>&1 &
 
 # Ubuntu process restarter
 function restart_it() {
