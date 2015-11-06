@@ -110,7 +110,10 @@ Comment=${socket.name}" > "${shortcut}"
 chmod $mask "${shortcut}"
 
 # Tell the desktop to look for new mimetypes in the background
+makeself_umask=`umask`
+umask 0002 # more permissive umask for mimetype registration  
 update-desktop-database > /dev/null 2>&1 &
+umask $makeself_umask
 
 # Ubuntu process restarter
 function restart_it() {
