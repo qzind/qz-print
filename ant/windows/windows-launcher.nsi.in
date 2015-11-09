@@ -66,15 +66,18 @@ Function FindJRE
   ReadRegStr $R1 HKLM "Software\JavaSoft\Java Runtime Environment" "CurrentVersion"
   ReadRegStr $R0 HKLM "Software\JavaSoft\Java Runtime Environment\$R1" "JavaHome"
   StrCpy $R0 "$R0\bin\javaw.exe"
- 
   IfErrors 0 JreFound
+  
   ; Fall-back to 32-bit registry
   ${If} ${RunningX64}
+  ClearErrors
   ReadRegStr $R1 HKLM "Software\Wow6432Node\JavaSoft\Java Runtime Environment" "CurrentVersion"
   ReadRegStr $R0 HKLM "Software\Wow6432Node\JavaSoft\Java Runtime Environment\$R1" "JavaHome"
   StrCpy $R0 "$R0\bin\javaw.exe"
+  IfErrors 0 JreFound
   ${EndIf}
   
+  ; Give up.  Use javaw.exe and hope it works
   StrCpy $R0 "javaw.exe"
  
  JreFound:
