@@ -22,7 +22,7 @@ fi
 noprompt="$1"
 destdir="${linux.installdir}"
 shortcut="/usr/share/applications/${project.filename}.desktop"
-jarfile="${destdir}/${project.filenamee}.jar"
+jarfile="${destdir}/${project.filename}.jar"
 
 # Confirmation dialog
 height=8; width=41
@@ -65,7 +65,7 @@ function progress_dialog() {
 # Check minimum java version
 function check_java() {
    curver=$(java -version 2>&1 | grep -i version | cut -d'"' -f2 | cut -d'.' -f1-2) 
-   minver="${javac.socket.target}"
+   minver="${javac.target}"
 
    if [ -z "$curver" ]; then
       curver="0.0"
@@ -73,13 +73,13 @@ function check_java() {
 
    if [ $(echo "$curver>=$minver" | bc -l) -eq 0 ]; then
       echo -e "\n\n${bash.failure}\n"
-      echo "Please install Java ${javac.socket.target} or higher to continue\n"
+      echo "Please install Java ${javac.target} or higher to continue\n"
    fi
 }
 
 confirm_dialog "Are you sure you want to install ${project.name}?" "$noprompt"
 
-progress_dialog 5 "Checking for Java ${javac.socket.target}+..."
+progress_dialog 5 "Checking for Java ${javac.target}+..."
 check_java
 
 progress_dialog 10 "Stopping any running versions..."

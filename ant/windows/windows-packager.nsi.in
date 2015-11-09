@@ -70,7 +70,7 @@ Section
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "DisplayVersion" "${build.version}"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
-                   "EstimatedSize" "${build.socket.size}"
+                   "EstimatedSize" "${build.size}"
 
   WriteUninstaller "$INSTDIR\uninstall.exe"
 

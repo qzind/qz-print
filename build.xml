@@ -31,9 +31,6 @@
         <javac destdir="${build.project.dir}" source="${javac.source}" target="${javac.target}" includeantruntime="false">
             <src path="${src.dir}"/>
             <classpath>
-                <path id="plugin.override">
-                    <pathelement path="${lib.dir}/jre/plugin.jar" />
-                </path>
                 <fileset dir="${lib.dir}">
                     <include name="**/*.jar"/>
                 </fileset>
@@ -54,7 +51,7 @@
         <echo>Building Jar for Socket use</echo>
         <jar compress="${jar.compress}" index="${jar.index}" destfile="${dist.jar}" duplicate="preserve">
             <fileset dir="${build.project.dir}"/>
-            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar"/>
+            <zipgroupfileset dir="${lib.dir}" includes="**/*.jar" excludes="**/jfxrt.jar"/>
             <manifest>
                 <attribute name="Application-Name" value="${manifest.application.name}"/>
                 <attribute name="Main-Class" value="${manifest.main.socket.class}"/>
@@ -105,15 +102,15 @@
         <property name="build.version" value="0.0.0" />
         <echo>Version ${build.version}</echo>
         <!-- Calculate installation size -->
-        <length property="build.socket.bytes" mode="all">
+        <length property="build.bytes" mode="all">
             <fileset dir="${dist.dir}" includes="**/*"/>
         </length>
         <script language="javascript">
             <![CDATA[
-            project.setNewProperty("build.socket.size", Math.round(project.getProperty("build.socket.bytes") / 1024));
+            project.setNewProperty("build.size", Math.round(project.getProperty("build.bytes") / 1024));
             ]]>
         </script>
-        <echo>Size: ${build.socket.size} KB</echo>
+        <echo>Size: ${build.size} KB</echo>
     </target>
 
     <target name="include-assets" depends="init,get-version" >

@@ -13,7 +13,7 @@
 # Check minimum java version
 function check_java() {
 	curver=$("${apple.jvmfallback}/java" -version 2>&1 | grep -i version | cut -d'"' -f2 | cut -d'.' -f1-2)
-	minver="${javac.socket.target}"
+	minver="${javac.target}"
 
 	if [ -z "$curver" ]; then
 		curver="0.0"
