@@ -213,6 +213,24 @@ public class PrintApplet extends PrintFunction implements Runnable {
         }
     }
 
+    public void send(String portName, String data) {
+        try {
+            if (!getSerialIO().isOpen()) {
+                throw new SerialException("A port has not yet been opened.");
+            } else if (getSerialIO().getPortName().equals(portName)) {
+                getSerialIO().append(data.getBytes(charset.name()));
+                this.startSending = true;
+            } else {
+                throw new SerialException("Port specified [" + portName + "] "
+                        + "differs from previously opened port "
+                        + "[" + getSerialIO().getPortName() + "].  Applet currently "
+                        + "supports only one open port at a time.  Data not sent.");
+            }
+        } catch (Throwable t) {
+            this.set(t);
+        }
+    }
+
     private void setDonePrinting(boolean donePrinting) {
         this.copies = -1;
         this.notifyBrowser("qzDonePrinting");
