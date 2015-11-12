@@ -102,6 +102,24 @@ public class FileUtilities {
         return path.contains(SystemUtilities.getDataDirectory());
     }
 
+    public static String readLocalFile(String file) throws IOException {
+        ByteArrayBuilder data = new ByteArrayBuilder();
+        byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
+        DataInputStream in = new DataInputStream(new FileInputStream(file));
+        while(true) {
+            int len = in.read(buffer);
+            if (len == -1) {
+                break;
+            }
+            byte[] temp = new byte[len];
+            System.arraycopy(buffer, 0, temp, 0, len);
+            data.append(temp);
+        }
+        in.close();
+
+        return new String(data.getByteArray());
+    }
+
     public static byte[] readRawFile(String url) throws IOException {
         ByteArrayBuilder rawCmds = new ByteArrayBuilder();
         byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
