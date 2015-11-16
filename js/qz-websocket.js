@@ -188,12 +188,14 @@ function connectionSuccess(websocket) {
 
             // Special case for getException
             if (message.method == 'getException') {
-                var result = message.result;
-                message.result = {
-                    getLocalizedMessage: function() {
-                        return result;
-                    }
-                };
+                if (message.result != null) {
+                    var result = message.result;
+                    message.result = {
+                        getLocalizedMessage: function() {
+                            return result;
+                        }
+                    };
+                }
             }
 
             if (message.callback == 'setupMethods') {
