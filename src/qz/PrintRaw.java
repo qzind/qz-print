@@ -179,9 +179,17 @@ public class PrintRaw {
     
     public boolean printToFile() throws PrintException, IOException {
         log.info("Printing to file: " + outputPath.get());
-        OutputStream out = new FileOutputStream(outputPath.get());
-        out.write(this.getRawCmds().getByteArray());
-        out.close();
+        OutputStream out = null;
+
+        try {
+            out = new FileOutputStream(outputPath.get());
+            out.write(this.getRawCmds().getByteArray());
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+            outputPath.set(null);
+        }
         return true;
     }
 
