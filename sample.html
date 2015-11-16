@@ -7,7 +7,7 @@
 
 <script type="text/javascript" src="js/3rdparty/jquery-1.11.3.min.js"></script>
 <script type="text/javascript" src="js/3rdparty/rsvp-3.1.0.min.js"></script>
-<script type="text/javascript" src="js/qzTray.js"></script>
+<script type="text/javascript" src="js/qz-tray.js"></script>
 
 <style>
     .row {
@@ -173,9 +173,9 @@
                 <a href="https://qz.io/wiki/What-is-Raw-Printing" target="new">What is Raw Printing?</a>
 
                 <span style="float: right;">
-                    <a href="javascript:findPrinter('Epson');">Epson</a>&nbsp;
-                    <a href="javascript:findPrinter('Citizen');">Citizen</a>&nbsp;
-                    <a href="javascript:findPrinter('Star');">Star</a>&nbsp;
+                    <a href="javascript:findAndSet('Epson');">Epson</a>&nbsp;
+                    <a href="javascript:findAndSet('Citizen');">Citizen</a>&nbsp;
+                    <a href="javascript:findAndSet('Star');">Star</a>&nbsp;
                 </span>
             </div>
 
@@ -193,7 +193,7 @@
                 </div>
 
                 <div class="columns-3">
-                    <button disabled type="button" onclick="print64();">Print Base64</button>
+                    <button disabled type="button" onclick="printBase64();">Print Base64</button>
                     <button disabled type="button" onclick="printXML();">Print XML</button>
                     <button disabled type="button" onclick="printHex();">Print Hex</button>
                     <br />
@@ -238,11 +238,11 @@
 
         <div>
             <div class="row">
-                <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Postsript Printing?</a>
+                <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Postscript Printing?</a>
 
                 <span style="float: right;">
-                    <a href="javascript:findPrinter('XPS');">Microsoft XPS</a>&nbsp;
-                    <a href="javascript:findPrinter('PDF');">PDF</a>&nbsp;
+                    <a href="javascript:findAndSet('XPS');">Microsoft XPS</a>&nbsp;
+                    <a href="javascript:findAndSet('PDF');">PDF</a>&nbsp;
                 </span>
             </div>
 
@@ -373,7 +373,7 @@
         }).catch(handleError);
     }
 
-    function findNetworkInfo() {
+    function listNetworkInfo() {
         qz.websocket.getNetworkInfo().then(function(data) {
             var macFormatted = '';
             for(var i = 0; i < data.macAddress.length; i++) {
@@ -393,6 +393,13 @@
         $("#printerSearch").val(query);
         qz.printers.find(query).then(function(data) {
             alert("Found: " + data);
+        }).catch(function(err) { console.error(err); });
+    }
+
+    function findAndSet(query) {
+        $("#printerSearch").val(query);
+        qz.printers.find(query).then(function(data) {
+            setPrinter(data);
         }).catch(function(err) { console.error(err); });
     }
 
@@ -759,7 +766,7 @@
     }
 
     function checkSizeActive() {
-        if (valu("psSizeActive", true)) {
+        if ($("#psSizeActive").prop('checked')) {
             $("#psSizeGroup").css('display', '');
         } else {
             $("#psSizeGroup").css('display', 'none');
@@ -767,7 +774,7 @@
     }
 
     function checkMarginsActive() {
-        if (valu("psMarginsActive", true)) {
+        if ($("#psMarginsActive").prop('checked')) {
             $("#psMarginsGroup").css('display', '');
             $("#psMargins").css('display', 'none');
         } else {
@@ -814,22 +821,6 @@
         return path.substring(0, path.lastIndexOf("/"));
     }
 
-    function valu(id, isCheckable, groupName) {
-        if (id[0] != '#') { id = '#' + id; }
-
-        if (!isCheckable) {
-            var val = $(id).val();
-            if (val === "") { val = null; }
-            return val;
-        } else {
-            if (groupName === undefined) {
-                return $(id).prop("checked");
-            } else {
-                return $("input[name=" + groupName + "]:checked").val();
-            }
-        }
-    }
-
 
     /// QZ Config ///
     var cfg = null;
@@ -844,43 +835,43 @@
 
     function updateConfig() {
         var psSize = null;
-        if (valu("psSizeActive", true)) {
+        if ($("#psSizeActive").prop('checked')) {
             psSize = {
-                width: valu("psSizeWidth"),
-                height: valu("psSizeHeight"),
-                scaleImage: valu("psSizeScale", true)
+                width: $("#psSizeWidth").val(),
+                height: $("#psSizeHeight").val(),
+                scaleImage: $("#psSizeScale").prop('checked')
             };
         }
 
-        var psMargins = valu("psMargins");
-        if (valu("psMarginsActive", true)) {
+        var psMargins = $("#psMargins").val();
+        if ($("#psMarginsActive").prop('checked')) {
             psMargins = {
-                top: valu("psMarginsTop"),
-                right: valu("psMarginsRight"),
-                bottom: valu("psMarginsBottom"),
-                left: valu("psMarginsLeft")
+                top: $("#psMarginsTop").val(),
+                right: $("#psMarginsRight").val(),
+                bottom: $("#psMarginsBottom").val(),
+                left: $("#psMarginsLeft").val()
             };
         }
 
         cfg.reconfigure({
-                            altPrinting: valu("rawAltPrinting", true),
-                            encoding: valu("rawEncoding"),
-                            endOfDoc: valu("rawEndOfDoc"),
-                            language: valu("rawLanguage"),
-                            perSpool: valu("rawPerSpool"),
-                            printerTray: valu("rawPrinterTray"),
+            altPrinting: $("#rawAltPrinting").prop('checked'),
+            encoding: $("#rawEncoding").val(),
+            endOfDoc: $("#rawEndOfDoc").val(),
+            language: $("#rawLanguage").val(),
+            perSpool: $("#rawPerSpool").val(),
+            printerTray: $("#rawPrinterTray").val(),
 
-                            colorType: valu("psColorType"),
-                            copies: valu("psCopies"),
-                            density: valu("psDensity"),
-                            duplex: valu("psDuplex", true),
-                            margins: psMargins,
-                            orientation: valu("psOrientation"),
-                            paperThickness: valu("psPaperThickness"),
-                            rotation: valu("psRotation"),
-                            size: psSize,
-                            units: valu("", true, "psUnits")
-                        });
+            colorType: $("#psColorType").val(),
+            copies: $("#psCopies").val(),
+            density: $("#psDensity").val(),
+            duplex: $("#psDuplex").prop('checked'),
+            margins: psMargins,
+            orientation: $("#psOrientation").val(),
+            paperThickness: $("#psPaperThickness").val(),
+            rotation: $("#psRotation").val(),
+            size: psSize,
+            units: $("input[name='psUnits']:checked").val()
+        });
     }
 
     function askForFile() {
