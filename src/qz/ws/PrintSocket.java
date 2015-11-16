@@ -350,7 +350,13 @@ public class PrintSocket {
                                 }
 
                                 if (qz.getException() != lastError) {
-                                    String eMsg = (qz.getException() == null? null:qz.getException().getLocalizedMessage());
+                                    String eMsg = null;
+                                    if (qz.getException() != null) {
+                                        eMsg = qz.getException().getLocalizedMessage();
+                                        if (eMsg == null) {
+                                            eMsg = qz.getException().getClass().getSimpleName();
+                                        }
+                                    }
 
                                     sendNewMethod(session, "getException", eMsg);
                                     lastError = qz.getException();
