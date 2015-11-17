@@ -1,0 +1,6 @@
+language: java
+script: ant
+jdk:
+  - oraclejdk8
+  - oraclejdk7
+  - openjdk7
