@@ -55,10 +55,10 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
 
     private static final Logger log = LoggerFactory.getLogger(PrintImage.class);
 
-    private List<BufferedImage> images;
+    protected List<BufferedImage> images;
 
-    private boolean scaleImage = false;
-    private double imageRotation = 0;
+    protected boolean scaleImage = false;
+    protected double imageRotation = 0;
 
 
     public PrintImage() {
@@ -133,12 +133,14 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
             imgToPrint = rotate(imgToPrint, imageRotation);
         }
 
-
         Graphics2D graphics2D = (Graphics2D)graphics;
         // Suggested by Bahadir 8/23/2012
+        graphics2D.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics2D.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
         graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        graphics2D.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
 
         log.trace("{}", graphics2D.getRenderingHints());
 
@@ -177,7 +179,7 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
     /**
      * Reads an image from base64 or a URL.
      *
-     * @param rawData Base^$ encoded string or URL
+     * @param rawData URL or Base64 encoded string
      * @return BufferedImage from {@code rawData}
      */
     private static BufferedImage readImage(String rawData, boolean fromBase64) throws IOException {
