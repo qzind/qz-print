@@ -31,6 +31,8 @@ function deployQZ() {
     // Old standard of WebSocket used const CLOSED as 2, new standards use const CLOSED as 3, we need the newer standard for jetty
     if ("WebSocket" in window && WebSocket.CLOSED != null && WebSocket.CLOSED > 2) {
         console.log('Starting deploy of qz');
+        qzConfig.protocolIndex = 0;
+        qzConfig.portIndex = 0;
 
         connectWebsocket(qzConfig.ports[qzConfig.portIndex]);
     } else {
