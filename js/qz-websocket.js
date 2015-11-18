@@ -11,6 +11,7 @@ var qzConfig = {
         printPS:         'qzDonePrinting',
         printHTML:       'qzDonePrinting',
         printToHost:     'qzDonePrinting',
+        printToFile:     'qzDonePrinting',
         findPorts:       'qzDoneFindingPorts',
         openPort:        'qzDoneOpeningPort',
         closePort:       'qzDoneClosingPort',
