@@ -1,5 +1,4 @@
 var qzConfig = {
-    preemptive: {isActive: '', getVersion: '', getPrinter: '', getLogPostScriptFeatures: ''},
     callbackMap: {
         findPrinter:     'qzDoneFinding',
         findPrinters:    'qzDoneFinding',
@@ -17,36 +16,52 @@ var qzConfig = {
         closePort:       'qzDoneClosingPort',
         findNetworkInfo: 'qzDoneFindingNetwork'
     },
-    protocol: ["wss://", "ws://"],   // Protocols to use, will try secure WS before insecure
+    protocols: ["wss://", "ws://"],   // Protocols to use, will try secure WS before insecure
     uri: "localhost",                // Base URL to server
     ports: [8181, 8282, 8383, 8484], // Ports to try, insecure WS uses port (ports[x] + 1)
-    protocolIndex: 0,                // Used to track which value in 'protocol' array is being used
-    portIndex: 0,                    // Used to track which value in 'ports' array is being used
-    keepAlive: (60 * 1000)           // Interval in millis to send pings to server
+    keepAlive: (60 * 1000),           // Interval in millis to send pings to server
+
+    port: function() { return qzConfig.ports[qzConfig.portIndex] + qzConfig.protocolIndex; },
+    protocol: function() { return qzConfig.protocols[qzConfig.protocolIndex]; },
+    url: function() { return qzConfig.protocol() + qzConfig.uri + ":" + qzConfig.port(); },
+    increment: function() {
+        if (++qzConfig.portIndex < qzConfig.ports.length) {
+            return true;
+        } else if (++qzConfig.protocolIndex < qzConfig.protocols.length) {
+            qzConfig.portIndex = 0;
+            return true;
+        }
+        return false;
+    },
+    outOfBounds: function() { return qzConfig.portIndex >= qzConfig.ports.length },
+    init: function(){
+        qzConfig.preemptive = {isActive: '', getVersion: '', getPrinter: '', getLogPostScriptFeatures: ''};
+        qzConfig.protocolIndex = 0;         // Used to track which value in 'protocol' array is being used
+        qzConfig.portIndex = 0;             // Used to track which value in 'ports' array is being used
+        return qzConfig;
+    }
 };
 
 
 function deployQZ() {
     console.log(WebSocket);
+    qzConfig.init();
 
     // Old standard of WebSocket used const CLOSED as 2, new standards use const CLOSED as 3, we need the newer standard for jetty
     if ("WebSocket" in window && WebSocket.CLOSED != null && WebSocket.CLOSED > 2) {
         console.log('Starting deploy of qz');
-        qzConfig.protocolIndex = 0;
-        qzConfig.portIndex = 0;
-
-        connectWebsocket(qzConfig.ports[qzConfig.portIndex]);
+        connectWebsocket();
     } else {
         alert("WebSocket not supported");
         window["deployQZ"] = null;
     }
 }
 
-function connectWebsocket(port) {
-    console.log('Attempting connection on port ' + port);
+function connectWebsocket() {
+    console.log('Attempting connection on port ' + qzConfig.port());
 
     try {
-        var websocket = new WebSocket(qzConfig.protocol[qzConfig.protocolIndex] + qzConfig.uri + ":" + port);
+        var websocket = new WebSocket(qzConfig.url());
     }
     catch(e) {
         console.error(e);
@@ -67,47 +82,50 @@ function connectWebsocket(port) {
 
             // Send keep-alive to the websocket so connection does not timeout
             // keep-alive over reconnecting so server is always able to send to client
-            window.setInterval(function() {
+            websocket.keepAlive = window.setInterval(function() {
                 websocket.send("ping");
             }, qzConfig.keepAlive);
         };
 
         websocket.onclose = function(event) {
             try {
-                if (websocket.valid || qzConfig.portIndex >= qzConfig.ports.length) {
+                if (websocket.valid || qzConfig.outOfBounds()) {
                     qzSocketClose(event);
                 }
                 // Safari compatibility fix to raise error event
                 if (!websocket.valid && navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
                     websocket.onerror();
                 }
+                websocket.cleanup();
             } catch (ignore) {}
         };
 
         websocket.onerror = function(event) {
-            if (websocket.valid || qzConfig.portIndex >= qzConfig.ports.length) {
+            if (websocket.valid || qzConfig.outOfBounds()) {
                 qzSocketError(event);
             }
 
             // Move on to the next port
             if (!websocket.valid) {
-                if (++qzConfig.portIndex < qzConfig.ports.length) {
-                    connectWebsocket(qzConfig.ports[qzConfig.portIndex] + qzConfig.protocolIndex);
+                websocket.cleanup();
+                if (qzConfig.increment()) {
+                    connectWebsocket();
                 } else {
-                    if (++qzConfig.protocolIndex < qzConfig.protocol.length) {
-                        //Try again using insecure protocol
-                        qzConfig.portIndex = 0;
-                        connectWebsocket(qzConfig.ports[qzConfig.portIndex] + qzConfig.protocolIndex);
-                    } else {
-                        qzNoConnection();
-                    }
+                    qzNoConnection();
                 }
             }
+        };
+		
+        websocket.cleanup = function() {
+            // Explicitly clear setInterval
+            if (websocket.keepAlive) {
+                window.clearInterval(websocket.keepAlive);        		
+            }
+            websocket = null;
         };
 
     } else {
         console.warn('Websocket connection failed');
-        websocket = null;
         qzNoConnection();
     }
 }
