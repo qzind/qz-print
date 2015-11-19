@@ -5,353 +5,431 @@
     <title>QZ Tray Sample Page</title>
 </head>
 
-<script type="text/javascript" src="js/3rdparty/jquery-1.11.3.min.js"></script>
-<script type="text/javascript" src="js/3rdparty/rsvp-3.1.0.min.js"></script>
+<!-- Required scripts -->
+<script type="text/javascript" src="js/dependencies/jquery-1.11.3.min.js"></script>
+<script type="text/javascript" src="js/dependencies/rsvp-3.1.0.min.js"></script>
 <script type="text/javascript" src="js/qz-tray.js"></script>
 
-<style>
-    .row {
-        display: block;
-        margin-bottom: 2em;
-        text-align: justify;
-
-        width: 100%;
-    }
-
-    .row div {
-        text-align: left;
-    }
-
-    .row.spread:after {
-        content: "";
-        display: inline-block;
-        width: 100%;
-    }
-
-    fieldset {
-        display: inline-block;
-        vertical-align: top;
-        margin: 0 1%;
-        padding: .5em;
-
-        width: 25%;
-        height: 12em;
-        overflow-y: auto;
-
-        background-color: #B1B1B1;
-    }
-
-    fieldset.wide {
-        width: 45%;
-    }
-
-    fieldset.tall {
-        height: auto;
-    }
-
-    fieldset div.columns-2 {
-        width: 45%;
-        float: left;
-        padding: 2.5%;
-    }
-
-    fieldset div.columns-3 {
-        width: 30%;
-        float: left;
-        padding: 1.3%;
-    }
-
-    legend {
-        font-weight: bold;
-        font-family: sans-serif;
-    }
-
-    h4 {
-        margin-top: -2.5em;
-    }
-
-    label {
-        display: block;
-        margin: .25em;
-    }
-
-    button, input[type=text], input[type=number], select {
-        display: block;
-        width: 100%;
-        margin: .25em 0;
-    }
-
-    .inline {
-        display: inline-block;
-    }
-
-    .inline label {
-        display: inline-block;
-        width: 30%;
-        margin: 0;
-    }
-
-    .inline input {
-        display: inline-block;
-        width: 65%;
-        margin: 0;
-    }
-</style>
+<!-- Page styling -->
+<script type="text/javascript" src="js/additional/bootstrap.min.js"></script>
+<link rel="stylesheet" href="css/font-awesome.min.css" />
+<link rel="stylesheet" href="css/bootstrap.min.css" />
+<link rel="stylesheet" href="css/style.css" />
 
 
-<body id="qz-page" style="background-color: #F1F1F1;">
+<body id="qz-page" role="document">
+<nav class="navbar navbar-default navbar-static-top" role="navigation">
+    <div class="container">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="https://qz.io/"><span class="fa fa-print"></span>&nbsp;qz.</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <!-- cheap way to avoid reimplementing the php menu -->
+                <li><a href="#">Demo Mode</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
-<div class="row">
-    <h1 id="title" style="margin:0;">QZ Print Plugin <span id="qz-version"></span></h1>
+<div id="qz-alert" style="position: absolute; width: 70%; margin: 0 5% 0 25%; z-index: 999;"></div>
+
+<div class="container" role="main">
+
+    <div class="row">
+        <h1 id="title" class="page-header">QZ Tray v<span id="qz-version">0</span></h1>
+    </div>
+
+    <div class="row spread">
+        <div class="col-md-4">
+            <h3>
+                Connection: <span id="qz-connection" class="text-muted" style="padding: 0 .2em; border-radius: 5px;">Unknown</span>
+            </h3>
+
+            <div class="btn-toolbar">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-success" onclick="startConnection();">Connect</button>
+                    <button type="button" class="btn btn-warning" onclick="endConnection();">Disconnect</button>
+                </div>
+                <button type="button" class="btn btn-info" onclick="listNetworkInfo();">List Network Info</button>
+            </div>
+
+            <hr />
+
+            <div class="panel panel-primary">
+                <div class="panel-heading">
+                    <h3 class="panel-title">Printer</h3>
+                </div>
+
+                <div class="panel-body">
+                    <div class="form-group">
+                        <label for="printerSearch">Search:</label>
+                        <input type="text" id="printerSearch" value="zebra" class="form-control" />
+                    </div>
+                    <div class="form-group">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-default btn-sm" onclick="findPrinter($('#printerSearch').val());">Find Printer</button>
+                            <button type="button" class="btn btn-default btn-sm" onclick="findDefaultPrinter();">Find Default Printer</button>
+                            <button type="button" class="btn btn-default btn-sm" onclick="findPrinters();">Find All Printers</button>
+                        </div>
+                    </div>
+                    <hr />
+                    <div class="form-group">
+                        <label>Current printer:</label>
+                        <div id="configPrinter">NONE</div>
+                    </div>
+                    <div class="form-group">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-default btn-sm" onclick="setPrinter($('#printerSearch').val());">Set To Search</button>
+                            <button disabled type="button" class="btn btn-default btn-sm" onclick="askForFile();">Set To File</button>
+                            <button disabled type="button" class="btn btn-default btn-sm" onclick="askForHost();">Set To Host</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <ul class="nav nav-tabs" role="tablist">
+                <li role="presentation" class="active"><a href="#rawTab" role="tab" data-toggle="tab">Raw Printing</a></li>
+                <li role="presentation"><a href="#psTab" role="tab" data-toggle="tab">Postscript Printing</a></li>
+                <li role="presentation"><a href="#serialTab" role="tab" data-toggle="tab">Serial</a></li>
+                <li role="presentation"><a href="#usbTab" role="tab" data-toggle="tab">USB</a></li>
+            </ul>
+        </div>
+
+        <div class="tab-content">
+            <div id="rawTab" class="tab-pane active col-md-8">
+                <h3>Raw Printing</h3>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <a href="https://qz.io/wiki/What-is-Raw-Printing" target="new">What is Raw Printing?</a>
+
+                        <span style="float: right;">
+                            <a href="javascript:findAndSet('Epson');">Epson</a> |
+                            <a href="javascript:findAndSet('Citizen');">Citizen</a> |
+                            <a href="javascript:findAndSet('Star');">Star</a>
+                        </span>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div>
+                                <label>Print Sample To Type</label>
+                            </div>
+                            <div class="btn-group">
+                                <button disabled type="button" class="btn btn-default" onclick="printEPL();">EPL</button>
+                                <button disabled type="button" class="btn btn-default" onclick="printZPL();">ZPL</button>
+                                <button disabled type="button" class="btn btn-default" onclick="printESCP();">ESCP</button>
+                                <button disabled type="button" class="btn btn-default" onclick="printEPCL();">EPCL (Zebra Card Printer)</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div>
+                                <label>Print Data</label>
+                            </div>
+                            <div class="btn-group">
+                                <button disabled type="button" class="btn btn-default" onclick="printBase64();">Base64</button>
+                                <button disabled type="button" class="btn btn-default" onclick="printXML();">XML</button>
+                                <button disabled type="button" class="btn btn-default" onclick="printHex();">Hex</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div>
+                                <label>Print From File</label>
+                            </div>
+                            <div class="btn-group">
+                                <button disabled type="button" class="btn btn-default" onclick="printFile('zpl_sample.txt');">zpl_sample.txt</button>
+                                <button disabled type="button" class="btn btn-default" onclick="printFile('fgl_sample.txt');">fgl_sample.txt</button>
+                                <button disabled type="button" class="btn btn-default" onclick="printFile('epl_sample.txt');">epl_sample.txt</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 1em;">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">Options</h4>
+                            </div>
+
+                            <div class="panel-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group form-inline">
+                                            <label for="rawEncoding">Encoding</label>
+                                            <input disabled type="text" id="rawEncoding" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="rawEndOfDoc">End Of Doc</label>
+                                            <input disabled type="text" id="rawEndOfDoc" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="rawLanguage">Language</label>
+                                            <input disabled type="text" id="rawLanguage" class="form-control pull-right" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group form-inline">
+                                            <label for="rawAltPrinting">Alternate Printing</label>
+                                            <input disabled type="checkbox" id="rawAltPrinting" class="pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="rawPerSpool">Per Spool</label>
+                                            <input disabled type="number" id="rawPerSpool" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="rawPrinterTray">Printer Tray</label>
+                                            <input disabled type="text" id="rawPrinterTray" class="form-control pull-right" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button type="button" class="btn btn-danger pull-right" onclick="resetRawOptions();">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="psTab" class="tab-pane col-md-8">
+                <h3>Postscript Printing</h3>
+                <!-- TODO - keep name ?? -->
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Postscript Printing?</a>
+
+                        <span style="float: right;">
+                            <a href="javascript:findAndSet('XPS');">Microsoft XPS</a> |
+                            <a href="javascript:findAndSet('PDF');">PDF</a>
+                        </span>
+                    </div>
+                </div>
+
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default" onclick="printHTML();">Print HTML</button>
+                                <button type="button" class="btn btn-default" onclick="printPage();">Print Current Page</button>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default" onclick="printPDF();">Print PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-default" onclick="printImage(false);">Print Image</button>
+                                <button type="button" class="btn btn-default" onclick="printImage(true);">Print Scaled Image</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="margin-top: 1em;">
+                    <div class="col-md-12">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">Options</h4>
+                            </div>
+
+                            <div class="panel-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+
+                                        <div class="form-group form-inline">
+                                            <label for="psColorType">Color Type</label>
+                                            <select id="psColorType" class="form-control pull-right">
+                                                <option value="color">Color</option>
+                                                <option value="greyscale">Greyscale</option>
+                                                <option value="blackwhite">Black & White</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="psCopies">Copies</label>
+                                            <input type="number" id="psCopies" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="psDensity">Density</label>
+                                            <input type="number" id="psDensity" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="psDuplex"> Duplex</label>
+                                            <input type="checkbox" id="psDuplex" class="pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="psOrientation">Orientation</label>
+                                            <select id="psOrientation" class="form-control pull-right">
+                                                <option value="">Default</option>
+                                                <option value="portrait">Portrait</option>
+                                                <option value="landscape">Landscape</option>
+                                                <option value="reverse-landscape">Landscape - Reverse</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="psPaperThickness">Paper Thickness</label>
+                                            <input disabled type="number" step="any" id="psPaperThickness" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="psRotation">Rotation</label>
+                                            <input type="number" step="any" id="psRotation" class="form-control pull-right" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label>Units</label>
+                                            <div>
+                                                <label>
+                                                    <input type="radio" name="psUnits" id="psUnitsIN" value="in" />
+                                                    IN
+                                                </label>
+                                                <label>
+                                                    <input type="radio" name="psUnits" id="psUnitsMM" value="mm" />
+                                                    MM
+                                                </label>
+                                                <label>
+                                                    <input type="radio" name="psUnits" id="psUnitsCM" value="cm" />
+                                                    CM
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="psMargins">Margins</label>
+                                            (
+                                            <label for="psMarginsActive" class="inline">Individual:</label>
+                                            <input type="checkbox" id="psMarginsActive" onclick="checkMarginsActive();">
+                                            )
+                                            <input type="number" step="any" id="psMargins" class="form-control" />
+                                        </div>
+                                        <div class="inline" id="psMarginsGroup">
+                                            <div class="form-group form-inline">
+                                                <label for="psMarginsTop">&nbsp; Top:</label>
+                                                <input type="number" step="any" id="psMarginsTop" class="form-control pull-right" />
+                                            </div>
+                                            <div class="form-group form-inline">
+                                                <label for="psMarginsRight">&nbsp; Right:</label>
+                                                <input type="number" step="any" id="psMarginsRight" class="form-control pull-right" />
+                                            </div>
+                                            <div class="form-group form-inline">
+                                                <label for="psMarginsBottom">&nbsp; Bottom:</label>
+                                                <input type="number" step="any" id="psMarginsBottom" class="form-control pull-right" />
+                                            </div>
+                                            <div class="form-group form-inline">
+                                                <label for="psMarginsLeft">&nbsp; Left:</label>
+                                                <input type="number" step="any" id="psMarginsLeft" class="form-control pull-right" />
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label class="inline">Size</label>
+                                            (
+                                            <label for="psSizeActive" class="inline">Enable:</label>
+                                            <input type="checkbox" id="psSizeActive" onclick="checkSizeActive();" />
+                                            )
+                                        </div>
+                                        <div class="inline" id="psSizeGroup">
+                                            <div class="form-group form-inline">
+                                                <label for="psSizeWidth">&nbsp; Width:</label>
+                                                <input type="number" step="any" id="psSizeWidth" class="form-control pull-right" />
+                                            </div>
+                                            <div class="form-group form-inline">
+                                                <label for="psSizeHeight">&nbsp; Height:</label>
+                                                <input type="number" step="any" id="psSizeHeight" class="form-control pull-right" />
+                                            </div>
+                                            <div class="form-group form-inline">
+                                                <label for="psSizeScale">&nbsp; Scale Image:</label>
+                                                <input type="checkbox" id="psSizeScale" class="form-control pull-right" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button type="button" class="btn btn-danger pull-right" onclick="resetPSOptions();">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="serialTab" class="tab-pane col-md-8">
+                <h3>Serial</h3>
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="serialPort">Port Number</label>
+                            <div class="input-group">
+                                <span class="input-group-btn">
+                                    <button disabled type="button" class="btn btn-info" onclick="listSerialPorts();">List Ports</button>
+                                </span>
+                                <input disabled type="text" id="serialPort" value="" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="btn-toolbar">
+                            <div class="btn-group">
+                                <button disabled type="button" class="btn btn-success" onclick="openSerialPort();">Open Port</button>
+                                <button disabled type="button" class="btn btn-warning" onclick="closeSerialPort();">Close Port</button>
+                            </div>
+                            <button disabled type="button" class="btn btn-default" onclick="sendSerialData();">Send Command</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="usbTab" class="tab-pane col-md-8">
+                <h3>USB</h3>
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-12">
+                        ???
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
-
-<div class="row spread">
-    <fieldset id="connection">
-        <legend>Connection</legend>
-
-        <div>
-            <div class="columns-2">
-                <button type="button" onclick="startConnection();">Connect</button>
-                <button type="button" onclick="endConnection();">Disconnect</button>
-            </div>
-            <div class="columns-2">
-                <button type="button" onclick="listNetworkInfo();">List Network Info</button>
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset id="detection">
-        <legend>Printer</legend>
-
-        <div>
-            <div class="columns-2">
-                <label for="printerSearch">Search:</label>
-                <input type="text" id="printerSearch" value="zebra" />
-                <button type="button" onclick="findPrinter($('#printerSearch').val());">Find Printer</button>
-                <button type="button" onclick="findDefaultPrinter();">Find Default Printer</button>
-                <button type="button" onclick="findPrinters();">List All Printers</button>
-            </div>
-
-            <div class="columns-2">
-                <span>Current printer:</span>
-
-                <div id="configPrinter" style="font-weight: bold;">NONE</div>
-
-                <button type="button" onclick="setPrinter($('#printerSearch').val());">Set To Searched Printer</button>
-                <button disabled type="button" onclick="askForFile();">Set To File</button>
-                <button disabled type="button" onclick="askForHost();">Set To Host</button>
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset id="serial" class="disabled">
-        <legend>Serial</legend>
-
-        <div>
-            <div class="columns-2">
-                <button disabled type="button" onclick="listSerialPorts();">List Ports</button>
-
-                <label for="serialPort">Port Number</label>
-                <input disabled type="text" id="serialPort" value="" />
-            </div>
-
-            <div class="columns-2">
-                <button disabled type="button" onclick="openSerialPort();">Open Port</button>
-                <button disabled type="button" onclick="sendSerialData();">Send Command</button>
-                <button disabled type="button" onclick="closeSerialPort();">Close Port</button>
-            </div>
-        </div>
-    </fieldset>
-</div>
-
-<div class="row spread">
-    <fieldset id="raw" class="wide tall disabled">
-        <legend>Raw Printing</legend>
-
-        <div>
-            <div class="row">
-                <a href="https://qz.io/wiki/What-is-Raw-Printing" target="new">What is Raw Printing?</a>
-
-                <span style="float: right;">
-                    <a href="javascript:findAndSet('Epson');">Epson</a>&nbsp;
-                    <a href="javascript:findAndSet('Citizen');">Citizen</a>&nbsp;
-                    <a href="javascript:findAndSet('Star');">Star</a>&nbsp;
-                </span>
-            </div>
-
-            <div class="row">
-                <div class="columns-3">
-                    <button disabled type="button" onclick="printEPL();">Print EPL</button>
-                    <button disabled type="button" onclick="printZPL();">Print ZPL</button>
-                    <br />
-
-                    <button disabled type="button" onclick="printESCP();">Print ESCP</button>
-                    <br />
-
-                    <button disabled type="button" onclick="printEPCL();">Print EPCL</button>
-                    (Zebra Card Printer)<br />
-                </div>
-
-                <div class="columns-3">
-                    <button disabled type="button" onclick="printBase64();">Print Base64</button>
-                    <button disabled type="button" onclick="printXML();">Print XML</button>
-                    <button disabled type="button" onclick="printHex();">Print Hex</button>
-                    <br />
-
-                    <button disabled type="button" onclick="printFile('zpl_sample.txt');">Print zpl_sample.txt</button>
-                    <button disabled type="button" onclick="printFile('fgl_sample.txt');">Print fgl_sample.txt</button>
-                    <button disabled type="button" onclick="printFile('epl_sample.txt');">Print epl_sample.txt</button>
-                    <br />
-                </div>
-
-                <div class="columns-3" style="border-left: 1px dashed #CCC;">
-                    <h4>Options</h4>
-
-                    <label for="rawAltPrinting">
-                        Alternate Printing:
-                        <input disabled type="checkbox" id="rawAltPrinting" />
-                    </label>
-
-                    <label for="rawEncoding">Encoding</label>
-                    <input disabled type="text" id="rawEncoding" />
-
-                    <label for="rawEndOfDoc">End Of Doc</label>
-                    <input disabled type="text" id="rawEndOfDoc" />
-
-                    <label for="rawLanguage">Language</label>
-                    <input disabled type="text" id="rawLanguage" />
-
-                    <label for="rawPerSpool">Per Spool</label>
-                    <input disabled type="number" id="rawPerSpool" />
-
-                    <label for="rawPrinterTray">Printer Tray</label>
-                    <input disabled type="text" id="rawPrinterTray" />
-
-                    <button type="button" style="margin-top: 2em; color: #F00;" onclick="resetRawOptions();">Reset</button>
-                </div>
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset id="postscript" class="wide tall">
-        <legend>Postscript Printing</legend>
-
-        <div>
-            <div class="row">
-                <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Postscript Printing?</a>
-
-                <span style="float: right;">
-                    <a href="javascript:findAndSet('XPS');">Microsoft XPS</a>&nbsp;
-                    <a href="javascript:findAndSet('PDF');">PDF</a>&nbsp;
-                </span>
-            </div>
-
-            <div class="row">
-                <div class="columns-3">
-                    <button type="button" onclick="printHTML();">Print HTML</button>
-                    <button type="button" onclick="printPage();">Print Current Page</button>
-                    <br />
-
-                    <button type="button" onclick="printPDF();">Print PDF</button>
-                    <br />
-
-                    <button type="button" onclick="printImage(false);">Print PostScript Image</button>
-                    <button type="button" onclick="printImage(true);">Print Scaled PostScript Image</button>
-                </div>
-
-                <div class="columns-3" style="border-left: 1px dashed #CCC;">
-                    <h4>Options</h4>
-
-                    <label for="psColorType">Color Type</label>
-                    <select id="psColorType">
-                        <option value="color">Color</option>
-                        <option value="greyscale">Greyscale</option>
-                        <option value="blackwhite">Black & White</option>
-                    </select>
-
-                    <label for="psCopies">Copies</label>
-                    <input type="number" id="psCopies" />
-
-                    <label for="psDensity">Density</label>
-                    <input type="number" id="psDensity" />
-
-                    <label for="psDuplex">
-                        Duplex:
-                        <input type="checkbox" id="psDuplex" />
-                    </label>
-
-                    <label for="psOrientation">Orientation</label>
-                    <select id="psOrientation">
-                        <option value="">Default</option>
-                        <option value="portrait">Portrait</option>
-                        <option value="landscape">Landscape</option>
-                        <option value="reverse-landscape">Landscape - Reverse</option>
-                    </select>
-
-                    <label for="psPaperThickness">Paper Thickness</label>
-                    <input disabled type="number" step="any" id="psPaperThickness" />
-
-                    <label for="psRotation">Rotation</label>
-                    <input type="number" step="any" id="psRotation" />
-
-                    <button type="button" style="margin-top: 2em; color: #F00;" onclick="resetPSOptions();">Reset</button>
-                </div>
-
-                <div class="columns-3">
-                    <label>Units</label>
-                    <span>
-                        <label style="float: left;">
-                            <input type="radio" name="psUnits" id="psUnitsIN" value="in" />
-                            IN
-                        </label>
-                        <label style="float: left;">
-                            <input type="radio" name="psUnits" id="psUnitsMM" value="mm" />
-                            MM
-                        </label>
-                        <label style="float: left;">
-                            <input type="radio" name="psUnits" id="psUnitsCM" value="cm" />
-                            CM
-                        </label>
-                        <label style="clear: both;"></label>
-                    </span>
-
-                    <label for="psMargins">Margins</label>
-                    (
-                    <label for="psMarginsActive" class="inline">Individual:</label>
-                    <input type="checkbox" id="psMarginsActive" onclick="checkMarginsActive();">
-                    )
-                    <input type="number" step="any" id="psMargins" />
-                    <span class="inline" id="psMarginsGroup">
-                        <label for="psMarginsTop">Top:</label>
-                        <input type="number" step="any" id="psMarginsTop" />
-                        <label for="psMarginsRight">Right:</label>
-                        <input type="number" step="any" id="psMarginsRight" />
-                        <label for="psMarginsBottom">Bottom:</label>
-                        <input type="number" step="any" id="psMarginsBottom" />
-                        <label for="psMarginsLeft">Left:</label>
-                        <input type="number" step="any" id="psMarginsLeft" />
-                    </span>
-                    <br />
-
-                    <label class="inline">Size</label>
-                    (
-                    <label for="psSizeActive" class="inline">Enable:</label>
-                    <input type="checkbox" id="psSizeActive" onclick="checkSizeActive();" />
-                    )
-                    <span class="inline" id="psSizeGroup">
-                        <label for="psSizeWidth">Width:</label>
-                        <input type="number" step="any" id="psSizeWidth" />
-                        <label for="psSizeHeight">Height:</label>
-                        <input type="number" step="any" id="psSizeHeight" />
-                        <label for="psSizeScale">Scale Image:</label>
-                        <input type="checkbox" id="psSizeScale" />
-                    </span>
-                </div>
-            </div>
-        </div>
-    </fieldset>
-</div>
-
 </body>
 
 
@@ -362,19 +440,22 @@
     /// Connection ///
     function startConnection() {
         qz.websocket.connect({ usingSecure: false }).then(function() {
-            setBackground('#FFFFFF');
+            updateState('Active', 'text-success bg-success');
             $("#qz-version").html(qz.getVersion());
-        }).catch(handleError);
+        }).catch(handleConnectionError);
     }
 
     function endConnection() {
         qz.websocket.disconnect().then(function() {
-            setBackground('#B1B1B1');
-        }).catch(handleError);
+            updateState('Inactive', 'text-muted');
+        }).catch(handleConnectionError);
     }
 
     function listNetworkInfo() {
         qz.websocket.getNetworkInfo().then(function(data) {
+            if (data.macAddress == null) { data.macAddress = 'UNKNOWN'; }
+            if (data.ipAddress == null) { data.ipAddress = "UNKNOWN"; }
+
             var macFormatted = '';
             for(var i = 0; i < data.macAddress.length; i++) {
                 macFormatted += data.macAddress[i];
@@ -383,7 +464,7 @@
                 }
             }
 
-            alert("IP: " + data.ipAddress + "\nPhysical Address: " + macFormatted);
+            displayMessage("<strong>IP:</strong> " + data.ipAddress + "<br/><strong>Physical Address:</strong> " + macFormatted);
         }).catch(function(err) { console.error(err); });
     }
 
@@ -392,7 +473,7 @@
     function findPrinter(query) {
         $("#printerSearch").val(query);
         qz.printers.find(query).then(function(data) {
-            alert("Found: " + data);
+            displayMessage("<strong>Found:</strong> " + data);
         }).catch(function(err) { console.error(err); });
     }
 
@@ -405,7 +486,7 @@
 
     function findDefaultPrinter() {
         qz.printers.getDefault().then(function(data) {
-            alert("Found: " + data);
+            displayMessage("<strong>Found:</strong> " + data);
         }).catch(function(err) { console.error(err); });
     }
 
@@ -413,10 +494,10 @@
         qz.printers.find().then(function(data) {
             var list = '';
             for(var i = 0; i < data.length; i++) {
-                list += data[i] + "\n";
+                list += "&nbsp; " + data[i] + "<br/>";
             }
 
-            alert("Available printers:\n\n" + list);
+            displayMessage("<strong>Available printers:</strong><br/>" + list);
         }).catch(function(err) { console.error(err); });
     }
 
@@ -496,7 +577,7 @@
      */
     function convertEPCL(data) {
         if (data == null || data.length == 0) {
-            log.warn('Empty EPCL data, skipping');
+            console.warn('Empty EPCL data, skipping');
         }
 
         // Data length for this command, in 2 character Hex (base 16) format
@@ -786,7 +867,6 @@
 
     /// Page load ///
     $(document).ready(function() {
-        setBackground('#FFF1D0');
         resetRawOptions();
         resetPSOptions();
 
@@ -794,26 +874,39 @@
     });
 
     qz.websocket.setClosedCallbacks(function(evt) {
-        setBackground('#B1B1B1');
+        updateState('Inactive', 'text-muted');
         console.log(evt);
     });
 
-    qz.websocket.setErrorCallbacks(handleError);
+    qz.websocket.setErrorCallbacks(handleConnectionError);
 
 
     /// Helpers ///
-    function handleError(err) {
-        setBackground('#F5A9A9');
-        console.error(err);
+    function handleConnectionError(err) {
+        updateState('Error', 'text-danger bg-danger');
+        displayError(err);
     }
 
     function displayError(err) {
-        alert(err);
         console.error(err);
+        displayMessage(err, 'alert-danger');
     }
 
-    function setBackground(color) {
-        $("#qz-page").children().children("fieldset").not(".disabled").css("background-color", color);
+    function displayMessage(msg, css) {
+        if (css == undefined) { css = 'alert-info'; }
+
+        var timeout = setTimeout(function() { $('#' + timeout).alert('close'); }, 5000);
+
+        var alert = $("<div/>").addClass('alert alert-dismissible fade in ' + css).attr('id', timeout).attr('role', 'alert');
+        alert.html("<button type='button' class='close' data-dismiss='alert'>&times;</button>" + msg);
+
+        $("#qz-alert").append(alert);
+    }
+
+    function updateState(text, css) {
+        var $conn = $("#qz-connection");
+        $conn.html(text);
+        $conn.removeClass().addClass(css);
     }
 
     function getPath() {
@@ -894,10 +987,10 @@
         if (typeof printer === 'object' && printer.name == undefined) {
             var shown;
             if (printer.file != undefined) {
-                shown = "FILE: " + printer.file;
+                shown = "<em>FILE:</em> " + printer.file;
             }
             if (printer.host != undefined) {
-                shown = "HOST: " + printer.host + ":" + printer.port;
+                shown = "<em>HOST:</em> " + printer.host + ":" + printer.port;
             }
 
             $("#configPrinter").html(shown);
