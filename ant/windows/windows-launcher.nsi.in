@@ -3,7 +3,7 @@
 ;------------------
 ; Creates a ${build.socket.name}.exe launcher which performs automatic JRE detection
 
-!include x64.nsh
+!include x64x.nsh
 !include LogicLib.nsh
 !addincludedir "${windows.nsis.addons}/Include"
 !include StdUtils.nsh
