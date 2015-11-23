@@ -35,7 +35,7 @@ else
 	suffix="-unsigned"
 fi
 
-eval "pkgbuild --identifier \"${build.socket.name}\" \
+eval "pkgbuild2 --identifier \"${build.socket.name}\" \
 	--root \"${dist.socket.dir}\" \
 	--install-location \"${apple.installdir}\" \
 	--scripts \"${apple.scripts}\" \
