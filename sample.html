@@ -45,7 +45,7 @@
             <div id="qz-connection" class="panel panel-default">
                 <div class="panel-heading">
                     <h3 class="panel-title">
-                        Connection: <span id="qz-status" class="text-muted" style="padding: 0 .2em; border-radius: 5px;">Unknown</span>
+                        Connection: <span id="qz-status" class="text-muted" style="font-weight: bold;">Unknown</span>
                     </h3>
                 </div>
 
@@ -87,8 +87,8 @@
                     <div class="form-group">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-default btn-sm" onclick="setPrinter($('#printerSearch').val());">Set To Search</button>
-                            <button type="button" class="btn btn-default btn-sm" onclick="askForFile();">Set To File</button>
-                            <button type="button" class="btn btn-default btn-sm" onclick="askForHost();">Set To Host</button>
+                            <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#askFileModal">Set To File</button>
+                            <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#askHostModal">Set To Host</button>
                         </div>
                     </div>
                 </div>
@@ -435,6 +435,46 @@
             </div>
         </div>
     </div>
+
+
+    <div class="modal fade" id="askFileModal" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="askFile">File:</label>
+                        <input type="text" id="askFile" class="form-control" value="C:\tmp\example-file.txt" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="setPrintFile();">Set</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="askHostModal" role="dialog">
+        <div class="modal-dialog modal-sm" role="document">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="askHost">Host:</label>
+                        <input type="text" id="askHost" class="form-control" value="192.168.1.254" />
+                    </div>
+                    <div class="form-group">
+                        <label for="askPort">Port:</label>
+                        <input type="text" id="askPort" class="form-control" value="9100" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="setPrintHost();">Set</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 </body>
 
@@ -887,6 +927,13 @@
         });
     }
 
+    $("#askFileModal").on("shown.bs.modal", function() {
+        $("#askFile").focus().select();
+    });
+    $("#askHostModal").on("shown.bs.modal", function() {
+        $("#askHost").focus().select();
+    });
+
 
     /// Helpers ///
     function handleConnectionError(err) {
@@ -979,19 +1026,14 @@
         });
     }
 
-    function askForFile() {
-        //FIXME - stop using `prompt`
-        var file = prompt("Print to file:", "C:\\tmp\\test-file.txt");
-
-        setPrinter({ file: file });
+    function setPrintFile() {
+        setPrinter({ file: $("#askFile").val() });
+        $("#askFileModal").modal('hide');
     }
 
-    function askForHost() {
-        //FIXME - stop using `prompt`
-        var host = prompt("Print to host:", "192.168.1.254");
-        var port = prompt("Use port:", "9100");
-
-        setPrinter({ host: host, port: port });
+    function setPrintHost() {
+        setPrinter({ host: $("#askHost").val(), port: $("#askPort").val() });
+        $("#askHostModal").modal('hide');
     }
 
     function setPrinter(printer) {
