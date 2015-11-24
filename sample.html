@@ -98,7 +98,7 @@
         <div class="col-md-8">
             <ul class="nav nav-tabs" role="tablist">
                 <li role="presentation" class="active"><a href="#rawTab" role="tab" data-toggle="tab">Raw Printing</a></li>
-                <li role="presentation"><a href="#psTab" role="tab" data-toggle="tab">Postscript Printing</a></li>
+                <li role="presentation"><a href="#pixelTab" role="tab" data-toggle="tab">Pixel Printing</a></li>
                 <li role="presentation"><a href="#serialTab" role="tab" data-toggle="tab">Serial</a></li>
                 <li role="presentation"><a href="#usbTab" role="tab" data-toggle="tab">USB</a></li>
             </ul>
@@ -210,13 +210,13 @@
                 </div>
             </div>
 
-            <div id="psTab" class="tab-pane col-md-8">
-                <h3>Postscript Printing</h3>
+            <div id="pixelTab" class="tab-pane col-md-8">
+                <h3>Pixel Printing</h3>
                 <!-- TODO - keep name ?? -->
 
                 <div class="row">
                     <div class="col-md-12">
-                        <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Postscript Printing?</a>
+                        <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Pixel Printing?</a>
 
                         <span style="float: right;">
                             <a href="javascript:findPrinter('XPS', true);">Microsoft XPS</a> |
@@ -263,8 +263,8 @@
                                     <div class="col-md-6">
 
                                         <div class="form-group form-inline">
-                                            <label for="psColorType">Color Type</label>
-                                            <select id="psColorType" class="form-control pull-right">
+                                            <label for="pxlColorType">Color Type</label>
+                                            <select id="pxlColorType" class="form-control pull-right">
                                                 <option value="color">Color</option>
                                                 <option value="greyscale">Greyscale</option>
                                                 <option value="blackwhite">Black & White</option>
@@ -272,23 +272,23 @@
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="psCopies">Copies</label>
-                                            <input type="number" id="psCopies" class="form-control pull-right" />
+                                            <label for="pxlCopies">Copies</label>
+                                            <input type="number" id="pxlCopies" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="psDensity">Density</label>
-                                            <input type="number" id="psDensity" class="form-control pull-right" />
+                                            <label for="pxlDensity">Density</label>
+                                            <input type="number" id="pxlDensity" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="psDuplex"> Duplex</label>
-                                            <input type="checkbox" id="psDuplex" class="pull-right" />
+                                            <label for="pxlDuplex"> Duplex</label>
+                                            <input type="checkbox" id="pxlDuplex" class="pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="psOrientation">Orientation</label>
-                                            <select id="psOrientation" class="form-control pull-right">
+                                            <label for="pxlOrientation">Orientation</label>
+                                            <select id="pxlOrientation" class="form-control pull-right">
                                                 <option value="">Default</option>
                                                 <option value="portrait">Portrait</option>
                                                 <option value="landscape">Landscape</option>
@@ -297,18 +297,18 @@
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="psPaperThickness">Paper Thickness</label>
-                                            <input disabled type="number" step="any" id="psPaperThickness" class="form-control pull-right" />
+                                            <label for="pxlPaperThickness">Paper Thickness</label>
+                                            <input disabled type="number" step="any" id="pxlPaperThickness" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="psPrinterTray">Printer Tray</label>
-                                            <input disabled type="text" id="psPrinterTray" class="form-control pull-right" />
+                                            <label for="pxlPrinterTray">Printer Tray</label>
+                                            <input disabled type="text" id="pxlPrinterTray" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="psRotation">Rotation</label>
-                                            <input type="number" step="any" id="psRotation" class="form-control pull-right" />
+                                            <label for="pxlRotation">Rotation</label>
+                                            <input type="number" step="any" id="pxlRotation" class="form-control pull-right" />
                                         </div>
                                     </div>
                                     <div class="col-md-6">
@@ -316,66 +316,66 @@
                                             <label>Units</label>
                                             <div>
                                                 <label>
-                                                    <input type="radio" name="psUnits" id="psUnitsIN" value="in" />
+                                                    <input type="radio" name="pxlUnits" id="pxlUnitsIN" value="in" />
                                                     IN
                                                 </label>
                                                 <label>
-                                                    <input type="radio" name="psUnits" id="psUnitsMM" value="mm" />
+                                                    <input type="radio" name="pxlUnits" id="pxlUnitsMM" value="mm" />
                                                     MM
                                                 </label>
                                                 <label>
-                                                    <input type="radio" name="psUnits" id="psUnitsCM" value="cm" />
+                                                    <input type="radio" name="pxlUnits" id="pxlUnitsCM" value="cm" />
                                                     CM
                                                 </label>
                                             </div>
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="psMargins">Margins</label>
+                                            <label for="pxlMargins">Margins</label>
                                             (
-                                            <label for="psMarginsActive" class="inline">Individual:</label>
-                                            <input type="checkbox" id="psMarginsActive" onclick="checkMarginsActive();">
+                                            <label for="pxlMarginsActive" class="inline">Individual:</label>
+                                            <input type="checkbox" id="pxlMarginsActive" onclick="checkMarginsActive();">
                                             )
-                                            <input type="number" step="any" id="psMargins" class="form-control" />
+                                            <input type="number" step="any" id="pxlMargins" class="form-control" />
                                         </div>
-                                        <div class="inline" id="psMarginsGroup">
+                                        <div class="inline" id="pxlMarginsGroup">
                                             <div class="form-group form-inline">
-                                                <label for="psMarginsTop">&nbsp; Top:</label>
-                                                <input type="number" step="any" id="psMarginsTop" class="form-control pull-right" />
+                                                <label for="pxlMarginsTop">&nbsp; Top:</label>
+                                                <input type="number" step="any" id="pxlMarginsTop" class="form-control pull-right" />
                                             </div>
                                             <div class="form-group form-inline">
-                                                <label for="psMarginsRight">&nbsp; Right:</label>
-                                                <input type="number" step="any" id="psMarginsRight" class="form-control pull-right" />
+                                                <label for="pxlMarginsRight">&nbsp; Right:</label>
+                                                <input type="number" step="any" id="pxlMarginsRight" class="form-control pull-right" />
                                             </div>
                                             <div class="form-group form-inline">
-                                                <label for="psMarginsBottom">&nbsp; Bottom:</label>
-                                                <input type="number" step="any" id="psMarginsBottom" class="form-control pull-right" />
+                                                <label for="pxlMarginsBottom">&nbsp; Bottom:</label>
+                                                <input type="number" step="any" id="pxlMarginsBottom" class="form-control pull-right" />
                                             </div>
                                             <div class="form-group form-inline">
-                                                <label for="psMarginsLeft">&nbsp; Left:</label>
-                                                <input type="number" step="any" id="psMarginsLeft" class="form-control pull-right" />
+                                                <label for="pxlMarginsLeft">&nbsp; Left:</label>
+                                                <input type="number" step="any" id="pxlMarginsLeft" class="form-control pull-right" />
                                             </div>
                                         </div>
 
                                         <div class="form-group">
                                             <label class="inline">Size</label>
                                             (
-                                            <label for="psSizeActive" class="inline">Enable:</label>
-                                            <input type="checkbox" id="psSizeActive" onclick="checkSizeActive();" />
+                                            <label for="pxlSizeActive" class="inline">Enable:</label>
+                                            <input type="checkbox" id="pxlSizeActive" onclick="checkSizeActive();" />
                                             )
                                         </div>
-                                        <div class="inline" id="psSizeGroup">
+                                        <div class="inline" id="pxlSizeGroup">
                                             <div class="form-group form-inline">
-                                                <label for="psSizeWidth">&nbsp; Width:</label>
-                                                <input type="number" step="any" id="psSizeWidth" class="form-control pull-right" />
+                                                <label for="pxlSizeWidth">&nbsp; Width:</label>
+                                                <input type="number" step="any" id="pxlSizeWidth" class="form-control pull-right" />
                                             </div>
                                             <div class="form-group form-inline">
-                                                <label for="psSizeHeight">&nbsp; Height:</label>
-                                                <input type="number" step="any" id="psSizeHeight" class="form-control pull-right" />
+                                                <label for="pxlSizeHeight">&nbsp; Height:</label>
+                                                <input type="number" step="any" id="pxlSizeHeight" class="form-control pull-right" />
                                             </div>
                                             <div class="form-group form-inline">
-                                                <label for="psSizeScale">&nbsp; Scale Image:</label>
-                                                <input type="checkbox" id="psSizeScale" class="form-control pull-right" />
+                                                <label for="pxlSizeScale">&nbsp; Scale Image:</label>
+                                                <input type="checkbox" id="pxlSizeScale" class="form-control pull-right" />
                                             </div>
                                         </div>
                                     </div>
@@ -383,7 +383,7 @@
                                 <hr />
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <button type="button" class="btn btn-danger pull-right" onclick="resetPSOptions();">Reset</button>
+                                        <button type="button" class="btn btn-danger pull-right" onclick="resetPixelOptions();">Reset</button>
                                     </div>
                                 </div>
                             </div>
@@ -818,8 +818,8 @@
 
     function printImage(scaling) {
         if (scaling) {
-            $("#psSizeActive").prop('checked', true);
-            $("#psSizeScale").prop('checked', true);
+            $("#pxlSizeActive").prop('checked', true);
+            $("#pxlSizeScale").prop('checked', true);
             checkSizeActive();
         }
         var config = getUpdatedConfig();
@@ -859,47 +859,47 @@
         $("#rawAltPrinting").prop('checked', false);
     }
 
-    function resetPSOptions() {
-        $("#psColorType").val("color");
-        $("#psCopies").val(1);
-        $("#psDensity").val(72);
-        $("#psDuplex").prop('checked', false);
-        $("#psOrientation").val("");
-        $("#psPaperThickness").val(null);
-        $("#psPrinterTray").val(null);
-        $("#psRotation").val(0);
-        $("#psUnitsIN").prop('checked', true);
+    function resetPixelOptions() {
+        $("#pxlColorType").val("color");
+        $("#pxlCopies").val(1);
+        $("#pxlDensity").val(72);
+        $("#pxlDuplex").prop('checked', false);
+        $("#pxlOrientation").val("");
+        $("#pxlPaperThickness").val(null);
+        $("#pxlPrinterTray").val(null);
+        $("#pxlRotation").val(0);
+        $("#pxlUnitsIN").prop('checked', true);
 
-        $("#psMargins").val(0).css('display', '');
-        $("#psMarginsTop").val(0);
-        $("#psMarginsRight").val(0);
-        $("#psMarginsBottom").val(0);
-        $("#psMarginsLeft").val(0);
-        $("#psMarginsActive").prop('checked', false);
-        $("#psMarginsGroup").css('display', 'none');
+        $("#pxlMargins").val(0).css('display', '');
+        $("#pxlMarginsTop").val(0);
+        $("#pxlMarginsRight").val(0);
+        $("#pxlMarginsBottom").val(0);
+        $("#pxlMarginsLeft").val(0);
+        $("#pxlMarginsActive").prop('checked', false);
+        $("#pxlMarginsGroup").css('display', 'none');
 
-        $("#psSizeWidth").val('');
-        $("#psSizeHeight").val('');
-        $("#psSizeScale").prop('checked', false);
-        $("#psSizeActive").prop('checked', false);
-        $("#psSizeGroup").css('display', 'none');
+        $("#pxlSizeWidth").val('');
+        $("#pxlSizeHeight").val('');
+        $("#pxlSizeScale").prop('checked', false);
+        $("#pxlSizeActive").prop('checked', false);
+        $("#pxlSizeGroup").css('display', 'none');
     }
 
     function checkSizeActive() {
-        if ($("#psSizeActive").prop('checked')) {
-            $("#psSizeGroup").css('display', '');
+        if ($("#pxlSizeActive").prop('checked')) {
+            $("#pxlSizeGroup").css('display', '');
         } else {
-            $("#psSizeGroup").css('display', 'none');
+            $("#pxlSizeGroup").css('display', 'none');
         }
     }
 
     function checkMarginsActive() {
-        if ($("#psMarginsActive").prop('checked')) {
-            $("#psMarginsGroup").css('display', '');
-            $("#psMargins").css('display', 'none');
+        if ($("#pxlMarginsActive").prop('checked')) {
+            $("#pxlMarginsGroup").css('display', '');
+            $("#pxlMargins").css('display', 'none');
         } else {
-            $("#psMarginsGroup").css('display', 'none');
-            $("#psMargins").css('display', '');
+            $("#pxlMarginsGroup").css('display', 'none');
+            $("#pxlMargins").css('display', '');
         }
     }
 
@@ -907,7 +907,7 @@
     /// Page load ///
     $(document).ready(function() {
         resetRawOptions();
-        resetPSOptions();
+        resetPixelOptions();
 
         startConnection();
     });
@@ -986,22 +986,22 @@
     }
 
     function updateConfig() {
-        var psSize = null;
-        if ($("#psSizeActive").prop('checked')) {
-            psSize = {
-                width: $("#psSizeWidth").val(),
-                height: $("#psSizeHeight").val(),
-                scaleImage: $("#psSizeScale").prop('checked')
+        var pxlSize = null;
+        if ($("#pxlSizeActive").prop('checked')) {
+            pxlSize = {
+                width: $("#pxlSizeWidth").val(),
+                height: $("#pxlSizeHeight").val(),
+                scaleImage: $("#pxlSizeScale").prop('checked')
             };
         }
 
-        var psMargins = $("#psMargins").val();
-        if ($("#psMarginsActive").prop('checked')) {
-            psMargins = {
-                top: $("#psMarginsTop").val(),
-                right: $("#psMarginsRight").val(),
-                bottom: $("#psMarginsBottom").val(),
-                left: $("#psMarginsLeft").val()
+        var pxlMargins = $("#pxlMargins").val();
+        if ($("#pxlMarginsActive").prop('checked')) {
+            pxlMargins = {
+                top: $("#pxlMarginsTop").val(),
+                right: $("#pxlMarginsRight").val(),
+                bottom: $("#pxlMarginsBottom").val(),
+                left: $("#pxlMarginsLeft").val()
             };
         }
 
@@ -1012,17 +1012,17 @@
             language: $("#rawLanguage").val(),
             perSpool: $("#rawPerSpool").val(),
 
-            colorType: $("#psColorType").val(),
-            copies: $("#psCopies").val(),
-            density: $("#psDensity").val(),
-            duplex: $("#psDuplex").prop('checked'),
-            margins: psMargins,
-            orientation: $("#psOrientation").val(),
-            paperThickness: $("#psPaperThickness").val(),
-            printerTray: $("#psPrinterTray").val(),
-            rotation: $("#psRotation").val(),
-            size: psSize,
-            units: $("input[name='psUnits']:checked").val()
+            colorType: $("#pxlColorType").val(),
+            copies: $("#pxlCopies").val(),
+            density: $("#pxlDensity").val(),
+            duplex: $("#pxlDuplex").prop('checked'),
+            margins: pxlMargins,
+            orientation: $("#pxlOrientation").val(),
+            paperThickness: $("#pxlPaperThickness").val(),
+            printerTray: $("#pxlPrinterTray").val(),
+            rotation: $("#pxlRotation").val(),
+            size: pxlSize,
+            units: $("input[name='pxlUnits']:checked").val()
         });
     }
 

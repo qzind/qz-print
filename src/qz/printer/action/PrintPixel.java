@@ -17,29 +17,29 @@ import java.awt.print.Paper;
 import java.util.Arrays;
 import java.util.List;
 
-public abstract class PrintPostScript {
+public abstract class PrintPixel {
 
-    private static final Logger log = LoggerFactory.getLogger(PrintPostScript.class);
+    private static final Logger log = LoggerFactory.getLogger(PrintPixel.class);
 
     private static final List<Integer> MAC_BAD_IMAGE_TYPES = Arrays.asList(BufferedImage.TYPE_BYTE_BINARY, BufferedImage.TYPE_CUSTOM);
 
 
-    protected PrintRequestAttributeSet applyDefaultSettings(PrintOptions.Postscript psOpts, PageFormat page) {
+    protected PrintRequestAttributeSet applyDefaultSettings(PrintOptions.Pixel pxlOpts, PageFormat page) {
         PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
 
         //apply general attributes
-        if (psOpts.getColorType() != null) {
-            attributes.add(psOpts.getColorType().getChromatic());
+        if (pxlOpts.getColorType() != null) {
+            attributes.add(pxlOpts.getColorType().getChromatic());
         }
-        if (psOpts.isDuplex()) {
+        if (pxlOpts.isDuplex()) {
             attributes.add(Sides.DUPLEX);
         }
-        if (psOpts.getOrientation() != null) {
-            attributes.add(psOpts.getOrientation().getAsAttribute());
+        if (pxlOpts.getOrientation() != null) {
+            attributes.add(pxlOpts.getOrientation().getAsAttribute());
         }
 
         // Fixes 4x6 labels on Mac OSX
-        if (psOpts.getSize() != null && psOpts.getUnits() == PrintOptions.Unit.INCH && psOpts.getSize().getWidth() == 4 && psOpts.getSize().getHeight() == 6) {
+        if (pxlOpts.getSize() != null && pxlOpts.getUnits() == PrintOptions.Unit.INCH && pxlOpts.getSize().getWidth() == 4 && pxlOpts.getSize().getHeight() == 6) {
             attributes.add(MediaSizeName.JAPANESE_POSTCARD);
         }
 
@@ -47,10 +47,12 @@ public abstract class PrintPostScript {
         //TODO - set printer tray
 
         // Java print using inches at 72dpi
-        final float CONVERT = psOpts.getUnits().asInch();
+        //FIXME - no longer working
+        final float CONVERT = pxlOpts.getUnits().asInch();
 
-        log.trace("DPI: {}", (psOpts.getDensity() * CONVERT));
-        float dpFactor = ((psOpts.getDensity() * CONVERT) / 72f);
+        //FIXME - just cuts off image or over when scaling
+        log.trace("DPI: {}", (pxlOpts.getDensity() * CONVERT));
+        float dpFactor = ((pxlOpts.getDensity() * CONVERT) / 72f);
 
         //apply sizing and margins
         Paper paper = new Paper();
@@ -61,19 +63,19 @@ public abstract class PrintPostScript {
         float pageH = (float)page.getHeight() * dpFactor;
 
         //page size
-        if (psOpts.getSize() != null && psOpts.getSize().getWidth() > 0 && psOpts.getSize().getHeight() > 0) {
-            pageW = (float)psOpts.getSize().getWidth() * psOpts.getDensity();
-            pageH = (float)psOpts.getSize().getHeight() * psOpts.getDensity();
+        if (pxlOpts.getSize() != null && pxlOpts.getSize().getWidth() > 0 && pxlOpts.getSize().getHeight() > 0) {
+            pageW = (float)pxlOpts.getSize().getWidth() * pxlOpts.getDensity();
+            pageH = (float)pxlOpts.getSize().getHeight() * pxlOpts.getDensity();
 
             paper.setSize((pageW * CONVERT) * dpFactor, (pageH * CONVERT) * dpFactor);
         }
 
         //margins
-        if (psOpts.getMargins() != null) {
-            pageX += psOpts.getMargins().left() * psOpts.getDensity();
-            pageY += psOpts.getMargins().top() * psOpts.getDensity();
-            pageW -= (psOpts.getMargins().right() + psOpts.getMargins().left()) * psOpts.getDensity();
-            pageH -= (psOpts.getMargins().bottom() + psOpts.getMargins().top()) * psOpts.getDensity();
+        if (pxlOpts.getMargins() != null) {
+            pageX += pxlOpts.getMargins().left() * pxlOpts.getDensity();
+            pageY += pxlOpts.getMargins().top() * pxlOpts.getDensity();
+            pageW -= (pxlOpts.getMargins().right() + pxlOpts.getMargins().left()) * pxlOpts.getDensity();
+            pageH -= (pxlOpts.getMargins().bottom() + pxlOpts.getMargins().top()) * pxlOpts.getDensity();
         }
 
         if (pageW > 0 && pageH > 0) {

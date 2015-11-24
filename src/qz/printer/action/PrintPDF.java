@@ -21,7 +21,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class PrintPDF extends PrintPostScript implements PrintProcessor {
+public class PrintPDF extends PrintPixel implements PrintProcessor {
 
     private static final Logger log = LoggerFactory.getLogger(PrintPDF.class);
 
@@ -60,7 +60,7 @@ public class PrintPDF extends PrintPostScript implements PrintProcessor {
         job.setPrintService(output.getPrintService());
         PageFormat page = job.getPageFormat(null);
 
-        PrintRequestAttributeSet attributes = applyDefaultSettings(options.getPSOptions(), page);
+        PrintRequestAttributeSet attributes = applyDefaultSettings(options.getPixelOptions(), page);
 
         Book book = new Book();
         for(PDDocument doc : pdfs) {
@@ -70,8 +70,8 @@ public class PrintPDF extends PrintPostScript implements PrintProcessor {
         job.setJobName(Constants.PDF_PRINT);
         job.setPageable(book);
 
-        log.info("Starting pdf printing ({} copies)", options.getPSOptions().getCopies());
-        for(int i = 0; i < options.getPSOptions().getCopies(); i++) {
+        log.info("Starting pdf printing ({} copies)", options.getPixelOptions().getCopies());
+        for(int i = 0; i < options.getPixelOptions().getCopies(); i++) {
             job.print(attributes);
         }
 

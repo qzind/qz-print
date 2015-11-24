@@ -51,7 +51,7 @@ import java.util.List;
 /**
  * @author Tres Finocchiaro, Anton Mezerny
  */
-public class PrintImage extends PrintPostScript implements PrintProcessor, Printable {
+public class PrintImage extends PrintPixel implements PrintProcessor, Printable {
 
     private static final Logger log = LoggerFactory.getLogger(PrintImage.class);
 
@@ -97,20 +97,20 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
         job.setPrintService(output.getPrintService());
         PageFormat page = job.getPageFormat(null);
 
-        PrintOptions.Postscript psOpts = options.getPSOptions();
-        PrintRequestAttributeSet attributes = applyDefaultSettings(psOpts, page);
+        PrintOptions.Pixel pxlOpts = options.getPixelOptions();
+        PrintRequestAttributeSet attributes = applyDefaultSettings(pxlOpts, page);
 
-        if (psOpts.getSize() != null) {
-            scaleImage = options.getPSOptions().getSize().isFitImage();
+        if (pxlOpts.getSize() != null) {
+            scaleImage = options.getPixelOptions().getSize().isFitImage();
         }
 
-        imageRotation = psOpts.getRotation();
+        imageRotation = pxlOpts.getRotation();
 
         job.setJobName(Constants.IMAGE_PRINT);
         job.setPrintable(this, page);
 
-        log.info("Starting image printing ({} copies)", psOpts.getCopies());
-        for(int i = 0; i < psOpts.getCopies(); i++) {
+        log.info("Starting image printing ({} copies)", pxlOpts.getCopies());
+        for(int i = 0; i < pxlOpts.getCopies(); i++) {
             job.print(attributes);
         }
     }

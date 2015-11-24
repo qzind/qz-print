@@ -13,12 +13,12 @@ public class PrintOptions {
 
     private static final Logger log = LoggerFactory.getLogger(PrintOptions.class);
 
-    private Postscript psOptions = new Postscript();
+    private Pixel psOptions = new Pixel();
     private Raw rawOptions = new Raw();
 
 
     /**
-     * Parses the provided JSON Object into relevant Postscript and Raw options
+     * Parses the provided JSON Object into relevant Pixel and Raw options
      */
     public PrintOptions(JSONObject configOpts) {
         if (configOpts == null) { configOpts = new JSONObject(); }
@@ -42,7 +42,7 @@ public class PrintOptions {
             catch(JSONException e) { log.warn("integer", "perSpool", configOpts.opt("perSpool")); }
         }
 
-        //check for postscript options
+        //check for pixel options
         if (!configOpts.isNull("colorType")) {
             try {
                 psOptions.colorType = ColorType.valueOf(configOpts.optString("colorType").toUpperCase());
@@ -167,7 +167,7 @@ public class PrintOptions {
         return rawOptions;
     }
 
-    public Postscript getPSOptions() {
+    public Pixel getPixelOptions() {
         return psOptions;
     }
 
@@ -204,8 +204,8 @@ public class PrintOptions {
         }
     }
 
-    /** Postscript printing options */
-    public class Postscript {
+    /** Pixel printing options */
+    public class Pixel {
         private ColorType colorType = ColorType.COLOR;  //Color / black&white
         private int copies = 1;                         //Job copies
         private int density = 72;                       //Pixel density (DPI or DPMM)
@@ -266,7 +266,7 @@ public class PrintOptions {
 
     // Sub options //
 
-    /** Postscript page size options */
+    /** Pixel page size options */
     public class Size {
         private double width = -1;          //Page width
         private double height = -1;         //Page height
@@ -286,7 +286,7 @@ public class PrintOptions {
         }
     }
 
-    /** Postscript page margins options */
+    /** Pixel page margins options */
     public class Margins {
         private double top = 0;             //Top page margin
         private double right = 0;           //Right page margin
@@ -318,7 +318,7 @@ public class PrintOptions {
         }
     }
 
-    /** Postscript dimension values */
+    /** Pixel dimension values */
     public enum Unit {
         INCH(1.0f),
         CM(2.54f),
@@ -335,7 +335,7 @@ public class PrintOptions {
         }
     }
 
-    /** Postscript page orientation option */
+    /** Pixel page orientation option */
     public enum Orientation {
         PORTRAIT(OrientationRequested.PORTRAIT, PageFormat.PORTRAIT),
         REVERSE_PORTRAIT(OrientationRequested.PORTRAIT, PageFormat.PORTRAIT),
@@ -360,7 +360,7 @@ public class PrintOptions {
         }
     }
 
-    /** Postscript page color option */
+    /** Pixel page color option */
     public enum ColorType {
         COLOR(Chromaticity.COLOR),
         GREYSCALE(Chromaticity.MONOCHROME),
