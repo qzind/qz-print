@@ -939,11 +939,15 @@
     function handleConnectionError(err) {
         updateState('Error', 'danger');
 
-        if (err.target.readyState >= 2) { //if CLOSING or CLOSED
-            displayError("Connection to QZ Tray was closed");
+        if (err.target != undefined) {
+            if (err.target.readyState >= 2) { //if CLOSING or CLOSED
+                displayError("Connection to QZ Tray was closed");
+            } else {
+                displayError("A connection error occurred, check log for details");
+                console.error(err);
+            }
         } else {
-            displayError("A connection error occurred, check log for details");
-            console.error(err);
+            displayError(err);
         }
     }
 
