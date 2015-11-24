@@ -42,16 +42,22 @@
 
     <div class="row spread">
         <div class="col-md-4">
-            <h3>
-                Connection: <span id="qz-connection" class="text-muted" style="padding: 0 .2em; border-radius: 5px;">Unknown</span>
-            </h3>
-
-            <div class="btn-toolbar">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-success" onclick="startConnection();">Connect</button>
-                    <button type="button" class="btn btn-warning" onclick="endConnection();">Disconnect</button>
+            <div id="qz-connection" class="panel panel-default">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        Connection: <span id="qz-status" class="text-muted" style="padding: 0 .2em; border-radius: 5px;">Unknown</span>
+                    </h3>
                 </div>
-                <button type="button" class="btn btn-info" onclick="listNetworkInfo();">List Network Info</button>
+
+                <div class="panel-body">
+                    <div class="btn-toolbar">
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-success" onclick="startConnection();">Connect</button>
+                            <button type="button" class="btn btn-warning" onclick="endConnection();">Disconnect</button>
+                        </div>
+                        <button type="button" class="btn btn-info" onclick="listNetworkInfo();">List Network Info</button>
+                    </div>
+                </div>
             </div>
 
             <hr />
@@ -435,19 +441,18 @@
 
 <!--TODO - better commenting-->
 <!--TODO - checks for open-->
-<!--TODO - alert on printing without a printer-->
 <script>
     /// Connection ///
     function startConnection() {
         qz.websocket.connect({ usingSecure: false }).then(function() {
-            updateState('Active', 'text-success bg-success');
+            updateState('Active', 'success');
             findVersion();
         }).catch(handleConnectionError);
     }
 
     function endConnection() {
         qz.websocket.disconnect().then(function() {
-            updateState('Inactive', 'text-muted');
+            updateState('Inactive', 'default');
         }).catch(handleConnectionError);
     }
 
@@ -868,7 +873,7 @@
     });
 
     qz.websocket.setClosedCallbacks(function(evt) {
-        updateState('Inactive', 'text-muted');
+        updateState('Inactive', 'default');
         console.log(evt);
     });
 
@@ -885,8 +890,14 @@
 
     /// Helpers ///
     function handleConnectionError(err) {
-        updateState('Error', 'text-danger bg-danger');
-        displayError(err);
+        updateState('Error', 'danger');
+
+        if (err.target.readyState >= 2) { //if CLOSING or CLOSED
+            displayError("Connection to QZ Tray was closed");
+        } else {
+            displayError("A connection error occurred, check log for details");
+            console.error(err);
+        }
     }
 
     function displayError(err) {
@@ -906,9 +917,8 @@
     }
 
     function updateState(text, css) {
-        var $conn = $("#qz-connection");
-        $conn.html(text);
-        $conn.removeClass().addClass(css);
+        $("#qz-status").html(text);
+        $("#qz-connection").removeClass().addClass('panel panel-' + css);
     }
 
     function getPath() {
