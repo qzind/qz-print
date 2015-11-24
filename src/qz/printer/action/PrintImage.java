@@ -29,11 +29,11 @@ import org.slf4j.LoggerFactory;
 import qz.common.Base64;
 import qz.common.Constants;
 import qz.printer.PrintOptions;
+import qz.printer.PrintOutput;
 import qz.utils.ByteUtilities;
 import qz.utils.PrintingUtilities;
 
 import javax.imageio.ImageIO;
-import javax.print.PrintService;
 import javax.print.attribute.PrintRequestAttributeSet;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -67,7 +67,7 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
 
 
     @Override
-    public void parseData(JSONArray printData) throws JSONException, UnsupportedOperationException {
+    public void parseData(JSONArray printData, PrintOptions options) throws JSONException, UnsupportedOperationException {
         for(int i = 0; i < printData.length(); i++) {
             JSONObject data = printData.getJSONObject(i);
 
@@ -87,14 +87,14 @@ public class PrintImage extends PrintPostScript implements PrintProcessor, Print
     }
 
     @Override
-    public void print(PrintService service, PrintOptions options) throws PrinterException {
+    public void print(PrintOutput output, PrintOptions options) throws PrinterException {
         if (images.isEmpty()) {
             log.warn("Nothing to print");
             return;
         }
 
         PrinterJob job = PrinterJob.getPrinterJob();
-        job.setPrintService(service);
+        job.setPrintService(output.getPrintService());
         PageFormat page = job.getPageFormat(null);
 
         PrintOptions.Postscript psOpts = options.getPSOptions();

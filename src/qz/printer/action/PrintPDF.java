@@ -9,8 +9,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.common.Constants;
 import qz.printer.PrintOptions;
+import qz.printer.PrintOutput;
 
-import javax.print.PrintService;
 import javax.print.attribute.PrintRequestAttributeSet;
 import java.awt.print.Book;
 import java.awt.print.PageFormat;
@@ -34,7 +34,7 @@ public class PrintPDF extends PrintPostScript implements PrintProcessor {
 
 
     @Override
-    public void parseData(JSONArray printData) throws JSONException, UnsupportedOperationException {
+    public void parseData(JSONArray printData, PrintOptions options) throws JSONException, UnsupportedOperationException {
         for(int i = 0; i < printData.length(); i++) {
             JSONObject data = printData.getJSONObject(i);
 
@@ -50,14 +50,14 @@ public class PrintPDF extends PrintPostScript implements PrintProcessor {
     }
 
     @Override
-    public void print(PrintService service, PrintOptions options) throws PrinterException {
+    public void print(PrintOutput output, PrintOptions options) throws PrinterException {
         if (pdfs.isEmpty()) {
             log.warn("Nothing to print");
             return;
         }
 
         PrinterJob job = PrinterJob.getPrinterJob();
-        job.setPrintService(service);
+        job.setPrintService(output.getPrintService());
         PageFormat page = job.getPageFormat(null);
 
         PrintRequestAttributeSet attributes = applyDefaultSettings(options.getPSOptions(), page);

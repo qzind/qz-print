@@ -81,8 +81,8 @@
                     <div class="form-group">
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-default btn-sm" onclick="setPrinter($('#printerSearch').val());">Set To Search</button>
-                            <button disabled type="button" class="btn btn-default btn-sm" onclick="askForFile();">Set To File</button>
-                            <button disabled type="button" class="btn btn-default btn-sm" onclick="askForHost();">Set To Host</button>
+                            <button type="button" class="btn btn-default btn-sm" onclick="askForFile();">Set To File</button>
+                            <button type="button" class="btn btn-default btn-sm" onclick="askForHost();">Set To Host</button>
                         </div>
                     </div>
                 </div>
@@ -107,9 +107,9 @@
                         <a href="https://qz.io/wiki/What-is-Raw-Printing" target="new">What is Raw Printing?</a>
 
                         <span style="float: right;">
-                            <a href="javascript:findAndSet('Epson');">Epson</a> |
-                            <a href="javascript:findAndSet('Citizen');">Citizen</a> |
-                            <a href="javascript:findAndSet('Star');">Star</a>
+                            <a href="javascript:findPrinter('Epson', true);">Epson</a> |
+                            <a href="javascript:findPrinter('Citizen', true);">Citizen</a> |
+                            <a href="javascript:findPrinter('Star', true);">Star</a>
                         </span>
                     </div>
                 </div>
@@ -123,10 +123,10 @@
                                 <label>Print Sample To Type</label>
                             </div>
                             <div class="btn-group">
-                                <button disabled type="button" class="btn btn-default" onclick="printEPL();">EPL</button>
-                                <button disabled type="button" class="btn btn-default" onclick="printZPL();">ZPL</button>
-                                <button disabled type="button" class="btn btn-default" onclick="printESCP();">ESCP</button>
-                                <button disabled type="button" class="btn btn-default" onclick="printEPCL();">EPCL (Zebra Card Printer)</button>
+                                <button type="button" class="btn btn-default" onclick="printEPL();">EPL</button>
+                                <button type="button" class="btn btn-default" onclick="printZPL();">ZPL</button>
+                                <button type="button" class="btn btn-default" onclick="printESCP();">ESCP</button>
+                                <button type="button" class="btn btn-default" onclick="printEPCL();">EPCL (Zebra Card Printer)</button>
                             </div>
                         </div>
                         <div class="form-group">
@@ -134,9 +134,9 @@
                                 <label>Print Data</label>
                             </div>
                             <div class="btn-group">
-                                <button disabled type="button" class="btn btn-default" onclick="printBase64();">Base64</button>
-                                <button disabled type="button" class="btn btn-default" onclick="printXML();">XML</button>
-                                <button disabled type="button" class="btn btn-default" onclick="printHex();">Hex</button>
+                                <button type="button" class="btn btn-default" onclick="printBase64();">Base64</button>
+                                <button type="button" class="btn btn-default" onclick="printXML();">XML</button>
+                                <button type="button" class="btn btn-default" onclick="printHex();">Hex</button>
                             </div>
                         </div>
                     </div>
@@ -147,9 +147,9 @@
                                 <label>Print From File</label>
                             </div>
                             <div class="btn-group">
-                                <button disabled type="button" class="btn btn-default" onclick="printFile('zpl_sample.txt');">zpl_sample.txt</button>
-                                <button disabled type="button" class="btn btn-default" onclick="printFile('fgl_sample.txt');">fgl_sample.txt</button>
-                                <button disabled type="button" class="btn btn-default" onclick="printFile('epl_sample.txt');">epl_sample.txt</button>
+                                <button type="button" class="btn btn-default" onclick="printFile('zpl_sample.txt');">zpl_sample.txt</button>
+                                <button type="button" class="btn btn-default" onclick="printFile('fgl_sample.txt');">fgl_sample.txt</button>
+                                <button type="button" class="btn btn-default" onclick="printFile('epl_sample.txt');">epl_sample.txt</button>
                             </div>
                         </div>
                     </div>
@@ -167,28 +167,28 @@
                                     <div class="col-md-6">
                                         <div class="form-group form-inline">
                                             <label for="rawEncoding">Encoding</label>
-                                            <input disabled type="text" id="rawEncoding" class="form-control pull-right" />
+                                            <input type="text" id="rawEncoding" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
                                             <label for="rawEndOfDoc">End Of Doc</label>
-                                            <input disabled type="text" id="rawEndOfDoc" class="form-control pull-right" />
+                                            <input type="text" id="rawEndOfDoc" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
                                             <label for="rawLanguage">Language</label>
-                                            <input disabled type="text" id="rawLanguage" class="form-control pull-right" />
+                                            <input type="text" id="rawLanguage" class="form-control pull-right" />
                                         </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group form-inline">
                                             <label for="rawAltPrinting">Alternate Printing</label>
-                                            <input disabled type="checkbox" id="rawAltPrinting" class="pull-right" />
+                                            <input type="checkbox" id="rawAltPrinting" class="pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
                                             <label for="rawPerSpool">Per Spool</label>
-                                            <input disabled type="number" id="rawPerSpool" class="form-control pull-right" />
+                                            <input type="number" id="rawPerSpool" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
@@ -218,8 +218,8 @@
                         <a href="https://qz.io/wiki/what-is-postScript-printing" target="new">What is Postscript Printing?</a>
 
                         <span style="float: right;">
-                            <a href="javascript:findAndSet('XPS');">Microsoft XPS</a> |
-                            <a href="javascript:findAndSet('PDF');">PDF</a>
+                            <a href="javascript:findPrinter('XPS', true);">Microsoft XPS</a> |
+                            <a href="javascript:findPrinter('PDF', true);">PDF</a>
                         </span>
                     </div>
                 </div>
@@ -441,7 +441,7 @@
     function startConnection() {
         qz.websocket.connect({ usingSecure: false }).then(function() {
             updateState('Active', 'text-success bg-success');
-            $("#qz-version").html(qz.getVersion());
+            findVersion();
         }).catch(handleConnectionError);
     }
 
@@ -470,17 +470,11 @@
 
 
     /// Detection ///
-    function findPrinter(query) {
+    function findPrinter(query, set) {
         $("#printerSearch").val(query);
         qz.printers.find(query).then(function(data) {
             displayMessage("<strong>Found:</strong> " + data);
-        }).catch(function(err) { console.error(err); });
-    }
-
-    function findAndSet(query) {
-        $("#printerSearch").val(query);
-        qz.printers.find(query).then(function(data) {
-            setPrinter(data);
+            if (set) { setPrinter(data); }
         }).catch(function(err) { console.error(err); });
     }
 
@@ -530,7 +524,7 @@
 
         var printData = [
             '^XA\n',
-            '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qz.getVersion() + '\n',
+            '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qzVersion + '\n',
             { type: 'raw', format: 'visual', data: getPath() + '/assets/img/image_sample_bw.png' },
             '^F5\n',
             '^XZ\n'
@@ -563,7 +557,7 @@
         $.merge(printData, convertEPCL('&CDER 0 0'));  // Set R/W encoder to ISO default
         $.merge(printData, convertEPCL('&SVM 0'));     // Disable magnetic encoding verifications
         $.merge(printData, convertEPCL('T 80 600 0 1 0 45 1 QZ INDUSTRIES'));   // Write text buffer
-        $.merge(printData, convertEPCL('&B 1 123456^INDUSTRIES/QZ^789012'));	// Write mag strip buffer
+        $.merge(printData, convertEPCL('&B 1 123456^INDUSTRIES/QZ^789012'));    // Write mag strip buffer
         $.merge(printData, convertEPCL('&E*'));        // Encode magnetic data
         $.merge(printData, convertEPCL('I 10'));       // Print card (10 returns to print ready pos.)
         $.merge(printData, convertEPCL('MO'));         // Move card to output hopper
@@ -734,7 +728,7 @@
         var config = getUpdatedConfig();
 
         var colA = '<h2>*&nbsp; QZ Print Plugin HTML Printing &nbsp;*</h2>' +
-                '<span style="color: #F00;">Version:</span> ' + qz.getVersion() + '<br/>' +
+                '<span style="color: #F00;">Version:</span> ' + qzVersion + '<br/>' +
                 '<span style="color: #F00;">Visit:</span> https://qz.io/';
         var colB = '<img src="' + getPath() + '/assets/img/image_sample.png">';
 
@@ -880,6 +874,14 @@
 
     qz.websocket.setErrorCallbacks(handleConnectionError);
 
+    var qzVersion = 0;
+    function findVersion() {
+        qz.getVersion().then(function(data) {
+            $("#qz-version").html(data);
+            qzVersion = data;
+        });
+    }
+
 
     /// Helpers ///
     function handleConnectionError(err) {
@@ -968,12 +970,14 @@
     }
 
     function askForFile() {
+        //FIXME - stop using `prompt`
         var file = prompt("Print to file:", "C:\\tmp\\test-file.txt");
 
         setPrinter({ file: file });
     }
 
     function askForHost() {
+        //FIXME - stop using `prompt`
         var host = prompt("Print to host:", "192.168.1.254");
         var port = prompt("Use port:", "9100");
 

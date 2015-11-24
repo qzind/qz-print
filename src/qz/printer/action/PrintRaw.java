@@ -21,29 +21,40 @@
  */
 package qz.printer.action;
 
+import org.apache.commons.io.IOUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
+import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qz.common.Base64;
 import qz.common.ByteArrayBuilder;
-import qz.common.LogIt;
-import qz.exception.InvalidFileTypeException;
+import qz.common.Constants;
 import qz.exception.NullCommandException;
 import qz.exception.NullPrintServiceException;
+import qz.printer.ImageWrapper;
+import qz.printer.LanguageType;
 import qz.printer.PrintOptions;
+import qz.printer.PrintOutput;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
+import qz.utils.PrintingUtilities;
 
+import javax.imageio.ImageIO;
 import javax.print.*;
-import javax.print.attribute.DocAttributeSet;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.standard.JobName;
 import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.Socket;
+import java.net.URL;
+import java.nio.charset.Charset;
+import java.util.LinkedList;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 /**
@@ -58,216 +69,254 @@ public class PrintRaw implements PrintProcessor {
 
     private ByteArrayBuilder commands;
 
-    //private DocFlavor docFlavor = DocFlavor.BYTE_ARRAY.AUTOSENSE;
-    //private DocAttributeSet docAttr;
+    String encoding = null;
 
-    //private PrintRequestAttributeSet reqAttr = new HashPrintRequestAttributeSet();
-    //private Boolean isFinished = false;
 
     public PrintRaw() {
         commands = new ByteArrayBuilder();
     }
 
 
-    public void parseData(JSONArray printData) throws JSONException, UnsupportedOperationException {
-        //TODO
-    }
-
-    public void print(PrintService service, PrintOptions options) {
-        //TODO
-    }
-
-
-    /**
-     * A brute-force, however surprisingly elegant way to send a file to a networked
-     * printer. The socket host can be an IP Address or Host Name.  The port
-     * 9100 is a standard HP/JetDirect and may work well.
-     * <p/>
-     * Please note that this will completely bypass the Print Spooler, so the
-     * Operating System will have absolutely no printer information.  This is
-     * printing "blind".
-     */
-    private boolean printToSocket() throws IOException {
-        /*
-        log.info("Printing to host " + socketHost + ":" + socketPort);
-        Socket socket = null;
-        DataOutputStream out = null;
-        try {
-            socket = new Socket(socketHost, socketPort);
-            out = new DataOutputStream(socket.getOutputStream());
-            out.write(getCommands().getByteArray());
-        }
-        finally {
-            if (out != null) {
-                out.close();
+    @Override
+    public void parseData(JSONArray printData, PrintOptions options) throws JSONException, UnsupportedOperationException {
+        for(int i = 0; i < printData.length(); i++) {
+            JSONObject data = printData.optJSONObject(i);
+            if (data == null) {
+                data = new JSONObject();
+                data.put("data", printData.getString(i));
+                data.put("format", "PLAIN");
             }
-            if (socket != null) {
-                socket.close();
+
+            String cmd = data.getString("data");
+            JSONObject opt = data.optJSONObject("options");
+            if (opt == null) { opt = new JSONObject(); }
+
+            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
+            PrintOptions.Raw rawOpts = options.getRawOptions();
+
+            encoding = rawOpts.getEncoding();
+            if (encoding == null || encoding.isEmpty()) { encoding = Charset.defaultCharset().name(); }
+
+            try {
+                switch(format) {
+                    case BASE64:
+                        commands.append(Base64.decode(cmd));
+                        break;
+                    case FILE:
+                        commands.append(FileUtilities.readRawFile(cmd));
+                        break;
+                    case VISUAL:
+                        commands.append(getImageWrapper(cmd, opt, rawOpts).getImageCommand());
+                        break;
+                    case HEX:
+                        commands.append(ByteUtilities.hexStringToByteArray(cmd));
+                        break;
+                    case XML:
+                        commands.append(Base64.decode(FileUtilities.readXMLFile(cmd, opt.optString("xmlTag"))));
+                        break;
+                    case AUTO: case PLAIN:
+                    default:
+                        commands.append(cmd.getBytes(encoding));
+                        break;
+                }
             }
-            socketHost = null;
-            socketPort = null;
+            catch(Exception e) {
+                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as a raw command", data.getString("format"), data.getString("data")), e);
+            }
         }
-        */
-        return true;
     }
 
-    public boolean printToFile() throws PrintException, IOException {
-        /*
-        log.info("Printing to file: " + outputPath);
-        OutputStream out = new FileOutputStream(outputPath);
-        out.write(getCommands().getByteArray());
-        out.close();
-        */
-        return true;
-    }
-
-    /**
-     * Constructs a
-     * <code>javax.print.SimpleDoc</code> with the previously defined byte
-     * array.
-     *
-     * @return True if print job created successfully
-     */
-    public boolean print() throws IOException, InterruptedException, PrintException {
-        return print(null);
-    }
-
-    /**
-     * Constructs a
-     * <code>javax.print.SimpleDoc</code> with the previously defined byte
-     * array. If and
-     * <code>offset</code> and
-     * <code>end</code> are specified, prints the subarray of the original byte
-     * array.
-     *
-     * @param data Data to print
-     * @return boolean indicating success
-     */
-    public boolean print(byte[] data) throws IOException, PrintException, InterruptedException {
-        /*
-        if (printService == null) {
-            throw new NullPrintServiceException("qz.printer.action.PrintRaw.print() failed, no print service.");
-        } else if (commands == null) {
-            throw new NullCommandException("qz.printer.action.PrintRaw.print() failed, no commands.");
-        } else if (outputPath != null) {
-            return printToFile();
-        } else if (socketHost != null) {
-            return printToSocket();
-        } else if (alternatePrint) {
-            return alternatePrint();
-        }
-
-        SimpleDoc doc;
-        if (data != null) {
-            doc = new SimpleDoc(data, docFlavor, docAttr);
+    private ImageWrapper getImageWrapper(String cmd, JSONObject opt, PrintOptions.Raw rawOpts) throws IOException, JSONException {
+        BufferedImage buf;
+        if (ByteUtilities.isBase64Image(cmd)) {
+            buf = ImageIO.read(new ByteArrayInputStream(Base64.decode(cmd)));
         } else {
-            doc = new SimpleDoc(getCommands().getByteArray(), docFlavor, docAttr);
+            buf = ImageIO.read(new URL(cmd));
         }
 
-        reqAttr.add(new JobName(JOB_NAME, Locale.getDefault()));
-        DocPrintJob printJob = printService.createPrintJob();
+        ImageWrapper iw = new ImageWrapper(buf, LanguageType.getType(rawOpts.getLanguage()));
+        iw.setCharset(Charset.forName(encoding));
+
+        //ESCP only
+        int density = opt.optInt("density", -1);
+        if (density == -1) {
+            String dStr = opt.optString("density", null);
+            if (dStr != null && !dStr.isEmpty()) {
+                switch(dStr.toLowerCase()) {
+                    case "single": density = 32; break;
+                    case "double": density = 33; break;
+                    case "triple": density = 39; break;
+                }
+            } else {
+                density = 32; //default
+            }
+        }
+        iw.setDotDensity(density);
+
+        //EPL only
+        iw.setxPos(opt.optInt("x", 0));
+        iw.setyPos(opt.optInt("y", 0));
+
+        return iw;
+    }
+
+    @Override
+    public void print(PrintOutput output, PrintOptions options) throws PrintException {
+        PrintOptions.Raw rawOpts = options.getRawOptions();
+
+        LinkedList<ByteArrayBuilder> pages;
+        if (rawOpts.getPerSpool() > 0 && rawOpts.getEndOfDoc() != null && !rawOpts.getEndOfDoc().isEmpty()) {
+            try {
+                pages = ByteUtilities.splitByteArray(commands.getByteArray(), rawOpts.getEndOfDoc().getBytes(encoding), rawOpts.getPerSpool());
+            }
+            catch(UnsupportedEncodingException e) {
+                throw new PrintException(e);
+            }
+        } else {
+            pages = new LinkedList<>();
+            pages.add(commands);
+        }
+
+        for(ByteArrayBuilder bab : pages) {
+            try {
+                if (output.isSetHost()) {
+                    printToHost(output.getHost(), output.getPort(), bab.getByteArray());
+                } else if (output.isSetFile()) {
+                    printToFile(output.getFile(), bab.getByteArray());
+                } else {
+                    if (rawOpts.isAltPrinting()) {
+                        printToAlternate(output.getPrintService(), bab.getByteArray());
+                    } else {
+                        printToPrinter(output.getPrintService(), bab.getByteArray());
+                    }
+                }
+            }
+            catch(IOException e) {
+                throw new PrintException(e);
+            }
+        }
+    }
+
+
+    /**
+     * A brute-force, however surprisingly elegant way to send a file to a networked printer.
+     * <p/>
+     * Please note that this will completely bypass the Print Spooler,
+     * so the Operating System will have absolutely no printer information.
+     * This is printing "blind".
+     */
+    private void printToHost(String host, int port, byte[] cmds) throws IOException {
+        log.debug("Printing to host {}:{}", host, port);
+
+        //throws any exception and auto-closes socket and stream
+        try(Socket socket = new Socket(host, port); DataOutputStream out = new DataOutputStream(socket.getOutputStream())) {
+            out.write(cmds);
+        }
+    }
+
+    /**
+     * Writes the raw commands directly to a file.
+     *
+     * @param file File to be written
+     */
+    private void printToFile(File file, byte[] cmds) throws IOException {
+        log.debug("Printing to file: {}", file.getName());
+
+        //throws any exception and auto-closes stream
+        try(OutputStream out = new FileOutputStream(file)) {
+            out.write(cmds);
+        }
+    }
+
+    /**
+     * Constructs a {@code SimpleDoc} with the {@code commands} byte array.
+     */
+    private void printToPrinter(PrintService service, byte[] cmds) throws PrintException {
+        if (service == null) { throw new NullPrintServiceException("Service cannot be null"); }
+        if (cmds == null || cmds.length == 0) { throw new NullCommandException("No commands found to send to the printer"); }
+
+        SimpleDoc doc = new SimpleDoc(cmds, DocFlavor.BYTE_ARRAY.AUTOSENSE, null);
+
+        PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
+        attributes.add(new JobName(Constants.RAW_PRINT, Locale.getDefault()));
+
+        DocPrintJob printJob = service.createPrintJob();
+
+
+        final AtomicBoolean finished = new AtomicBoolean(false);
         printJob.addPrintJobListener(new PrintJobListener() {
-            //@Override //JDK 1.6
+            @Override
             public void printDataTransferCompleted(PrintJobEvent printJobEvent) {
-                LogIt.log(printJobEvent);
-                isFinished = true;
+                log.debug("{}", printJobEvent);
+                finished.set(true);
             }
 
-            //@Override //JDK 1.6
+            @Override
             public void printJobCompleted(PrintJobEvent printJobEvent) {
-                LogIt.log(printJobEvent);
-                isFinished = true;
+                log.debug("{}", printJobEvent);
+                finished.set(true);
             }
 
-            //@Override //JDK 1.6
+            @Override
             public void printJobFailed(PrintJobEvent printJobEvent) {
-                LogIt.log(printJobEvent);
-                isFinished = true;
+                log.error("{}", printJobEvent);
+                finished.set(true);
             }
 
-            //@Override //JDK 1.6
+            @Override
             public void printJobCanceled(PrintJobEvent printJobEvent) {
-                LogIt.log(printJobEvent);
-                isFinished = true;
+                log.warn("{}", printJobEvent);
+                finished.set(true);
             }
 
-            //@Override //JDK 1.6
+            @Override
             public void printJobNoMoreEvents(PrintJobEvent printJobEvent) {
-                LogIt.log(printJobEvent);
-                isFinished = true;
+                log.debug("{}", printJobEvent);
+                finished.set(true);
             }
 
-            //@Override //JDK 1.6
+            @Override
             public void printJobRequiresAttention(PrintJobEvent printJobEvent) {
-                LogIt.log(printJobEvent);
+                log.info("{}", printJobEvent);
             }
         });
 
-        log.info("Sending print job to printer: \"" + printService.getName() + "\"");
-        printJob.print(doc, reqAttr);
+        log.trace("Sending print job to printer");
+        printJob.print(doc, attributes);
 
-        while(!isFinished) {
-            Thread.sleep(100);
+        while(!finished.get()) {
+            try { Thread.sleep(100); } catch(Exception ignore) {}
         }
 
-        log.info("Print job received by printer: \"" + printService.getName() + "\"");
-
-        //clear(); - Ver 1.0.8+ : Should be done from Applet instead now
-        */
-        return true;
+        log.trace("Print job received by printer");
     }
 
     /**
      * Alternate printing mode for CUPS capable OSs, issues lp via command line
-     * on Linux, BSD, Solaris, OSX, etc. This will never work on windows.
-     *
-     * @return boolean indicating success
+     * on Linux, BSD, Solaris, OSX, etc. This will never work on Windows.
      */
-    public boolean alternatePrint() throws PrintException {
-        /*
-        File tmpFile = new File("/tmp/qz-spool-" + System.currentTimeMillis());
-        try {
-            outputPath = tmpFile.getAbsolutePath();
-            if (printToFile()) {
-                String shellCmd = "/usr/bin/lp -d \"" + printService.getName()
-                        + "\" -o raw \"" + tmpFile.getAbsolutePath() + "\";";
-                log.info("Runtime Exec running: " + shellCmd);
-                Process process = Runtime.getRuntime().exec(new String[] {"bash", "-c", shellCmd});
-                process.waitFor();
-                processStream(process);
-            }
-        }
-        catch(Throwable t) {
-            throw new PrintException(t.getLocalizedMessage());
-        }
-        finally {
-            //noinspection ResultOfMethodCallIgnored
-            tmpFile.delete();
-            outputPath = null;
-            //isFinished = true;
-        }
-        */
+    public void printToAlternate(PrintService service, byte[] cmds) throws IOException, PrintException {
+        File tmp = File.createTempFile("qz_raw_", null);
+        printToFile(tmp, cmds);
 
-        return true;
-    }
+        String shellCmd = String.format("/usr/bin/lp -d \"%s\" -o raw \"%s\";", service.getName(), tmp.getAbsolutePath());
+        log.trace("Runtime Exec running: {}", shellCmd);
 
-    private void processStream(Process process) throws Throwable {
-        /*
+        Process process = Runtime.getRuntime().exec(new String[] {"bash", "-c", shellCmd});
+        try { process.waitFor(); }catch(InterruptedException ignore) {}
+
         BufferedReader buf = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        String tmp;
-        String output = "";
-        while((tmp = buf.readLine()) != null) {
-            if (output.isEmpty()) {
-                output = tmp;
-            } else {
-                output = output.concat("\n" + tmp);
-            }
-        }
-        log.info("Runtime Exec returned: " + output);
+        String output = IOUtils.toString(buf);
+        buf.close();
+
+        log.info("Runtime Exec returned: {}", output);
         if (process.exitValue() != 0) {
-            throw new PrintException("Alternate printing returned a non-zero value (" + process.exitValue() + "). " + output);
+            throw new PrintException(String.format("Alternate printing returned a non-zero value (%d).%n%s", process.exitValue(), output));
         }
-        */
+
+        if (!tmp.delete()) {
+            tmp.deleteOnExit();
+        }
     }
 
 }

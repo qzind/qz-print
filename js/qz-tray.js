@@ -83,7 +83,6 @@ var _qz = {
 
                 //TODO - send some certificates
 
-
                 if (config.keepAlive > 0) {
                     var interval = window.setInterval(function() {
                         if (_qz.connection == null) {
@@ -196,7 +195,7 @@ var _qz = {
 
     pendingCalls: {}, //library of promises waiting response, id -> promise
     newUID: function() {
-        var len = 5;
+        var len = 6;
         return (new Array(len + 1).join("0") + (Math.random() * Math.pow(36, len) << 0).toString(36)).slice(-len)
     },
 
@@ -255,24 +254,27 @@ var _qz = {
 
 //our Config "class"
 //TODO - docs
-function Config(printerName, opts) {
-    this.printer = printerName;
-    this.config = opts;
+function Config(printer, opts) {
+    this.setPrinter = function(newPrinter) {
+        if (typeof newPrinter === 'string') {
+            newPrinter = { name: newPrinter };
+        }
 
-
-    this.setPrinter = function(printerName) {
-        this.printer = printerName;
+        this.printer = newPrinter;
     };
     this.getPrinter = function() {
         return this.printer;
     };
 
-    this.reconfigure = function(opts) {
-        $.extend(this.config, opts);
+    this.reconfigure = function(newOpts) {
+        $.extend(this.config, newOpts);
     };
     this.getOptions = function() {
         return this.config;
     };
+
+    this.setPrinter(printer);
+    this.config = opts;
 }
 Config.prototype.print = function(data) {
     qz.print(this, data);
@@ -301,11 +303,13 @@ window.qz = {
             return new RSVP.Promise(function(resolve, reject) {
                 if (_qz.connection != null) {
                     reject(new Error("An open connection with QZ Tray already exists"));
+                    return;
                 }
 
                 // Old standard of WebSocket used const CLOSED as 2, new standards use const CLOSED as 3, we need the newer standard for jetty
                 if (!"WebSocket" in window || WebSocket.CLOSED == null || WebSocket.CLOSED == 2) {
                     reject(new Error("Web Sockets are not supported by this browser"));
+                    return;
                 }
 
                 var config = $.extend({}, _qz.connectConfig, options);
@@ -465,7 +469,7 @@ window.qz = {
          * @param {string|object} printer Name of printer. Use object type to specify printing to file or host.
          *  @param {string} [printer.name] Name of printer to send printing.
          *  @param {string} [printer.file] Name of file to send printing.
-         *  @param {string} [printer.host] Name of host to send printing.
+         *  @param {string} [printer.host] IP address or host name to send printing.
          *  @param {string} [printer.port] Port used by &lt;printer.host>.
          * @param {Object} [options] Override any of the default options for this config only.
          *
@@ -654,8 +658,22 @@ window.qz = {
         }
     },
 
+    /**
+     * Get version of connected QZ Tray application
+     *
+     * @returns {Promise<string|Error>} Version number of QZ Tray
+     */
     getVersion: function() {
-        return '2.0'; //FIXME - pull from server
+        return new RSVP.Promise(function(resolve, reject) {
+            var msg = {
+                call: 'getVersion',
+                promise: {
+                    resolve: resolve, reject: reject
+                }
+            };
+
+            _qz.connection.sendData(msg);
+        });
     }
 
 };

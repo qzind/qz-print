@@ -29,6 +29,7 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qz.printer.PrintOptions;
 import qz.utils.PrintingUtilities;
 
 import java.awt.print.Printable;
@@ -45,7 +46,7 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
 
 
     @Override
-    public void parseData(JSONArray printData) throws JSONException, UnsupportedOperationException {
+    public void parseData(JSONArray printData, PrintOptions options) throws JSONException, UnsupportedOperationException {
         WebApp.initialize();
 
         for(int i = 0; i < printData.length(); i++) {

@@ -7,14 +7,15 @@ import org.eclipse.jetty.websocket.api.annotations.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.auth.Certificate;
+import qz.common.Constants;
 import qz.common.TrayManager;
 import qz.printer.PrintOptions;
+import qz.printer.PrintOutput;
 import qz.printer.PrintServiceMatcher;
 import qz.printer.action.PrintProcessor;
 import qz.utils.NetworkUtilities;
 import qz.utils.PrintingUtilities;
 
-import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
 import java.awt.print.PrinterAbortException;
 import java.io.IOException;
@@ -118,6 +119,10 @@ public class PrintSocketClient {
             //case "serial.sendData": break;
             //case "serial.closePort": break;
 
+            case "getVersion":
+                sendResult(session, UID, Constants.VERSION);
+                break;
+
             default:
                 sendError(session, UID, "Invalid function call: " + call);
                 break;
@@ -131,20 +136,16 @@ public class PrintSocketClient {
      * @param UID     ID of call from web API
      * @param params  Params of call from web API
      */
-    private void processPrintRequest(Session session, String UID, JSONObject params) throws JSONException {
-        PrintService service = PrintServiceMatcher.findPrinter(params.getString("printer"));
-        if (service == null) {
-            sendError(session, UID, "Cannot find printer " + params.getString("printer"));
-            return;
-        }
-        PrintOptions options = new PrintOptions(params.getJSONObject("options"));
-
+    private void processPrintRequest(Session session, String UID, JSONObject params) {
         try {
+            PrintOutput output = new PrintOutput(params.optJSONObject("printer"));
+            PrintOptions options = new PrintOptions(params.optJSONObject("options"));
+
             PrintProcessor processor = PrintingUtilities.getPrintProcessor(params.getJSONArray("data"));
             log.debug("Using {} to print", processor.getClass().getName());
 
-            processor.parseData(params.getJSONArray("data"));
-            processor.print(service, options);
+            processor.parseData(params.getJSONArray("data"), options);
+            processor.print(output, options);
             log.info("Printing complete");
 
             sendResult(session, UID, null);
@@ -155,7 +156,10 @@ public class PrintSocketClient {
         }
         catch(Exception e) {
             log.error("Failed to print", e);
-            sendError(session, UID, "Printing failed: " + e.getMessage());
+
+            String err = e.getMessage();
+            if (err == null) { err = e.getClass().getSimpleName(); }
+            sendError(session, UID, "Printing failed: " + err);
         }
     }
 
