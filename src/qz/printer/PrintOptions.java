@@ -41,10 +41,6 @@ public class PrintOptions {
             try { rawOptions.perSpool = configOpts.getInt("perSpool"); }
             catch(JSONException e) { log.warn("integer", "perSpool", configOpts.opt("perSpool")); }
         }
-        if (!configOpts.isNull("printerTray")) {
-            rawOptions.printerTray = configOpts.optString("printerTray", null);
-        }
-
 
         //check for postscript options
         if (!configOpts.isNull("colorType")) {
@@ -110,6 +106,9 @@ public class PrintOptions {
         if (!configOpts.isNull("paperThickness")) {
             try { psOptions.paperThickness = configOpts.getDouble("paperThickness"); }
             catch(JSONException e) { warn("double", "paperThickness", configOpts.opt("paperThickness")); }
+        }
+        if (!configOpts.isNull("printerTray")) {
+            psOptions.printerTray = configOpts.optString("printerTray", null);
         }
         if (!configOpts.isNull("rotation")) {
             try { psOptions.rotation = configOpts.getDouble("rotation"); }
@@ -182,7 +181,6 @@ public class PrintOptions {
         private String endOfDoc = null;         //End of document character
         private String language = null;         //Printer language
         private int perSpool = 1;               //Pages per spool
-        private String printerTray = null;      //Printer tray to use
 
 
         public boolean isAltPrinting() {
@@ -204,10 +202,6 @@ public class PrintOptions {
         public int getPerSpool() {
             return perSpool;
         }
-
-        public String getPrinterTray() {
-            return printerTray;
-        }
     }
 
     /** Postscript printing options */
@@ -219,6 +213,7 @@ public class PrintOptions {
         private Margins margins = new Margins();        //Page margins
         private Orientation orientation = null;         //Page orientation
         private double paperThickness = -1;             //Paper thickness
+        private String printerTray = null;              //Printer tray to use
         private double rotation = 0;                    //Image rotation
         private Size size = null;                       //Paper size
         private Unit units = Unit.INCH;                 //Units for density, margins, size
@@ -250,6 +245,10 @@ public class PrintOptions {
 
         public double getPaperThickness() {
             return paperThickness;
+        }
+
+        public String getPrinterTray() {
+            return printerTray;
         }
 
         public double getRotation() {

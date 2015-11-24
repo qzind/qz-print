@@ -44,6 +44,7 @@ public abstract class PrintPostScript {
         }
 
         //TODO - set paper thickness
+        //TODO - set printer tray
 
         // Java print using inches at 72dpi
         final float CONVERT = psOpts.getUnits().asInch();

@@ -196,11 +196,6 @@
                                             <label for="rawPerSpool">Per Spool</label>
                                             <input type="number" id="rawPerSpool" class="form-control pull-right" />
                                         </div>
-
-                                        <div class="form-group form-inline">
-                                            <label for="rawPrinterTray">Printer Tray</label>
-                                            <input disabled type="text" id="rawPrinterTray" class="form-control pull-right" />
-                                        </div>
                                     </div>
                                 </div>
                                 <hr />
@@ -304,6 +299,11 @@
                                         <div class="form-group form-inline">
                                             <label for="psPaperThickness">Paper Thickness</label>
                                             <input disabled type="number" step="any" id="psPaperThickness" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="psPrinterTray">Printer Tray</label>
+                                            <input disabled type="text" id="psPrinterTray" class="form-control pull-right" />
                                         </div>
 
                                         <div class="form-group form-inline">
@@ -856,7 +856,6 @@
         $("#rawLanguage").val(null);
         $("#rawEncoding").val(null);
         $("#rawEndOfDoc").val(null);
-        $("#rawPrinterTray").val(null);
         $("#rawAltPrinting").prop('checked', false);
     }
 
@@ -867,6 +866,7 @@
         $("#psDuplex").prop('checked', false);
         $("#psOrientation").val("");
         $("#psPaperThickness").val(null);
+        $("#psPrinterTray").val(null);
         $("#psRotation").val(0);
         $("#psUnitsIN").prop('checked', true);
 
@@ -1011,7 +1011,6 @@
             endOfDoc: $("#rawEndOfDoc").val(),
             language: $("#rawLanguage").val(),
             perSpool: $("#rawPerSpool").val(),
-            printerTray: $("#rawPrinterTray").val(),
 
             colorType: $("#psColorType").val(),
             copies: $("#psCopies").val(),
@@ -1020,6 +1019,7 @@
             margins: psMargins,
             orientation: $("#psOrientation").val(),
             paperThickness: $("#psPaperThickness").val(),
+            printerTray: $("#psPrinterTray").val(),
             rotation: $("#psRotation").val(),
             size: psSize,
             units: $("input[name='psUnits']:checked").val()

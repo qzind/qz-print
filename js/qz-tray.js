@@ -208,6 +208,7 @@ var _qz = {
         margins: 0,
         orientation: null,
         paperThickness: null,
+        printerTray: null,
         rotation: 0,
         size: null,
 
@@ -215,8 +216,7 @@ var _qz = {
         encoding: null,
         endOfDoc: null,
         language: null,
-        perSpool: 1,
-        printerTray: null
+        perSpool: 1
     },
 
 
@@ -445,6 +445,7 @@ window.qz = {
          *   @param {number} [options.margins.left=0]
          *  @param {string} [options.orientation=null] Valid values  <code>[portrait|landscape|reverse-landscape]</code>
          *  @param {number} [options.paperThickness=null]
+         *  @param {string} [options.printerTray=null] //TODO - string?
          *  @param {number} [options.rotation=0] Image rotation in degrees.
          *  @param {Object} [options.size=null] Paper size.
          *   @param {number} [options.size.width=null] Page width.
@@ -457,7 +458,6 @@ window.qz = {
          *  @param {string} [options.endOfDoc=null]
          *  @param {string} [options.language=null] Printer language
          *  @param {int} [options.perSpool=1] Number of pages per spool.
-         *  @param {string} [options.printerTray=null] //TODO - string?
          */
         setDefaults: function(options) {
             $.extend(true, _qz.defaultConfig, options);
