@@ -43,7 +43,10 @@ var qzConfig = {
 };
 
 
-function deployQZ() {
+function deployQZ(host) {
+    if (host) {
+        qzConfig.uri = host;
+    }
     console.log(WebSocket);
     qzConfig.init();
 
