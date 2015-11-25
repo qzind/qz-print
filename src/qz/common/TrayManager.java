@@ -219,6 +219,7 @@ public class TrayManager {
         
         if (SystemUtilities.isMac()) {
             MacUtilities.registerAboutDialog(aboutDialog);
+            MacUtilities.registerQuitHandler(this);
         }
 
         JSeparator separator = new JSeparator();
@@ -328,15 +329,17 @@ public class TrayManager {
 
     private final ActionListener exitListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            if (confirmDialog.prompt("Exit " + name + "?")) {
-                for (Handler h : trayLogger.getHandlers()) {
-                    trayLogger.removeHandler(h);
-                }
-                System.exit(0);
-            }
+             if (confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
         }
     };
-
+    
+    public void exit(int returnCode) {
+        for (Handler h : trayLogger.getHandlers()) {
+                trayLogger.removeHandler(h);
+        }
+        System.exit(returnCode);
+    }
+	
     /**
      * Process toggle/checkbox events as they relate to creating shortcuts
      *

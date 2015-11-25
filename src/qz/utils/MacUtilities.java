@@ -23,6 +23,7 @@
 package qz.utils;
 
 import com.apple.OSXAdapter;
+import qz.common.TrayManager;
 
 import java.awt.*;
 
@@ -32,9 +33,14 @@ import java.awt.*;
  */
 public class MacUtilities {
     private static Dialog aboutDialog;
+    private static TrayManager trayManager;
 
     public static void showAboutDialog() {
         if (aboutDialog != null) { aboutDialog.setVisible(true); }
+    }
+    
+    public static void showExitPrompt() {
+    	if (trayManager != null) { trayManager.exit(0); }
     }
 
     /**
@@ -45,6 +51,20 @@ public class MacUtilities {
         MacUtilities.aboutDialog = aboutDialog;
         try {
             OSXAdapter.setAboutHandler(MacUtilities.class, MacUtilities.class.getDeclaredMethod("showAboutDialog"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Adds a listener to register the Apple "Quit" to call trayManager.exit(0)
+     * @param aboutDialog
+     */
+    public static void registerQuitHandler(TrayManager trayManager) {
+    	MacUtilities.trayManager = trayManager;
+        MacUtilities.aboutDialog = aboutDialog;
+        try {
+            OSXAdapter.setQuitHandler(MacUtilities.class, MacUtilities.class.getDeclaredMethod("showExitPrompt"));
         } catch (Exception e) {
             e.printStackTrace();
         }
