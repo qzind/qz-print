@@ -242,10 +242,9 @@ public class TrayManager {
     private final ActionListener openListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             try {
-                // to get Macs to open the package's contents rather than launching it, we -R the package's auth folder to
+                // To get Macs to open the package's contents rather than launching it, we -R the package's auth folder to
                 // select it in finder. Thus we are opening auth's parent folder rather than the package.
                 if (SystemUtilities.isMac()) {
-                    //You cannot pass an 'open' command through exec that contains spaces (QZ Tray) unless you use an array
                     ShellUtilities.execute(new String[] {"open", "-R", shortcutCreator.getJarPath()});
                 } else {
                     Desktop d = Desktop.getDesktop();
@@ -253,7 +252,11 @@ public class TrayManager {
                 }
             }
             catch(Exception ex) {
-                showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
+                if (SystemUtilities.isLinux() && ShellUtilities.execute(new String[] {"xdg-open", shortcutCreator.getParentDirectory()})) {
+                    // Do nothing
+                } else {
+                    showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
+                }
             }
         }
     };
