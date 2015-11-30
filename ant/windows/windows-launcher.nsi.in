@@ -22,9 +22,9 @@ AutoCloseWindow true
 ShowInstDetails nevershow
 
 ; Full path to jar
-!define JAR "$INSTDIR\${build.socket.name}.jar"
+!define JAR "$EXEDIR\${build.socket.name}.jar"
 
-Section ""
+Section ""  
   ${If} ${RunningX64}
   ${DisableX64FSRedirection}
   ${EndIf}
@@ -89,7 +89,5 @@ Function .onInit
     ${If} ${RunningX64}
 		;  Force 64-bit registry view by default
         SetRegView 64
-        ;  Default to 64-bit Program Files
-        StrCpy $INSTDIR "$PROGRAMFILES64\${socket.name}"
     ${EndIf}
 FunctionEnd
