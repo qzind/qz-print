@@ -219,6 +219,7 @@ public class TrayManager {
 
         if (SystemUtilities.isMac()) {
             MacUtilities.registerAboutDialog(aboutDialog);
+            MacUtilities.registerQuitHandler(this);
         }
 
         JSeparator separator = new JSeparator();
@@ -242,10 +243,9 @@ public class TrayManager {
     private final ActionListener openListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             try {
-                // to get Macs to open the package's contents rather than launching it, we -R the package's auth folder to
+                // To get Macs to open the package's contents rather than launching it, we -R the package's auth folder to
                 // select it in finder. Thus we are opening auth's parent folder rather than the package.
                 if (SystemUtilities.isMac()) {
-                    //You cannot pass an 'open' command through exec that contains spaces (QZ Tray) unless you use an array
                     ShellUtilities.execute(new String[] {"open", "-R", shortcutCreator.getJarPath()});
                 } else {
                     Desktop d = Desktop.getDesktop();
@@ -253,7 +253,11 @@ public class TrayManager {
                 }
             }
             catch(Exception ex) {
-                showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
+                if (SystemUtilities.isLinux() && ShellUtilities.execute(new String[] {"xdg-open", shortcutCreator.getParentDirectory()})) {
+                    // Do nothing
+                } else {
+                    showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
+                }
             }
         }
     };
@@ -328,15 +332,17 @@ public class TrayManager {
 
     private final ActionListener exitListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            if (confirmDialog.prompt("Exit " + name + "?")) {
-                for (Handler h : trayLogger.getHandlers()) {
-                    trayLogger.removeHandler(h);
-                }
-                System.exit(0);
-            }
+             if (confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
         }
     };
-
+    
+    public void exit(int returnCode) {
+        for (Handler h : trayLogger.getHandlers()) {
+                trayLogger.removeHandler(h);
+        }
+        System.exit(returnCode);
+    }
+	
     /**
      * Process toggle/checkbox events as they relate to creating shortcuts
      *
@@ -390,28 +396,48 @@ public class TrayManager {
         JOptionPane.showMessageDialog(tray, message, name, JOptionPane.ERROR_MESSAGE);
     }
 
-    public boolean showGatewayDialog(Certificate cert) {
+    public boolean showGatewayDialog(final Certificate cert) {
         if (cert == null) {
             displayErrorMessage("Invalid certificate");
             return false;
         }
-        else if (gatewayDialog.prompt("%s wants to access local resources", cert)) {
-            trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
-            if (gatewayDialog.isPersistent()) {
-                whiteList(cert);
-            }
-        } else {
-            trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from accessing local resources");
-            if (gatewayDialog.isPersistent()) {
-                blackList(cert);
-            }
+        else {
+            try{
+                SwingUtilities.invokeAndWait(new Runnable() {
+                    @Override
+                    public void run() {
+                        gatewayDialog.prompt("%s wants to access local resources", cert);
+                    }
+                });
+            }catch(Exception ignore){}
+
+            if (gatewayDialog.isApproved()) {
+                trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
+                if (gatewayDialog.isPersistent()) {
+                    whiteList(cert);
+                }
+            } else {
+                trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from accessing local resources");
+                if (gatewayDialog.isPersistent()) {
+                    blackList(cert);
+                }
+            }            
         }
 
         return gatewayDialog.isApproved();
     }
 
-    public boolean showPrintDialog(Certificate cert, String printer) {
-        if (gatewayDialog.prompt("%s wants to print to " + printer, cert)) {
+    public boolean showPrintDialog(final Certificate cert, final String printer) {
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    gatewayDialog.prompt("%s wants to print to " + printer, cert);
+                }
+            });
+        } catch(Exception ignore) {}
+
+        if (gatewayDialog.isApproved()) {
             trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to print to " + printer);
             if (gatewayDialog.isPersistent()) {
                 whiteList(cert);

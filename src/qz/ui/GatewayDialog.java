@@ -123,6 +123,16 @@ public class GatewayDialog extends JDialog {
         @Override
         public void actionPerformed(ActionEvent e) {
             approved = e.getSource().equals(allowButton);
+
+            // Require confirmation for permanent block
+            if (!approved && persistentCheckBox.isSelected()) {
+                ConfirmDialog confirmDialog = new ConfirmDialog(null, "Please Confirm", iconCache);
+                String message = Constants.BLACK_LIST.replace(" blocked ", " block ") + "?";
+                message = String.format(message, cert == null ? "" : cert.getCommonName());
+                if (!confirmDialog.prompt(message)) {
+                    return;
+                }
+            }
             setVisible(false);
         }
     };

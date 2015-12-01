@@ -24,7 +24,7 @@ Public Sub SignMessage(String message)
 
      ' Sample key.  Replace with one used for CSR generation
      ' How to associate a private key with the X509Certificate2 class in .net
-     ' openssl pkcs12 -export -in private-key.pem -inkey digital-certificate.txt -out private-key.pfx
+     ' openssl pkcs12 -export -inkey private-key.pem -in digital-certificate.txt -out private-key.pfx
 	
 	Dim KEY = "private-key.pfx"
 	Dim PASS = "S3cur3P@ssw0rd"
@@ -36,6 +36,6 @@ Public Sub SignMessage(String message)
 	Dim hash As Byte() = New SHA1Managed().ComputeHash(data)
 	
 	Response.ContentType = "text/plain"
-	Response.Write(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1")))
+	Response.Write(Convert.ToBase64String(csp.SignHash(hash, CryptoConfig.MapNameToOID("SHA1"))))
 	Environment.[Exit](0)
 End Sub

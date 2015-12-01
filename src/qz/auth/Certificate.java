@@ -36,35 +36,50 @@ public class Certificate {
 
     public static Certificate trustedRootCert = null;
     private static final Logger log = Logger.getLogger(TrayManager.class.getName());
+    private static boolean overrideTrustedRootCert = false;
 
     static {
         try {
-            trustedRootCert = new Certificate("-----BEGIN CERTIFICATE-----\n" +
-                                                      "MIIELzCCAxegAwIBAgIJALm151zCHDxiMA0GCSqGSIb3DQEBCwUAMIGsMQswCQYD\n" +
-                                                      "VQQGEwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UE\n" +
-                                                      "CgwSUVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBM\n" +
-                                                      "TEMxGTAXBgNVBAMMEHF6aW5kdXN0cmllcy5jb20xJzAlBgkqhkiG9w0BCQEWGHN1\n" +
-                                                      "cHBvcnRAcXppbmR1c3RyaWVzLmNvbTAgFw0xNTAzMDEyMzM4MjlaGA8yMTE1MDMw\n" +
-                                                      "MjIzMzgyOVowgawxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJ\n" +
-                                                      "Q2FuYXN0b3RhMRswGQYDVQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsM\n" +
-                                                      "ElFaIEluZHVzdHJpZXMsIExMQzEZMBcGA1UEAwwQcXppbmR1c3RyaWVzLmNvbTEn\n" +
-                                                      "MCUGCSqGSIb3DQEJARYYc3VwcG9ydEBxemluZHVzdHJpZXMuY29tMIIBIjANBgkq\n" +
-                                                      "hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuWsBa6uk+RM4OKBZTRfIIyqaaFD71FAS\n" +
-                                                      "7kojAQ+ySMpYuqLjIVZuCh92o1FGBvyBKUFc6knAHw5749yhLCYLXhzWwiNW2ri1\n" +
-                                                      "Jwx/d83Wnaw6qA3lt++u3tmiA8tsFtss0QZW0YBpFsIqhamvB3ypwu0bdUV/oH7g\n" +
-                                                      "/s8TFR5LrDfnfxlLFYhTUVWuWzMqEFAGnFG3uw/QMWZnQgkGbx0LMcYzdqFb7/vz\n" +
-                                                      "rTSHfjJsisUTWPjo7SBnAtNYCYaGj0YH5RFUdabnvoTdV2XpA5IPYa9Q597g/M0z\n" +
-                                                      "icAjuaK614nKXDaAUCbjki8RL3OK9KY920zNFboq/jKG6rKW2t51ZQIDAQABo1Aw\n" +
-                                                      "TjAdBgNVHQ4EFgQUA0XGTcD6jqkL2oMPQaVtEgZDqV4wHwYDVR0jBBgwFoAUA0XG\n" +
-                                                      "TcD6jqkL2oMPQaVtEgZDqV4wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC\n" +
-                                                      "AQEAijcT5QMVqrWWqpNEe1DidzQfSnKo17ZogHW+BfUbxv65JbDIntnk1XgtLTKB\n" +
-                                                      "VAdIWUtGZbXxrp16NEsh96V2hjDIoiAaEpW+Cp6AHhIVgVh7Q9Knq9xZ1t6H8PL5\n" +
-                                                      "QiYQKQgJ0HapdCxlPKBfUm/Mj1ppNl9mPFJwgHmzORexbxrzU/M5i2jlies+CXNq\n" +
-                                                      "cvmF2l33QNHnLwpFGwYKs08pyHwUPp6+bfci6lRvavztgvnKroWWIRq9ZPlC0yVK\n" +
-                                                      "FFemhbCd7ZVbrTo0NcWZM1PTAbvlOikV9eh3i1Vot+3dJ8F27KwUTtnV0B9Jrxum\n" +
-                                                      "W9P3C48mvwTxYZJFOu0N9UBLLg==\n" +
-                                                      "-----END CERTIFICATE-----");
+            String overridePath = System.getProperty("trustedRootCert");
+            if (overridePath != null) {
+                try {
+                    trustedRootCert = new Certificate(FileUtilities.readLocalFile(overridePath));
+                    overrideTrustedRootCert = true;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            if (trustedRootCert == null) {
+                trustedRootCert = new Certificate("-----BEGIN CERTIFICATE-----\n" +
+                                                "MIIELzCCAxegAwIBAgIJALm151zCHDxiMA0GCSqGSIb3DQEBCwUAMIGsMQswCQYD\n" +
+                                                "VQQGEwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UE\n" +
+                                                "CgwSUVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBM\n" +
+                                                "TEMxGTAXBgNVBAMMEHF6aW5kdXN0cmllcy5jb20xJzAlBgkqhkiG9w0BCQEWGHN1\n" +
+                                                "cHBvcnRAcXppbmR1c3RyaWVzLmNvbTAgFw0xNTAzMDEyMzM4MjlaGA8yMTE1MDMw\n" +
+                                                "MjIzMzgyOVowgawxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJ\n" +
+                                                "Q2FuYXN0b3RhMRswGQYDVQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsM\n" +
+                                                "ElFaIEluZHVzdHJpZXMsIExMQzEZMBcGA1UEAwwQcXppbmR1c3RyaWVzLmNvbTEn\n" +
+                                                "MCUGCSqGSIb3DQEJARYYc3VwcG9ydEBxemluZHVzdHJpZXMuY29tMIIBIjANBgkq\n" +
+                                                "hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuWsBa6uk+RM4OKBZTRfIIyqaaFD71FAS\n" +
+                                                "7kojAQ+ySMpYuqLjIVZuCh92o1FGBvyBKUFc6knAHw5749yhLCYLXhzWwiNW2ri1\n" +
+                                                "Jwx/d83Wnaw6qA3lt++u3tmiA8tsFtss0QZW0YBpFsIqhamvB3ypwu0bdUV/oH7g\n" +
+                                                "/s8TFR5LrDfnfxlLFYhTUVWuWzMqEFAGnFG3uw/QMWZnQgkGbx0LMcYzdqFb7/vz\n" +
+                                                "rTSHfjJsisUTWPjo7SBnAtNYCYaGj0YH5RFUdabnvoTdV2XpA5IPYa9Q597g/M0z\n" +
+                                                "icAjuaK614nKXDaAUCbjki8RL3OK9KY920zNFboq/jKG6rKW2t51ZQIDAQABo1Aw\n" +
+                                                "TjAdBgNVHQ4EFgQUA0XGTcD6jqkL2oMPQaVtEgZDqV4wHwYDVR0jBBgwFoAUA0XG\n" +
+                                                "TcD6jqkL2oMPQaVtEgZDqV4wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC\n" +
+                                                "AQEAijcT5QMVqrWWqpNEe1DidzQfSnKo17ZogHW+BfUbxv65JbDIntnk1XgtLTKB\n" +
+                                                "VAdIWUtGZbXxrp16NEsh96V2hjDIoiAaEpW+Cp6AHhIVgVh7Q9Knq9xZ1t6H8PL5\n" +
+                                                "QiYQKQgJ0HapdCxlPKBfUm/Mj1ppNl9mPFJwgHmzORexbxrzU/M5i2jlies+CXNq\n" +
+                                                "cvmF2l33QNHnLwpFGwYKs08pyHwUPp6+bfci6lRvavztgvnKroWWIRq9ZPlC0yVK\n" +
+                                                "FFemhbCd7ZVbrTo0NcWZM1PTAbvlOikV9eh3i1Vot+3dJ8F27KwUTtnV0B9Jrxum\n" +
+                                                "W9P3C48mvwTxYZJFOu0N9UBLLg==\n" +
+                                                "-----END CERTIFICATE-----");
+                CRL.getInstance();  // Fetch the CRL
+            }
             trustedRootCert.valid = true;
+            log.info("Using trusted root certificate: CN=" + trustedRootCert.getCommonName() +
+                    ", O=" + trustedRootCert.getOrganization() + " (" + trustedRootCert.getFingerprint() + ")");
         }
         catch(javax.security.cert.CertificateParsingException e) {
             e.printStackTrace();
@@ -133,15 +148,18 @@ public class Certificate {
                 }
             }
 
-            CRL qzCrl = CRL.getInstance();
-            if (qzCrl.isLoaded()) {
-                if (qzCrl.isRevoked(getFingerprint()) || theIntermediateCertificate == null || qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate))) {
-                    log.warning("Problem verifying certificate with CRL");
-                    valid = false;
+            // Only do CRL checks on QZ-issued certificates
+            if (trustedRootCert != null && !overrideTrustedRootCert) {
+                CRL qzCrl = CRL.getInstance();
+                if (qzCrl.isLoaded()) {
+                    if (qzCrl.isRevoked(getFingerprint()) || theIntermediateCertificate == null || qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate))) {
+                        log.warning("Problem verifying certificate with CRL");
+                        valid = false;
+                    }
+                } else {
+                    //Assume nothing is revoked, because we can't get the CRL
+                    log.warning("Failed to retrieve QZ CRL, skipping CRL check");
                 }
-            } else if (trustedRootCert != null) {
-                //Assume nothing is revoked, because we can't get the CRL
-                log.warning("Failed to retrieve QZ CRL, skipping CRL check");
             }
         }
         catch(Exception e) {
@@ -188,6 +206,10 @@ public class Certificate {
      * @return true if signature valid, false if not
      */
     public boolean isSignatureValid(String signature, String data) {
+        if (signature.length() == 0) {
+            return false;
+        }
+
         RSATool tool = RSAToolFactory.getRSATool();
         RSAKey thePublicKey = new RSAKeyImpl(theCertificate.getPublicKey());
 
