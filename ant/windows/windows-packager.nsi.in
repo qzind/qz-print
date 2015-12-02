@@ -72,6 +72,12 @@ Section
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${project.name}" \
                    "EstimatedSize" "${build.size}"
 
+  ; Mimetype support, e.g. ${vendor.name}:launch
+  WriteRegStr HKCR "${vendor.name}" "" "URL:${project.name} Protocol"
+  WriteRegStr HKCR "${vendor.name}" "URL Protocol" ""
+  WriteRegStr HKCR "${vendor.name}\DefaultIcon" "" "$\"$INSTDIR\${windows.icon}$\",1"
+  WriteRegStr HKCR "${vendor.name}\shell\open\command" "" "$\"$INSTDIR\${project.filename}.exe$\" $\"%1$\""
+
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   ; Prevent launching exe from SysWOW64
@@ -111,7 +117,7 @@ Section
     ${EndIf}
   ${EndIf}
 
-  CreateShortCut "$SMPROGRAMS\${project.name}.lnk" "$INSTDIR\${project.filename}.jar" "" "$INSTDIR\${windows.icon}" 0
+  CreateShortCut "$SMPROGRAMS\${project.name}.lnk" "$INSTDIR\${project.filename}.exe" "" "$INSTDIR\${windows.icon}" 0
 
   ; Delete matching firewall rules
   DetailPrint "Removing ${project.name} firewall rules..."

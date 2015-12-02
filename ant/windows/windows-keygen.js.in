@@ -4,32 +4,35 @@
  * Copyright (C) 2015 Tres Finocchiaro, QZ Industries
  */
 
-/******************************************************************************
- *                        Windows KeyGen Utility                              *
- ******************************************************************************
- *  Description:                                                              *
- *    Utility to create a private key and install its respective public       *
- *    certificate to the system.  When run in "uninstall" mode, the public    *
- *    certificate is removed based on matched publisher/vendor information.   *
- *                                                                            *
- *  INSTALL:                                                                  *
- *    1. Creates a self-signed Java Keystore for jetty wss://${jks.cn}        *
- *    2. Exports public certificate from Java Keystore                        *
- *    3. Imports into Windows trusted cert store                              *
- *    4. Imports into Firefox web browser (if installed)                      *
- *                                                                            *
- *  UNINSTALL                                                                 *
- *    1. Deletes certificate from Windows trusted cert store                  *
- *    2. Deletes certificate from Firefox web browser (if installed)          *
- *                                                                            *
- *  Depends:                                                                  *
- *    keytool.exe (distributed with jre: http://java.com)                     *
- *                                                                            *
- *  Usage:                                                                    *
- *    cscript //NoLogo windows-keygen.js "C:\Program Files\QZ Tray" install   *
- *    cscript //NoLogo windows-keygen.js "C:\Program Files\QZ Tray" uninstall *
- *                                                                            *
- *****************************************************************************/
+/**********************************************************************************************
+ *                        Windows KeyGen Utility                                              *
+ **********************************************************************************************
+ *  Description:                                                                              *
+ *    Utility to create a private key and install its respective public certificate to the    *
+ *    system.  When run in "uninstall" mode, the public certificate is removed based on       *
+ *    matched publisher/vendor information.                                                   *
+ *                                                                                            *
+ *  INSTALL:                                                                                  *
+ *    1. Creates a self-signed Java Keystore for jetty wss://${jks.cn}                        *
+ *    2. Exports public certificate from Java Keystore                                        *
+ *    3. Imports into Windows trusted cert store                                              *
+ *    4. Imports into Firefox web browser (if installed)                                      *
+ *                                                                                            *
+ *  UNINSTALL                                                                                 *
+ *    1. Deletes certificate from Windows trusted cert store                                  *
+ *    2. Deletes certificate from Firefox web browser (if installed)                          *
+ *                                                                                            *
+ *  Depends:                                                                                  *
+ *    keytool.exe (distributed with jre: http://java.com)                                     *
+ *                                                                                            *
+ *  Usage:                                                                                    *
+ *    cscript //NoLogo ${windows.keygen.name}                                                      *
+ *            "C:\Program Files\${project.name}" install [hostname] [portable_firefox]                *
+ *                                                                                            *
+ *    cscript //NoLogo ${windows.keygen.name}                                                 *
+ *            "C:\Program Files\${project.name}" uninstall [hostname] [portable_firefox]                   *
+ *                                                                                            *
+ **********************************************************************************************/
 
 var shell = new ActiveXObject("WScript.shell");
 var fso = new ActiveXObject("Scripting.FileSystemObject");
@@ -38,6 +41,8 @@ var newLine = "\r\n";
 // Uses passed-in parameter as install location.  Will fallback to registry if not provided.
 var qzInstall = getArg(0, getRegValue("HKLM\\Software\\${project.name}\\"));
 var installMode = getArg(1, "install");
+var cn = getArg(2, "${jks.cn}");
+var firefoxPortable = getArg(3, null);
 
 if (installMode == "install") {
     var javaKey, jreHome, keyTool, keyStore, password, derCert, firefoxInstall;
@@ -221,8 +226,13 @@ function createJavaKeystore() {
         .replace("${jks.storepass}", password)
         .replace("${jks.keypass}", password);
 
+    // Handle CN=${jks.cn} override
+    if (cn != "${jks.cn}") {
+        makeKeyStore = makeKeyStore.replace("CN=${jks.cn},", "CN=" + cn + ",");
+    }
+
     deleteFile(keyStore);   // remove old, if exists
-    debug("Creating keystore for secure websockets (this could take a minute)...");
+    debug("Creating keystore for wss://" + cn + " (this could take a minute)...");
     shell.Run(makeKeyStore, 0, true);
     verifyExists(keyStore, "Check keystore exists");
 
@@ -279,6 +289,12 @@ function installWindowsXPCertificate() {
  * Gets the Firefox installation path, stores it a global variable "firefoxInstall"
  */
 function getFirefoxInstall() {
+    //  Use provided install directory, if supplied
+    if (firefoxPortable) {
+        firefoxInstall = firefoxPortable + "\\App\\Firefox\\firefox.exe";
+        return firefoxInstall;
+    }
+
     //  Determine if Firefox is installed
     var firefoxKey = "HKLM\\Software\\Mozilla\\Mozilla Firefox";
     var firefoxVer = getRegValue(firefoxKey + "\\");
@@ -364,7 +380,8 @@ function deleteFirefoxCertificate() {
     // Variable replacements for Firefox config file
     var replacements = {
         "${certData}" : "",
-        "${uninstall}" : "true"
+        "${uninstall}" : "true",
+        "${commonName}" : cn
     };
 
     // 1. readPlainCert() reads in certificate, stripping non-base64 content
@@ -498,7 +515,7 @@ function isVendorMatch(certData) {
         for (var i in lines) {
             var line = trim(lines[i]);
             if (line.indexOf(issuerTag) == 0) {
-                if (line.indexOf("OU=${vendor.company}") != -1 && line.indexOf("CN=${jks.cn}") != -1) {
+                if (line.indexOf("OU=${vendor.company}") != -1 && line.indexOf("CN=" + cn) != -1) {
                     return true;
                 }
             }

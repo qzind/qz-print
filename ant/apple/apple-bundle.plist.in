@@ -11,4 +11,13 @@
     <key>CFBundleShortVersionString</key><string>${build.version}</string>
     <key>CFBundleName</key><string>${project.name}</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleURLName</key>
+                <string>${project.name}</string>
+                <key>CFBundleURLSchemes</key>
+                <array><string>${vendor.name}</string></array>
+            </dict>
+        </array>
 </dict></plist>

@@ -9,7 +9,7 @@
 #                                                                             #
 #  Usage:                                                                     #
 #    $ chmod +x ${linux.installer.name}                                            #
-#    $ sudo ./${linux.installer.name}                                              #
+#    $ sudo ./${linux.installer.name} [noprompt] [hostname]                        #
 #                                                                             #
 ###############################################################################
 
@@ -20,6 +20,7 @@ if [ "$(id -u)" != "0" ]; then
 fi
 
 noprompt="$1"
+cname="$2"
 mask=755
 destdir="${linux.installdir}"
 shortcut="/usr/share/applications/${project.filename}.desktop"
@@ -103,9 +104,16 @@ Name=${project.name}
 Exec=java -jar \"${jarfile}\"
 Path=${destdir}
 Icon=${destdir}/${linux.icon}
+MimeType=application/x-qz;x-scheme-handler/qz;
 Terminal=false
 Comment=${project.name}" > "${shortcut}"
 chmod $mask "${shortcut}"
+
+# Tell the desktop to look for new mimetypes in the background
+makeself_umask=`umask`
+umask 0002 # more permissive umask for mimetype registration
+update-desktop-database > /dev/null 2>&1 &
+umask $makeself_umask
 
 # Ubuntu process restarter
 function restart_it() {
@@ -134,7 +142,7 @@ fi
 
 progress_dialog 70 "Generating certificate..."
 chmod $mask "$destdir/auth/${linux.keygen.name}"  > /dev/null 2>&1
-"$destdir/auth/${linux.keygen.name}"
+"$destdir/auth/${linux.keygen.name}" "$cname"
 
 progress_dialog 75 "Importing Firefox locator..."
 chmod $mask "$destdir/auth/firefox/${locator.name}"  > /dev/null 2>&1
@@ -142,7 +150,7 @@ chmod $mask "$destdir/auth/firefox/${locator.name}"  > /dev/null 2>&1
 
 progress_dialog 80 "Importing Firefox certificate..."
 chmod $mask "$destdir/auth/firefox/${firefoxcert.name}"  > /dev/null 2>&1
-"$destdir/auth/firefox/${firefoxcert.name}"
+"$destdir/auth/firefox/${firefoxcert.name}" "install" "$cname"
 
 progress_dialog 85 "Checking for certutil..."
 which certutil > /dev/null 1>&2
