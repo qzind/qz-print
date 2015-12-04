@@ -37,6 +37,8 @@ public class Constants {
     public static final String TRUSTED_PUBLISHER = String.format("Verified by %s", Constants.ABOUT_COMPANY);
     public static final String UNTRUSTED_PUBLISHER = "Untrusted website";
 
+    public static final String PROBE_REQUEST = "getProgramName";
+    public static final String PROBE_RESPONSE = ABOUT_TITLE;
 
     public static final String WHITE_LIST = "Permanently allowed %s to access local resources";
     public static final String BLACK_LIST = "Permanently blocked %s from accessing local resources";

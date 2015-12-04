@@ -104,7 +104,7 @@ public class PrintWebSocketServer {
                 server.start();
 
                 running.set(true);
-                trayManager.setServer(server, running, portIndex);
+                trayManager.setServer(server, running, portIndex, ports);
                 log.info("Server started on port(s) " + TrayManager.getPorts(server));
 
                 server.join();
