@@ -33,11 +33,6 @@ import java.util.logging.Level;
  * @author Tres Finocchiaro
  */
 public class LinuxDeploy extends DeployUtilities {
-    // Try using ${linux.icon} first, if it exists
-    private static String qzIcon = System.getenv("HOME") + "/" + Constants.ABOUT_TITLE + "/linux-icon.svg";
-    private static String defaultIcon = "printer";
-    private static boolean useQzIcon = fileExists(qzIcon);
-
     @Override
     public boolean createStartupShortcut() {
         return createShortcut(System.getProperty("user.home") + "/.config/autostart/");
@@ -88,7 +83,7 @@ public class LinuxDeploy extends DeployUtilities {
     /**
      * Creates a Linux ".desktop" shortcut
      *
-     * @param jarPath Absolute path to a jar file
+     * @param folderPath Absolute path to a jar file
      * @return Whether or not the shortcut was created successfully
      */
     private boolean createShortcut(String folderPath) {
@@ -103,9 +98,15 @@ public class LinuxDeploy extends DeployUtilities {
             "Exec=java -jar \"" + getJarPath() + "\"",
             workingPath.trim().equals("") ? "" : "Path=" + workingPath,
             //"IconIndex=" + iconIndex,
-            "Icon=" + (useQzIcon ? qzIcon : defaultIcon),
+            "Icon=" + getIconPath(),
             "Terminal=false",
             "Comment=" + getShortcutName()
         });
     }
+
+    private String getIconPath() {
+        String linuxIcon = getParentDirectory() + "/linux-icon.svg";
+        return fileExists(linuxIcon) ? linuxIcon : "printer";
+    }
 }
+
