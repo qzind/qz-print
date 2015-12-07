@@ -32,6 +32,7 @@ import org.joor.Reflect;
 import org.joor.ReflectException;
 import qz.PrintFunction;
 import qz.auth.Certificate;
+import qz.common.Constants;
 import qz.common.TrayManager;
 
 import java.lang.reflect.Method;
@@ -122,6 +123,9 @@ public class PrintSocket {
     public void onMessage(Session session, String json) {
         if (json == null) {
             sendError(session, "Invalid Message");
+        } else if (Constants.PROBE_REQUEST.equals(json)) {
+            sendResponse(session, Constants.PROBE_RESPONSE);
+            log.info("Second instance of " + Constants.ABOUT_TITLE + " probably detected, now asking it to close...");
         } else if (!"ping".equals(json)) {
             try {
                 log.info("Request: " + json);

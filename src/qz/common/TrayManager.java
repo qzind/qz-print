@@ -25,6 +25,7 @@ package qz.common;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.websocket.client.WebSocketClient;
 import qz.auth.Certificate;
 import qz.deploy.DeployUtilities;
 import qz.deploy.WindowsDeploy;
@@ -36,6 +37,7 @@ import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
 import qz.utils.ShellUtilities;
 import qz.ws.PrintSocket;
+import qz.ws.SingleInstanceChecker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -216,7 +218,7 @@ public class TrayManager {
         aboutDialog.addPanelButton(sitesItem);
         aboutDialog.addPanelButton(logItem);
         aboutDialog.addPanelButton(openItem);
-        
+
         if (SystemUtilities.isMac()) {
             MacUtilities.registerAboutDialog(aboutDialog);
             MacUtilities.registerQuitHandler(this);
@@ -338,7 +340,7 @@ public class TrayManager {
     
     public void exit(int returnCode) {
         for (Handler h : trayLogger.getHandlers()) {
-                trayLogger.removeHandler(h);
+            trayLogger.removeHandler(h);
         }
         System.exit(returnCode);
     }
@@ -421,7 +423,7 @@ public class TrayManager {
                 if (gatewayDialog.isPersistent()) {
                     blackList(cert);
                 }
-            }            
+            }
         }
 
         return gatewayDialog.isApproved();
@@ -473,8 +475,9 @@ public class TrayManager {
      * @param running   Object used to notify PrintSocket to reiterate its main while loop
      * @param portIndex Object used to notify PrintSocket to reset its port array counter
      */
-    public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger portIndex) {
+    public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger portIndex, final Integer[] ports) {
         if (server != null && server.getConnectors().length > 0) {
+            singleInstanceCheck(ports, portIndex.get());
             displayInfoMessage("Server started on port(s) " + TrayManager.getPorts(server));
             aboutDialog.setServer(server);
             setDefaultIcon();
@@ -487,8 +490,7 @@ public class TrayManager {
                         server.stop();
                         running.set(false);
                         portIndex.set(-1);
-                    }
-                    catch(Exception e) {
+                    } catch (Exception e) {
                         displayErrorMessage("Error stopping print socket: " + e.getLocalizedMessage());
                     }
                 }
@@ -616,4 +618,12 @@ public class TrayManager {
         return logHandler;
     }
 
+    public void singleInstanceCheck(Integer[] ports, Integer ourPortIndex) {
+        WebSocketClient client = null;
+        for (int i : ports) {
+            if (i != ports[ourPortIndex]) {
+                new SingleInstanceChecker(client, this, i + 1);
+            }
+        }
+    }
 }
