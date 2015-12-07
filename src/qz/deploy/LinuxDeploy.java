@@ -33,13 +33,7 @@ import java.net.URLDecoder;
  * @author Tres Finocchiaro
  */
 public class LinuxDeploy extends DeployUtilities {
-
     private static final Logger log = LoggerFactory.getLogger(LinuxDeploy.class);
-
-    // Try using ${linux.icon} first, if it exists
-    private static String qzIcon = System.getenv("HOME") + "/" + Constants.ABOUT_TITLE + "/linux-icon.svg";
-    private static String defaultIcon = "printer";
-    private static boolean useQzIcon = fileExists(qzIcon);
 
     @Override
     public boolean createStartupShortcut() {
@@ -99,16 +93,22 @@ public class LinuxDeploy extends DeployUtilities {
         String shortcutPath = folderPath + getShortcutName() + ".desktop";
 
         // Create the shortcut's parent folder if it does not exist
-        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[] {
+        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[]{
                 "[Desktop Entry]",
                 "Type=Application",
                 "Name=" + getShortcutName(),
                 "Exec=java -jar \"" + getJarPath() + "\"",
-                workingPath.trim().equals("")? "":"Path=" + workingPath,
+                workingPath.trim().equals("") ? "" : "Path=" + workingPath,
                 //"IconIndex=" + iconIndex,
-                "Icon=" + (useQzIcon? qzIcon:defaultIcon),
+                "Icon=" + getIconPath(),
                 "Terminal=false",
                 "Comment=" + getShortcutName()
         });
     }
+
+    private String getIconPath() {
+        String linuxIcon = getParentDirectory() + "/linux-icon.svg";
+        return fileExists(linuxIcon) ? linuxIcon : "printer";
+    }
 }
+

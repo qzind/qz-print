@@ -61,7 +61,7 @@ public class GatewayDialog extends JDialog {
         allowButton = new JButton("Allow", iconCache.getIcon(IconCache.Icon.ALLOW_ICON));
         allowButton.setMnemonic(KeyEvent.VK_A);
         blockButton = new JButton("Block", iconCache.getIcon(IconCache.Icon.BLOCK_ICON));
-        allowButton.setMnemonic(KeyEvent.VK_B);
+        blockButton.setMnemonic(KeyEvent.VK_B);
         allowButton.addActionListener(buttonAction);
         blockButton.addActionListener(buttonAction);
 

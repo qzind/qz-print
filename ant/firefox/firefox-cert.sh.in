@@ -16,13 +16,13 @@
 #    - perl (standard with most modern Linux/Unix systems)                    #
 #                                                                             #
 #  Usage:                                                                     #
-#    $ ./${firefoxcert.name} "install"                                            #
-#    $ ./${firefoxcert.name} "uninstall"                                          #
+#    $ ./${firefoxcert.name} "install" [hostname]                                 #
+#    $ ./${firefoxcert.name} "uninstall" [hostname]                               #
 #                                                                             #
 ###############################################################################
 
 # Array of possible Firefox application names.
-appnames=("Firefox")	# "Firefox" "IceWeasel" "etc
+appnames=("Firefox")	# "Firefox" "IceWeasel", etc
 
 # Array of possible pref tag conflicts
 conflicts=("general.config.filename")
@@ -77,9 +77,15 @@ fi
 
 # Substitution variables (!install, etc)
 install="${jks.install}"
+cname="${jks.cn}"
 dercert="${der.cert}"
 prefs="${firefoxprefs.install}"
 config="${firefoxconfig.install}"
+
+# Handle CN=${jks.cn} override
+if [ -n "$2" ]; then
+    cname="$2"
+fi
 
 # Perform substitutions
 dercertpath=$(echo "$dercert" | sed -e "s|$install|$installdir|g")
@@ -169,7 +175,9 @@ if [ -f "$bindir/${firefoxconfig.name}" ]; then
     ret2=$?
     perl -pi -e "s#\\\${timestamp}#$timestamp#g" "$bindir/${firefoxconfig.name}"
     ret3=$?
-    if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ]; then
+    perl -pi -e "s#\\\${commonName}#$cname#g" "$bindir/${firefoxconfig.name}"
+    ret4=$?
+    if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ] && [ $ret4 -eq 0 ]; then
         echo -e "${bash.success} Certificate installed"
     else
         echo -e "${bash.failure} Certificate installation failed"
