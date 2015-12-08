@@ -21,63 +21,55 @@
  */
 package qz.utils;
 
-import qz.common.Base64;
 import qz.common.ByteArrayBuilder;
 import qz.common.Constants;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.net.URLConnection;
+import java.util.ArrayList;
 import java.util.LinkedList;
-import java.util.logging.Logger;
+import java.util.List;
 
 /**
- * Place for all raw static byte conversion functions. Especially useful for
- * converting typed Hex (<code>String</code> base 16) to <code>byte[]</code>,
- * <code>byte[]</code> to Hex (<code>String</code> base 16), <code>byte[]</code>
- * to <code>int[]</code> conversions, etc.
+ * Place for all raw static byte conversion functions.
+ * Especially useful for converting hexadecimal strings to byte arrays,
+ * byte arrays to hexadecimal strings,
+ * byte arrays to integer array conversions, etc.
  *
  * @author Tres Finocchiaro
  */
 public class ByteUtilities {
 
-    private static final Logger log = Logger.getLogger(ByteUtilities.class.getName());
-
     /**
-     * Converts typed Hex (<code>String</code> base 16) to <code>byte[]</code>.
+     * Converts a hexadecimal string to a byte array.
+     * <p/>
      * This is especially useful for special characters that are appended via
-     * JavaScript, specifically the "\0" or <code>NUL</code> character, which
-     * will early terminate a JavaScript <code>String</code>.
+     * JavaScript, specifically "\0" or the {@code NUL} character, which
+     * will terminate a JavaScript string early.
      *
-     * @param s Base 16 String to covert to byte array
-     * @return byte array
-     * @throws NumberFormatException
+     * @param hex Base 16 String to covert to byte array.
      */
-    public static byte[] hexStringToByteArray(String s) throws NumberFormatException {
+    public static byte[] hexStringToByteArray(String hex) throws NumberFormatException {
         byte[] data = new byte[0];
-        if (s != null && s.length() > 0) {
+        if (hex != null && hex.length() > 0) {
             String[] split;
-            if (s.length() > 2) {
-                if (s.length() >= 3 && s.contains("x")) {
-                    s = s.startsWith("x") ? s.substring(1) : s;
-                    s = s.endsWith("x") ? s.substring(0, s.length() - 1) : s;
-                    split = s.split("x");
+            if (hex.length() > 2) {
+                if (hex.length() >= 3 && hex.contains("x")) {
+                    hex = hex.startsWith("x")? hex.substring(1):hex;
+                    hex = hex.endsWith("x")? hex.substring(0, hex.length() - 1):hex;
+                    split = hex.split("x");
                 } else {
-                    split = s.split("(?<=\\G..)");
+                    split = hex.split("(?<=\\G..)");
                 }
 
                 data = new byte[split.length];
-                for (int i = 0; i < split.length; i++) {
-                    //data[i] = Byte.parseByte(split[i], 16);
+                for(int i = 0; i < split.length; i++) {
                     Integer signedByte = Integer.parseInt(split[i], 16);
-                    data[i] = (byte) (signedByte & 0xFF);
+                    data[i] = (byte)(signedByte & 0xFF);
                 }
-            } else if (s.length() == 2) {
-                data = new byte[]{Byte.parseByte(s)};
+            } else if (hex.length() == 2) {
+                data = new byte[] {Byte.parseByte(hex)};
             }
         }
+
         return data;
     }
 
@@ -85,14 +77,21 @@ public class ByteUtilities {
         return bytesToHex(bytes, true);
     }
 
+    /**
+     * Converts an array of bytes to its hexadecimal form.
+     *
+     * @param bytes     Bytes to be converted.
+     * @param upperCase Whether the hex string should be UPPER or lower case.
+     */
     public static String bytesToHex(byte[] bytes, boolean upperCase) {
         char[] hexChars = new char[bytes.length * 2];
         int v;
-        for (int j = 0; j < bytes.length; j++) {
+        for(int j = 0; j < bytes.length; j++) {
             v = bytes[j] & 0xFF;
             hexChars[j * 2] = Constants.HEXES_ARRAY[v >>> 4];
             hexChars[j * 2 + 1] = Constants.HEXES_ARRAY[v & 0x0F];
         }
+
         if (upperCase) {
             return new String(hexChars);
         }
@@ -100,192 +99,108 @@ public class ByteUtilities {
     }
 
     /**
-     * Iterates through byte array finding matches of a sublist of bytes.
-     * Returns an array of positions. TODO: Make this natively Iterable.
+     * Iterates through byte array finding matches of {@code match} inside {@code target}.
+     * <p/>
+     * TODO: Make this natively Iterable.
      *
-     * @param array byte array to search
-     * @param sublist sublist to search for
-     * @return indicies to found sublists
+     * @param target Byte array to search.
+     * @param match  Sub-array to match inside {@code target}.
+     * @return Array of starting indices for matched values.
      */
-    public static int[] indicesOfSublist(byte[] array, byte[] sublist) {
-        LinkedList<Integer> indexes = new LinkedList<Integer>();
-
-        if (array == null || sublist == null || array.length == 0
-                || sublist.length == 0 || sublist.length > array.length) {
-            return new int[0];
+    public static Integer[] indicesOfMatches(byte[] target, byte[] match) {
+        if (target == null || match == null || target.length == 0
+                || match.length == 0 || match.length > target.length) {
+            return new Integer[0];
         }
+
+        LinkedList<Integer> indexes = new LinkedList<>();
 
         // Find instances of byte list
         outer:
-        for (int i = 0; i < array.length - sublist.length + 1; i++) {
-            for (int j = 0; j < sublist.length; j++) {
-                if (array[i + j] != sublist[j]) {
+        for(int i = 0; i < target.length - match.length + 1; i++) {
+            for(int j = 0; j < match.length; j++) {
+                if (target[i + j] != match[j]) {
                     continue outer;
                 }
             }
+
             indexes.add(i);
         }
 
-        // Convert to primitive type
-        int[] int_array = new int[indexes.size()];
-        for (int i = 0; i < indexes.size(); i++) {
-            int_array[i] = indexes.get(i);
-        }
-
-        return int_array;
+        return indexes.toArray(new Integer[indexes.size()]);
     }
 
     /**
-     * When supplied a <code>src</code> <code>byte[]</code> array,
-     * <code>pattern</code> <code>byte[]</code> array and <code>count</code>,
-     * this returns a <code>LinkedList</code> of <code>byte[]</code> split at
-     * the nth instance of the supplied <code>pattern</code>. (nth being the
-     * supplied <code>count</code> parameter)
+     * Splits the {@code src} byte array after every {@code count}-th instance of the supplied {@code pattern} byte array.
+     * <p/>
+     * This is useful for large print batches that need to be split up,
+     * (for example) after the P1 or ^XO command has been issued.
+     * <p/>
+     * TODO:
+     * A rewrite of this would be a proper {@code Iteratable} interface
+     * paired with an {@code Iterator} that does this automatically
+     * and would eliminate the need for a {@code indicesOfMatches()} function.
      *
-     * This is useful for large print batches that need to be split up (for
-     * example) after the P1 or ^XO command has been issued.
-     *
-     * TODO: A rewrite of this would be a proper <code>Iteratable</code>
-     * interface paired with an <code>Iterator</code> that does this
-     * automatically and would eliminate the need for a
-     * <code>indicesOfSublist()</code> function.
-     *
-     * @param src array to split
-     * @param pattern pattern to determine where split should occur
-     * @param count number of arrays to split data into
-     * @return array of byte arrays
+     * @param src     Array to split.
+     * @param pattern Pattern to determine where split should occur.
+     * @param count   Number of matches between splits.
      */
-    public static LinkedList<ByteArrayBuilder> splitByteArray(byte[] src, byte[] pattern, int count)
-            throws NullPointerException, IndexOutOfBoundsException, ArrayStoreException {
-        LinkedList<ByteArrayBuilder> byteArrayList = new LinkedList<ByteArrayBuilder>();
-        int[] split = indicesOfSublist(src, pattern);
-        count = count < 1 ? 1 : count;
-        int _count = 1;
+    public static List<ByteArrayBuilder> splitByteArray(byte[] src, byte[] pattern, int count) throws NullPointerException, IndexOutOfBoundsException, ArrayStoreException {
+        if (count < 1) { throw new IllegalArgumentException("Count cannot be less than 1"); }
+
+        List<ByteArrayBuilder> byteArrayList = new ArrayList<>();
+        ByteArrayBuilder builder = new ByteArrayBuilder();
+
+        Integer[] split = indicesOfMatches(src, pattern);
+
+        int counted = 1;
         int prev = 0;
-        ByteArrayBuilder b = new ByteArrayBuilder();
-        for (int i : split) {
+
+        for(int i : split) {
+            //copy everything from the last pattern (or the start) to the end of this pattern
             byte[] temp = new byte[i - prev + pattern.length];
             System.arraycopy(src, prev, temp, 0, temp.length);
-            b.append(temp);
-            if (_count < count) {
-                _count++;
+            builder.append(temp);
+
+            //if we have 'count' matches, add it to list and start a new builder
+            if (counted < count) {
+                counted++;
             } else {
-                byteArrayList.add(b);
-                b = new ByteArrayBuilder();
-                _count = 1;
+                byteArrayList.add(builder);
+                builder = new ByteArrayBuilder();
+                counted = 1;
             }
+
             prev = i + pattern.length;
         }
-        if (!byteArrayList.contains(b)) {
-            byteArrayList.add(b);
+
+        //include any builder matches below 'count'
+        if (!byteArrayList.contains(builder)) {
+            byteArrayList.add(builder);
         }
+
         return byteArrayList;
     }
 
-    // TODO: RKC - Verify method is not needed
-    public static byte[] intArrayToByteArray(int ints[]) {
-        byte[] bytes = new byte[ints.length];
-        for (int i = 0; i < ints.length; i++) {
-            bytes[i] = (byte) ints[i];
-        }
-        return bytes;
-    }
-
-    // TODO: RKC - Verify method is not needed
     /**
-     * Base 2 array to Base 10 array converter: Takes a binary array (using a
-     * boolean array for storage) and converts every 8 rows to a full byte,
-     * keeping the value in decimal (<code>int</code>). Returns an array of
-     * integers (<code>int[]</code>). These integers will likely be converted to
-     * a byte array (<code>byte[]</code>) later.
+     * Converts an integer array to a String representation of a hexadecimal number.
      *
-     * @param black boolean values to convert
-     * @return number array in base 10
-     */
-    public static int[] binaryArrayToIntArray(boolean[] black) {
-        int[] hex = new int[black.length / 8];
-        // Convert every eight zero's to a full byte, in decimal
-        for (int i = 0; i < hex.length; i++) {
-            for (int k = 0; k < 8; k++) {
-                hex[i] += (black[8 * i + k] ? 1 : 0) << 7 - k;
-            }
-        }
-        return hex;
-    }
-
-    /**
-     * Converts an integer array (<code>int[]</code>) to a String representation
-     * of a hexadecimal array.
-     * 
-     * @param raw numbers to be converted to hex
-     * @return hex string representation
+     * @param raw Numbers to be converted to hex.
+     * @return Hex string representation.
      */
     public static String getHexString(int[] raw) {
-        if (raw == null) {
-            return null;
-        }
+        if (raw == null) { return null; }
+
         final StringBuilder hex = new StringBuilder(2 * raw.length);
-        for (final int i : raw) {
+        for(final int i : raw) {
             hex.append(Constants.HEXES.charAt((i & 0xF0) >> 4)).append(Constants.HEXES.charAt((i & 0x0F)));
         }
-        return hex.toString();
-    }
 
-    public static boolean isBlank(Object o) {
-        if (o instanceof byte[]) {
-            return ((byte[]) o).length < 1;
-        } else if (o instanceof String) {
-            return "".equals(o);
-        } else {
-            log.warning("Unchecked blank comparison.");
-            return o == null;
-        }
+        return hex.toString();
     }
 
     public static boolean isBase64Image(String path) {
         return path.startsWith("data:image/") && path.contains(";base64,");
     }
 
-    private static boolean isBase64PDF(String path) {
-        return path.startsWith("data:application/pdf;base64,");
-    }
-
-    /**
-     * Reads a binary file (i.e. PDF) from URL to a ByteBuffer. This is later
-     * appended to the applet, but needs a renderer capable of printing it to
-     * PostScript
-     * @param file URL string to location of file
-     * @return byte array containing file content
-     * @throws IOException
-     */
-    public static byte[] readBinaryFile(String file) throws IOException {
-        if (isBase64PDF(file)) {
-            return Base64.decode(file.split(",")[1]);
-        } else {
-            URLConnection con = new URL(file).openConnection();
-            InputStream in = con.getInputStream();
-            int size = con.getContentLength();
-
-            ByteArrayOutputStream out;
-            if (size != -1) {
-                out = new ByteArrayOutputStream(size);
-            } else {
-                 // Pick some appropriate size
-                out = new ByteArrayOutputStream(Constants.OUTPUT_STREAM_SIZE);
-            }
-
-            byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
-            while (true) {
-                int len = in.read(buffer);
-                if (len == -1) {
-                    break;
-                }
-                out.write(buffer, 0, len);
-            }
-            in.close();
-            out.close();
-
-            return out.toByteArray();
-        }
-    }
 }

@@ -5,271 +5,276 @@
 package qz.utils;
 
 import jssc.SerialPort;
-import qz.common.LogIt;
+import jssc.SerialPortList;
+import org.apache.commons.io.IOUtils;
+import org.codehaus.jettison.json.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.exception.SerialException;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.logging.Logger;
+import java.util.Arrays;
+import java.util.List;
 
 /**
- *
  * @author Tres
  */
 public class SerialUtilities {
 
-    private static final Logger log = Logger.getLogger(SerialUtilities.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(SerialUtilities.class);
 
-    private final static int WINDOWS = 1;
-    private final static int LINUX = 2;
-    private final static int OSX = 3;
-    
-    public static final String winCmd = "%windir%\\System32\\reg.exe "
-            + "query \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Ports\" |find \"?\"";
-    
-    public static int[] getSystemAttributes(String portName) throws IOException, SerialException {
-        switch(getOS()) {
-            case WINDOWS: return getWindowsAttributes(portName);
-            case LINUX: LogIt.log("Parsing Linux Serial Port attributes has not yet been implemented"); break;
-            case OSX: LogIt.log("Parsing OSX Serial Port attributes has not yet been implemented"); break;
-            default: //Do nothing
-        }
-        return null;
-    }
-    
+    private static final List<Integer> VALID_BAUD = Arrays.asList(SerialPort.BAUDRATE_110, SerialPort.BAUDRATE_300,
+                                                                  SerialPort.BAUDRATE_600, SerialPort.BAUDRATE_1200,
+                                                                  SerialPort.BAUDRATE_4800, SerialPort.BAUDRATE_9600,
+                                                                  SerialPort.BAUDRATE_14400, SerialPort.BAUDRATE_19200,
+                                                                  SerialPort.BAUDRATE_38400, SerialPort.BAUDRATE_57600,
+                                                                  SerialPort.BAUDRATE_115200, SerialPort.BAUDRATE_128000,
+                                                                  SerialPort.BAUDRATE_256000);
+
+
     /**
-     * Calls REG.EXE to obtain the port settings.  These should be returned in the
-     * format "COM10:    REG_SZ    9600,n,8,1"
-     * @param portName name of windows port
-     * @return windows port attributes
-     * @throws IOException 
+     * @return Array of serial ports available on the attached system.
+     */
+    public static String[] getSerialPorts() {
+        return SerialPortList.getPortNames();
+    }
+
+    /**
+     * @return JSON array of {@code getSerialPorts()} result.
+     */
+    public static JSONArray getSerialJSON() {
+        String[] names = getSerialPorts();
+        JSONArray ports = new JSONArray();
+
+        for(String name : names) {
+            ports.put(name);
+        }
+
+        return ports;
+    }
+
+
+    /**
+     * Turn a string into a character byte array.
+     * First attempting to take the entire string as a character literal (for non-printable unicode).
+     */
+    public static byte[] characterBytes(String convert) {
+        try {
+            //try to interpret entire string as single char representation (such as "\u0000" or "0xFFFF")
+            char literal = (char)Integer.parseInt(convert.substring(2), 16);
+            return String.valueOf(literal).getBytes();
+        }
+        catch(NumberFormatException ignore) {
+            //not a single char, convert entire string to bytes
+            return convert.getBytes();
+        }
+    }
+
+    /**
+     * Get system supplied settings for {@code portName} if available.
+     *
+     * @param portName Name of port to retrieve settings
+     * @return Array of {@code SerialPort} constants ordered as {@code [BAUDRATE, DATABITS, STOPBITS, PARITY, FLOWCONTROL]}
+     */
+    public static int[] getSystemAttributes(String portName) throws IOException, SerialException {
+        if (SystemUtilities.isWindows()) {
+            return getWindowsAttributes(portName);
+        } else {
+            log.warn("Parsing serial port attributes for this OS has not been implemented yet.");
+            return null;
+        }
+    }
+
+    /**
+     * Calls REG.EXE to obtain the port settings.
+     * These should be returned in the format "COM10:    REG_SZ    9600,n,8,1"
+     *
+     * @param portName Name of windows port
+     * @return Array of {@code SerialPort} constants ordered as {@code [BAUDRATE, DATABITS, STOPBITS, PARITY, FLOWCONTROL]}
      */
     public static int[] getWindowsAttributes(String portName) throws IOException, SerialException {
-        String[] command = { "cmd.exe", "/c", winCmd.replace("?", portName)};
+        String winCmd = "%windir%\\System32\\reg.exe query \"HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\Ports\" |find \"?\"";
+        String[] command = {"cmd.exe", "/c", winCmd.replace("?", portName)};
+
         Process p = Runtime.getRuntime().exec(command);
-        String output = new BufferedReader(new InputStreamReader(p.getInputStream())).readLine();
-        log.info("Found windows registry settings: " + output);
-        String[] split = output.split("REG_SZ");
-        if (split.length > 0) {
-            int[] attr = {SerialPort.BAUDRATE_9600, 
-                SerialPort.DATABITS_8, 
-                SerialPort.STOPBITS_1, 
-                SerialPort.PARITY_NONE,
-                SerialPort.FLOWCONTROL_NONE};
-            String settings = split[split.length -1];
-            String[] _attr = settings.split(",");
-            for (int i = 0; i < _attr.length; i++) {
-                String val = _attr[i];
-                switch (i) {
-                    case 0: attr[0] = parseBaudRate(val); break;
-                    case 1: attr[3] = parseParity(val); break;
-                    case 2: attr[1] = parseDataBits(val); break;
-                    case 3: attr[2] = parseStopBits(val); break;
-                    case 4: attr[4] = parseFlowControl(val); break;
-                    default: // Do nothing
-                }
-            }
-            for (int i : attr) {
+        String output = IOUtils.toString(p.getInputStream());
+        log.info("Found windows registry settings: {}", output);
+
+        String[] raw = output.split("\\s+");
+        if (raw.length > 0) {
+            String[] settings = raw[raw.length - 1].split(",");
+
+            int[] attr = {
+                    settings.length > 0? parseBaudRate(settings[0]):SerialPort.BAUDRATE_9600,
+                    settings.length > 2? parseDataBits(settings[2]):SerialPort.DATABITS_8,
+                    settings.length > 3? parseStopBits(settings[3]):SerialPort.STOPBITS_1,
+                    settings.length > 1? parseParity(settings[1]):SerialPort.PARITY_NONE,
+                    settings.length > 4? parseFlowControl(settings[4]):SerialPort.FLOWCONTROL_NONE
+            };
+
+            boolean valid = true;
+            for(int i : attr) {
                 if (i == -1) {
-                    throw new SerialException("Cannot parse system provided "
-                            + "serial attributes: " + output);
+                    valid = false;
                 }
             }
-            return attr;
-        }
-        throw new SerialException("Cannot parse system provided "
-                            + "serial attributes: " + output);
-    }
-    
-    /**
-     * Checks the value of <code>System.getProperty("os.name");</code> and 
-     * returns either SerialUtilities.WINDOWS, LINUX, or OSX.  Solaris, AIX, OS/2,
-     * etc are not currently handled and will return -1, which will cause an error.
-     * BSD defaults to OSX, which may need to be changed.
-     * @return operating system constant
-     */
-    public static int getOS() {
-        String os = System.getProperty("os.name", "Windows 7").toLowerCase();
-        if (os.startsWith("windows")) {
-            log.info("OS Detected: Windows");
-            return WINDOWS;
-        } else if (os.startsWith("linux")) {
-            log.info("OS Detected: Linux");
-            return LINUX;
-        } else if (os.startsWith("mac os") || os.startsWith("freebsd")) {
-            log.info("OS Detected: OS X");
-            return OSX;
-        } else {
-            log.info("Unknown OS Detected.");
-            return -1;
-        }
-    }
-    
-    /**
-     * Parses the suppled String data bits parameter and returns the SerialPorts's
-     * DATABITS_X <code>int</code> value that corresponds with the provided 
-     * String.  Returns -1 if the data bits value can't be parsed.
-     * 
-     * @param s data bits value
-     * @return  number of data bits
-     */
-    public static int parseDataBits(String s) {
-        s = s.trim();
-        if (s.equals("")) {
-            log.severe("Cannot parse empty data bits value.");
-        } else if (s.equals("5")) {
-            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
-            return SerialPort.DATABITS_5;
-        } else if (s.equals("6")) {
-            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
-            return SerialPort.DATABITS_6; 
-        } else if (s.equals("7")) {
-            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
-            return SerialPort.DATABITS_7; 
-        } else if (s.equals("8")) {
-            log.info("Parsed serial setting: " + s + "=DATABITS_" + s);
-            return SerialPort.DATABITS_8; 
-        } else {
-            log.severe("Data bits value of " + s + " not supported");
-        }
-        return -1;
-    }
-    
-      /**
-     * Parses the supplied String flow control parameter and returns the SerialPorts's
-     * FLOWCONTROL_TYPE_DIRECTION <code>int</code> value that corresponds with the provided 
-     * String.  Returns -1 if the flow control value can't be parsed.
-     * TODO: (TEST THIS) By default flow control is assumed to be in the "out" 
-     * direction.  This could be backwards on Windows, as the registry does not 
-     * specify direction.
-     * 
-     * @param s number of stop bits
-     * @return  number of stop bits
-     */
-    public static int parseStopBits(String s) {
-        s = s.trim();
-        if (s.equals("1") || s.equals("")) {
-            log.info("Parsed serial setting: " + s + "=STOPBITS_" + s);
-            return SerialPort.STOPBITS_1;
-        } else if (s.equals("2")) {
-            log.info("Parsed serial setting: " + s + "=STOPBITS_" + s);
-            return SerialPort.STOPBITS_2;
-        } else if (s.equals("1.5") || s.equals("1_5")) {
-            log.info("Parsed serial setting: " + s + "=STOPBITS_" + s);
-            return SerialPort.STOPBITS_1_5;
-        } else {
-            log.severe("Stop bits value of " + s + " could not be parsed");
-        }
-        return -1;
-    }
-    
-    /**
-     * Parses the suppled String flow control parameter and returns the SerialPorts's
-     * FLOWCONTROL_TYPE_DIRECTION <code>int</code> value that corresponds with the provided 
-     * String.  Returns -1 if the flow control value can't be parsed.
-     * TODO: (TEST THIS) By default flow control is assumed to be in the "out" 
-     * direction.  This could be backwards on Windows, as the registry does not 
-     * specify direction.
-     * 
-     * @param s
-     * @return 
-     */
-    public static int parseFlowControl(String s) {
-        s = s.trim();
-        if (s.equals("n") || s.equals("none") || s.equals("")) {
-            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_NONE");
-            return SerialPort.FLOWCONTROL_NONE;
-        } else if (s.equals("x") || s.equals("xonxoff") || s.equals("xonxoff_out")) {
-            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_XONXOFF_OUT");
-            return SerialPort.FLOWCONTROL_XONXOFF_OUT;
-        } else if (s.equals("xonxoff_in")) {
-            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_XONXOFF_IN");
-            return SerialPort.FLOWCONTROL_XONXOFF_IN;
-        } else if (s.equals("p") || s.equals("rtscts") || s.equals("rtscts_out")) {
-            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_RTSCTS_OUT");
-            return SerialPort.FLOWCONTROL_RTSCTS_OUT;
-        } else if (s.equals("rtscts_in")) {
-            log.info("Parsed serial setting: " + s + "=FLOWCONTROL_RTSCTS_IN");
-            return SerialPort.FLOWCONTROL_RTSCTS_IN;
-        } else {
-            log.severe("Flow control value of " + s + " could not be parsed");
-        }
-        return -1;
-    }
-    
-    /**
-     * Parses the suppled String data bits parameter and returns the SerialPorts's
-     * DATABITS_X <code>int</code> value that corresponds with the provided 
-     * String.  Returns -1 if the data bits value can't be parsed.
-     * 
-     * @param s
-     * @return 
-     */
-    public static int parseParity(String s) {
-        s = s.trim().toLowerCase();
-        if (s.startsWith("n") || s.equals("")) {
-            log.info("Parsed serial setting: " + s + "=PARITY_NONE");
-            return SerialPort.PARITY_NONE;
-        } else if (s.startsWith("e")) {
-            log.info("Parsed serial setting: " + s + "=PARITY_EVEN");
-            return SerialPort.PARITY_EVEN;
-        } else if (s.equals("o")) {
-            log.info("Parsed serial setting: " + s + "=PARITY_ODD");
-            return SerialPort.PARITY_ODD;
-        } else if (s.equals("m")) {
-            log.info("Parsed serial setting: " + s + "=PARITY_MARK");
-            return SerialPort.PARITY_MARK; 
-        } else if (s.equals("s")) {
-            log.info("Parsed serial setting: " + s + "=PARITY_SPACE");
-            return SerialPort.PARITY_SPACE; 
-        } else {
-            log.severe("Data bits value of " + s + " not supported");
-        }
-        return -1;
-    }
-    
 
-    /**
-     * Parses the supplied String baud rate parameter and returns the SerialPorts's
-     * BAUDRATE_XXX <code>int</code> value that corresponds with the provided 
-     * String.  Returns -1 if the baud rate value can't be parsed.
-     * 
-     * @param s
-     * @return 
-     */
-    public static int parseBaudRate(String s) {
-        int baud = -1;
-        try {
-            baud = Integer.decode(s.trim());
-        } catch (Exception ex) {
-            log.severe("Cannot parse baud rate value. " + ex.getMessage());
-            return -1;
+            if (valid) {
+                return attr;
+            }
         }
 
-        switch(baud) {
-            // valid baud rates
-            case 110:
-            case 300:
-            case 600:
-            case 1200:
-            case 4800:
-            case 9600:
-            case 14400:
-            case 19200:
-            case 38400:
-            case 57600:
-            case 115200:
-            case 128000:
-            case 256000:
-                log.info(String.format("Parsed serial setting: %d=BAUDRATE_%d", baud, baud));
-                break;
+        throw new SerialException("Cannot parse system provided serial attributes: " + output);
+    }
+
+
+    /**
+     * Parses the SerialPort's {@code DATABITS_x} value that corresponds with the provided {@code data}.
+     *
+     * @param data Data bits value to parse
+     * @return The passed data bits value as a {@code SerialPort} constant value if valid, or -1 if invalid;
+     */
+    public static int parseDataBits(String data) {
+        data = data.trim();
+
+        switch(data) {
+            case "5":
+                log.debug("Parsed serial setting: DATABITS_5");
+                return SerialPort.DATABITS_5;
+            case "6":
+                log.debug("Parsed serial setting: DATABITS_6");
+                return SerialPort.DATABITS_6;
+            case "7":
+                log.debug("Parsed serial setting: DATABITS_7");
+                return SerialPort.DATABITS_7;
+            case "8":
+                log.debug("Parsed serial setting: DATABITS_8");
+                return SerialPort.DATABITS_8;
             default:
-                log.severe("Baud rate of " + s + " not supported");
-                baud = -1;
+                log.error("Data bits value of {} not supported", data);
+                return -1;
+        }
+    }
+
+    /**
+     * Parses the SerialPort's {@code STOPBITS_x} value that corresponds with the provided {@code stop}.
+     *
+     * @param stop Stop bits value to parse
+     * @return The passed stop bits value as a {@code SerialPort} constant value if valid, or -1 if invalid;
+     */
+    public static int parseStopBits(String stop) {
+        stop = stop.trim();
+
+        switch(stop) {
+            case "":
+            case "1":
+                log.debug("Parsed serial setting: STOPBITS_1");
+                return SerialPort.STOPBITS_1;
+            case "2":
+                log.debug("Parsed serial setting: STOPBITS_2");
+                return SerialPort.STOPBITS_2;
+            case "1.5":
+            case "1_5":
+                log.debug("Parsed serial setting: STOPBITS_1_5");
+                return SerialPort.STOPBITS_1_5;
+            default:
+                log.error("Stop bits value of {} could not be parsed", stop);
+                return -1;
+        }
+    }
+
+    /**
+     * Parses the SerialPort's {@code FLOWCONTROL_x} value that corresponds with the provided {@code control}.
+     *
+     * @param control Flow control value to parse
+     * @return The passed flow control value as a {@code SerialPort} constant value if valid, or -1 if invalid;
+     */
+    public static int parseFlowControl(String control) {
+        control = control.trim().toLowerCase();
+
+        switch(control) {
+            case "":
+            case "n":
+            case "none":
+                log.debug("Parsed serial setting: FLOWCONTROL_NONE");
+                return SerialPort.FLOWCONTROL_NONE;
+            case "x":
+            case "xonxoff":
+            case "xonxoff_out":
+                log.debug("Parsed serial setting: FLOWCONTROL_XONXOFF_OUT");
+                return SerialPort.FLOWCONTROL_XONXOFF_OUT;
+            case "xonxoff_in":
+                log.debug("Parsed serial setting: FLOWCONTROL_XONXOFF_IN");
+                return SerialPort.FLOWCONTROL_XONXOFF_IN;
+            case "p":
+            case "rtscts":
+            case "rtscts_out":
+                log.debug("Parsed serial setting: FLOWCONTROL_RTSCTS_OUT");
+                return SerialPort.FLOWCONTROL_RTSCTS_OUT;
+            case "rtscts_in":
+                log.debug("Parsed serial setting: FLOWCONTROL_RTSCTS_IN");
+                return SerialPort.FLOWCONTROL_RTSCTS_IN;
+            default:
+                log.error("Flow control value of {} could not be parsed", control);
+                return -1;
+        }
+    }
+
+    /**
+     * Parses the SerialPort's {@code PARITY_x} value that corresponds with the provided {@code parity}.
+     *
+     * @param parity Parity value to parse
+     * @return The passed parity value as a {@code SerialPort} constant value if valid, or -1 if invalid.
+     */
+    public static int parseParity(String parity) {
+        parity = parity.trim().toLowerCase();
+
+        switch(parity) {
+            case "":
+            case "n":
+            case "none":
+                log.debug("Parsed serial setting: PARITY_NONE");
+                return SerialPort.PARITY_NONE;
+            case "e":
+            case "even":
+                log.debug("Parsed serial setting: PARITY_EVEN");
+                return SerialPort.PARITY_EVEN;
+            case "o":
+            case "odd":
+                log.debug("Parsed serial setting: PARITY_ODD");
+                return SerialPort.PARITY_ODD;
+            case "m":
+            case "mark":
+                log.debug("Parsed serial setting: PARITY_MARK");
+                return SerialPort.PARITY_MARK;
+            case "s":
+            case "space":
+                log.debug("Parsed serial setting: PARITY_SPACE");
+                return SerialPort.PARITY_SPACE;
+            default:
+                log.error("Parity value of {} not supported", parity);
+                return -1;
+        }
+    }
+
+    /**
+     * Parses the SerialPort's {@code BAUDRATE_x} value that corresponds with the provided {@code rate}.
+     *
+     * @param rate Baud rate to parse
+     * @return The passed baud rate as a {@code SerialPort} constant value if valid, or -1 if invalid.
+     */
+    public static int parseBaudRate(String rate) {
+        int baud = -1;
+        try { baud = Integer.decode(rate.trim()); } catch(NumberFormatException ignore) {}
+
+        if (VALID_BAUD.contains(baud)) {
+            log.info("Parsed serial setting: BAUDRATE_{}", baud);
+        } else {
+            log.error("Baud rate of {} not supported", rate);
+            baud = -1;
         }
 
         return baud;
     }
-    
+
 }

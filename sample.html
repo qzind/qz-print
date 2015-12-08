@@ -212,7 +212,6 @@
 
             <div id="pixelTab" class="tab-pane col-md-8">
                 <h3>Pixel Printing</h3>
-                <!-- TODO - keep name ?? -->
 
                 <div class="row">
                     <div class="col-md-12">
@@ -398,26 +397,87 @@
 
                 <div class="row">
                     <div class="col-md-12">
-                        <div class="form-group">
-                            <label for="serialPort">Port Number</label>
-                            <div class="input-group">
-                                <span class="input-group-btn">
-                                    <button disabled type="button" class="btn btn-info" onclick="listSerialPorts();">List Ports</button>
-                                </span>
-                                <input disabled type="text" id="serialPort" value="" class="form-control" />
+                        <div class="btn-toolbar">
+                            <button type="button" class="btn btn-info" onclick="listSerialPorts();">List Ports</button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-success" onclick="openSerialPort();">Open Port</button>
+                                <button type="button" class="btn btn-warning" onclick="closeSerialPort();">Close Port</button>
                             </div>
+                            <button type="button" class="btn btn-default" onclick="sendSerialData();">Send Command</button>
                         </div>
                     </div>
                 </div>
 
-                <div class="row">
+                <div class="row" style="margin-top: 1em;">
                     <div class="col-md-12">
-                        <div class="btn-toolbar">
-                            <div class="btn-group">
-                                <button disabled type="button" class="btn btn-success" onclick="openSerialPort();">Open Port</button>
-                                <button disabled type="button" class="btn btn-warning" onclick="closeSerialPort();">Close Port</button>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                <h4 class="panel-title">Options</h4>
                             </div>
-                            <button disabled type="button" class="btn btn-default" onclick="sendSerialData();">Send Command</button>
+
+                            <div class="panel-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group form-inline">
+                                            <label for="serialPort">Port</label>
+                                            <input type="text" id="serialPort" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="serialCmd">Command</label>
+                                            <input type="text" id="serialCmd" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="serialBegin">Response Start</label>
+                                            <input type="text" id="serialBegin" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="serialEnd">Response End</label>
+                                            <input type="text" id="serialEnd" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <!-- Overrides response Start/End fields -->
+                                            <label for="serialWidth">Response Length</label>
+                                            <input type="number" id="serialWidth" class="form-control pull-right" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group form-inline">
+                                            <label for="serialBaud">Baud Rate</label>
+                                            <input type="number" id="serialBaud" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="serialData">Data Bits</label>
+                                            <input type="number" id="serialData" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="serialStop">Stop Bits</label>
+                                            <input type="number" id="serialStop" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="serialParity">Parity</label>
+                                            <input type="text" id="serialParity" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="serialFlow">Flow Control</label>
+                                            <input type="text" id="serialFlow" class="form-control pull-right" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr />
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <button type="button" class="btn btn-danger pull-right" onclick="resetSerialOptions();">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -484,6 +544,8 @@
 <script>
     /// Connection ///
     function startConnection() {
+        updateState('Waiting', 'default');
+
         qz.websocket.connect({ usingSecure: false }).then(function() {
             updateState('Active', 'success');
             findVersion();
@@ -510,7 +572,7 @@
             }
 
             displayMessage("<strong>IP:</strong> " + data.ipAddress + "<br/><strong>Physical Address:</strong> " + macFormatted);
-        }).catch(function(err) { console.error(err); });
+        }).catch(displayError);
     }
 
 
@@ -520,13 +582,13 @@
         qz.printers.find(query).then(function(data) {
             displayMessage("<strong>Found:</strong> " + data);
             if (set) { setPrinter(data); }
-        }).catch(function(err) { console.error(err); });
+        }).catch(displayError);
     }
 
     function findDefaultPrinter() {
         qz.printers.getDefault().then(function(data) {
             displayMessage("<strong>Found:</strong> " + data);
-        }).catch(function(err) { console.error(err); });
+        }).catch(displayError);
     }
 
     function findPrinters() {
@@ -537,7 +599,7 @@
             }
 
             displayMessage("<strong>Available printers:</strong><br/>" + list);
-        }).catch(function(err) { console.error(err); });
+        }).catch(displayError);
     }
 
 
@@ -754,7 +816,7 @@
             { type: 'raw', format: 'hex', data: '6374696f6e2e220d0a50312c310d0a' }
         ];
 
-        qz.print(config, printData);
+        qz.print(config, printData).catch(displayError);
     }
 
     function printFile(file) {
@@ -834,19 +896,47 @@
 
     /// Serial ///
     function listSerialPorts() {
-        console.warn("Not Implemented!"); //TODO
+        qz.serial.findPorts().then(function(data) {
+            var list = '';
+            for(var i = 0; i < data.length; i++) {
+                list += "&nbsp; " + data[i] + "<br/>";
+            }
+
+            displayMessage("<strong>Available serial ports:</strong><br/>" + list);
+        }).catch(displayError);
     }
 
     function openSerialPort() {
-        console.warn("Not Implemented!"); //TODO
+        var widthVal = $("#serialWidth").val();
+        if (!widthVal) { widthVal = null; }
+
+        var bounds = {
+            begin: $("#serialBegin").val(),
+            end: $("#serialEnd").val(),
+            width: widthVal
+        };
+
+        qz.serial.openPort($("#serialPort").val(), bounds).then(function() {
+            displayMessage("Serial port opened");
+        }).catch(displayError);
     }
 
     function sendSerialData() {
-        console.warn("Not Implemented!"); //TODO
+        var properties = {
+            baudRate: $("#serialBaud").val(),
+            dataBits: $("#serialData").val(),
+            stopBits: $("#serialStop").val(),
+            parity: $("#serialParity").val(),
+            flowControl: $("#serialFlow").val()
+        };
+
+        qz.serial.sendData($("#serialPort").val(), $("#serialCmd").val(), properties).catch(displayError);
     }
 
     function closeSerialPort() {
-        console.warn("Not Implemented!"); //TODO
+        qz.serial.closePort($("#serialPort").val()).then(function() {
+            displayMessage("Serial port closed");
+        }).catch(displayError);
     }
 
 
@@ -903,11 +993,25 @@
         }
     }
 
+    function resetSerialOptions() {
+        $("#serialPort").val('');
+        $("#serialCmd").val('');
+        $("#serialBegin").val("0x0002"); //String.fromCharCode(2)
+        $("#serialEnd").val("0x000D"); //String.fromCharCode(13)
+
+        $("#serialBaud").val(9600);
+        $("#serialData").val(8);
+        $("#serialStop").val(1);
+        $("#serialParity").val('NONE');
+        $("#serialFlow").val('NONE');
+    }
+
 
     /// Page load ///
     $(document).ready(function() {
         resetRawOptions();
         resetPixelOptions();
+        resetSerialOptions();
 
         startConnection();
     });
@@ -918,6 +1022,12 @@
     });
 
     qz.websocket.setErrorCallbacks(handleConnectionError);
+
+    qz.serial.setSerialCallbacks(function(output) {
+        console.log('Serial output', output);
+        displayMessage("Received output from serial port: " + output);
+    });
+
 
     var qzVersion = 0;
     function findVersion() {

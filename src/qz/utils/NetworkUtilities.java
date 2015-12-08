@@ -21,15 +21,15 @@
  */
 package qz.utils;
 
-import com.sun.org.apache.bcel.internal.generic.NEW;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.reflection.Reflect;
 import qz.reflection.ReflectException;
 
 import java.io.IOException;
 import java.net.*;
-import java.util.logging.Logger;
 
 /**
  *
@@ -37,7 +37,7 @@ import java.util.logging.Logger;
  */
 public class NetworkUtilities {
 
-    private static final Logger log = Logger.getLogger(NetworkUtilities.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(NetworkUtilities.class);
 
     private static NetworkUtilities instance;
 
@@ -67,8 +67,7 @@ public class NetworkUtilities {
     }
 
     private void gatherNetworkInfo(String hostname, int port) throws IOException, ReflectException {
-        log.info("Initiating a temporary connection to \"" + hostname + ":" + port
-                         + "\" to determine main Network Interface");
+        log.info("Initiating a temporary connection to \"{}:{}\" to determine main Network Interface", hostname, port);
 
         SocketAddress endpoint = new InetSocketAddress(hostname, port);
         Socket socket = new Socket();

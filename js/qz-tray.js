@@ -56,6 +56,12 @@ var _qz = {
         keepAlive: 60
     },
 
+    //stream types (PrintSocketClient.StreamType)
+    streams: {
+        serial: 'SERIAL',
+        usb: 'USB'
+    },
+
     //loop through possible ports to open connection, sets web socket calls that will settle the promise
     findConnection: function(config, resolve, reject) {
         var address;
@@ -179,14 +185,31 @@ var _qz = {
         _qz.connection.onmessage = function(evt) {
             var returned = $.parseJSON(evt.data);
 
-            //TODO - no uid = generic error call
+            if (returned.uid == null) {
+                if (returned.type == null) {
+                    if (_qz.DEBUG) { console.error("Response is incorrectly formatted", returned); }
+                } else {
+                    if (returned.type == _qz.streams.serial) {
+                        _qz.callSerial(returned.key, returned.result)
+                    } else if (returned.type == _qz.streams.usb) {
+                        //TODO - usb callback
+                    } else {
+                        if (_qz.DEBUG) { console.error("Cannot determine stream type for callback", returned); }
+                    }
+                }
+
+                return;
+            }
 
             var promise = _qz.pendingCalls[returned.uid];
-
-            if (returned.error != undefined) {
-                promise.reject(new Error(returned.error));
+            if (promise == undefined) {
+                if (_qz.DEBUG) {console.error('No promise found for returned result');}
             } else {
-                promise.resolve(returned.result);
+                if (returned.error != undefined) {
+                    promise.reject(new Error(returned.error));
+                } else {
+                    promise.resolve(returned.result);
+                }
             }
 
             delete _qz.pendingCalls[returned.uid];
@@ -222,26 +245,36 @@ var _qz = {
 
     errorCallbacks: [],
     callError: function(evt) {
-        if (typeof _qz.errorCallbacks == 'function') {
-            _qz.errorCallbacks(evt);
-        } else {
+        if (Array.isArray(_qz.errorCallbacks)) {
             for(var i = 0; i < _qz.errorCallbacks.length; i++) {
                 _qz.errorCallbacks[i](evt);
             }
+        } else {
+            _qz.errorCallbacks(evt);
         }
     },
 
     closedCallbacks: [],
     callClose: function(evt) {
-        if (typeof _qz.closedCallbacks == 'function') {
-            _qz.closedCallbacks(evt);
-        } else {
+        if (Array.isArray(_qz.closedCallbacks)) {
             for(var i = 0; i < _qz.closedCallbacks.length; i++) {
                 _qz.closedCallbacks[i](evt);
             }
+        } else {
+            _qz.closedCallbacks(evt);
         }
     },
 
+    serialCallbacks: [],
+    callSerial: function(port, output) {
+        if (Array.isArray(_qz.serialCallbacks)) {
+            for(var i = 0; i < _qz.serialCallbacks.length; i++) {
+                _qz.serialCallbacks[i](port, output);
+            }
+        } else {
+            _qz.serialCallbacks(port, output);
+        }
+    },
 
     certCallbacks: [],
     callCert: function() {},
@@ -267,7 +300,7 @@ function Config(printer, opts) {
     };
 
     this.reconfigure = function(newOpts) {
-        $.extend(this.config, newOpts);
+        $.extend(true, this.config, newOpts);
     };
     this.getOptions = function() {
         return this.config;
@@ -295,7 +328,7 @@ window.qz = {
          * @param {Object} [options] Configuration options for the web socket connection.
          *  @param {string} [options.host='localhost'] Host running the QZ Tray software.
          *  @param {boolean} [options.usingSecure=true] If the web socket should try to use secure ports for connecting.
-         *  @param {int} [options.keepAlive=60] Seconds between keep-alive pings to keep connection open. Set to 0 to disable.
+         *  @param {number} [options.keepAlive=60] Seconds between keep-alive pings to keep connection open. Set to 0 to disable.
          *
          * @returns {Promise<null|Error>}
          */
@@ -312,7 +345,7 @@ window.qz = {
                     return;
                 }
 
-                var config = $.extend({}, _qz.connectConfig, options);
+                var config = $.extend(true, {}, _qz.connectConfig, options);
                 _qz.findConnection(config, resolve, reject);
             });
         },
@@ -337,7 +370,7 @@ window.qz = {
          * List of functions called for any connections errors outside of an API call.<p/>
          * Also called if {@link websocket#connect} fails to connect.
          *
-         * @param {Function|Array<Function>} calls Single or array of Function(Event) calls.
+         * @param {Function|Array<Function>} calls Single or array of <code>Function({Event} event)</code> calls.
          */
         setErrorCallbacks: function(calls) {
             _qz.errorCallbacks = calls;
@@ -347,7 +380,7 @@ window.qz = {
          * List of functions called for any connection closing event outside of an API call.<p/>
          * Also called when {@link websocket#disconnect} is called.
          *
-         * @param {Function|Array<Function>} calls Single or array of Function(Event) calls.
+         * @param {Function|Array<Function>} calls Single or array of <code>Function({Event} event)</code> calls.
          */
         setClosedCallbacks: function(calls) {
             _qz.closedCallbacks = calls;
@@ -435,7 +468,7 @@ window.qz = {
          * @param {Object} options Default options used by printer configs if not overridden.
          *
          *  @param {string} [options.colorType='color'] Valid values  <code>[color|greyscale|blackwhite]</code>
-         *  @param {int} [options.copies=1] Number of copies to be printed.
+         *  @param {number} [options.copies=1] Number of copies to be printed.
          *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on  <code>[options.units]</code>).
          *  @param {boolean} [options.duplex=false] Double sided printing
          *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides.
@@ -457,7 +490,7 @@ window.qz = {
          *  @param {string} [options.encoding=null] Character set
          *  @param {string} [options.endOfDoc=null]
          *  @param {string} [options.language=null] Printer language
-         *  @param {int} [options.perSpool=1] Number of pages per spool.
+         *  @param {number} [options.perSpool=1] Number of pages per spool.
          */
         setDefaults: function(options) {
             $.extend(true, _qz.defaultConfig, options);
@@ -499,9 +532,9 @@ window.qz = {
      *      For <code>[pdf]</code> types, valid format is <code>[file]</code>.<p/>
      *      For <code>[raw]</code> types, valid formats are <code>[base64|file|visual|plain|hex|xml]</code>, use of <code>[auto]</code> assumes <code>[plain]</code>.
      *  @param {Object} [data.options]
-     *   @param {int} [data.options.x] Used only with raw printing <code>[visual]</code> type. The X position of the image.
-     *   @param {int} [data.options.y] Used only with raw printing <code>[visual]</code> type. The Y position of the image.
-     *   @param {string|int} [data.options.dotDensity] Used only with raw printing <code>[visual]</code> type. //TODO - use PS 'dpi' option value ??
+     *   @param {number} [data.options.x] Used only with raw printing <code>[visual]</code> type. The X position of the image.
+     *   @param {number} [data.options.y] Used only with raw printing <code>[visual]</code> type. The Y position of the image.
+     *   @param {string|number} [data.options.dotDensity] Used only with raw printing <code>[visual]</code> type.
      *   @param {string} [data.options.xmlTag] Required if passing xml data. Tag name containing base64 formatted data.
      *   @param {number} [data.options.pageWidth=1280] Used only with <code>[html]</code> type printing. Width of the web page to render.
      * @param {boolean} [signed] Indicate if the data is already signed. Will call signing methods if false.
@@ -549,11 +582,24 @@ window.qz = {
         },
 
         /**
-         * @param {string|int} port Name|Number of port to open.
+         * List of functions called for any response from open serial ports.
+         *
+         * @param {Function|Array<Function>} calls Single or array of <code>Function({string} portName, {string} output)</code> calls.
+         */
+        setSerialCallbacks: function(calls) {
+            _qz.serialCallbacks = calls;
+        },
+
+        /**
+         * @param {string} port Name of port to open.
+         * @param {Object} bounds Boundaries of serial port output.
+         *  @param {string} [bounds.begin=0x0002] Character denoting start of serial response. Not used if <code>width</code is provided.
+         *  @param {string} [bounds.end=0x000D] Character denoting end of serial response. Not used if <code>width</code> is provided.
+         *  @param {number} [bounds.width] Used for fixed-width response serial communication.
          *
          * @returns {Promise<null|Error>}
          */
-        openPort: function(port) {
+        openPort: function(port, bounds) {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
                     call: 'serial.openPort',
@@ -561,7 +607,8 @@ window.qz = {
                         resolve: resolve, reject: reject
                     },
                     params: {
-                        port: port
+                        port: port,
+                        bounds: bounds
                     }
                 };
 
@@ -570,24 +617,20 @@ window.qz = {
         },
 
         /**
-         * Send data over a serial port.
-         * The success callback will only be called when a valid message is returned from the serial port.
+         * Send commands over a serial port.
          *
-         * @param {string|int} port An open port to send data over.
-         * @param {Object} options Options for sending data over serial port.
-         *  @param {string} options.begin Pattern signifying start of response data from the port.
-         *  @param {string} options.end Pattern signifying end of response from the port.
-         *  @param {Object} options.properties Properties of data being sent over the port.
-         *   @param {string} options.properties.baudRate
-         *   @param {string} options.properties.dataBits
-         *   @param {string} options.properties.stopBits
-         *   @param {string} options.properties.parity
-         *   @param {string} options.properties.flowControl
-         *  @param {string} options.data Data being sent over the port.
+         * @param {string} port An open port to send data over.
+         * @param {string} data The data to send to the serial device.
+         * @param {Object} [properties] Properties of data being sent over the serial port.
+         *  @param {string} [properties.baudRate=9600]
+         *  @param {string} [properties.dataBits=8]
+         *  @param {string} [properties.stopBits=1]
+         *  @param {string} [properties.parity='NONE']
+         *  @param {string} [properties.flowControl='NONE']
          *
          * @returns {Promise<null|Error>}
          */
-        sendData: function(port, options) {
+        sendData: function(port, data, properties) {
             return new RSVP.Promise(function(resolve, reject) {
                 var msg = {
                     call: 'serial.sendData',
@@ -595,8 +638,9 @@ window.qz = {
                         resolve: resolve, reject: reject
                     },
                     params: {
-                        port: port
-                        // ??
+                        port: port,
+                        data: data,
+                        properties: properties
                     }
                 };
 
@@ -605,7 +649,7 @@ window.qz = {
         },
 
         /**
-         * @param {string|int} port Name|Number of port to close.
+         * @param {string} port Name of port to close.
          *
          * @returns {Promise<null|Error>}
          */
@@ -633,7 +677,7 @@ window.qz = {
          * List of functions called when requesting a public certificate for signing requests.
          * Should return a public certificate as a string.
          *
-         * @param {Function|Array<Function>} calls Single or array of Function() calls.
+         * @param {Function|Array<Function>} calls Single or array of <code>Function()</code> calls.
          */
         setCertificateCallbacks: function(calls) {
             if (typeof calls == 'function' || Array.isArray(calls)) {
@@ -647,7 +691,7 @@ window.qz = {
          * List of functions called to sign a request to the connection.
          * Should return just the signed string of the passed `stringToSign` param.
          *
-         * @param {Function|Array<Function>} calls Single or array of Function(stringToSign) calls.
+         * @param {Function|Array<Function>} calls Single or array of <code>Function({string} toSign)</code> calls.
          */
         setSigningCallbacks: function(calls) {
             if (typeof calls == 'function' || Array.isArray(calls)) {
@@ -677,4 +721,3 @@ window.qz = {
     }
 
 };
-

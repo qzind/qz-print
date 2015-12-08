@@ -52,7 +52,8 @@ import java.io.*;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -164,7 +165,7 @@ public class PrintRaw implements PrintProcessor {
     public void print(PrintOutput output, PrintOptions options) throws PrintException {
         PrintOptions.Raw rawOpts = options.getRawOptions();
 
-        LinkedList<ByteArrayBuilder> pages;
+        List<ByteArrayBuilder> pages;
         if (rawOpts.getPerSpool() > 0 && rawOpts.getEndOfDoc() != null && !rawOpts.getEndOfDoc().isEmpty()) {
             try {
                 pages = ByteUtilities.splitByteArray(commands.getByteArray(), rawOpts.getEndOfDoc().getBytes(encoding), rawOpts.getPerSpool());
@@ -173,7 +174,7 @@ public class PrintRaw implements PrintProcessor {
                 throw new PrintException(e);
             }
         } else {
-            pages = new LinkedList<>();
+            pages = new ArrayList<>();
             pages.add(commands);
         }
 

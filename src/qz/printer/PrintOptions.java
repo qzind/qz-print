@@ -39,7 +39,7 @@ public class PrintOptions {
         }
         if (!configOpts.isNull("perSpool")) {
             try { rawOptions.perSpool = configOpts.getInt("perSpool"); }
-            catch(JSONException e) { log.warn("integer", "perSpool", configOpts.opt("perSpool")); }
+            catch(JSONException e) { warn("integer", "perSpool", configOpts.opt("perSpool")); }
         }
 
         //check for pixel options
@@ -159,7 +159,7 @@ public class PrintOptions {
      * @param actualValue  Invalid value passed
      */
     private static void warn(String expectedType, String name, Object actualValue) {
-        log.warn("Cannot read {} as an {} for {}, using default", actualValue, expectedType, name);
+        log.warn("Cannot read {} as a {} for {}, using default", actualValue, expectedType, name);
     }
 
 
