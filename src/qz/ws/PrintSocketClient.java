@@ -68,6 +68,12 @@ public class PrintSocketClient {
     public void onMessage(Session session, String message) {
         if (message == null || message.isEmpty()) {
             sendError(session, null, "Message is empty");
+            return;
+        }
+        if (Constants.PROBE_REQUEST.equals(message)) {
+            try { session.getRemote().sendString(Constants.PROBE_RESPONSE); } catch(Exception ignore) {}
+            log.warn("Second instance of {} likely detected, asking it to close", Constants.ABOUT_TITLE);
+            return;
         }
         if ("ping".equals(message)) { return; } //keep-alive call / no need to process
 

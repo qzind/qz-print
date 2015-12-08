@@ -36,6 +36,8 @@ import qz.utils.SystemUtilities;
 import qz.utils.UbuntuUtilities;
 import qz.utils.ShellUtilities;
 //import qz.ws.PrintSocket; //FIXME
+import qz.ws.PrintSocketServer;
+import qz.ws.SingleInstanceChecker;
 
 import javax.swing.*;
 import java.awt.*;
@@ -335,14 +337,14 @@ public class TrayManager {
              if (confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
         }
     };
-    
+
     public void exit(int returnCode) {
         for (Handler h : trayLogger.getHandlers()) {
                 trayLogger.removeHandler(h);
         }
         System.exit(returnCode);
     }
-	
+
     /**
      * Process toggle/checkbox events as they relate to creating shortcuts
      *
@@ -421,7 +423,7 @@ public class TrayManager {
                 if (gatewayDialog.isPersistent()) {
                     blackList(cert);
                 }
-            }            
+            }
         }
 
         return gatewayDialog.isApproved();
@@ -476,6 +478,8 @@ public class TrayManager {
      */
     public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger securePortIndex, final AtomicInteger insecurePortIndex) {
         if (server != null && server.getConnectors().length > 0) {
+            singleInstanceCheck(PrintSocketServer.INSECURE_PORTS, insecurePortIndex.get());
+
             displayInfoMessage("Server started on port(s) " + TrayManager.getPorts(server));
             aboutDialog.setServer(server);
             setDefaultIcon();
@@ -616,6 +620,14 @@ public class TrayManager {
             }
         });
         return logHandler;
+    }
+
+    public void singleInstanceCheck(Integer[] insecurePorts, Integer insecurePortIndex) {
+        for(int port : insecurePorts) {
+            if (port != insecurePorts[insecurePortIndex]) {
+                new SingleInstanceChecker(this, port);
+            }
+        }
     }
 
 }

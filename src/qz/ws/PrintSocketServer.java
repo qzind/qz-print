@@ -44,15 +44,15 @@ public class PrintSocketServer {
     private static final Logger log = LoggerFactory.getLogger(PrintSocketServer.class);
 
     private static final int MAX_MESSAGE_SIZE = Integer.MAX_VALUE;
-    private static final Integer[] SECURE_PORTS = new Integer[] {8181, 8282, 8383, 8484};
-    private static final Integer[] INSECURE_PORTS = new Integer[] {8182, 8283, 8384, 8485};
+    public static final Integer[] SECURE_PORTS = new Integer[] {8181, 8282, 8383, 8484};
+    public static final Integer[] INSECURE_PORTS = new Integer[] {8182, 8283, 8384, 8485};
 
 
     private static TrayManager trayManager;
 
 
     public static void main(String[] args) {
-        for (String s : args) {
+        for(String s : args) {
             // Print version information and exit
             if ("-v".equals(s) || "--version".equals(s)) {
                 System.out.println(Constants.VERSION);
@@ -134,7 +134,7 @@ public class PrintSocketServer {
                 }
 
                 //explicitly stop the server, because if only 1 port has an exception the other will still be opened
-                try{ server.stop(); }catch(Exception ignore){ ignore.printStackTrace(); }
+                try { server.stop(); }catch(Exception ignore) { ignore.printStackTrace(); }
             }
             catch(Exception e) {
                 e.printStackTrace();
