@@ -7,7 +7,9 @@ import qz.utils.SystemUtilities;
 
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.ResolutionSyntax;
 import javax.print.attribute.standard.MediaSizeName;
+import javax.print.attribute.standard.PrinterResolution;
 import javax.print.attribute.standard.Sides;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -46,45 +48,44 @@ public abstract class PrintPixel {
         //TODO - set paper thickness
         //TODO - set printer tray
 
-        // Java print using inches at 72dpi
-        //FIXME - no longer working
-        final float CONVERT = pxlOpts.getUnits().asInch();
+        // Java prints using inches at 72dpi
+        final float CONVERT = 72 * pxlOpts.getUnits().toInch();
+        final float DENSITY = pxlOpts.getDensity() * pxlOpts.getUnits().fromInch();
 
-        //FIXME - just cuts off image or over when scaling
-        log.trace("DPI: {}", (pxlOpts.getDensity() * CONVERT));
-        float dpFactor = ((pxlOpts.getDensity() * CONVERT) / 72f);
+        log.trace("DPI: {}", DENSITY);
+        attributes.add(new PrinterResolution((int)DENSITY, (int)DENSITY, ResolutionSyntax.DPI));
+
 
         //apply sizing and margins
         Paper paper = new Paper();
 
         float pageX = 0f;
         float pageY = 0f;
-        float pageW = (float)page.getWidth() * dpFactor;
-        float pageH = (float)page.getHeight() * dpFactor;
+        float pageW = (float)page.getWidth();
+        float pageH = (float)page.getHeight();
 
         //page size
         if (pxlOpts.getSize() != null && pxlOpts.getSize().getWidth() > 0 && pxlOpts.getSize().getHeight() > 0) {
-            pageW = (float)pxlOpts.getSize().getWidth() * pxlOpts.getDensity();
-            pageH = (float)pxlOpts.getSize().getHeight() * pxlOpts.getDensity();
+            pageW = (float)pxlOpts.getSize().getWidth() * CONVERT;
+            pageH = (float)pxlOpts.getSize().getHeight() * CONVERT;
 
-            paper.setSize((pageW * CONVERT) * dpFactor, (pageH * CONVERT) * dpFactor);
+            paper.setSize(pageW, pageH);
         }
 
         //margins
         if (pxlOpts.getMargins() != null) {
-            pageX += pxlOpts.getMargins().left() * pxlOpts.getDensity();
-            pageY += pxlOpts.getMargins().top() * pxlOpts.getDensity();
-            pageW -= (pxlOpts.getMargins().right() + pxlOpts.getMargins().left()) * pxlOpts.getDensity();
-            pageH -= (pxlOpts.getMargins().bottom() + pxlOpts.getMargins().top()) * pxlOpts.getDensity();
+            pageX += pxlOpts.getMargins().left() * CONVERT;
+            pageY += pxlOpts.getMargins().top() * CONVERT;
+            pageW -= (pxlOpts.getMargins().right() + pxlOpts.getMargins().left()) * CONVERT;
+            pageH -= (pxlOpts.getMargins().bottom() + pxlOpts.getMargins().top()) * CONVERT;
         }
 
+        log.trace("Drawable area: {},{}:{},{}", pageX, pageY, pageW, pageH);
         if (pageW > 0 && pageH > 0) {
-            paper.setImageableArea(pageX * dpFactor, pageY * dpFactor, pageW * dpFactor, pageH * dpFactor);
-            log.debug("Custom size: {},{}:{},{}", paper.getImageableX(), paper.getImageableY(), paper.getImageableWidth(), paper.getImageableHeight());
-
+            paper.setImageableArea(pageX, pageY, pageW, pageH);
             page.setPaper(paper);
         } else {
-            log.trace("Cannot apply custom size: {},{}:{},{}", pageX * dpFactor, pageY * dpFactor, pageW * dpFactor, pageH * dpFactor);
+            log.warn("Could not apply custom size, using printer default");
         }
 
         log.trace("{}", Arrays.toString(attributes.toArray()));

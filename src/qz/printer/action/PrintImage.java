@@ -165,11 +165,13 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
 
         double boundX = pageFormat.getImageableX();
         double boundY = pageFormat.getImageableY();
+
         log.debug("Paper area: {},{}:{},{}", (int)boundX, (int)boundY, (int)boundW, (int)boundH);
+        log.trace("Image size: {},{}", imgW, imgH);
 
         // Now we perform our rendering
-        graphics2D.drawImage(imgToPrint, (int)boundX + imgToPrint.getMinX(), (int)boundY + imgToPrint.getMinY(), (int)boundX + imgW, (int)boundY + imgH,
-                             imgToPrint.getMinX(), imgToPrint.getMinY(), imgToPrint.getWidth(), imgToPrint.getHeight(), null);
+        graphics2D.drawImage(imgToPrint, (int)boundX, (int)boundY, (int)boundX + imgW, (int)boundY + imgH,
+                             0, 0, imgToPrint.getWidth(), imgToPrint.getHeight(), null);
 
         // Valid page
         return PAGE_EXISTS;

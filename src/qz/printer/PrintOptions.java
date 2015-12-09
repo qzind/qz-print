@@ -320,18 +320,24 @@ public class PrintOptions {
 
     /** Pixel dimension values */
     public enum Unit {
-        INCH(1.0f),
-        CM(2.54f),
-        MM(25.4f);
+        INCH(1.0f, 1.0f), //iin = 1in
+        CM(.3937f, 2.54f), //1cm = .3937in ; 1in = 2.54cm
+        MM(.03937f, 25.4f); //1mm = .03937in ; 1in = 25.4mm
 
+        private final float fromInch;
         private final float toInch; //multiplicand to convert to inches
 
-        Unit(float toIN) {
+        Unit(float toIN, float fromIN) {
             toInch = toIN;
+            fromInch = fromIN;
         }
 
-        public float asInch() {
+        public float toInch() {
             return toInch;
+        }
+
+        public float fromInch() {
+            return fromInch;
         }
     }
 
