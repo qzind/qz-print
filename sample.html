@@ -26,6 +26,9 @@ function deployQZApplet() {
     else if (deployJava.versionCheck("1.6+") == true) {
         delete parameters['jnlp_href'];
     }
+
+    // Disable java download redirects
+    deployJava.installJRE = function(version, ignore) { alert("Java " + version + " NPAPI plugin not available"); }
     deployJava.runApplet(attributes, parameters, '1.6');
 }
 
@@ -134,10 +137,10 @@ function qzReady() {
     if (!qz) {
         window["qz"] = document.getElementById('qz');
     }
-    var title = document.getElementById("title");
+    var version = document.getElementById("version");
     if (qz) {
         try {
-            title.innerHTML = title.innerHTML + " " + qz.getVersion();
+            version.innerHTML = qz.getVersion();
             document.getElementById("qz-status").style.background = "#F0F0F0";
         } catch(err) { // LiveConnect error, display a detailed message
             document.getElementById("qz-status").style.background = "#F5A9A9";
@@ -149,6 +152,16 @@ function qzReady() {
                     "Java version \n          (or)\n  2. Lower the security " +
                     "settings from the Java Control Panel.");
         }
+    }
+}
+
+function launchQZ() {
+    if (qz && $.isFunction(qz.isActive) && qz.isActive()) {
+        alert("Already running");
+    } else {
+        window.location.assign("qz:launch");
+        qzNoConnection = function() { deployQZ(); }
+        qzNoConnection();
     }
 }
 
@@ -164,6 +177,7 @@ function qzSocketClose(event) {
     document.getElementById("qz-status").style.background = "#A0A0A0";
     console.log('Close:');
     console.log(event);
+    qz = null;
 
     alert("Connection was closed:\n"+ event.reason);
 }
@@ -1095,11 +1109,12 @@ function chr(i) {
 </head>
 
 <body id="qz-status" bgcolor="#FFF380">
-<div style="margin: 0 1em;"><h1 id="title" style="margin:0;">QZ Print Plugin</h1></div>
+<div style="margin: 0 1em;"><h1 style="margin:0;">QZ Print Plugin <span id="version"></span></h1></div>
 
 <table border="1px" cellpadding="5px" cellspacing="0px">
 <tr>
     <td valign="top"><h2>All Printers</h2>
+        <a href="javascript:launchQZ();">Launch QZ Tray</a><br /><br />
         <input type="button" onClick="findPrinter()" value="Detect Printer"><br />
         <input id="printer" type="text" value="zebra" size="15"><br />
         <input type="button" onClick="findPrinters()" value="List All Printers"><br />
