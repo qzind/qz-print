@@ -28,19 +28,21 @@ import java.io.File;
 
 /**
  * Utility class for OS detection functions.
+ *
  * @author Tres Finocchiaro
  */
 public class SystemUtilities {
+
     // Name of the os, i.e. "Windows XP", "Mac OS X"
     private static final String OS_NAME = System.getProperty("os.name").toLowerCase();
+
     private static String uname;
     private static String linuxRelease;
-    
-     /**
-     * Returns a lowercase version of the Operating system name identified by
-     * <code>System.getProperty("os.name");</code>.
-     *
-     * @return Lowercase version of the Operating system name
+
+
+    /**
+     * @return Lowercase version of the operating system name
+     * identified by {@code System.getProperty("os.name");}.
      */
     public static String getOS() {
         return OS_NAME;
@@ -48,17 +50,19 @@ public class SystemUtilities {
 
 
     /**
-     * Returns the OS-specific Application Data directory such as:
-     *  <code>C:\Users\John\AppData\Roaming\.qz</code> on Windows
-     *   -- or --
-     *  <code>/Users/John/Library/Application Support/.qz</code> on Mac
-     *  -- or --
-     *  <code>/home/John/.qz</code> on Linux
+     * Retrieve OS-specific Application Data directory such as:
+     * {@code C:\Users\John\AppData\Roaming\.qz} on Windows
+     * -- or --
+     * {@code /Users/John/Library/Application Support/.qz} on Mac
+     * -- or --
+     * {@code /home/John/.qz} on Linux
+     *
      * @return Full path to the Application Data directory
      */
     public static String getDataDirectory() {
         String parent;
         String folder = Constants.DATA_DIR;
+
         if (isWindows()) {
             parent = System.getenv("APPDATA");
         } else if (isMac()) {
@@ -69,14 +73,15 @@ public class SystemUtilities {
         } else {
             parent = System.getProperty("user.dir");
         }
+
         return parent + File.separator + folder;
     }
 
-    
+
     /**
      * Determine if the current Operating System is Windows
      *
-     * @return <code>true</code> if Windows, <code>false</code> otherwise
+     * @return {@code true} if Windows, {@code false} otherwise
      */
     public static boolean isWindows() {
         return (OS_NAME.contains("win"));
@@ -85,7 +90,7 @@ public class SystemUtilities {
     /**
      * Determine if the current Operating System is Mac OS
      *
-     * @return <code>true</code> if Mac OS, <code>false</code> otherwise
+     * @return {@code true} if Mac OS, {@code false} otherwise
      */
     public static boolean isMac() {
         return (OS_NAME.contains("mac"));
@@ -94,7 +99,7 @@ public class SystemUtilities {
     /**
      * Determine if the current Operating System is Linux
      *
-     * @return <code>true</code> if Linux, <code>false</code> otherwise
+     * @return {@code true} if Linux, {@code false} otherwise
      */
     public static boolean isLinux() {
         return (OS_NAME.contains("linux"));
@@ -103,7 +108,7 @@ public class SystemUtilities {
     /**
      * Determine if the current Operating System is Unix
      *
-     * @return <code>true</code> if Unix, <code>false</code> otherwise
+     * @return {@code true} if Unix, {@code false} otherwise
      */
     public static boolean isUnix() {
         return (OS_NAME.contains("nix") || OS_NAME.contains("nux") || OS_NAME.indexOf("aix") > 0);
@@ -112,15 +117,16 @@ public class SystemUtilities {
     /**
      * Determine if the current Operating System is Solaris
      *
-     * @return <code>true</code> if Solaris, <code>false</code> otherwise
+     * @return {@code true} if Solaris, {@code false} otherwise
      */
     public static boolean isSolaris() {
         return (OS_NAME.contains("sunos"));
     }
 
     /**
-     * Returns whether the output of <code>uname -a</code> shell command contains "Ubuntu"
-     * @return <code>true</code> if this OS is Ubuntu
+     * Returns whether the output of {@code uname -a} shell command contains "Ubuntu"
+     *
+     * @return {@code true} if this OS is Ubuntu
      */
     public static boolean isUbuntu() {
         getUname();
@@ -129,7 +135,8 @@ public class SystemUtilities {
 
     /**
      * Returns whether the output of <code>cat /etc/redhat-release/code> shell command contains "Fedora"
-     * @return <code>true</code> if this OS is Fedora
+     *
+     * @return {@code true} if this OS is Fedora
      */
     public static boolean isFedora() {
         getLinuxRelease();
@@ -137,38 +144,42 @@ public class SystemUtilities {
     }
 
     /**
-     * Returns the output of <code>cat /etc/lsb-release</code> or equivalent
+     * Returns the output of {@code cat /etc/lsb-release} or equivalent
+     *
      * @return the output of the command or null if not running Linux
      */
-    public static String getLinuxRelease()  {
+    public static String getLinuxRelease() {
         if (isLinux() && linuxRelease == null) {
             String[] releases = {"/etc/lsb-release", "/etc/redhat-release"};
-            for (String release : releases) {
+            for(String release : releases) {
                 String result = ShellUtilities.execute(
-                        new String[]{"cat", release},
+                        new String[] {"cat", release},
                         null
                 );
-                if (result != null && !result.isEmpty()) {
+                if (!result.isEmpty()) {
                     linuxRelease = result;
                     break;
                 }
             }
         }
+
         return linuxRelease;
     }
 
     /**
-     * Returns the output of <code>uname -a</code> shell command, useful for parsing the Linux Version
-     * @return the output of <code>uname -a</code>, or null if not running Linux
+     * Returns the output of {@code uname -a} shell command, useful for parsing the Linux Version
+     *
+     * @return the output of {@code uname -a}, or null if not running Linux
      */
     public static String getUname() {
         if (isLinux() && uname == null) {
             uname = ShellUtilities.execute(
-                    new String[]{"uname", "-a"},
+                    new String[] {"uname", "-a"},
                     null
             );
         }
+
         return uname;
     }
-    
+
 }

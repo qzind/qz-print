@@ -51,20 +51,6 @@ public class PrintSocket {
 
     private final Logger log = Logger.getLogger(PrintSocket.class.getName());
 
-    // We are going to pass this for all unsigned requests
-    // This way, paid or not, users will have to Allow/Deny all unsigned requests, encouraging security
-    public static final Certificate UNSIGNED;
-
-    static {
-        HashMap<String,String> map = new HashMap<String,String>();
-        map.put("fingerprint", "UNSIGNED REQUEST");
-        map.put("commonName", "An anonymous request");
-        map.put("organization", "Unknown");
-        map.put("validFrom", "0000-00-00 00:00:00");
-        map.put("validTo", "0000-00-00 00:00:00");
-        map.put("valid", "false");
-        UNSIGNED = Certificate.loadCertificate(map);
-    }
 
     // Each connection to the websocket has its own instance of QZ to avoid conflicting print buffers
     //private static HashMap<Integer,PrintFunction> connections = new HashMap<Integer,PrintFunction>();
@@ -72,7 +58,7 @@ public class PrintSocket {
     private static AtomicBoolean isAsking = new AtomicBoolean(false);
 
     private final List<String> privilegedMethods = Arrays.asList("findNetworkInfo", "closePort", "findPrinter", "findPrinters",
-            "findPorts", "openPort", "send", "setSerialProperties", "setSerialBegin", "setSerialEnd", "getSerialIO");
+                                                                 "findPorts", "openPort", "send", "setSerialProperties", "setSerialBegin", "setSerialEnd", "getSerialIO");
 
     private final TrayManager trayManager = PrintSocketServer.getTrayManager();
 
@@ -153,7 +139,6 @@ public class PrintSocket {
 
         }
     }
-
 
 
 }

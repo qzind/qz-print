@@ -15,7 +15,7 @@ public interface PrintProcessor {
      * Used to parse information passed from the web API for printing.
      *
      * @param printData JSON Array of printer data
-     * @param options Printing options to use for the print job
+     * @param options   Printing options to use for the print job
      */
     void parseData(JSONArray printData, PrintOptions options) throws JSONException, UnsupportedOperationException;
 
@@ -23,7 +23,7 @@ public interface PrintProcessor {
     /**
      * Used to setup and send documents to the specified printing {@code service}.
      *
-     * @param output Destination used for printing
+     * @param output  Destination used for printing
      * @param options Printing options to use for the print job
      */
     void print(PrintOutput output, PrintOptions options) throws PrintException, PrinterException;

@@ -5,7 +5,6 @@
 package qz.exception;
 
 /**
- *
  * @author Tres
  */
 public class SerialException extends Exception {

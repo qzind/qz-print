@@ -5,22 +5,22 @@
  * Copyright (C) 2013 Antoni Ten Monro's
  *
  * IMPORTANT:  This software is dual-licensed
- * 
+ *
  * LGPL 2.1
- * This is free software.  This software and source code are released under 
- * the "LGPL 2.1 License".  A copy of this license should be distributed with 
+ * This is free software.  This software and source code are released under
+ * the "LGPL 2.1 License".  A copy of this license should be distributed with
  * this software. http://www.gnu.org/licenses/lgpl-2.1.html
- * 
+ *
  * QZ INDUSTRIES SOURCE CODE LICENSE
- * This software and source code *may* instead be distributed under the 
- * "QZ Industries Source Code License", available by request ONLY.  If source 
+ * This software and source code *may* instead be distributed under the
+ * "QZ Industries Source Code License", available by request ONLY.  If source
  * code for this project is to be made proprietary for an individual and/or a
  * commercial entity, written permission via a copy of the "QZ Industries Source
- * Code License" must be obtained first.  If you've obtained a copy of the 
- * proprietary license, the terms and conditions of the license apply only to 
+ * Code License" must be obtained first.  If you've obtained a copy of the
+ * proprietary license, the terms and conditions of the license apply only to
  * the licensee identified in the agreement.  Only THEN may the LGPL 2.1 license
  * be voided.
- * 
+ *
  */
 
 package qz.common;
@@ -29,26 +29,22 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 
-/*
- * Provides a simple and efficient way for concatenating byte arrays, similar
- * in purpose to <code>StringBuilder</code>. Objects of this class are not 
- * thread safe and include no synchronization
- * 
- */
-
-
 /**
+ * Provides a simple and efficient way for concatenating byte arrays, similar
+ * in purpose to <code>StringBuilder</code>. Objects of this class are not
+ * thread safe and include no synchronization
+ *
  * @author Antoni Ten Monro's
  */
 
-@SuppressWarnings("UnusedDeclaration")
-/*Library class, may be used outside of project context*/
+@SuppressWarnings("UnusedDeclaration") //Library class, may be used outside of project context
 public final class ByteArrayBuilder {
+
     private ArrayList<byte[]> buffer;
-    
+
     private int length = 0;
-    
-    private byte[] contents=null;
+
+    private byte[] contents = null;
 
     /**
      * Gives the number of bytes currently stored in this <code>ByteArrayBuilder</code>
@@ -63,113 +59,111 @@ public final class ByteArrayBuilder {
      * Creates a new <code>ByteArrayBuilder</code> and sets initial capacity to 10
      */
     public ByteArrayBuilder() {
-        buffer=new ArrayList<byte[]>(10);
+        buffer = new ArrayList<>(10);
     }
-    
+
     /**
-     * Creates a new <code>ByteArrayBuilder</code> and sets initial capacity to 
+     * Creates a new <code>ByteArrayBuilder</code> and sets initial capacity to
      * <code>initialCapacity</code>
-     * 
+     *
      * @param initialCapacity the initial capacity of the <code>ByteArrayBuilder</code>
      */
-    public ByteArrayBuilder(int initialCapacity){
-        buffer=new ArrayList<byte[]>(initialCapacity);
+    public ByteArrayBuilder(int initialCapacity) {
+        buffer = new ArrayList<>(initialCapacity);
     }
 
     /**
      * Creates a new <code>ByteArrayBuilder</code>, sets initial capacity to 10
      * and appends <code>initialContents</code>
-     * 
+     *
      * @param initialContents the initial contents of the ByteArrayBuilder
      */
     public ByteArrayBuilder(byte[] initialContents) {
         this();
-        this.append(initialContents);
+        append(initialContents);
     }
-    
+
     /**
-     * Creates a new <code>ByteArrayBuilder</code>, sets initial capacity to 
+     * Creates a new <code>ByteArrayBuilder</code>, sets initial capacity to
      * <code>initialContents</code> and appends <code>initialContents</code>
-     * 
+     *
      * @param initialContents the initial contents of the <code>ByteArrayBuilder</code>
      * @param initialCapacity the initial capacity of the <code>ByteArrayBuilder</code>
      */
-    public ByteArrayBuilder(byte[] initialContents, int initialCapacity){
+    public ByteArrayBuilder(byte[] initialContents, int initialCapacity) {
         this(initialCapacity);
-        this.append(initialContents);
+        append(initialContents);
     }
-    
-    private void resetContents(){
-        contents=null;
+
+    private void resetContents() {
+        contents = null;
     }
-    
+
     /**
      * Empties the <code>ByteArrayBuilder</code>
      */
-    public void clear(){
-        length=0;
-        this.resetContents();
+    public void clear() {
+        length = 0;
+        resetContents();
         buffer.clear();
     }
-    
+
     /**
-     * Appends a new byte array to this <code>ByteArrayBuilder</code>. 
+     * Appends a new byte array to this <code>ByteArrayBuilder</code>.
      * Returns this same object to allow chaining calls
-     * 
+     *
      * @param bytes the byte array to append
      * @return this <code>ByteArrayBuilder</code>
      */
-    public final ByteArrayBuilder append(byte[] bytes){
-        this.resetContents();
-        length+=bytes.length;
+    public final ByteArrayBuilder append(byte[] bytes) {
+        resetContents();
+        length += bytes.length;
         buffer.add(bytes);
         return this;
     }
-    
+
     /**
      * Convenience method for append(byte[]) combined with a StringBuffer of specified
      * charset
-     * 
-     * @param string the String to append
+     *
+     * @param string  the String to append
      * @param charset the Charset of the String
      * @return this <code>ByteArrayBuilder</code>
-     * @throws UnsupportedEncodingException 
      */
-    public final ByteArrayBuilder append(String string, Charset charset ) throws UnsupportedEncodingException {
+    public final ByteArrayBuilder append(String string, Charset charset) throws UnsupportedEncodingException {
         return append(string.getBytes(charset.name()));
     }
-    
+
     /**
      * Convenience method for append(byte[]) combined with a String of specified
      * charset
-     * 
+     *
      * @param stringBuilder the StringBuilder to append
-     * @param charset the Charset of the StringBuilder
+     * @param charset       the Charset of the StringBuilder
      * @return this <code>ByteArrayBuilder</code>
-     * @throws UnsupportedEncodingException 
      */
     public final ByteArrayBuilder append(StringBuilder stringBuilder, Charset charset) throws UnsupportedEncodingException {
         return append(stringBuilder.toString(), charset);
     }
-    
+
     /**
      * Returns the full contents of this <code>ByteArrayBuilder</code> as
      * a single <code>byte</code> array. The result is cached, so multiple
      * calls with no changes to the contents of the <code>ByteArrayBuilder</code>
      * are efficient.
-     * 
+     *
      * @return The contents of this <code>ByteArrayBuilder</code> as a single <code>byte</code> array
      */
-    public byte[] getByteArray(){
-        if(contents==null)
-        {
-            contents=new byte[this.getLength()];
-            int pos=0;
-            for (byte[] bs:buffer){
+    public byte[] getByteArray() {
+        if (contents == null) {
+            contents = new byte[getLength()];
+            int pos = 0;
+            for(byte[] bs : buffer) {
                 System.arraycopy(bs, 0, contents, pos, bs.length);
-                pos+=bs.length;
+                pos += bs.length;
             }
         }
+
         return contents;
     }
 }

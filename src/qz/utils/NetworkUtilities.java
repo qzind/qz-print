@@ -32,7 +32,6 @@ import java.io.IOException;
 import java.net.*;
 
 /**
- *
  * @author Tres
  */
 public class NetworkUtilities {

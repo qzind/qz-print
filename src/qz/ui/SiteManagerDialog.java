@@ -1,10 +1,10 @@
 package qz.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.auth.Certificate;
 import qz.common.Constants;
-import qz.common.LogIt;
 import qz.utils.FileUtilities;
-//import qz.ws.PrintSocket; //FIXME
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -20,16 +20,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.logging.Level;
 
 /**
  * Created by Tres on 2/23/2015.
  */
 public class SiteManagerDialog extends BasicDialog implements Runnable {
+
+    private static final Logger log = LoggerFactory.getLogger(SiteManagerDialog.class);
+
     private JSplitPane splitPane;
 
     private JTabbedPane tabbedPane;
@@ -45,16 +46,20 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
     private AtomicBoolean threadRunning;
     private AtomicReference<Certificate> deleteCertificate;
 
+    private long allowTick = -1;
+    private long blockTick = -1;
+
+
     public SiteManagerDialog(JMenuItem caller, IconCache iconCache) {
         super(caller, iconCache);
-        this.certTable = new CertificateTable(null, iconCache);
+        certTable = new CertificateTable(null, iconCache);
         initComponents();
     }
 
     public void initComponents() {
-        allowList = new ContainerList<Certificate>();
+        allowList = new ContainerList<>();
         allowList.setTag(Constants.ALLOW_FILE);
-        blockList = new ContainerList<Certificate>();
+        blockList = new ContainerList<>();
         blockList.setTag(Constants.BLOCK_FILE);
 
         setIconImage(getImage(IconCache.Icon.SAVED_ICON));
@@ -65,7 +70,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
         appendListTab(allowList.getList(), "Allowed", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_A);
         appendListTab(blockList.getList(), "Blocked", IconCache.Icon.BLOCK_ICON, KeyEvent.VK_B);
 
-        setHeader("Sites " + (tabbedPane.getSelectedIndex() == 0 ? Constants.WHITE_LIST : Constants.BLACK_LIST).toLowerCase());
+        setHeader("Sites " + (tabbedPane.getSelectedIndex() == 0? Constants.WHITE_LIST:Constants.BLACK_LIST).toLowerCase());
 
         tabbedPane.addChangeListener(new ChangeListener() {
             @Override
@@ -74,7 +79,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
                 allowList.getList().clearSelection();
                 blockList.getList().clearSelection();
 
-                switch (tabbedPane.getSelectedIndex()) {
+                switch(tabbedPane.getSelectedIndex()) {
                     case 1: setHeader("Sites " + Constants.BLACK_LIST.toLowerCase());
                         blockList.getList().setSelectedIndex(0);
                         break;
@@ -106,7 +111,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
 
         readerThread = new Thread(this);
         threadRunning = new AtomicBoolean(false);
-        deleteCertificate = new AtomicReference<Certificate>(null);
+        deleteCertificate = new AtomicReference<>(null);
 
         setContent(splitPane, true);
     }
@@ -135,6 +140,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
                 getSelectedList().getList().setSelectedIndex(0);
             }
         });
+
         return this;
     }
 
@@ -184,8 +190,9 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
         if (certificate != null && FileUtilities.deleteFromFile(certList.getTag().toString(), certificate.data())) {
             certList.remove(certificate);
         } else {
-            LogIt.log(Level.WARNING, String.format("Error removing %s from the list of %s sites", certificate, getSelectedTabName().toLowerCase()));
+            log.warn("Error removing {} from the list of {} sites", certificate, getSelectedTabName().toLowerCase());
         }
+
         return this;
     }
 
@@ -197,6 +204,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
         if (tabbedPane.getSelectedIndex() >= 0) {
             return tabbedPane.getTitleAt(tabbedPane.getSelectedIndex());
         }
+
         return "";
     }
 
@@ -204,16 +212,9 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
         if (tabbedPane.getSelectedIndex() == 0) {
             return allowList;
         }
+
         return blockList;
     }
-
-    // TODO:  Fix duplicate function
-    public void printToLog(String message, TrayIcon.MessageType type) {
-        FileUtilities.printLineToFile(Constants.LOG_FILE, String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s", type, new Date(), message));
-    }
-
-    private long allowTick = -1;
-    private long blockTick = -1;
 
     public void run() {
         threadRunning.set(true);
@@ -223,12 +224,12 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
 
         boolean initialSelection = true;
 
-        allowTick = allowTick < 0 ? 0 : allowTick;
-        blockTick = blockTick < 0 ? 0 : blockTick;
+        allowTick = allowTick < 0? 0:allowTick;
+        blockTick = blockTick < 0? 0:blockTick;
 
         // Reads the certificate allowed/blocked files and updates the certificate listing
-        while (threadRunning.get()) {
-             if (isVisible()) {
+        while(threadRunning.get()) {
+            if (isVisible()) {
                 if (deleteCertificate.get() != null) {
                     removeCertificate(deleteCertificate.getAndSet(null));
                 } else if (allowFile.lastModified() > allowTick) {
@@ -251,48 +252,39 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
     }
 
     public void sleep(int millis) {
-        try {
-            Thread.sleep(millis);
-        }
-        catch (InterruptedException ignore) {}
+        try { Thread.sleep(millis); } catch(InterruptedException ignore) {}
     }
 
     /**
-     * Reads a certificate data file and updates the corresponding <code>ArrayList</code>
-     * @param certList The <code>ArrayList</code> requiring updating
-     * @param file The data file containing allow/block certificate information
-     * @return
+     * Reads a certificate data file and updates the corresponding {@code ArrayList}
+     *
+     * @param certList The {@code ArrayList} requiring updating
+     * @param file     The data file containing allow/block certificate information
      */
     public ArrayList<Certificate> readCertificates(ArrayList<Certificate> certList, File file) {
-        BufferedReader br = null;
-        try {
+        try(BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
-            br = new BufferedReader(new FileReader(file));
-            while ((line = br.readLine()) != null) {
+            while((line = br.readLine()) != null) {
                 String[] data = line.split("\\t");
 
                 if (data.length == Certificate.saveFields.length) {
-                    HashMap<String, String> dataMap = new HashMap<String, String>();
-                    for (int i = 0; i < data.length; i++) {
+                    HashMap<String,String> dataMap = new HashMap<>();
+                    for(int i = 0; i < data.length; i++) {
                         dataMap.put(Certificate.saveFields[i], data[i]);
                     }
+
                     Certificate certificate = Certificate.loadCertificate(dataMap);
                     // Don't include the unsigned certificate if we are blocking it, there is a menu option instead
-                    //if (!certList.contains(certificate) && !PrintSocket.UNSIGNED.equals(certificate)) {
-                    //    certList.add(certificate);
-                    //}
-                }
-            }
-        } catch (IOException ioe) {
-            ioe.printStackTrace();
-        } finally {
-            if (br != null) {
-                try {
-                    br.close();
-                } catch (Exception ignore) {
+                    if (!certList.contains(certificate) && !Certificate.UNSIGNED.equals(certificate)) {
+                        certList.add(certificate);
+                    }
                 }
             }
         }
+        catch(IOException ioe) {
+            ioe.printStackTrace();
+        }
+
         return certList;
     }
 }

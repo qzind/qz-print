@@ -7,10 +7,10 @@ import com.estontorise.simplersa.interfaces.RSATool;
 import org.apache.commons.ssl.X509CertificateChainBuilder;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.common.Base64;
 import qz.common.Constants;
-import qz.common.LogIt;
-import qz.common.TrayManager;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;
 
@@ -26,7 +26,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.logging.Logger;
 
 /**
  * Created by Steven on 1/27/2015. Package: qz.auth Project: qz-print
@@ -34,61 +33,15 @@ import java.util.logging.Logger;
  */
 public class Certificate {
 
+    private static final Logger log = LoggerFactory.getLogger(Certificate.class);
+
     public static Certificate trustedRootCert = null;
-    private static final Logger log = Logger.getLogger(TrayManager.class.getName());
+    public static final String[] saveFields = new String[] {"fingerprint", "commonName", "organization", "validFrom", "validTo", "valid"};
+
     private static boolean overrideTrustedRootCert = false;
+    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-    static {
-        try {
-            String overridePath = System.getProperty("trustedRootCert");
-            if (overridePath != null) {
-                try {
-                    trustedRootCert = new Certificate(FileUtilities.readLocalFile(overridePath));
-                    overrideTrustedRootCert = true;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            if (trustedRootCert == null) {
-                trustedRootCert = new Certificate("-----BEGIN CERTIFICATE-----\n" +
-                                                "MIIELzCCAxegAwIBAgIJALm151zCHDxiMA0GCSqGSIb3DQEBCwUAMIGsMQswCQYD\n" +
-                                                "VQQGEwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UE\n" +
-                                                "CgwSUVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBM\n" +
-                                                "TEMxGTAXBgNVBAMMEHF6aW5kdXN0cmllcy5jb20xJzAlBgkqhkiG9w0BCQEWGHN1\n" +
-                                                "cHBvcnRAcXppbmR1c3RyaWVzLmNvbTAgFw0xNTAzMDEyMzM4MjlaGA8yMTE1MDMw\n" +
-                                                "MjIzMzgyOVowgawxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJ\n" +
-                                                "Q2FuYXN0b3RhMRswGQYDVQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsM\n" +
-                                                "ElFaIEluZHVzdHJpZXMsIExMQzEZMBcGA1UEAwwQcXppbmR1c3RyaWVzLmNvbTEn\n" +
-                                                "MCUGCSqGSIb3DQEJARYYc3VwcG9ydEBxemluZHVzdHJpZXMuY29tMIIBIjANBgkq\n" +
-                                                "hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuWsBa6uk+RM4OKBZTRfIIyqaaFD71FAS\n" +
-                                                "7kojAQ+ySMpYuqLjIVZuCh92o1FGBvyBKUFc6knAHw5749yhLCYLXhzWwiNW2ri1\n" +
-                                                "Jwx/d83Wnaw6qA3lt++u3tmiA8tsFtss0QZW0YBpFsIqhamvB3ypwu0bdUV/oH7g\n" +
-                                                "/s8TFR5LrDfnfxlLFYhTUVWuWzMqEFAGnFG3uw/QMWZnQgkGbx0LMcYzdqFb7/vz\n" +
-                                                "rTSHfjJsisUTWPjo7SBnAtNYCYaGj0YH5RFUdabnvoTdV2XpA5IPYa9Q597g/M0z\n" +
-                                                "icAjuaK614nKXDaAUCbjki8RL3OK9KY920zNFboq/jKG6rKW2t51ZQIDAQABo1Aw\n" +
-                                                "TjAdBgNVHQ4EFgQUA0XGTcD6jqkL2oMPQaVtEgZDqV4wHwYDVR0jBBgwFoAUA0XG\n" +
-                                                "TcD6jqkL2oMPQaVtEgZDqV4wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC\n" +
-                                                "AQEAijcT5QMVqrWWqpNEe1DidzQfSnKo17ZogHW+BfUbxv65JbDIntnk1XgtLTKB\n" +
-                                                "VAdIWUtGZbXxrp16NEsh96V2hjDIoiAaEpW+Cp6AHhIVgVh7Q9Knq9xZ1t6H8PL5\n" +
-                                                "QiYQKQgJ0HapdCxlPKBfUm/Mj1ppNl9mPFJwgHmzORexbxrzU/M5i2jlies+CXNq\n" +
-                                                "cvmF2l33QNHnLwpFGwYKs08pyHwUPp6+bfci6lRvavztgvnKroWWIRq9ZPlC0yVK\n" +
-                                                "FFemhbCd7ZVbrTo0NcWZM1PTAbvlOikV9eh3i1Vot+3dJ8F27KwUTtnV0B9Jrxum\n" +
-                                                "W9P3C48mvwTxYZJFOu0N9UBLLg==\n" +
-                                                "-----END CERTIFICATE-----");
-                CRL.getInstance();  // Fetch the CRL
-            }
-            trustedRootCert.valid = true;
-            log.info("Using trusted root certificate: CN=" + trustedRootCert.getCommonName() +
-                    ", O=" + trustedRootCert.getOrganization() + " (" + trustedRootCert.getFingerprint() + ")");
-        }
-        catch(javax.security.cert.CertificateParsingException e) {
-            e.printStackTrace();
-        }
-    }
-
-    X509Certificate theCertificate;
-    X509Certificate theIntermediateCertificate;
-
+    private X509Certificate theCertificate;
     private String fingerprint;
     private String commonName;
     private String organization;
@@ -97,26 +50,85 @@ public class Certificate {
 
     private boolean valid = false; //used by review sites UI only
 
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    public static final String[] saveFields = new String[] {"fingerprint", "commonName", "organization", "validFrom", "validTo", "valid"};
-
-    /**
-     * Decodes a certificate and intermediate certificate from the given string
-     */
-    public Certificate(String in) throws CertificateParsingException {
-
+    static {
         try {
-            CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            String overridePath = System.getProperty("trustedRootCert");
+            if (overridePath != null) {
+                try {
+                    trustedRootCert = new Certificate(FileUtilities.readLocalFile(overridePath));
+                    overrideTrustedRootCert = true;
+                }
+                catch(IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (trustedRootCert == null) {
+                trustedRootCert = new Certificate("-----BEGIN CERTIFICATE-----\n" +
+                                                          "MIIELzCCAxegAwIBAgIJALm151zCHDxiMA0GCSqGSIb3DQEBCwUAMIGsMQswCQYD\n" +
+                                                          "VQQGEwJVUzELMAkGA1UECAwCTlkxEjAQBgNVBAcMCUNhbmFzdG90YTEbMBkGA1UE\n" +
+                                                          "CgwSUVogSW5kdXN0cmllcywgTExDMRswGQYDVQQLDBJRWiBJbmR1c3RyaWVzLCBM\n" +
+                                                          "TEMxGTAXBgNVBAMMEHF6aW5kdXN0cmllcy5jb20xJzAlBgkqhkiG9w0BCQEWGHN1\n" +
+                                                          "cHBvcnRAcXppbmR1c3RyaWVzLmNvbTAgFw0xNTAzMDEyMzM4MjlaGA8yMTE1MDMw\n" +
+                                                          "MjIzMzgyOVowgawxCzAJBgNVBAYTAlVTMQswCQYDVQQIDAJOWTESMBAGA1UEBwwJ\n" +
+                                                          "Q2FuYXN0b3RhMRswGQYDVQQKDBJRWiBJbmR1c3RyaWVzLCBMTEMxGzAZBgNVBAsM\n" +
+                                                          "ElFaIEluZHVzdHJpZXMsIExMQzEZMBcGA1UEAwwQcXppbmR1c3RyaWVzLmNvbTEn\n" +
+                                                          "MCUGCSqGSIb3DQEJARYYc3VwcG9ydEBxemluZHVzdHJpZXMuY29tMIIBIjANBgkq\n" +
+                                                          "hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuWsBa6uk+RM4OKBZTRfIIyqaaFD71FAS\n" +
+                                                          "7kojAQ+ySMpYuqLjIVZuCh92o1FGBvyBKUFc6knAHw5749yhLCYLXhzWwiNW2ri1\n" +
+                                                          "Jwx/d83Wnaw6qA3lt++u3tmiA8tsFtss0QZW0YBpFsIqhamvB3ypwu0bdUV/oH7g\n" +
+                                                          "/s8TFR5LrDfnfxlLFYhTUVWuWzMqEFAGnFG3uw/QMWZnQgkGbx0LMcYzdqFb7/vz\n" +
+                                                          "rTSHfjJsisUTWPjo7SBnAtNYCYaGj0YH5RFUdabnvoTdV2XpA5IPYa9Q597g/M0z\n" +
+                                                          "icAjuaK614nKXDaAUCbjki8RL3OK9KY920zNFboq/jKG6rKW2t51ZQIDAQABo1Aw\n" +
+                                                          "TjAdBgNVHQ4EFgQUA0XGTcD6jqkL2oMPQaVtEgZDqV4wHwYDVR0jBBgwFoAUA0XG\n" +
+                                                          "TcD6jqkL2oMPQaVtEgZDqV4wDAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQsFAAOC\n" +
+                                                          "AQEAijcT5QMVqrWWqpNEe1DidzQfSnKo17ZogHW+BfUbxv65JbDIntnk1XgtLTKB\n" +
+                                                          "VAdIWUtGZbXxrp16NEsh96V2hjDIoiAaEpW+Cp6AHhIVgVh7Q9Knq9xZ1t6H8PL5\n" +
+                                                          "QiYQKQgJ0HapdCxlPKBfUm/Mj1ppNl9mPFJwgHmzORexbxrzU/M5i2jlies+CXNq\n" +
+                                                          "cvmF2l33QNHnLwpFGwYKs08pyHwUPp6+bfci6lRvavztgvnKroWWIRq9ZPlC0yVK\n" +
+                                                          "FFemhbCd7ZVbrTo0NcWZM1PTAbvlOikV9eh3i1Vot+3dJ8F27KwUTtnV0B9Jrxum\n" +
+                                                          "W9P3C48mvwTxYZJFOu0N9UBLLg==\n" +
+                                                          "-----END CERTIFICATE-----");
+
+                CRL.getInstance();  // Fetch the CRL
+            }
+
+            trustedRootCert.valid = true;
+            log.debug("Using trusted root certificate: CN={}, O={} ({})",
+                      trustedRootCert.getCommonName(), trustedRootCert.getOrganization(), trustedRootCert.getFingerprint());
+        }
+        catch(CertificateParsingException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // We are going to pass this for all unsigned requests
+    // This way, paid or not, users will have to Allow/Deny all unsigned requests, encouraging security
+    public static final Certificate UNSIGNED;
+
+    static {
+        HashMap<String,String> map = new HashMap<String,String>();
+        map.put("fingerprint", "UNSIGNED REQUEST");
+        map.put("commonName", "An anonymous request");
+        map.put("organization", "Unknown");
+        map.put("validFrom", "0000-00-00 00:00:00");
+        map.put("validTo", "0000-00-00 00:00:00");
+        map.put("valid", "false");
+        UNSIGNED = Certificate.loadCertificate(map);
+    }
+
+
+    /** Decodes a certificate and intermediate certificate from the given string */
+    public Certificate(String in) throws CertificateParsingException {
+        try {
             //Setup X.509
+            CertificateFactory cf = CertificateFactory.getInstance("X.509");
 
-            String[] split = in.split("--START INTERMEDIATE CERT--");
-
-            byte[] serverCertificate = Base64.decode(split[0].replaceAll(X509Constants.BEGIN_CERT, "").replaceAll(X509Constants.END_CERT, ""));
             //Strip beginning and end
+            String[] split = in.split("--START INTERMEDIATE CERT--");
+            byte[] serverCertificate = Base64.decode(split[0].replaceAll(X509Constants.BEGIN_CERT, "").replaceAll(X509Constants.END_CERT, ""));
 
-            theCertificate = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(serverCertificate));
-            //Generate cert
-
+            X509Certificate theIntermediateCertificate;
             if (split.length == 2) {
                 byte[] intermediateCertificate = Base64.decode(split[1].replaceAll(X509Constants.BEGIN_CERT, "").replaceAll(X509Constants.END_CERT, ""));
                 theIntermediateCertificate = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(intermediateCertificate));
@@ -124,6 +136,8 @@ public class Certificate {
                 theIntermediateCertificate = null; //Self-signed
             }
 
+            //Generate cert
+            theCertificate = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(serverCertificate));
             commonName = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.CN).get(0));
             fingerprint = makeThumbPrint(theCertificate);
             organization = String.valueOf(PrincipalUtil.getSubjectX509Principal(theCertificate).getValues(X509Name.O).get(0));
@@ -131,7 +145,7 @@ public class Certificate {
             validTo = theCertificate.getNotAfter();
 
             if (trustedRootCert != null) {
-                HashSet<X509Certificate> chain = new HashSet<X509Certificate>();
+                HashSet<X509Certificate> chain = new HashSet<>();
                 try {
                     chain.add(trustedRootCert.theCertificate);
                     if (theIntermediateCertificate != null) { chain.add(theIntermediateCertificate); }
@@ -144,7 +158,7 @@ public class Certificate {
                     }
                 }
                 catch(Exception e) {
-                    e.printStackTrace();
+                    log.error("Problem building certificate chain", e);
                 }
             }
 
@@ -153,17 +167,16 @@ public class Certificate {
                 CRL qzCrl = CRL.getInstance();
                 if (qzCrl.isLoaded()) {
                     if (qzCrl.isRevoked(getFingerprint()) || theIntermediateCertificate == null || qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate))) {
-                        log.warning("Problem verifying certificate with CRL");
+                        log.warn("Problem verifying certificate with CRL");
                         valid = false;
                     }
                 } else {
                     //Assume nothing is revoked, because we can't get the CRL
-                    log.warning("Failed to retrieve QZ CRL, skipping CRL check");
+                    log.warn("Failed to retrieve QZ CRL, skipping CRL check");
                 }
             }
         }
         catch(Exception e) {
-            e.printStackTrace();
             CertificateParsingException certificateParsingException = new CertificateParsingException();
             certificateParsingException.initCause(e);
             throw certificateParsingException;
@@ -171,6 +184,7 @@ public class Certificate {
     }
 
     private Certificate() {}
+
 
     /**
      * Used to rebuild a certificate for the 'Saved Sites' screen without having to decrypt the certificates again
@@ -186,10 +200,11 @@ public class Certificate {
             cert.validFrom = dateFormat.parse(data.get("validFrom"));
             cert.validTo = dateFormat.parse(data.get("validTo"));
         }
-        catch(ParseException badParse) {
+        catch(ParseException e) {
             cert.validFrom = new Date(0);
             cert.validTo = new Date(0);
-            LogIt.log(badParse);
+
+            log.error("Unable to parse certificate date", e);
         }
 
         cert.valid = Boolean.parseBoolean(data.get("valid"));
@@ -206,63 +221,37 @@ public class Certificate {
      * @return true if signature valid, false if not
      */
     public boolean isSignatureValid(String signature, String data) {
-        if (signature.length() == 0) {
-            return false;
-        }
+        if (signature.length() > 0) {
+            RSATool tool = RSAToolFactory.getRSATool();
+            RSAKey thePublicKey = new RSAKeyImpl(theCertificate.getPublicKey());
 
-        RSATool tool = RSAToolFactory.getRSATool();
-        RSAKey thePublicKey = new RSAKeyImpl(theCertificate.getPublicKey());
-
-        //On errors, assume failure.
-        try {
-            return tool.verifyWithKey(data.getBytes(), Base64.decode(signature), thePublicKey);
-        }
-        catch(Exception e) {
-            log.warning(e.getMessage());
+            //On errors, assume failure.
+            try {
+                return tool.verifyWithKey(data.getBytes(), Base64.decode(signature), thePublicKey);
+            }
+            catch(Exception e) {
+                log.error("Unable to verify signature", e);
+            }
         }
 
         return false;
     }
 
-    /**
-     * Checks if the certificate has been added to the local trusted store
-     */
+    /** Checks if the certificate has been added to the local trusted store */
     public boolean isSaved() {
         File allowed = FileUtilities.getFile(Constants.ALLOW_FILE);
-
-        BufferedReader br = null;
-        try {
-            String line;
-            br = new BufferedReader(new FileReader(allowed));
-            while((line = br.readLine()) != null) {
-                String print = line.substring(0, line.indexOf("\t"));
-                if (print.equals(getFingerprint())) {
-                    return true;
-                }
-            }
-        }
-        catch(IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            if (br != null) {
-                try { br.close(); } catch(Exception ignore) {}
-            }
-        }
-
-        return false;
+        return existsInFile(allowed);
     }
 
-    /**
-     * Checks if the certificate has been added to the local blocked store
-     */
+    /** Checks if the certificate has been added to the local blocked store */
     public boolean isBlocked() {
         File blocks = FileUtilities.getFile(Constants.BLOCK_FILE);
+        return existsInFile(blocks);
+    }
 
-        BufferedReader br = null;
-        try {
+    private boolean existsInFile(File file) {
+        try(BufferedReader br = new BufferedReader(new FileReader(file))) {
             String line;
-            br = new BufferedReader(new FileReader(blocks));
             while((line = br.readLine()) != null) {
                 String print = line.substring(0, line.indexOf("\t"));
                 if (print.equals(getFingerprint())) {
@@ -273,14 +262,10 @@ public class Certificate {
         catch(IOException e) {
             e.printStackTrace();
         }
-        finally {
-            if (br != null) {
-                try { br.close(); } catch(Exception ignore) {}
-            }
-        }
 
         return false;
     }
+
 
     public String getFingerprint() {
         return fingerprint;
@@ -311,18 +296,17 @@ public class Certificate {
     }
 
     /**
-     * Validates certificate against embedded cacert.
+     * Validates certificate against embedded cert.
      */
     public boolean isTrusted() {
         return valid;
     }
 
+
     public static String makeThumbPrint(X509Certificate cert) throws NoSuchAlgorithmException, CertificateEncodingException {
         MessageDigest md = MessageDigest.getInstance("SHA-1");
-        byte[] der = cert.getEncoded();
-        md.update(der);
-        byte[] digest = md.digest();
-        return ByteUtilities.bytesToHex(digest, false);
+        md.update(cert.getEncoded());
+        return ByteUtilities.bytesToHex(md.digest(), false);
     }
 
     public String data() {
@@ -334,10 +318,6 @@ public class Certificate {
                 isTrusted();
     }
 
-    public static Logger getLogger() {
-        return log;
-    }
-
     @Override
     public String toString() {
         return getOrganization() + " (" + getCommonName() + ")";
@@ -346,7 +326,7 @@ public class Certificate {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Certificate) {
-            return ((Certificate)obj).data().equals(this.data());
+            return ((Certificate)obj).data().equals(data());
         }
         return super.equals(obj);
     }

@@ -22,6 +22,9 @@
 
 package qz.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
@@ -29,13 +32,14 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Created by Tres Finocchiaro on 12/12/2014.
  */
 public class IconCache {
+
+    private static final Logger log = LoggerFactory.getLogger(IconCache.class);
+
     // Internal Jar path containing the images
     static String RESOURCES_DIR = "/qz/ui/resources/";
 
@@ -131,8 +135,8 @@ public class IconCache {
         public String getFileName() { return fileName; }
     }
 
-    private final HashMap<Icon, ImageIcon> imageIcons;
-    private final HashMap<Icon, BufferedImage> images;
+    private final HashMap<Icon,ImageIcon> imageIcons;
+    private final HashMap<Icon,BufferedImage> images;
     private final Dimension scaleSize;
 
     /**
@@ -140,8 +144,8 @@ public class IconCache {
      * Builds a cache of Image and ImageIcon resources by iterating through all IconCache.Icon types
      */
     public IconCache() {
-        imageIcons = new HashMap<Icon, ImageIcon>();
-        images = new HashMap<Icon, BufferedImage>();
+        imageIcons = new HashMap<>();
+        images = new HashMap<>();
         scaleSize = null;
         buildIconCache();
     }
@@ -153,8 +157,8 @@ public class IconCache {
      * @param scaleSize The size to scale each appropriate image to.  See IconCache.Icon.isScaled()
      */
     public IconCache(Dimension scaleSize) {
-        imageIcons = new HashMap<Icon, ImageIcon>();
-        images = new HashMap<Icon, BufferedImage>();
+        imageIcons = new HashMap<>();
+        images = new HashMap<>();
         this.scaleSize = scaleSize;
         buildIconCache();
     }
@@ -220,9 +224,10 @@ public class IconCache {
      */
     private BufferedImage getImageResource(Icon i) {
         BufferedImage bi = getImageResource(i.getPath());
-        if (i.isScaled() && scaleSize != null) {
+        if (bi != null && i.isScaled() && scaleSize != null) {
             return toBufferedImage(bi.getScaledInstance(scaleSize.width, -1, Image.SCALE_SMOOTH));
         }
+
         return bi;
     }
 
@@ -240,11 +245,11 @@ public class IconCache {
             if (is != null) {
                 return ImageIO.read(is);
             } else {
-                Logger.getLogger(IconCache.class.getClass().getName()).log(Level.WARNING, "Cannot find {0}", new Object[] {imagePath});
+                log.warn("Cannot find {}", imagePath);
             }
         }
         catch(IOException e) {
-            Logger.getLogger(IconCache.class.getClass().getName()).log(Level.WARNING, "Cannot find {0}", new Object[] {imagePath});
+            log.error("Cannot find {}", imagePath, e);
         }
         return null;
     }
@@ -256,7 +261,7 @@ public class IconCache {
      * @param bgColor the java Color used for the transparent pixels
      */
     public void toOpaqueImage(Icon i, Color bgColor) {
-        this.putIcon(i, new ImageIcon(toOpaqueImage(getIcon(i), bgColor)));
+        putIcon(i, new ImageIcon(toOpaqueImage(getIcon(i), bgColor)));
     }
 
     /**
@@ -279,7 +284,7 @@ public class IconCache {
      */
     public static BufferedImage toBufferedImage(Image img) {
         if (img instanceof BufferedImage) {
-            return (BufferedImage) img;
+            return (BufferedImage)img;
         }
 
         // Create a buffered image with transparency

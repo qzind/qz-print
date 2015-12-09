@@ -48,7 +48,7 @@ public class GatewayDialog extends JDialog {
     }
 
     private void initComponents() {
-        descriptionPanel  = new JPanel();
+        descriptionPanel = new JPanel();
         verifiedLabel = new JLabel();
         verifiedLabel.setBorder(new EmptyBorder(3, 3, 3, 3));
         descriptionLabel = new JLabel();
@@ -128,7 +128,7 @@ public class GatewayDialog extends JDialog {
             if (!approved && persistentCheckBox.isSelected()) {
                 ConfirmDialog confirmDialog = new ConfirmDialog(null, "Please Confirm", iconCache);
                 String message = Constants.BLACK_LIST.replace(" blocked ", " block ") + "?";
-                message = String.format(message, cert == null ? "" : cert.getCommonName());
+                message = String.format(message, cert == null? "":cert.getCommonName());
                 if (!confirmDialog.prompt(message)) {
                     return;
                 }
@@ -149,11 +149,11 @@ public class GatewayDialog extends JDialog {
         if (cert != null) {
             // TODO:  Add name, publisher
             descriptionLabel.setText("<html>" +
-                    String.format(description, "<p>" + cert.getCommonName()) +
-                    "</p><strong>" + (cert.isTrusted() ?  Constants.TRUSTED_PUBLISHER :  Constants.UNTRUSTED_PUBLISHER) + "</strong>" +
-                    "</html>");
+                                             String.format(description, "<p>" + cert.getCommonName()) +
+                                             "</p><strong>" + (cert.isTrusted()? Constants.TRUSTED_PUBLISHER:Constants.UNTRUSTED_PUBLISHER) + "</strong>" +
+                                             "</html>");
             certInfoLabel.setText("Certificate information");
-            verifiedLabel.setIcon(iconCache.getIcon(cert.isTrusted() ? IconCache.Icon.VERIFIED_ICON : IconCache.Icon.UNVERIFIED_ICON));
+            verifiedLabel.setIcon(iconCache.getIcon(cert.isTrusted()? IconCache.Icon.VERIFIED_ICON:IconCache.Icon.UNVERIFIED_ICON));
         } else {
             descriptionLabel.setText(description);
             verifiedLabel.setIcon(null);

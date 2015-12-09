@@ -36,6 +36,7 @@ public class CertificateTable extends JTable {
 
         /**
          * Returns the <code>String</code> value associated with this certificate field
+         *
          * @return Certificate field such as "commonName"
          */
         public String getValue(Certificate cert) {
@@ -44,7 +45,7 @@ public class CertificateTable extends JTable {
             }
 
             Reflect reflect = Reflect.on(cert).call(callBack);
-            Object value = reflect == null ? null : reflect.get();
+            Object value = reflect == null? null:reflect.get();
             if (value == null) {
                 return "";
             }
@@ -84,7 +85,10 @@ public class CertificateTable extends JTable {
     }
 
     private void initComponents() {
-        model = new DefaultTableModel() { @Override public boolean isCellEditable(int x, int y){ return false; } };
+        model = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int x, int y) { return false; }
+        };
         model.addColumn("Field");
         model.addColumn("Value");
 
@@ -111,16 +115,16 @@ public class CertificateTable extends JTable {
         warn.add(Calendar.DAY_OF_MONTH, -1 * Constants.EXPIRY_WARN);
 
         // First Column
-        for (CertificateField field : CertificateField.values()) {
-            model.addRow(new Object[]{field, ""});
+        for(CertificateField field : CertificateField.values()) {
+            model.addRow(new Object[] {field, ""});
         }
 
         // Second Column
-        for (int col = 0; col < model.getColumnCount(); col++) {
-            for (int row = 0; row < model.getRowCount(); row++) {
+        for(int col = 0; col < model.getColumnCount(); col++) {
+            for(int row = 0; row < model.getRowCount(); row++) {
                 Object cell = (model.getValueAt(row, col));
                 if (cell instanceof CertificateField) {
-                    model.setValueAt(((CertificateField) cell).getValue(cert), row, col + 1);
+                    model.setValueAt(((CertificateField)cell).getValue(cert), row, col + 1);
                 }
             }
         }
@@ -138,7 +142,7 @@ public class CertificateTable extends JTable {
     }
 
     public void removeRows() {
-        for (int row = model.getRowCount() - 1; row >= 0 ; row--) {
+        for(int row = model.getRowCount() - 1; row >= 0; row--) {
             model.removeRow(row);
         }
     }
@@ -149,7 +153,7 @@ public class CertificateTable extends JTable {
      */
     public void autoSize() {
         removeRows();
-        for (int row = 0; row < CertificateField.size(); row++) {
+        for(int row = 0; row < CertificateField.size(); row++) {
             model.addRow(new Object[2]);
         }
         int normalWidth = (int)getPreferredScrollableViewportSize().getWidth();
@@ -169,7 +173,7 @@ public class CertificateTable extends JTable {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
-            JLabel label = (JLabel) super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
+            JLabel label = (JLabel)super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
 
             // First Column
             if (value instanceof CertificateField) {
@@ -185,18 +189,18 @@ public class CertificateTable extends JTable {
 
             CertificateField field = (CertificateField)table.getValueAt(row, col - 1);
             if (field == null) { return stylizeLabel(STATUS_NORMAL, label, isSelected); }
-            switch (field) {
+            switch(field) {
                 case TRUSTED:
-                    label.setText(cert.isTrusted() ? Constants.TRUSTED_PUBLISHER : Constants.UNTRUSTED_PUBLISHER);
-                    return stylizeLabel(!cert.isTrusted() ? STATUS_WARNING : STATUS_TRUSTED, label, isSelected);
+                    label.setText(cert.isTrusted()? Constants.TRUSTED_PUBLISHER:Constants.UNTRUSTED_PUBLISHER);
+                    return stylizeLabel(!cert.isTrusted()? STATUS_WARNING:STATUS_TRUSTED, label, isSelected);
                 case VALID_FROM:
                     boolean futureExpiration = cert.getValidFromDate().compareTo(now.getTime()) > 0;
-                    return stylizeLabel(futureExpiration ? STATUS_WARNING : STATUS_NORMAL, label, isSelected, "future expiration");
+                    return stylizeLabel(futureExpiration? STATUS_WARNING:STATUS_NORMAL, label, isSelected, "future expiration");
                 case VALID_TO:
                     boolean expiresSoon = cert.getValidToDate().compareTo(warn.getTime()) < 0;
                     boolean expired = cert.getValidToDate().compareTo(now.getTime()) < 0;
-                    String reason = expiresSoon ? "expired" : "expires soon";
-                    return stylizeLabel(expiresSoon || expired ? STATUS_WARNING : STATUS_NORMAL, label, isSelected, reason);
+                    String reason = expiresSoon? "expired":"expires soon";
+                    return stylizeLabel(expiresSoon || expired? STATUS_WARNING:STATUS_NORMAL, label, isSelected, reason);
                 default:
                     return stylizeLabel(STATUS_NORMAL, label, isSelected);
             }
@@ -212,7 +216,7 @@ public class CertificateTable extends JTable {
             int fontWeight;
             Color foreground;
 
-            switch (statusCode) {
+            switch(statusCode) {
 
                 case STATUS_WARNING:
                     foreground = Constants.WARNING_COLOR;
@@ -229,7 +233,7 @@ public class CertificateTable extends JTable {
             }
 
             label.setFont(label.getFont().deriveFont(fontWeight));
-            label.setForeground(isSelected ? defaultSelectedForeground : foreground);
+            label.setForeground(isSelected? defaultSelectedForeground:foreground);
             if (statusCode == STATUS_WARNING && reason != null) {
                 label.setText(label.getText() + " (" + reason + ")");
             }

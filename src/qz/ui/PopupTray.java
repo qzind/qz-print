@@ -22,14 +22,14 @@
 
 package qz.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.utils.SystemUtilities;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.MouseEvent;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Creates a more robust System Tray menu by leveraging a JPopupMenu.
@@ -39,13 +39,18 @@ import java.util.logging.Logger;
  * @author A. Tres Finocchiaro
  */
 public class PopupTray extends JPopupMenu {
+
+    private static final Logger log = LoggerFactory.getLogger(PopupTray.class);
+
     private final SystemTray systemTray;
     private final TrayIcon trayIcon;
+
 
     /**
      * Constructs a JPopupMenu attached to the system's SystemTray with
      * the specified imageIcon and toolTipText
-     * @param imageIcon The icon to display in the System Tray
+     *
+     * @param imageIcon   The icon to display in the System Tray
      * @param toolTipText The text to display during tray mouse-over
      */
     public PopupTray(ImageIcon imageIcon, String toolTipText) {
@@ -60,7 +65,8 @@ public class PopupTray extends JPopupMenu {
     /**
      * Constructs a JPopupMenu attached to the system's SystemTray with
      * the specified image and toolTipText
-     * @param image The image to display in the System Tray
+     *
+     * @param image       The image to display in the System Tray
      * @param toolTipText The text to display during tray mouse-over
      */
     public PopupTray(Image image, String toolTipText) {
@@ -75,6 +81,7 @@ public class PopupTray extends JPopupMenu {
     /**
      * Constructs a JPopupMenu attached to the system's SystemTray with
      * the specified toolTipText
+     *
      * @param toolTipText The text to display during tray mouse-over
      */
     public PopupTray(String toolTipText) {
@@ -98,6 +105,7 @@ public class PopupTray extends JPopupMenu {
 
     /**
      * Sets the TrayIcon image based on the Image specified
+     *
      * @param image The image to set the TrayIcon to
      */
     public final void setImage(Image image) {
@@ -109,17 +117,19 @@ public class PopupTray extends JPopupMenu {
     /**
      * Sets the toolTipText for the underlying TrayIcon instance, rather than
      * that of the JPopupMenu
+     *
      * @param toolTipText tool text to set
      */
     @Override
     public final void setToolTipText(String toolTipText) {
-	if (trayIcon != null){
+        if (trayIcon != null) {
             trayIcon.setToolTip(toolTipText);
-	}
+        }
     }
 
     /**
      * Returns the underlying TrayIcon for this object
+     *
      * @return The underlying TrayIcon object
      */
     public TrayIcon getTrayIcon() {
@@ -128,33 +138,37 @@ public class PopupTray extends JPopupMenu {
 
     /**
      * Returns the width of the underlying TrayIcon
+     *
      * @return Width measurement in pixels
      */
     public int getTrayWidth() {
-        return (trayIcon != null)?(int)trayIcon.getSize().getWidth():1;
+        return (trayIcon != null)? (int)trayIcon.getSize().getWidth():1;
     }
 
     /**
      * Returns the height of the underlying TrayIcon
+     *
      * @return Height measurement in pixels
      */
     public int getTrayHeight() {
-        return (trayIcon != null)?(int)trayIcon.getSize().getHeight():1;
+        return (trayIcon != null)? (int)trayIcon.getSize().getHeight():1;
     }
 
     /**
      * Returns the size of the TrayIcons
+     *
      * @return Height measurement in pixels
      */
     public Dimension getIconSize() {
-	if (trayIcon != null){
+        if (trayIcon != null) {
             return trayIcon.getSize();
-	}
-	return new Dimension(1,1);
+        }
+        return new Dimension(1, 1);
     }
 
     /**
      * Sets the TrayIcon image based on the ImageIcon specified
+     *
      * @param imageIcon The ImageIcon to set the TrayIcon to
      */
     public final void setIcon(ImageIcon imageIcon) {
@@ -165,25 +179,27 @@ public class PopupTray extends JPopupMenu {
 
     /**
      * Creates a custom tray icon with this JPopupMenu attached
+     *
      * @return The AWT TrayIcon associated with this JPopupMenu
      */
     private TrayIcon createTrayIcon() {
         // Create an empty tray icon
-	if (SystemTray.isSupported()){
+        if (SystemTray.isSupported()) {
             TrayIcon newTrayIcon = new TrayIcon(new ImageIcon(new byte[1]).getImage());
             addTrayListener();
             newTrayIcon.setImageAutoSize(true);
             return newTrayIcon;
-	}
-	return null;
+        }
+
+        return null;
     }
 
     /**
-     * Functional equivalent of a <code>MouseAdapter</code>, but accommodates an edge-cases in Gnome3 where the tray
+     * Functional equivalent of a {@code MouseAdapter}, but accommodates an edge-cases in Gnome3 where the tray
      * icon cannot listen on mouse events.
-     *
+     * <p/>
      * Since there's no component to listen on, show popup only when
-     * <code>MouseEvent.getComponent()</code> is <code>null</code>
+     * {@code MouseEvent.getComponent()} is {@code null}
      */
     private void addTrayListener() {
         Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
@@ -193,11 +209,11 @@ public class PopupTray extends JPopupMenu {
                     MouseEvent me = (MouseEvent)e;
                     // X11 bug
                     if (SystemUtilities.isFedora()) {
-                        show(me.getComponent(),0,0);
+                        show(me.getComponent(), 0, 0);
                     } else {
                         setInvoker(PopupTray.this);
                         setVisible(true);
-                        setLocation(me.getX(), me.getY() - (SystemUtilities.isWindows() ? getHeight() : 0));
+                        setLocation(me.getX(), me.getY() - (SystemUtilities.isWindows()? getHeight():0));
                     }
                 }
             }
@@ -205,12 +221,13 @@ public class PopupTray extends JPopupMenu {
     }
 
     private boolean isTrayEvent(AWTEvent e) {
-        if (e instanceof MouseEvent) { 
+        if (e instanceof MouseEvent) {
             MouseEvent me = (MouseEvent)e;
             if (me.getID() == MouseEvent.MOUSE_RELEASED && me.getSource() != null) {
                 return me.getSource().getClass().getName().contains("TrayIcon");
             }
         }
+
         return false;
     }
 
@@ -219,22 +236,21 @@ public class PopupTray extends JPopupMenu {
      * Convenience method for getTrayIcon().displayMessage(...).
      * Displays a pop-up message near the tray icon.  The message will
      * disappear after a time or if the user clicks on it.
-     * @param caption the caption displayed above the text, usually in
-     * bold; may be <code>null</code>
-     * @param text the text displayed for the particular message; may be
-     * <code>null</code>
-     * @param level The Logger message severity, shouldn't be
-     * <code>null</code>
+     *
+     * @param caption the caption displayed above the text, usually in bold; may be {@code null}
+     * @param text    the text displayed for the particular message; may be {@code null}
+     * @param level   The Logger message severity, shouldn't be {@code null}
      */
-    public void displayMessage(String caption, String text, Level level) {
-	if (trayIcon != null){
-            trayIcon.displayMessage(caption, text, convert(level));
-	}
+    public void displayMessage(String caption, String text, TrayIcon.MessageType level) {
+        if (trayIcon != null) {
+            trayIcon.displayMessage(caption, text, level);
+        }
     }
 
 
     /**
      * Attaches the specified TrayIcon to the SystemTray
+     *
      * @param trayIcon The TrayIcon to attach
      */
     private void attachSystemTray(TrayIcon trayIcon) {
@@ -242,20 +258,20 @@ public class PopupTray extends JPopupMenu {
             if (getSystemTray() != null) {
                 getSystemTray().add(trayIcon);
             }
-        } catch (AWTException e) {
-            Logger.getLogger(getClass().getName()).log(Level.WARNING,
-                "Tray menu could not be added: {0}", e.getLocalizedMessage());
+        }
+        catch(AWTException e) {
+            log.error("Tray menu could not be added: {}", e.getLocalizedMessage(), e);
             if (SystemUtilities.isLinux()) {
-                Logger.getLogger(getClass().getName()).log(Level.WARNING,
-                "Ubuntu users:  If the tray icon does not appear try running the following:\n\n" +
-                        "    $ gsettings set com.canonical.Unity.Panel systray-whitelist \"['all']\"\n\n" +
-                        "... then log out and log back in to restart Unity.");
+                log.warn("Ubuntu users:  If the tray icon does not appear try running the following:\n\n" +
+                                 "    $ gsettings set com.canonical.Unity.Panel systray-whitelist \"['all']\"\n\n" +
+                                 "... then log out and log back in to restart Unity.");
             }
         }
     }
 
     /**
      * Returns the SystemTray, or null if none exists
+     *
      * @return The SystemTray, or null if none exists
      */
     private SystemTray getSystemTray() {
@@ -265,20 +281,9 @@ public class PopupTray extends JPopupMenu {
             }
             return systemTray;
         } else {
-            Logger.getLogger(getClass().getName()).log(Level.SEVERE,
-                    "System tray is not supported on this platform");
+            log.error("System tray is not supported on this platform");
             return null;
         }
     }
 
-    public static TrayIcon.MessageType convert(Level level)  {
-       if (level.equals(Level.SEVERE)) {
-           return TrayIcon.MessageType.ERROR;
-       } else if (level.equals(Level.WARNING)) {
-           return TrayIcon.MessageType.WARNING;
-       } else if (level.equals(Level.INFO)) {
-           return TrayIcon.MessageType.INFO;
-       }
-       return TrayIcon.MessageType.NONE;
-    }
 }

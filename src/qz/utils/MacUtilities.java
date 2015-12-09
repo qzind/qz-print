@@ -29,43 +29,46 @@ import java.awt.*;
 
 /**
  * Utility class for MacOS specific functions.
+ *
  * @author Tres Finocchiaro
  */
 public class MacUtilities {
+
     private static Dialog aboutDialog;
     private static TrayManager trayManager;
 
     public static void showAboutDialog() {
         if (aboutDialog != null) { aboutDialog.setVisible(true); }
     }
-    
+
     public static void showExitPrompt() {
-    	if (trayManager != null) { trayManager.exit(0); }
+        if (trayManager != null) { trayManager.exit(0); }
     }
 
     /**
-     * Adds a listener to register the Apple "About" dialog to call setVisible() on the specified Dialog
-     * @param aboutDialog
+     * Adds a listener to register the Apple "About" dialog to call {@code setVisible()} on the specified Dialog
      */
     public static void registerAboutDialog(Dialog aboutDialog) {
         MacUtilities.aboutDialog = aboutDialog;
+
         try {
             OSXAdapter.setAboutHandler(MacUtilities.class, MacUtilities.class.getDeclaredMethod("showAboutDialog"));
-        } catch (Exception e) {
+        }
+        catch(Exception e) {
             e.printStackTrace();
         }
     }
-    
+
     /**
-     * Adds a listener to register the Apple "Quit" to call trayManager.exit(0)
-     * @param aboutDialog
+     * Adds a listener to register the Apple "Quit" to call {@code trayManager.exit(0)}
      */
     public static void registerQuitHandler(TrayManager trayManager) {
-    	MacUtilities.trayManager = trayManager;
-        MacUtilities.aboutDialog = aboutDialog;
+        MacUtilities.trayManager = trayManager;
+
         try {
             OSXAdapter.setQuitHandler(MacUtilities.class, MacUtilities.class.getDeclaredMethod("showExitPrompt"));
-        } catch (Exception e) {
+        }
+        catch(Exception e) {
             e.printStackTrace();
         }
     }

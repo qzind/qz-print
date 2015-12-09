@@ -28,6 +28,7 @@ import java.awt.*;
 
 /**
  * Utility class for Ubuntu OS specific functions.
+ *
  * @author Tres Finocchiaro
  */
 public class UbuntuUtilities {
@@ -38,9 +39,9 @@ public class UbuntuUtilities {
     /**
      * Attempts to get the SystemTray background color from the Ubuntu OS by
      * first parsing the theme name registered with GTK, and then parsing the
-     * <code>dark_bg_color</code> value from the GTK stylesheet.
-     * @return The Ubuntu system tray background color, or <code>Color.WHITE</code>
-     * if it cannot be determined
+     * {@code dark_bg_color} value from the GTK stylesheet.
+     *
+     * @return The Ubuntu system tray background color, or <code>Color.WHITE</code> if it cannot be determined
      */
     public static Color getTrayColor() {
         if (trayColor == null) {
@@ -49,24 +50,24 @@ public class UbuntuUtilities {
             // Ubuntu 12.04 LTS
             String themeName = getThemeName("Ambiance");
             String stdout = ShellUtilities.execute(
-                    new String[]{
-                        "grep", "dark_bg_color",
-                        "/usr/share/themes/" + themeName + "/gtk-3.0/gtk.css"
+                    new String[] {
+                            "grep", "dark_bg_color",
+                            "/usr/share/themes/" + themeName + "/gtk-3.0/gtk.css"
                     },
-                    new String[]{
-                        "dark_bg_color"
+                    new String[] {
+                            "dark_bg_color"
                     });
             if (stdout.isEmpty()) {
                 // Ubuntu 14.04 LTS
                 stdout = ShellUtilities.execute(
-                    // Ubuntu 12.04 - 14.04
-                    new String[]{
-                        "grep", "dark_bg_color",
-                        "/usr/share/themes/" + themeName + "/gtk-3.0/gtk-main.css"
-                    },
-                    new String[]{
-                        "dark_bg_color"
-                });
+                        // Ubuntu 12.04 - 14.04
+                        new String[] {
+                                "grep", "dark_bg_color",
+                                "/usr/share/themes/" + themeName + "/gtk-3.0/gtk-main.css"
+                        },
+                        new String[] {
+                                "dark_bg_color"
+                        });
             }
             if (!stdout.isEmpty() && stdout.contains("#")) {
                 String[] split = stdout.split("#");
@@ -75,41 +76,43 @@ public class UbuntuUtilities {
                 }
             }
         }
+
         return trayColor;
     }
 
     /**
-     * Attempts to retrieve the Ubuntu theme name, i.e. "Ambience", "Radiance", etc
-     * @return the current running theme, or an empty String if it could not be
-     * determined.
+     * Attempts to retrieve the Ubuntu theme name, i.e. "Ambiance", "Radiance", etc
+     *
+     * @return the current running theme, or an empty String if it could not be determined.
      */
     public static String getThemeName(String defaultTheme) {
         String themeName = ShellUtilities.execute(
-                new String[]{
-                    "gconftool-2",
-                    "--get",
-                    "/desktop/gnome/shell/windows/theme"
+                new String[] {
+                        "gconftool-2",
+                        "--get",
+                        "/desktop/gnome/shell/windows/theme"
                 },
                 null
         );
-        return themeName.isEmpty() ? defaultTheme : themeName;
+
+        return themeName.isEmpty()? defaultTheme:themeName;
     }
 
     /**
-     * Replaces the cached tray icons with Ubuntu colorized ones, fixing a Java bug which gives them undesirable
-     * transparency
+     * Replaces the cached tray icons with Ubuntu colorized ones,
+     * fixing a Java bug which gives them undesirable transparency
+     *
      * @param iconCache The icons which have been cached
      */
     public static void fixTrayIcons(IconCache iconCache) {
         // Execute some shell commands to determine specific Linux OS
         if (SystemUtilities.isUbuntu()) {
-            for (IconCache.Icon i : IconCache.getTypes()) {
+            for(IconCache.Icon i : IconCache.getTypes()) {
                 if (i.isTrayIcon()) {
                     iconCache.toOpaqueImage(i, getTrayColor());
                 }
             }
         }
-
     }
 
 }

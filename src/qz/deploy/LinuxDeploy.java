@@ -24,7 +24,6 @@ package qz.deploy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qz.common.Constants;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -33,6 +32,7 @@ import java.net.URLDecoder;
  * @author Tres Finocchiaro
  */
 public class LinuxDeploy extends DeployUtilities {
+
     private static final Logger log = LoggerFactory.getLogger(LinuxDeploy.class);
 
     @Override
@@ -47,27 +47,23 @@ public class LinuxDeploy extends DeployUtilities {
 
     @Override
     public boolean removeStartupShortcut() {
-        return deleteFile(System.getProperty("user.home") +
-                                  "/.config/autostart/" + getShortcutName() + ".desktop");
+        return deleteFile(System.getProperty("user.home") + "/.config/autostart/" + getShortcutName() + ".desktop");
     }
 
     @Override
     public boolean removeDesktopShortcut() {
-        return deleteFile(System.getProperty("user.home") + "/Desktop/" +
-                                  getShortcutName() + ".desktop");
+        return deleteFile(System.getProperty("user.home") + "/Desktop/" + getShortcutName() + ".desktop");
     }
 
 
     @Override
     public boolean hasStartupShortcut() {
-        return fileExists(System.getProperty("user.home") + "/.config/autostart/" +
-                                  getShortcutName() + ".desktop");
+        return fileExists(System.getProperty("user.home") + "/.config/autostart/" + getShortcutName() + ".desktop");
     }
 
     @Override
     public boolean hasDesktopShortcut() {
-        return fileExists(System.getProperty("user.home") + "/Desktop/" +
-                                  getShortcutName() + ".desktop");
+        return fileExists(System.getProperty("user.home") + "/Desktop/" + getShortcutName() + ".desktop");
     }
 
     @Override
@@ -93,12 +89,12 @@ public class LinuxDeploy extends DeployUtilities {
         String shortcutPath = folderPath + getShortcutName() + ".desktop";
 
         // Create the shortcut's parent folder if it does not exist
-        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[]{
+        return createParentFolder(shortcutPath) && writeArrayToFile(shortcutPath, new String[] {
                 "[Desktop Entry]",
                 "Type=Application",
                 "Name=" + getShortcutName(),
                 "Exec=java -jar \"" + getJarPath() + "\"",
-                workingPath.trim().equals("") ? "" : "Path=" + workingPath,
+                workingPath.trim().isEmpty()? "":"Path=" + workingPath,
                 //"IconIndex=" + iconIndex,
                 "Icon=" + getIconPath(),
                 "Terminal=false",
@@ -108,7 +104,7 @@ public class LinuxDeploy extends DeployUtilities {
 
     private String getIconPath() {
         String linuxIcon = getParentDirectory() + "/linux-icon.svg";
-        return fileExists(linuxIcon) ? linuxIcon : "printer";
+        return fileExists(linuxIcon)? linuxIcon:"printer";
     }
 }
 

@@ -1,8 +1,8 @@
 package qz.ui;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.common.Constants;
-import qz.common.LogIt;
-import qz.utils.FileUtilities;
 import qz.utils.SystemUtilities;
 
 import javax.swing.*;
@@ -19,6 +19,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Created by Tres on 2/26/2015.
  */
 public class LogDialog extends BasicDialog implements Runnable {
+
+    private static final Logger log = LoggerFactory.getLogger(LogDialog.class);
+
     private final int ROWS = 20;
     private final int COLS = 80;
 
@@ -43,7 +46,6 @@ public class LogDialog extends BasicDialog implements Runnable {
         logArea.setEditable(false);
         logArea.setLineWrap(true);
         logArea.setWrapStyleWord(true);
-        logPane = new JScrollPane(logArea);
 
         // TODO:  Fix button panel resizing issues
         clearButton = addPanelButton("Clear", IconCache.Icon.DELETE_ICON, KeyEvent.VK_L);
@@ -59,12 +61,14 @@ public class LogDialog extends BasicDialog implements Runnable {
         threadRunning = new AtomicBoolean(false);
         clearLogFile = new AtomicBoolean(false);
 
+        logPane = new JScrollPane(logArea);
         setContent(logPane, true);
         setResizable(true);
     }
 
     /**
      * Thread safe append
+     *
      * @param data The data to append to the log window
      */
     public LogDialog append(final String data) {
@@ -75,6 +79,7 @@ public class LogDialog extends BasicDialog implements Runnable {
                 clearButton.setEnabled(true);
             }
         });
+
         return this;
     }
 
@@ -98,6 +103,7 @@ public class LogDialog extends BasicDialog implements Runnable {
             clear();
             threadRunning.set(false);
         }
+
         super.setVisible(visible);
     }
 
@@ -110,49 +116,52 @@ public class LogDialog extends BasicDialog implements Runnable {
             String buffer;
 
             // Reads the log file and prints to the text area
-            while (threadRunning.get()) {
+            while(threadRunning.get()) {
                 File activeLogFile = getActiveLogFile();
                 if (br == null || !activeLogFile.equals(previousLogFile)) {
                     previousLogFile = activeLogFile;
                     if (br != null) {
                         try { br.close(); }
-                        catch (Exception ignore) {}
+                        catch(Exception ignore) {}
                     }
+
                     br = new BufferedReader(new FileReader(activeLogFile));
-                    LogIt.log("Reading " + activeLogFile.getPath());
+                    log.info("Reading {}", activeLogFile.getPath());
                 }
 
                 if (isVisible()) {
-                   if (clearLogFile.get()) {
+                    if (clearLogFile.get()) {
                         clear();
                         clearLogFile.set(false);
                     } else if ((buffer = br.readLine()) != null) {
                         append(buffer).append("\r\n");
-                    } else sleep(500);
+                    } else {
+                        sleep(500);
+                    }
                 }
             }
-        } catch (IOException e) {
+        }
+        catch(IOException e) {
             e.printStackTrace();
-        } finally {
+        }
+        finally {
+            threadRunning.set(false);
             if (br != null) {
-                try {
-                    threadRunning.set(false);
-                    br.close();
-                } catch (Exception ignore) {
-                }
+                try { br.close(); } catch(Exception ignore) {}
             }
         }
     }
 
     public File getActiveLogFile() {
         File logFile = null;
-        File dataDir = new File(SystemUtilities.getDataDirectory());
-        for (File f : dataDir.listFiles()) {
-            if (f.getName().startsWith(Constants.LOG_FILE) && f.getName().contains(".log") && !f.getName().contains(".lck")) {
-                File compareFile = f;
+        File[] dataDir = new File(SystemUtilities.getDataDirectory()).listFiles();
 
-                if (logFile == null || compareFile.lastModified() > logFile.lastModified()) {
-                    logFile = compareFile;
+        if (dataDir != null) {
+            for(File file : dataDir) {
+                if (file.getName().startsWith(Constants.LOG_FILE) && file.getName().contains(".log") && !file.getName().contains(".lck")) {
+                    if (logFile == null || file.lastModified() > logFile.lastModified()) {
+                        logFile = file;
+                    }
                 }
             }
         }
@@ -161,9 +170,6 @@ public class LogDialog extends BasicDialog implements Runnable {
     }
 
     public void sleep(int millis) {
-        try {
-            Thread.sleep(millis);
-        }
-        catch (InterruptedException ignore) {}
+        try { Thread.sleep(millis); } catch(InterruptedException ignore) {}
     }
 }

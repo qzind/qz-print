@@ -39,7 +39,7 @@ public class BasicDialog extends JDialog {
 
     public void initBasicComponents() {
         setIconImage(iconCache.getImage(IconCache.Icon.DEFAULT_ICON));
-        mainPanel= new JPanel();
+        mainPanel = new JPanel();
         mainPanel.setBorder(new EmptyBorder(Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING, Constants.BORDER_PADDING));
 
         headerComponent = new JLabel();
@@ -108,7 +108,7 @@ public class BasicDialog extends JDialog {
     }
 
     public JButton addPanelButton(String title, IconCache.Icon icon, int mnemonic) {
-        return addPanelButton(title, iconCache == null ? null : iconCache.getIcon(icon), mnemonic);
+        return addPanelButton(title, iconCache == null? null:iconCache.getIcon(icon), mnemonic);
     }
 
     public JButton addPanelButton(String title, Icon icon, int mnemonic) {
@@ -130,7 +130,7 @@ public class BasicDialog extends JDialog {
 
     public int indexOf(Component findComponent) {
         int i = -1;
-        for (Component currentComponent : mainPanel.getComponents()) {
+        for(Component currentComponent : mainPanel.getComponents()) {
             i++;
             if (findComponent == currentComponent) {
                 break;

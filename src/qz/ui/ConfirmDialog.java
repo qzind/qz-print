@@ -35,7 +35,7 @@ public class ConfirmDialog extends JDialog {
     }
 
     private void initComponents() {
-        descriptionPanel  = new JPanel();
+        descriptionPanel = new JPanel();
         messageLabel = new JLabel();
         questionLabel = new JLabel(iconCache.getIcon(IconCache.Icon.QUESTION_ICON));
 

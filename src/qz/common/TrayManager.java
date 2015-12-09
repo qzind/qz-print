@@ -25,17 +25,14 @@ package qz.common;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import qz.auth.Certificate;
 import qz.deploy.DeployUtilities;
+import qz.deploy.LinuxCertificate;
 import qz.deploy.WindowsDeploy;
 import qz.ui.*;
-import qz.deploy.LinuxCertificate;
-import qz.utils.FileUtilities;
-import qz.utils.MacUtilities;
-import qz.utils.SystemUtilities;
-import qz.utils.UbuntuUtilities;
-import qz.utils.ShellUtilities;
-//import qz.ws.PrintSocket; //FIXME
+import qz.utils.*;
 import qz.ws.PrintSocketServer;
 import qz.ws.SingleInstanceChecker;
 
@@ -43,11 +40,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.io.IOException;
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.*;
 
 /**
  * Manages the icons and actions associated with the TrayIcon
@@ -55,14 +49,14 @@ import java.util.logging.*;
  * @author Tres Finocchiaro
  */
 public class TrayManager {
+
+    private static final Logger log = LoggerFactory.getLogger(TrayManager.class);
+
     // The cached icons
     private final IconCache iconCache;
 
-    // Time in millis before the popup menu disappears
-    final int POPUP_TIMEOUT = 2000;
-
     // Custom swing pop-up menu
-    AutoHidePopupTray tray;
+    private AutoHidePopupTray tray;
 
     private ConfirmDialog confirmDialog;
     private GatewayDialog gatewayDialog;
@@ -72,10 +66,6 @@ public class TrayManager {
 
     // Need a class reference to this so we can set it from the request dialog window
     private JCheckBoxMenuItem anonymousItem;
-
-    // Dedicated log handler for web socket activity
-    private final Logger trayLogger;
-    private FileHandler logHandler;
 
     // The name this UI component will use, i.e "QZ Print 1.9.0"
     private final String name;
@@ -92,15 +82,12 @@ public class TrayManager {
     public TrayManager() {
         name = Constants.ABOUT_TITLE + " " + Constants.VERSION;
 
-        // Setup the web socket log file writer
-        trayLogger = Logger.getLogger(TrayManager.class.getName());
-        addLogHandler(trayLogger);
-
         // Setup the shortcut name so that the UI components can use it
         shortcutCreator = DeployUtilities.getSystemShortcutCreator();
         shortcutCreator.setShortcutName(Constants.ABOUT_TITLE);
 
         // Initialize a custom Swing system tray that hides after a timeout
+        int POPUP_TIMEOUT = 2000;
         tray = new AutoHidePopupTray(POPUP_TIMEOUT);
         tray.setToolTipText(name);
 
@@ -108,7 +95,7 @@ public class TrayManager {
         iconCache = new IconCache(tray.getIconSize());
         tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
 
-        // Linux spcecific tasks
+        // Linux specific tasks
         if (SystemUtilities.isLinux()) {
             // Fix the tray icon to look proper on Ubuntu
             UbuntuUtilities.fixTrayIcons(iconCache);
@@ -129,13 +116,13 @@ public class TrayManager {
         addMenuItems(tray);
         //tray.displayMessage(name, name + " is running.", Level.INFO);
 
-	if (tray.getTrayIcon()!=null){
+        if (tray.getTrayIcon() != null) {
             tray.getTrayIcon().addMouseListener(new MouseListener() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getClickCount() == 2) {
                         tray.setVisible(false);
-                        aboutListener.actionPerformed(new ActionEvent(e.getSource(),e.getID(),null));
+                        aboutListener.actionPerformed(new ActionEvent(e.getSource(), e.getID(), null));
                     }
                 }
 
@@ -151,7 +138,7 @@ public class TrayManager {
                 @Override
                 public void mouseExited(MouseEvent e) {}
             });
-	}
+        }
     }
 
     /**
@@ -183,7 +170,7 @@ public class TrayManager {
 
         anonymousItem = new JCheckBoxMenuItem("Block Anonymous Requests");
         anonymousItem.setMnemonic(KeyEvent.VK_K);
-        //anonymousItem.setState(PrintSocket.UNSIGNED.isBlocked());
+        anonymousItem.setState(Certificate.UNSIGNED.isBlocked());
         anonymousItem.addActionListener(anonymousListener);
 
         JMenuItem logItem = new JMenuItem("View Logs...", iconCache.getIcon(IconCache.Icon.LOG_ICON));
@@ -255,9 +242,7 @@ public class TrayManager {
                 }
             }
             catch(Exception ex) {
-                if (SystemUtilities.isLinux() && ShellUtilities.execute(new String[] {"xdg-open", shortcutCreator.getParentDirectory()})) {
-                    // Do nothing
-                } else {
+                if (!SystemUtilities.isLinux() || !ShellUtilities.execute(new String[] {"xdg-open", shortcutCreator.getParentDirectory()})) {
                     showErrorDialog("Sorry, unable to open the file browser: " + ex.getLocalizedMessage());
                 }
             }
@@ -284,12 +269,12 @@ public class TrayManager {
                 checkBoxState = ((JCheckBoxMenuItem)e.getSource()).getState();
             }
 
-            System.out.println("Block unsigned: " + checkBoxState);
+            log.debug("Block unsigned: {}", checkBoxState);
 
             if (checkBoxState) {
-                //blackList(PrintSocket.UNSIGNED);
+                blackList(Certificate.UNSIGNED);
             } else {
-                //FileUtilities.deleteFromFile(Constants.BLOCK_FILE, PrintSocket.UNSIGNED.data());
+                FileUtilities.deleteFromFile(Constants.BLOCK_FILE, Certificate.UNSIGNED.data());
             }
         }
     };
@@ -334,14 +319,11 @@ public class TrayManager {
 
     private final ActionListener exitListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-             if (confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
+            if (confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
         }
     };
 
     public void exit(int returnCode) {
-        for (Handler h : trayLogger.getHandlers()) {
-                trayLogger.removeHandler(h);
-        }
         System.exit(returnCode);
     }
 
@@ -356,7 +338,7 @@ public class TrayManager {
         // Assume true in case its a regular JMenuItem
         boolean checkBoxState = true;
         if (e.getSource() instanceof JCheckBoxMenuItem) {
-            checkBoxState = ((JCheckBoxMenuItem) e.getSource()).getState();
+            checkBoxState = ((JCheckBoxMenuItem)e.getSource()).getState();
         }
 
         if (shortcutCreator.getJarPath() == null) {
@@ -368,10 +350,10 @@ public class TrayManager {
             // Remove shortcut entry
             if (confirmDialog.prompt("Remove " + name + " from " + toggleType + "?")) {
                 if (!shortcutCreator.removeShortcut(toggleType)) {
-                    tray.displayMessage(name, "Error removing " + toggleType + " entry", Level.SEVERE);
+                    tray.displayMessage(name, "Error removing " + toggleType + " entry", TrayIcon.MessageType.ERROR);
                     checkBoxState = true;   // Set our checkbox back to true
                 } else {
-                    tray.displayMessage(name, "Successfully removed " + toggleType + " entry", Level.INFO);
+                    tray.displayMessage(name, "Successfully removed " + toggleType + " entry", TrayIcon.MessageType.INFO);
                 }
             } else {
                 checkBoxState = true;   // Set our checkbox back to true
@@ -379,15 +361,15 @@ public class TrayManager {
         } else {
             // Add shortcut entry
             if (!shortcutCreator.createShortcut(toggleType)) {
-                tray.displayMessage(name, "Error creating " + toggleType + " entry", Level.SEVERE);
+                tray.displayMessage(name, "Error creating " + toggleType + " entry", TrayIcon.MessageType.ERROR);
                 checkBoxState = false;   // Set our checkbox back to false
             } else {
-                tray.displayMessage(name, "Successfully added " + toggleType + " entry", Level.INFO);
+                tray.displayMessage(name, "Successfully added " + toggleType + " entry", TrayIcon.MessageType.INFO);
             }
         }
 
         if (e.getSource() instanceof JCheckBoxMenuItem) {
-            ((JCheckBoxMenuItem) e.getSource()).setState(checkBoxState);
+            ((JCheckBoxMenuItem)e.getSource()).setState(checkBoxState);
         }
     }
 
@@ -402,24 +384,24 @@ public class TrayManager {
         if (cert == null) {
             displayErrorMessage("Invalid certificate");
             return false;
-        }
-        else {
-            try{
+        } else {
+            try {
                 SwingUtilities.invokeAndWait(new Runnable() {
                     @Override
                     public void run() {
                         gatewayDialog.prompt("%s wants to access local resources", cert);
                     }
                 });
-            }catch(Exception ignore){}
+            }
+            catch(Exception ignore) {}
 
             if (gatewayDialog.isApproved()) {
-                trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
+                log.info("Allowed {} to access local resources", cert.getCommonName());
                 if (gatewayDialog.isPersistent()) {
                     whiteList(cert);
                 }
             } else {
-                trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from accessing local resources");
+                log.info("Blocked {} from accessing local resources", cert.getCommonName());
                 if (gatewayDialog.isPersistent()) {
                     blackList(cert);
                 }
@@ -437,21 +419,22 @@ public class TrayManager {
                     gatewayDialog.prompt("%s wants to print to " + printer, cert);
                 }
             });
-        } catch(Exception ignore) {}
+        }
+        catch(Exception ignore) {}
 
         if (gatewayDialog.isApproved()) {
-            trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to print to " + printer);
+            log.info("Allowed {} to print to {}", cert.getCommonName(), printer);
             if (gatewayDialog.isPersistent()) {
                 whiteList(cert);
             }
         } else {
-            trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from printing to " + printer);
+            log.info("Blocked {} from printing to {}", cert.getCommonName(), printer);
             if (gatewayDialog.isPersistent()) {
-                //if (PrintSocket.UNSIGNED.equals(cert)) {
-                //    anonymousItem.doClick(); // if always block anonymous requests -> flag menu item
-                //} else {
-                //    blackList(cert);
-                //}
+                if (Certificate.UNSIGNED.equals(cert)) {
+                    anonymousItem.doClick(); // if always block anonymous requests -> flag menu item
+                } else {
+                    blackList(cert);
+                }
             }
         }
 
@@ -471,9 +454,9 @@ public class TrayManager {
     /**
      * Sets the WebSocket Server instance for displaying port information and restarting the server
      *
-     * @param server    The Server instance contain to bind the reload action to
-     * @param running   Object used to notify PrintSocket to reiterate its main while loop
-     * @param securePortIndex Object used to notify PrintSocket to reset its port array counter
+     * @param server            The Server instance contain to bind the reload action to
+     * @param running           Object used to notify PrintSocket to reiterate its main while loop
+     * @param securePortIndex   Object used to notify PrintSocket to reset its port array counter
      * @param insecurePortIndex Object used to notify PrintSocket to reset its port array counter
      */
     public void setServer(final Server server, final AtomicBoolean running, final AtomicInteger securePortIndex, final AtomicInteger insecurePortIndex) {
@@ -506,64 +489,47 @@ public class TrayManager {
 
     /**
      * Returns a String representation of the ports assigned to the specified Server
-     * @param server
-     * @return
      */
     public static String getPorts(Server server) {
         String ports = "";
-        for (Connector c : server.getConnectors()) {
+        for(Connector c : server.getConnectors()) {
             ports = ports + ((ServerConnector)c).getLocalPort() + ", ";
         }
 
         return ports.replaceAll(", $", "");
     }
 
-    /**
-     * Thread safe method for setting the warning status message
-     */
+    /** Thread safe method for setting the warning status message */
     public void displayInfoMessage(String text) {
-        displayMessage(name, text, Level.INFO);
+        displayMessage(name, text, TrayIcon.MessageType.INFO);
     }
 
-    /**
-     * Thread safe method for setting the default icon
-     */
+    /** Thread safe method for setting the default icon */
     public void setDefaultIcon() {
         setIcon(IconCache.Icon.DEFAULT_ICON);
     }
 
-    /**
-     * Thread safe method for setting the error status message
-     */
+    /** Thread safe method for setting the error status message */
     public void displayErrorMessage(String text) {
-        displayMessage(name, text, Level.SEVERE);
+        displayMessage(name, text, TrayIcon.MessageType.ERROR);
     }
 
-    /**
-     * Thread safe method for setting the danger icon
-     */
+    /** Thread safe method for setting the danger icon */
     public void setDangerIcon() {
         setIcon(IconCache.Icon.DANGER_ICON);
     }
 
-    /**
-     * Thread safe method for setting the warning status message
-     */
+    /** Thread safe method for setting the warning status message */
     public void displayWarningMessage(String text) {
-        displayMessage(name, text, Level.WARNING);
+        displayMessage(name, text, TrayIcon.MessageType.WARNING);
     }
 
-
-    /**
-     * Thread safe method for setting the warning icon
-     */
+    /** Thread safe method for setting the warning icon */
     public void setWarningIcon() {
         setIcon(IconCache.Icon.WARNING_ICON);
     }
 
-    /**
-     * Thread safe method for setting the specified icon
-     */
+    /** Thread safe method for setting the specified icon */
     private void setIcon(final IconCache.Icon i) {
         if (tray != null) {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
@@ -578,29 +544,30 @@ public class TrayManager {
     /**
      * Thread safe method for setting the specified status message
      *
-     * @param caption     The title of the tray message
-     * @param text        The text body of the tray message
-     * @param level The message type: Level.INFO, .WARN, .SEVERE
+     * @param caption The title of the tray message
+     * @param text    The text body of the tray message
+     * @param level   The message type: Level.INFO, .WARN, .SEVERE
      */
-    private void displayMessage(final String caption, final String text, final Level level) {
+    private void displayMessage(final String caption, final String text, final TrayIcon.MessageType level) {
         if (tray != null) {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
                 @Override
                 public void run() {
                     tray.displayMessage(caption, text, level);
-                    trayLogger.log(level, "Tray Message: " + text);
+                    //trayLogger.log(level, "Tray Message: " + text);
                 }
             }));
         }
     }
 
+    /* TODO - replace with log4j file appender
     public void addLogHandler(Logger logger) {
         if (logHandler == null) {
             try {
                 logHandler = createLogHandler();
-            } catch (IOException e) {
-                logger.log(Level.WARNING, String.format("Could not write to log file %s.  " +
-                        "Log history be limited to the console only.", Constants.LOG_FILE), e);
+            }
+            catch(IOException e) {
+                logger.log(Level.WARNING, String.format("Could not write to log file %s. Log history be limited to the console only.", Constants.LOG_FILE), e);
             }
         }
 
@@ -621,6 +588,7 @@ public class TrayManager {
         });
         return logHandler;
     }
+    */
 
     public void singleInstanceCheck(Integer[] insecurePorts, Integer insecurePortIndex) {
         for(int port : insecurePorts) {

@@ -1,6 +1,7 @@
 package qz.ui;
 
-import qz.common.LogIt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
@@ -18,7 +19,11 @@ import java.util.ArrayList;
  * Created by Tres on 2/19/2015.
  */
 public class LinkLabel extends JLabel {
-    ArrayList<ActionListener> actionListeners;
+
+    private static final Logger log = LoggerFactory.getLogger(LinkLabel.class);
+
+    private ArrayList<ActionListener> actionListeners;
+
 
     public LinkLabel() {
         super();
@@ -37,11 +42,12 @@ public class LinkLabel extends JLabel {
                         Desktop.getDesktop().mail(new URI(text));
                     } else {
                         File filePath = new File(text);
-                        Desktop.getDesktop().browse(filePath.isDirectory() ? filePath.toURI() : filePath.getParentFile().toURI());
+                        Desktop.getDesktop().browse(filePath.isDirectory()? filePath.toURI():filePath.getParentFile().toURI());
                     }
 
-                } catch (Exception ex) {
-                    LogIt.log(ex);
+                }
+                catch(Exception ex) {
+                    log.error("", ex);
                 }
             }
         });
@@ -55,8 +61,9 @@ public class LinkLabel extends JLabel {
             public void actionPerformed(ActionEvent e) {
                 try {
                     Desktop.getDesktop().browse(url.toURI());
-                } catch (Exception ex) {
-                    LogIt.log(ex);
+                }
+                catch(Exception ex) {
+                    log.error("", ex);
                 }
             }
         });
@@ -69,21 +76,22 @@ public class LinkLabel extends JLabel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().browse(filePath.isDirectory() ? filePath.toURI() : filePath.getParentFile().toURI());
-                } catch (IOException ex) {
-                    LogIt.log(ex);
+                    Desktop.getDesktop().browse(filePath.isDirectory()? filePath.toURI():filePath.getParentFile().toURI());
+                }
+                catch(IOException ex) {
+                    log.error("", ex);
                 }
             }
         });
     }
 
     private void initialize() {
-        actionListeners = new ArrayList<ActionListener>();
+        actionListeners = new ArrayList<>();
 
         addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                for (ActionListener actionListener : actionListeners) {
+                for(ActionListener actionListener : actionListeners) {
                     actionListener.actionPerformed(new ActionEvent(e.getSource(), e.getID(), "mouseClicked"));
                 }
             }
@@ -107,7 +115,7 @@ public class LinkLabel extends JLabel {
     }
 
     @Override
-    public void setText(String text){
+    public void setText(String text) {
         super.setText(linkify(text));
     }
 

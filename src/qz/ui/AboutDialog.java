@@ -12,7 +12,7 @@ import java.net.URL;
 
 /**
  * Created by Tres on 2/26/2015.
- *
+ * <p/>
  * Displays a basic about dialog
  */
 public class AboutDialog extends BasicDialog {
@@ -54,7 +54,8 @@ public class AboutDialog extends BasicDialog {
         gridPanel.add(createLabel("Publisher:", true));
         try {
             gridPanel.add(new LinkLabel(new URL(Constants.ABOUT_URL)));
-        } catch (MalformedURLException ex) {
+        }
+        catch(MalformedURLException ex) {
             gridPanel.add(new LinkLabel(Constants.ABOUT_URL));
         }
 
@@ -63,14 +64,14 @@ public class AboutDialog extends BasicDialog {
     }
 
     public void shadeComponents() {
-        for (int i = 0; i < gridPanel.getComponents().length; i++) {
+        for(int i = 0; i < gridPanel.getComponents().length; i++) {
             if (i % 4 == 0 || i % 4 == 1) {
                 if (gridPanel.getComponent(i) instanceof JComponent) {
-                    ((JComponent) gridPanel.getComponent(i)).setOpaque(true);
+                    ((JComponent)gridPanel.getComponent(i)).setOpaque(true);
                     gridPanel.getComponent(i).setBackground(gridPanel.getComponent(i).getBackground().brighter());
                 }
             }
-            ((JComponent) gridPanel.getComponent(i)).setBorder(new EmptyBorder(0, Constants.BORDER_PADDING, 0, Constants.BORDER_PADDING));
+            ((JComponent)gridPanel.getComponent(i)).setBorder(new EmptyBorder(0, Constants.BORDER_PADDING, 0, Constants.BORDER_PADDING));
         }
     }
 
@@ -83,24 +84,23 @@ public class AboutDialog extends BasicDialog {
         if (isBold) {
             label.setFont(label.getFont().deriveFont(Font.BOLD));
         }
+
         return label;
-    }	
+    }
 
     /**
      * Sets server for displaying port and socket secure/insecure information
-     * @param server
      */
     public void setServer(Server server) {
-        for (Connector c : server.getConnectors()) {
-            for (ConnectionFactory f : c.getConnectionFactories()) {
+        for(Connector c : server.getConnectors()) {
+            for(ConnectionFactory f : c.getConnectionFactories()) {
                 ServerConnector s = (ServerConnector)c;
                 if (f instanceof SslConnectionFactory) {
                     wssLabel.setText("wss://localhost:" + s.getLocalPort());
                     wssLabel.setFont(wsLabel.getFont());
                     wssLabel.setForeground(wsLabel.getForeground());
                     break;
-                }
-                else {
+                } else {
                     wsLabel.setText("ws://localhost:" + s.getLocalPort());
                     break;
                 }

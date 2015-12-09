@@ -23,22 +23,21 @@
  */
 package qz.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import qz.common.ByteArrayBuilder;
 import qz.common.Constants;
-import qz.common.LogIt;
 import qz.exception.NullCommandException;
 
-import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.net.URL;
 import java.util.HashMap;
-import java.util.logging.Logger;
 
 
 /**
@@ -48,7 +47,7 @@ import java.util.logging.Logger;
  */
 public class FileUtilities {
 
-    private static final Logger log = Logger.getLogger(FileUtilities.class.getName());
+    private static final Logger log = LoggerFactory.getLogger(FileUtilities.class);
 
     private static final String[] badExtensions = new String[] {
             "exe", "pif", "paf", "application", "msi", "com", "cmd", "bat", "lnk", // Windows Executable program or script
@@ -75,126 +74,104 @@ public class FileUtilities {
             "url" // Internet Shortcut
     };
 
+    /* User resource files */
+    private static HashMap<String,File> fileMap = new HashMap<>();
+
+
     public static boolean isBadExtension(String fileName) {
         String[] tokens = fileName.split("\\.(?=[^\\.]+$)");
         if (tokens.length == 2) {
             String extension = tokens[1];
-            for(String s : FileUtilities.badExtensions) {
-                if (s.equalsIgnoreCase(extension)) {
+            for(String bad : FileUtilities.badExtensions) {
+                if (bad.equalsIgnoreCase(extension)) {
                     return true;
                 }
             }
         }
+
         return false;
     }
 
     /**
      * Returns whether or not the supplied path is restricted, such as the qz-tray data directory
      * Warning:  This does not follow symlinks
+     *
      * @param path File or Directory path to test
-     * @return <code>true</code> if restricted, <code>false</code> otherwise
+     * @return {@code true} if restricted, {@code false} otherwise
      */
     public static boolean isBadPath(String path) {
         if (SystemUtilities.isWindows()) {
             // Case insensitive
             return path.toLowerCase().contains(SystemUtilities.getDataDirectory().toLowerCase());
         }
+
         return path.contains(SystemUtilities.getDataDirectory());
     }
 
-    public static String readLocalFile(String file) throws IOException {
-        ByteArrayBuilder data = new ByteArrayBuilder();
-        byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
-        DataInputStream in = new DataInputStream(new FileInputStream(file));
-        while(true) {
-            int len = in.read(buffer);
-            if (len == -1) {
-                break;
-            }
-            byte[] temp = new byte[len];
-            System.arraycopy(buffer, 0, temp, 0, len);
-            data.append(temp);
-        }
-        in.close();
 
-        return new String(data.getByteArray());
+    public static String readLocalFile(String file) throws IOException {
+        return new String(readFile(new DataInputStream(new FileInputStream(file))));
     }
 
     public static byte[] readRawFile(String url) throws IOException {
-        ByteArrayBuilder rawCmds = new ByteArrayBuilder();
+        return readFile(new DataInputStream(new URL(url).openStream()));
+    }
+
+    private static byte[] readFile(DataInputStream in) throws IOException {
+        ByteArrayBuilder cmds = new ByteArrayBuilder();
         byte[] buffer = new byte[Constants.BYTE_BUFFER_SIZE];
-        DataInputStream in = new DataInputStream(new URL(url).openStream());
-        while(true) {
-            int len = in.read(buffer);
-            if (len == -1) {
-                break;
-            }
+
+        int len;
+        while((len = in.read(buffer)) > -1) {
             byte[] temp = new byte[len];
             System.arraycopy(buffer, 0, temp, 0, len);
-            rawCmds.append(temp);
+            cmds.append(temp);
         }
         in.close();
 
-        return rawCmds.getByteArray();
+        return cmds.getByteArray();
     }
+
 
     /**
      * Reads an XML file from URL, searches for the tag specified by
-     * <code>dataTag</code> tag name and returns the <code>String</code> value
+     * {@code dataTag} tag name and returns the {@code String} value
      * of that tag.
      *
      * @param url     location of the xml file to be read
      * @param dataTag tag in the file to be searched
      * @return value of the tag if found
-     * @throws DOMException
-     * @throws IOException
-     * @throws NullCommandException
-     * @throws ParserConfigurationException
-     * @throws SAXException
      */
     public static String readXMLFile(String url, String dataTag) throws DOMException, IOException, NullCommandException,
                                                                         ParserConfigurationException, SAXException {
-        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-        DocumentBuilder db;
-        Document doc;
-        db = dbf.newDocumentBuilder();
-        doc = db.parse(url);
+        Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(url);
         doc.getDocumentElement().normalize();
         log.info("Root element " + doc.getDocumentElement().getNodeName());
+
         NodeList nodeList = doc.getElementsByTagName(dataTag);
         if (nodeList.getLength() > 0) {
             return nodeList.item(0).getTextContent();
         }
+
         throw new NullCommandException(String.format("Node \"%s\" could not be found in XML file specified", dataTag));
     }
 
 
-    /* User resource files */
-    private static HashMap<String, File> fileMap = new HashMap<String, File>();
-
     public static void printLineToFile(String fileName, String message) {
-        FileWriter fw = null;
-        try {
-            fw = new FileWriter(getFile(fileName), true);
-
+        try(FileWriter fw = new FileWriter(getFile(fileName), true)) {
             message += "\r\n";
             fw.write(message);
             fw.flush();
         }
         catch(IOException e) {
-            log.warning("Cannot write to file " + fileName);
-            e.printStackTrace();
-        }
-        finally {
-            if (fw != null) {
-                try { fw.close(); }catch(Exception ignore) {}
-            }
+            log.error("Cannot write to file {}", fileName, e);
         }
     }
 
     public static File getFile(String name) {
         if (!fileMap.containsKey(name) || fileMap.get(name) == null) {
             String fileLoc = SystemUtilities.getDataDirectory();
+
             try {
                 File locDir = new File(fileLoc);
                 File file = new File(fileLoc + File.separator + name + ".dat");
@@ -205,7 +182,7 @@ public class FileUtilities {
                 fileMap.put(name, file);
             }
             catch(IOException e) {
-                e.printStackTrace();
+                log.error("Cannot get file", e);
             }
         }
 
@@ -216,7 +193,8 @@ public class FileUtilities {
         File file = fileMap.get(name);
 
         if (file != null && !file.delete()) {
-            log.warning("Unable to delete file " + name);
+            log.warn("Unable to delete file {}", name);
+            file.deleteOnExit();
         }
 
         fileMap.put(name, null);
@@ -226,12 +204,7 @@ public class FileUtilities {
         File file = getFile(fileName);
         File temp = getFile(Constants.TEMP_FILE);
 
-        BufferedReader br = null;
-        BufferedWriter bw = null;
-        try {
-            br = new BufferedReader(new FileReader(file));
-            bw = new BufferedWriter(new FileWriter(temp));
-
+        try(BufferedReader br = new BufferedReader(new FileReader(file)); BufferedWriter bw = new BufferedWriter(new FileWriter(temp))) {
             String line;
             while((line = br.readLine()) != null) {
                 if (!line.equals(deleteLine)) {
@@ -240,25 +213,14 @@ public class FileUtilities {
             }
 
             bw.flush();
-            bw.close();
-            br.close();
 
             deleteFile(fileName);
-            temp.renameTo(file);
+            return temp.renameTo(file);
         }
         catch(IOException e) {
-            LogIt.log(e);
+            log.error("Unable to delete line from file", e);
             return false;
         }
-        finally {
-            if (br != null) {
-                try { br.close(); }catch(Exception ignore) {}
-            }
-            if (bw != null) {
-                try { bw.close(); }catch(Exception ignore) {}
-            }
-        }
-        return true;
     }
 
 }

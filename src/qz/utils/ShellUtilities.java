@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * Utility class for managing all <code>Runtime.exec(...)</code> functions.
+ * Utility class for managing all {@code Runtime.exec(...)} functions.
  *
  * @author Tres Finocchiaro
  */
@@ -41,12 +41,10 @@ public class ShellUtilities {
     private static final Logger log = LoggerFactory.getLogger(ShellUtilities.class);
 
     /**
-     * Executes a synchronous shell command and returns true if the
-     * <code>Process.exitValue()</code> is <code>0</code>.
+     * Executes a synchronous shell command and returns true if the {@code Process.exitValue()} is {@code 0}.
      *
      * @param commandArray array of command pieces to supply to the shell environment to e executed as a single command
-     * @return <code>true</code> if <code>Process.exitValue()</code> is <code>0</code>, otherwise
-     * <code>false</code>.
+     * @return {@code true} if {@code Process.exitValue()} is {@code 0}, otherwise {@code false}.
      */
     public static boolean execute(String[] commandArray) {
         log.info("Executing: {}", Arrays.toString(commandArray));
@@ -62,6 +60,7 @@ public class ShellUtilities {
         catch(IOException ex) {
             log.error("IOException executing: {}", Arrays.toString(commandArray), ex);
         }
+
         return false;
     }
 
@@ -69,8 +68,7 @@ public class ShellUtilities {
      * Executes a synchronous shell command and return the result.
      *
      * @param commandArray array of shell commands to execute
-     * @param searchFor    array of return values to look for, case sensitivity
-     *                     matters
+     * @param searchFor    array of return values to look for, case sensitivity matters
      * @return The first matching string value
      */
     public static String execute(String[] commandArray, String[] searchFor) {
@@ -81,11 +79,11 @@ public class ShellUtilities {
      * Executes a synchronous shell command and return the result.
      *
      * @param commandArray  array of shell commands to execute
-     * @param searchFor     array of return values to look for, or <code>null</code>
+     * @param searchFor     array of return values to look for, or {@code null}
      *                      to return the first line of standard output
      * @param caseSensitive whether or not to perform case-sensitive search
-     * @return The first matching an element of <code>searchFor</code>, unless
-     * <code>searchFor</code> is null ,then the first line of standard output
+     * @return The first matching an element of {@code searchFor}, unless
+     * {@code searchFor} is null ,then the first line of standard output
      */
     public static String execute(String[] commandArray, String[] searchFor, boolean caseSensitive) {
         log.info("Executing: {}", Arrays.toString(commandArray));
@@ -114,23 +112,24 @@ public class ShellUtilities {
         catch(IOException ex) {
             log.error("IOException executing: {}", Arrays.toString(commandArray), ex);
         }
+
         return "";
     }
 
     /**
      * Checks that the currently running OS is Apple and executes a native
      * AppleScript macro against the OS. Returns true if the
-     * <code>Process.exitValue()</code> is <code>0</code>.
+     * {@code Process.exitValue()} is {@code 0}.
      *
      * @param scriptBody AppleScript to execute
-     * @return true if the <code>Process.exitValue()</code> is
-     * <code>0</code>.
+     * @return true if the {@code Process.exitValue()} is {@code 0}.
      */
     public static boolean executeAppleScript(String scriptBody) {
         if (!SystemUtilities.isMac()) {
             log.error("AppleScript can only be invoked from Apple OS");
             return false;
         }
+
         return execute(new String[] {"osascript", "-e", scriptBody});
     }
 
@@ -142,14 +141,14 @@ public class ShellUtilities {
      * @param scriptBody   AppleScript text to execute
      * @param searchValue1 first value to search for
      * @param searchValue2 second value to search for
-     * @return true if the supplied searchValues are found within the standard
-     * output.
+     * @return true if the supplied searchValues are found within the standard output.
      */
     public static boolean executeAppleScript(String scriptBody, String searchValue1, String searchValue2) {
         if (!SystemUtilities.isMac()) {
             log.error("AppleScript can only be invoked from Apple OS");
             return false;
         }
+
         // Empty string returned by execute(...) means the values weren't found
         return !execute(new String[] {"osascript", "-e", scriptBody},
                         new String[] {searchValue1, searchValue2}).isEmpty();
@@ -160,6 +159,7 @@ public class ShellUtilities {
             log.error("Reg commands can only be invoked from Windows");
             return false;
         }
+
         String reg = System.getenv("windir") + "\\system32\\reg.exe";
         return execute(
                 new String[] {
@@ -174,6 +174,7 @@ public class ShellUtilities {
             log.error("Reg commands can only be invoked from Windows");
             return -1;
         }
+
         String reg = System.getenv("windir") + "\\system32\\reg.exe";
         String stdout = execute(
                 new String[] {
@@ -193,6 +194,7 @@ public class ShellUtilities {
                 }
             }
         }
+
         return -1;
     }
 
@@ -222,6 +224,7 @@ public class ShellUtilities {
             log.error("Reg commands can only be invoked from Windows");
             return false;
         }
+
         String reg = System.getenv("windir") + "\\system32\\reg.exe";
         if ("delete".equals(function)) {
             return execute(new String[] {

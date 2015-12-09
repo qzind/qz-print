@@ -7,10 +7,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by Tres on 2/28/2015.
- *
+ * <p/>
  * <code>ArrayList</code> which is linked to an internal <code>JList</code> and synced with its
  * <code>DefaultListModel</code>
- *
+ * <p/>
  * Updates to the <code>JList</code> are non-blocking and submitted on the Event Dispatch thread.
  * Class created to reduce the amount of thread-safe calls cluttering up the <code>>SiteManagerDialog</code.
  */
@@ -28,6 +28,7 @@ public class ContainerList<D> extends ArrayList<D> {
 
     /**
      * Sets a miscellaneous <code>Object</code> placeholder
+     *
      * @param tag A generic <code>Object</code> placeholder
      */
     public void setTag(Object tag) {
@@ -83,7 +84,7 @@ public class ContainerList<D> extends ArrayList<D> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                for (D element : collection) {
+                for(D element : collection) {
                     listModel.skipNextSuperCall();
                     listModel.addElement(element);
                 }
@@ -98,7 +99,7 @@ public class ContainerList<D> extends ArrayList<D> {
             @Override
             public void run() {
                 int counter = 0;
-                for (D element : c) {
+                for(D element : c) {
                     listModel.skipNextSuperCall();
                     listModel.add(index + counter++, element);
                 }
@@ -112,8 +113,8 @@ public class ContainerList<D> extends ArrayList<D> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-               listModel.skipNextSuperCall();
-               listModel.removeAllElements();
+                listModel.skipNextSuperCall();
+                listModel.removeAllElements();
             }
         });
         super.clear();

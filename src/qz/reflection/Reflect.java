@@ -1,26 +1,26 @@
 /**
  * Copyright (c) 2011-2012, Lukas Eder, lukas.eder@gmail.com
  * All rights reserved.
- *
+ * <p/>
  * This software is licensed to you under the Apache License, Version 2.0
  * (the "License"); You may obtain a copy of the License at
- *
- *   http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p/>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p/>
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
- *
+ * <p/>
  * . Redistributions of source code must retain the above copyright notice, this
- *   list of conditions and the following disclaimer.
- *
+ * list of conditions and the following disclaimer.
+ * <p/>
  * . Redistributions in binary form must reproduce the above copyright notice,
- *   this list of conditions and the following disclaimer in the documentation
- *   and/or other materials provided with the distribution.
- *
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ * <p/>
  * . Neither the name "jOOR" nor the names of its contributors may be
- *   used to endorse or promote products derived from this software without
- *   specific prior written permission.
- *
+ * used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ * <p/>
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -129,7 +129,7 @@ public class Reflect {
     /**
      * The wrapped object
      */
-    private final Object  object;
+    private final Object object;
 
     /**
      * A flag indicating whether the wrapped object is a {@link Class} (for
@@ -163,7 +163,7 @@ public class Reflect {
      */
     @SuppressWarnings("unchecked")
     public <T> T get() {
-        return (T) object;
+        return (T)object;
     }
 
     /**
@@ -187,14 +187,14 @@ public class Reflect {
             field.set(object, unwrap(value));
             return this;
         }
-        catch (Exception e1) {
+        catch(Exception e1) {
 
             // Try again, setting a non-public field
             try {
                 accessible(type().getDeclaredField(name)).set(object, unwrap(value));
                 return this;
             }
-            catch (Exception e2) {
+            catch(Exception e2) {
                 throw new ReflectException(e2);
             }
         }
@@ -235,17 +235,17 @@ public class Reflect {
     public Reflect field(String name) throws ReflectException {
         try {
 
-             // Try getting a public field
+            // Try getting a public field
             Field field = type().getField(name);
             return on(field.get(object));
         }
-        catch (Exception e1) {
+        catch(Exception e1) {
 
             // Try again, getting a non-public field
             try {
                 return on(accessible(type().getDeclaredField(name)).get(object));
             }
-            catch (Exception e2) {
+            catch(Exception e2) {
                 throw new ReflectException(e2);
             }
         }
@@ -266,10 +266,10 @@ public class Reflect {
      *
      * @return A map containing field names and wrapped values.
      */
-    public Map<String, Reflect> fields() {
-        Map<String, Reflect> result = new LinkedHashMap<String, Reflect>();
+    public Map<String,Reflect> fields() {
+        Map<String,Reflect> result = new LinkedHashMap<String,Reflect>();
 
-        for (Field field : type().getFields()) {
+        for(Field field : type().getFields()) {
             if (!isClass ^ Modifier.isStatic(field.getModifiers())) {
                 String name = field.getName();
                 result.put(name, field(name));
@@ -337,8 +337,8 @@ public class Reflect {
 
         // If there is no exact match, try to find one that has a "similar"
         // signature if primitive argument types are converted to their wrappers
-        catch (NoSuchMethodException e) {
-            for (Method method : type().getMethods()) {
+        catch(NoSuchMethodException e) {
+            for(Method method : type().getMethods()) {
                 if (method.getName().equals(name) && match(method.getParameterTypes(), types)) {
                     return on(method, object, args);
                 }
@@ -400,8 +400,8 @@ public class Reflect {
 
         // If there is no exact match, try to find one that has a "similar"
         // signature if primitive argument types are converted to their wrappers
-        catch (NoSuchMethodException e) {
-            for (Constructor<?> constructor : type().getConstructors()) {
+        catch(NoSuchMethodException e) {
+            for(Constructor<?> constructor : type().getConstructors()) {
                 if (match(constructor.getParameterTypes(), types)) {
                     return on(constructor, args);
                 }
@@ -427,7 +427,7 @@ public class Reflect {
             }
         };
 
-        return (P) Proxy.newProxyInstance(proxyType.getClassLoader(), new Class[] { proxyType }, handler);
+        return (P)Proxy.newProxyInstance(proxyType.getClassLoader(), new Class[] {proxyType}, handler);
     }
 
     // ---------------------------------------------------------------------
@@ -440,15 +440,14 @@ public class Reflect {
      */
     private boolean match(Class<?>[] declaredTypes, Class<?>[] actualTypes) {
         if (declaredTypes.length == actualTypes.length) {
-            for (int i = 0; i < actualTypes.length; i++) {
+            for(int i = 0; i < actualTypes.length; i++) {
                 if (!wrapper(declaredTypes[i]).isAssignableFrom(wrapper(actualTypes[i]))) {
                     return false;
                 }
             }
 
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
@@ -467,7 +466,7 @@ public class Reflect {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof Reflect) {
-            return object.equals(((Reflect) obj).get());
+            return object.equals(((Reflect)obj).get());
         }
 
         return false;
@@ -492,7 +491,7 @@ public class Reflect {
         try {
             return on(constructor.newInstance(args));
         }
-        catch (Exception e) {
+        catch(Exception e) {
             throw new ReflectException(e);
         }
     }
@@ -507,12 +506,11 @@ public class Reflect {
             if (method.getReturnType() == void.class) {
                 method.invoke(object, args);
                 return on(object);
-            }
-            else {
+            } else {
                 return on(method.invoke(object, args));
             }
         }
-        catch (Exception e) {
+        catch(Exception e) {
             throw new ReflectException(e);
         }
     }
@@ -522,7 +520,7 @@ public class Reflect {
      */
     private static Object unwrap(Object object) {
         if (object instanceof Reflect) {
-            return ((Reflect) object).get();
+            return ((Reflect)object).get();
         }
 
         return object;
@@ -540,7 +538,7 @@ public class Reflect {
 
         Class<?>[] result = new Class[values.length];
 
-        for (int i = 0; i < values.length; i++) {
+        for(int i = 0; i < values.length; i++) {
             result[i] = values[i].getClass();
         }
 
@@ -556,7 +554,7 @@ public class Reflect {
         try {
             return Class.forName(name);
         }
-        catch (Exception e) {
+        catch(Exception e) {
             throw new ReflectException(e);
         }
     }
@@ -568,9 +566,8 @@ public class Reflect {
      */
     public Class<?> type() {
         if (isClass) {
-            return (Class<?>) object;
-        }
-        else {
+            return (Class<?>)object;
+        } else {
             return object.getClass();
         }
     }
@@ -582,29 +579,21 @@ public class Reflect {
     private static Class<?> wrapper(Class<?> type) {
         if (boolean.class == type) {
             return Boolean.class;
-        }
-        else if (int.class == type) {
+        } else if (int.class == type) {
             return Integer.class;
-        }
-        else if (long.class == type) {
+        } else if (long.class == type) {
             return Long.class;
-        }
-        else if (short.class == type) {
+        } else if (short.class == type) {
             return Short.class;
-        }
-        else if (byte.class == type) {
+        } else if (byte.class == type) {
             return Byte.class;
-        }
-        else if (double.class == type) {
+        } else if (double.class == type) {
             return Double.class;
-        }
-        else if (float.class == type) {
+        } else if (float.class == type) {
             return Float.class;
-        }
-        else if (char.class == type) {
+        } else if (char.class == type) {
             return Character.class;
-        }
-        else {
+        } else {
             return type;
         }
     }

@@ -70,6 +70,7 @@ public class MacDeploy extends DeployUtilities {
         catch(UnsupportedEncodingException e) {
             log.error("Error decoding URL: {}", jarPath, e);
         }
+
         return jarPath;
     }
 
@@ -85,17 +86,18 @@ public class MacDeploy extends DeployUtilities {
 
     @Override
     public boolean createDesktopShortcut() {
-    	String target = getJarPath();
-    	if (target.contains("/Applications/")) {
-    		// Use the parent folder instead i.e. "/Applications/QZ Tray.app"
-    		File f = new File(getJarPath());
-    		if (f.getParent() != null) {
-    			target = f.getParent();
-    		}
-    	}
-        return ShellUtilities.execute(new String[]{
-            "ln", "-sf", target,
-            System.getProperty("user.home") + "/Desktop/" + getShortcutName()
+        String target = getJarPath();
+        if (target.contains("/Applications/")) {
+            // Use the parent folder instead i.e. "/Applications/QZ Tray.app"
+            File f = new File(getJarPath());
+            if (f.getParent() != null) {
+                target = f.getParent();
+            }
+        }
+
+        return ShellUtilities.execute(new String[] {
+                "ln", "-sf", target,
+                System.getProperty("user.home") + "/Desktop/" + getShortcutName()
         });
     }
 
@@ -137,6 +139,7 @@ public class MacDeploy extends DeployUtilities {
                 }
             }
         }
+
         log.info("Symbolic link result: {}", returnVal);
         return returnVal;
     }

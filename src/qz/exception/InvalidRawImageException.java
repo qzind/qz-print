@@ -1,7 +1,6 @@
 package qz.exception;
 
 /**
- *
  * @author Tres
  */
 public class InvalidRawImageException extends Exception {
