@@ -28,16 +28,13 @@ var qzConfig = {
     increment: function() {
         if (++qzConfig.portIndex < qzConfig.ports.length) {
             return true;
-        } else if (++qzConfig.protocolIndex < qzConfig.protocols.length) {
-            qzConfig.portIndex = 0;
-            return true;
         }
         return false;
     },
     outOfBounds: function() { return qzConfig.portIndex >= qzConfig.ports.length },
     init: function(){
         qzConfig.preemptive = {isActive: '', getVersion: '', getPrinter: '', getLogPostScriptFeatures: ''};
-        qzConfig.protocolIndex = 0;         // Used to track which value in 'protocol' array is being used
+        qzConfig.protocolIndex = window.location.protocol == "https:" ? 0 : 1;         // Used to track which value in 'protocol' array is being used
         qzConfig.portIndex = 0;             // Used to track which value in 'ports' array is being used
         return qzConfig;
     }
