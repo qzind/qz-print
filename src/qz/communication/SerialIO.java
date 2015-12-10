@@ -4,6 +4,7 @@ import jssc.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.utils.ByteUtilities;
+import qz.utils.SerialUtilities;
 
 /**
  * @author Tres
@@ -129,7 +130,7 @@ public class SerialIO {
         port.setFlowControlMode(props.getFlowControl());
 
         log.debug("Sending data over [{}]", portName);
-        port.writeBytes(data.getBytes());
+        port.writeBytes(SerialUtilities.characterBytes(data));
     }
 
     /**

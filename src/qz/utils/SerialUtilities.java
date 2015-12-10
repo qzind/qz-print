@@ -7,6 +7,7 @@ package qz.utils;
 import jssc.SerialPort;
 import jssc.SerialPortList;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,15 +60,17 @@ public class SerialUtilities {
      * First attempting to take the entire string as a character literal (for non-printable unicode).
      */
     public static byte[] characterBytes(String convert) {
-        try {
-            //try to interpret entire string as single char representation (such as "\u0000" or "0xFFFF")
-            char literal = (char)Integer.parseInt(convert.substring(2), 16);
-            return String.valueOf(literal).getBytes();
+        if (convert.length() > 2) {
+            try {
+                //try to interpret entire string as single char representation (such as "\u0000" or "0xFFFF")
+                char literal = (char)Integer.parseInt(convert.substring(2), 16);
+                return String.valueOf(literal).getBytes();
+            }
+            catch(NumberFormatException ignore) {}
         }
-        catch(NumberFormatException ignore) {
-            //not a single char, convert entire string to bytes
-            return convert.getBytes();
-        }
+
+        //try escaping string using Apache (to get strings like "\r" as characters)
+        return StringEscapeUtils.unescapeJava(convert).getBytes();
     }
 
     /**
@@ -139,16 +142,16 @@ public class SerialUtilities {
 
         switch(data) {
             case "5":
-                log.debug("Parsed serial setting: DATABITS_5");
+                log.trace("Parsed serial setting: DATABITS_5");
                 return SerialPort.DATABITS_5;
             case "6":
-                log.debug("Parsed serial setting: DATABITS_6");
+                log.trace("Parsed serial setting: DATABITS_6");
                 return SerialPort.DATABITS_6;
             case "7":
-                log.debug("Parsed serial setting: DATABITS_7");
+                log.trace("Parsed serial setting: DATABITS_7");
                 return SerialPort.DATABITS_7;
             case "8":
-                log.debug("Parsed serial setting: DATABITS_8");
+                log.trace("Parsed serial setting: DATABITS_8");
                 return SerialPort.DATABITS_8;
             default:
                 log.error("Data bits value of {} not supported", data);
@@ -168,14 +171,14 @@ public class SerialUtilities {
         switch(stop) {
             case "":
             case "1":
-                log.debug("Parsed serial setting: STOPBITS_1");
+                log.trace("Parsed serial setting: STOPBITS_1");
                 return SerialPort.STOPBITS_1;
             case "2":
-                log.debug("Parsed serial setting: STOPBITS_2");
+                log.trace("Parsed serial setting: STOPBITS_2");
                 return SerialPort.STOPBITS_2;
             case "1.5":
             case "1_5":
-                log.debug("Parsed serial setting: STOPBITS_1_5");
+                log.trace("Parsed serial setting: STOPBITS_1_5");
                 return SerialPort.STOPBITS_1_5;
             default:
                 log.error("Stop bits value of {} could not be parsed", stop);
@@ -196,23 +199,23 @@ public class SerialUtilities {
             case "":
             case "n":
             case "none":
-                log.debug("Parsed serial setting: FLOWCONTROL_NONE");
+                log.trace("Parsed serial setting: FLOWCONTROL_NONE");
                 return SerialPort.FLOWCONTROL_NONE;
             case "x":
             case "xonxoff":
             case "xonxoff_out":
-                log.debug("Parsed serial setting: FLOWCONTROL_XONXOFF_OUT");
+                log.trace("Parsed serial setting: FLOWCONTROL_XONXOFF_OUT");
                 return SerialPort.FLOWCONTROL_XONXOFF_OUT;
             case "xonxoff_in":
-                log.debug("Parsed serial setting: FLOWCONTROL_XONXOFF_IN");
+                log.trace("Parsed serial setting: FLOWCONTROL_XONXOFF_IN");
                 return SerialPort.FLOWCONTROL_XONXOFF_IN;
             case "p":
             case "rtscts":
             case "rtscts_out":
-                log.debug("Parsed serial setting: FLOWCONTROL_RTSCTS_OUT");
+                log.trace("Parsed serial setting: FLOWCONTROL_RTSCTS_OUT");
                 return SerialPort.FLOWCONTROL_RTSCTS_OUT;
             case "rtscts_in":
-                log.debug("Parsed serial setting: FLOWCONTROL_RTSCTS_IN");
+                log.trace("Parsed serial setting: FLOWCONTROL_RTSCTS_IN");
                 return SerialPort.FLOWCONTROL_RTSCTS_IN;
             default:
                 log.error("Flow control value of {} could not be parsed", control);
@@ -233,23 +236,23 @@ public class SerialUtilities {
             case "":
             case "n":
             case "none":
-                log.debug("Parsed serial setting: PARITY_NONE");
+                log.trace("Parsed serial setting: PARITY_NONE");
                 return SerialPort.PARITY_NONE;
             case "e":
             case "even":
-                log.debug("Parsed serial setting: PARITY_EVEN");
+                log.trace("Parsed serial setting: PARITY_EVEN");
                 return SerialPort.PARITY_EVEN;
             case "o":
             case "odd":
-                log.debug("Parsed serial setting: PARITY_ODD");
+                log.trace("Parsed serial setting: PARITY_ODD");
                 return SerialPort.PARITY_ODD;
             case "m":
             case "mark":
-                log.debug("Parsed serial setting: PARITY_MARK");
+                log.trace("Parsed serial setting: PARITY_MARK");
                 return SerialPort.PARITY_MARK;
             case "s":
             case "space":
-                log.debug("Parsed serial setting: PARITY_SPACE");
+                log.trace("Parsed serial setting: PARITY_SPACE");
                 return SerialPort.PARITY_SPACE;
             default:
                 log.error("Parity value of {} not supported", parity);
@@ -268,7 +271,7 @@ public class SerialUtilities {
         try { baud = Integer.decode(rate.trim()); } catch(NumberFormatException ignore) {}
 
         if (VALID_BAUD.contains(baud)) {
-            log.info("Parsed serial setting: BAUDRATE_{}", baud);
+            log.trace("Parsed serial setting: BAUDRATE_{}", baud);
         } else {
             log.error("Baud rate of {} not supported", rate);
             baud = -1;

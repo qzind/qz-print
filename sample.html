@@ -941,7 +941,6 @@
             flowControl: $("#serialFlow").val()
         };
 
-        //TODO - problem sending newlines ?
         qz.serial.sendData($("#serialPort").val(), $("#serialCmd").val(), properties).catch(displayError);
     }
 
@@ -1042,9 +1041,9 @@
 
     qz.websocket.setErrorCallbacks(handleConnectionError);
 
-    qz.serial.setSerialCallbacks(function(output) {
-        console.log('Serial output', output);
-        displayMessage("Received output from serial port: " + output);
+    qz.serial.setSerialCallbacks(function(port, output) {
+        console.log('Serial', port, 'received output', output);
+        displayMessage("Received output from serial port [" + port + "]: <em>" + output + "</em>");
     });
 
 

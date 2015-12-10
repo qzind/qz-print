@@ -184,7 +184,7 @@ var _qz = {
                     if (_qz.DEBUG) { console.error("Response is incorrectly formatted", returned); }
                 } else {
                     if (returned.type == _qz.streams.serial) {
-                        _qz.callSerial(returned.key, returned.result)
+                        _qz.callSerial(returned.key, returned.data)
                     } else if (returned.type == _qz.streams.usb) {
                         //TODO - usb callback
                     } else {

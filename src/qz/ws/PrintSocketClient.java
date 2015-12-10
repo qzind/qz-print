@@ -144,7 +144,7 @@ public class PrintSocketClient {
                         io.sendData(props, params.getString("data"));
                         sendResult(session, UID, null);
                     } else {
-                        sendError(session, UID, String.format("Serial port [%s] is already open.", params.getString("port")));
+                        sendError(session, UID, String.format("Serial port [%s] must be opened first.", params.getString("port")));
                     }
                 }
                 catch(SerialPortException e) {
