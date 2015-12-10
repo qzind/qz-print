@@ -155,8 +155,6 @@
         <copy file="${firefoxprefs.in}" tofile="${firefoxprefs.out}" >
             <filterchain><expandproperties/></filterchain>
         </copy>
-
-        <copy file="${basedir}/CHANGELOG.txt" tofile="${build.project.dir}/CHANGELOG.txt" />
     </target>
 
     <!--
