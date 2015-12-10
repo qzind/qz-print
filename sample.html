@@ -156,7 +156,7 @@ function qzReady() {
 }
 
 function launchQZ() {
-    if (qz && $.isFunction(qz.isActive) && qz.isActive()) {
+    if (window["qz"] && $.isFunction(qz.isActive) && qz.isActive()) {
         alert("Already running");
     } else {
         window.location.assign("qz:launch");
