@@ -115,17 +115,11 @@ var _qz = {
 
                 config.port.usingIndex++;
 
-                if (config.usingSecure) {
-                    if (config.port.usingIndex >= config.port.secure.length) {
-                        config.usingSecure = false;
-                        config.port.usingIndex = 0;
-                    }
-                } else {
-                    if (config.port.usingIndex >= config.port.insecure.length) {
-                        //give up, all hope is lost
-                        reject(new Error("Unable to establish connection with QZ"));
-                        return;
-                    }
+                if ((config.usingSecure && config.port.usingIndex >= config.port.secure.length)
+                    || (!config.usingSecure && config.port.usingIndex >= config.port.insecure.length)) {
+                    //give up, all hope is lost
+                    reject(new Error("Unable to establish connection with QZ"));
+                    return;
                 }
 
                 // recursive call until connection established or all ports are exhausted
@@ -279,6 +273,7 @@ var _qz = {
     certCallbacks: [],
     callCert: function() {},
 
+    //TODO - signature time frame check
     //TODO - what message parts get signed ?? - pre-sign compatible !!
     signCallbacks: [],
     callSign: function(toSign) {}
@@ -343,6 +338,12 @@ window.qz = {
                 if (!"WebSocket" in window || WebSocket.CLOSED == null || WebSocket.CLOSED == 2) {
                     reject(new Error("Web Sockets are not supported by this browser"));
                     return;
+                }
+
+                //disable secure ports if page is not secure
+                if (location.protocol !== 'https:') {
+                    if (options == undefined) { options = {}; }
+                    options.usingSecure = false;
                 }
 
                 var config = $.extend(true, {}, _qz.connectConfig, options);
@@ -413,7 +414,7 @@ window.qz = {
      * @see connect
      */
     isActive: function() {
-        return _qz.connection != null && _qz.connection.valid;
+        return _qz.connection != null && _qz.connection.established;
     },
 
 

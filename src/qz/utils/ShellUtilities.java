@@ -47,7 +47,7 @@ public class ShellUtilities {
      * @return {@code true} if {@code Process.exitValue()} is {@code 0}, otherwise {@code false}.
      */
     public static boolean execute(String[] commandArray) {
-        log.info("Executing: {}", Arrays.toString(commandArray));
+        log.debug("Executing: {}", Arrays.toString(commandArray));
         try {
             // Create and execute our new process
             Process p = Runtime.getRuntime().exec(commandArray);
@@ -86,7 +86,7 @@ public class ShellUtilities {
      * {@code searchFor} is null ,then the first line of standard output
      */
     public static String execute(String[] commandArray, String[] searchFor, boolean caseSensitive) {
-        log.info("Executing: {}", Arrays.toString(commandArray));
+        log.debug("Executing: {}", Arrays.toString(commandArray));
         try {
             // Create and execute our new process
             Process p = Runtime.getRuntime().exec(commandArray);

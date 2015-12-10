@@ -159,7 +159,7 @@ public class PrintSocketClient {
                         openSerialPorts.remove(params.getString("port"));
                         sendResult(session, UID, null);
                     } else {
-                        sendError(session, UID, String.format("Serial port [%s] is already open.", params.getString("port")));
+                        sendError(session, UID, String.format("Serial port [%s] is not open.", params.getString("port")));
                     }
                 }
                 catch(SerialPortException e) {

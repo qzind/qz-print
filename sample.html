@@ -32,7 +32,7 @@
     </div>
 </nav>
 
-<div id="qz-alert" style="position: absolute; width: 70%; margin: 0 5% 0 25%; z-index: 999;"></div>
+<div id="qz-alert" style="position: fixed; width: 70%; margin: 0 5% 0 25%; z-index: 999;"></div>
 
 <div class="container" role="main">
 
@@ -540,22 +540,29 @@
 
 
 <!--TODO - better commenting-->
-<!--TODO - checks for open-->
 <script>
     /// Connection ///
     function startConnection() {
-        updateState('Waiting', 'default');
+        if (!qz.isActive()) {
+            updateState('Waiting', 'default');
 
-        qz.websocket.connect({ usingSecure: false }).then(function() {
-            updateState('Active', 'success');
-            findVersion();
-        }).catch(handleConnectionError);
+            qz.websocket.connect().then(function() {
+                updateState('Active', 'success');
+                findVersion();
+            }).catch(handleConnectionError);
+        } else {
+            displayMessage('An active connection with QZ already exists.', 'alert-warning');
+        }
     }
 
     function endConnection() {
-        qz.websocket.disconnect().then(function() {
-            updateState('Inactive', 'default');
-        }).catch(handleConnectionError);
+        if (qz.isActive()) {
+            qz.websocket.disconnect().then(function() {
+                updateState('Inactive', 'default');
+            }).catch(handleConnectionError);
+        } else {
+            displayMessage('No active connection with QZ exists.', 'alert-warning');
+        }
     }
 
     function listNetworkInfo() {
@@ -580,8 +587,12 @@
     function findPrinter(query, set) {
         $("#printerSearch").val(query);
         qz.printers.find(query).then(function(data) {
-            displayMessage("<strong>Found:</strong> " + data);
-            if (set) { setPrinter(data); }
+            if (data != undefined) {
+                displayMessage("<strong>Found:</strong> " + data);
+                if (set) { setPrinter(data); }
+            } else {
+                displayMessage("Could not find a printer using <em>" + query + "</em>", 'alert-warning');
+            }
         }).catch(displayError);
     }
 
@@ -930,6 +941,7 @@
             flowControl: $("#serialFlow").val()
         };
 
+        //TODO - problem sending newlines ?
         qz.serial.sendData($("#serialPort").val(), $("#serialCmd").val(), properties).catch(displayError);
     }
 
@@ -1014,6 +1026,13 @@
         resetSerialOptions();
 
         startConnection();
+
+        $("#printerSearch").on('keyup', function(e) {
+            if (e.which == 13 || e.keyCode == 13) {
+                findPrinter($('#printerSearch').val());
+                return false;
+            }
+        })
     });
 
     qz.websocket.setClosedCallbacks(function(evt) {

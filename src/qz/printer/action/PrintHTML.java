@@ -47,28 +47,33 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
 
     @Override
     public void parseData(JSONArray printData, PrintOptions options) throws JSONException, UnsupportedOperationException {
-        WebApp.initialize();
+        try {
+            WebApp.initialize();
 
-        for(int i = 0; i < printData.length(); i++) {
-            JSONObject data = printData.getJSONObject(i);
-            String source = data.getString("data");
+            for(int i = 0; i < printData.length(); i++) {
+                JSONObject data = printData.getJSONObject(i);
+                String source = data.getString("data");
 
-            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
-            boolean fromFile = (format == PrintingUtilities.Format.FILE) || (format == PrintingUtilities.Format.AUTO && source.startsWith("http"));
+                PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
+                boolean fromFile = (format == PrintingUtilities.Format.FILE) || (format == PrintingUtilities.Format.AUTO && source.startsWith("http"));
 
-            double pageWidth = WebApp.DEFAULT_WIDTH;
-            JSONObject option = data.optJSONObject("options");
-            if (option != null) { pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH); }
+                double pageWidth = WebApp.DEFAULT_WIDTH;
+                JSONObject option = data.optJSONObject("options");
+                if (option != null) { pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH); }
 
-            try {
-                images.add(WebApp.capture(source, fromFile, pageWidth));
+                try {
+                    images.add(WebApp.capture(source, fromFile, pageWidth));
+                }
+                catch(IOException e) {
+                    throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", data.getString("format"), source), e);
+                }
             }
-            catch(IOException e) {
-                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", data.getString("format"), source), e);
-            }
+
+            log.debug("Parsed {} html records", images.size());
         }
-
-        log.debug("Parsed {} html records", images.size());
+        catch(NoClassDefFoundError e) {
+            throw new UnsupportedOperationException("JavaFX libraries not found", e);
+        }
     }
 
 }

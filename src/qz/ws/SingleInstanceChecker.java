@@ -53,7 +53,7 @@ public class SingleInstanceChecker {
     public SingleInstanceChecker(TrayManager trayManager, int port) {
         this.trayManager = trayManager;
 
-        log.info("Checking for a running instance of {} on port {}", Constants.ABOUT_TITLE, port);
+        log.debug("Checking for a running instance of {} on port {}", Constants.ABOUT_TITLE, port);
         autoCloseClient(AUTO_CLOSE);
         connectTo("ws://localhost:" + port);
     }
