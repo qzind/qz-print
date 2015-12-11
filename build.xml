@@ -127,6 +127,14 @@
             <fileset dir="${js.dir}"/>
         </copy>
 
+        <copy todir="${dist.dir}/${demo.dir}/${css.dir}">
+            <fileset dir="${css.dir}"/>
+        </copy>
+
+        <copy todir="${dist.dir}/${demo.dir}/${fonts.dir}">
+            <fileset dir="${fonts.dir}"/>
+        </copy>
+
         <copy todir="${dist.dir}/${demo.dir}">
             <fileset file="sample.html"/>
         </copy>
