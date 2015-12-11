@@ -74,8 +74,8 @@
                     </div>
                     <div class="form-group">
                         <div class="btn-group" role="group">
-                            <button type="button" class="btn btn-default btn-sm" onclick="findPrinter($('#printerSearch').val());">Find Printer</button>
-                            <button type="button" class="btn btn-default btn-sm" onclick="findDefaultPrinter();">Find Default Printer</button>
+                            <button type="button" class="btn btn-default btn-sm" onclick="findPrinter($('#printerSearch').val(), true);">Find Printer</button>
+                            <button type="button" class="btn btn-default btn-sm" onclick="findDefaultPrinter(true);">Find Default Printer</button>
                             <button type="button" class="btn btn-default btn-sm" onclick="findPrinters();">Find All Printers</button>
                         </div>
                     </div>
@@ -596,9 +596,10 @@
         }).catch(displayError);
     }
 
-    function findDefaultPrinter() {
+    function findDefaultPrinter(set) {
         qz.printers.getDefault().then(function(data) {
             displayMessage("<strong>Found:</strong> " + data);
+            if (set) { setPrinter(data); }
         }).catch(displayError);
     }
 
@@ -1028,7 +1029,7 @@
 
         $("#printerSearch").on('keyup', function(e) {
             if (e.which == 13 || e.keyCode == 13) {
-                findPrinter($('#printerSearch').val());
+                findPrinter($('#printerSearch').val(), true);
                 return false;
             }
         })
