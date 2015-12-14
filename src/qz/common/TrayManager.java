@@ -399,53 +399,34 @@ public class TrayManager {
     }
 
     public boolean showGatewayDialog(final Certificate cert) {
+        return showGatewayDialog(cert, null);
+    }
+
+    public boolean showGatewayDialog(final Certificate cert, String printer) {
         if (cert == null) {
             displayErrorMessage("Invalid certificate");
             return false;
         }
-        else {
-            try{
-                SwingUtilities.invokeAndWait(new Runnable() {
-                    @Override
-                    public void run() {
-                        gatewayDialog.prompt("%s wants to access local resources", cert);
-                    }
-                });
-            }catch(Exception ignore){}
 
-            if (gatewayDialog.isApproved()) {
-                trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to access local resources");
-                if (gatewayDialog.isPersistent()) {
-                    whiteList(cert);
-                }
-            } else {
-                trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from accessing local resources");
-                if (gatewayDialog.isPersistent()) {
-                    blackList(cert);
-                }
-            }
-        }
+        final String msg1 = printer == null ? "access local resources" : "print to " + printer;
+        final String msg2 = printer == null ? "accessing local resources" : "printing to " + printer;
 
-        return gatewayDialog.isApproved();
-    }
-
-    public boolean showPrintDialog(final Certificate cert, final String printer) {
-        try {
+        try{
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
-                    gatewayDialog.prompt("%s wants to print to " + printer, cert);
+                    gatewayDialog.prompt("%s wants to " + msg1, cert);
                 }
             });
-        } catch(Exception ignore) {}
+        } catch(Exception ignore){}
 
         if (gatewayDialog.isApproved()) {
-            trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to print to " + printer);
+            trayLogger.log(Level.INFO, "Allowed " + cert.getCommonName() + " to " + msg1);
             if (gatewayDialog.isPersistent()) {
                 whiteList(cert);
             }
         } else {
-            trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from printing to " + printer);
+            trayLogger.log(Level.INFO, "Blocked " + cert.getCommonName() + " from " + msg2);
             if (gatewayDialog.isPersistent()) {
                 if (PrintSocket.UNSIGNED.equals(cert)) {
                     anonymousItem.doClick(); // if always block anonymous requests -> flag menu item

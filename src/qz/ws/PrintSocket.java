@@ -228,7 +228,7 @@ public class PrintSocket {
             String name = message.optString("method");
             boolean blocked = false;
 
-            if (printingMethods.contains(name) && !trayManager.showPrintDialog(certificate, qz.getPrinter())) {
+            if (printingMethods.contains(name) && !trayManager.showGatewayDialog(certificate, qz.getPrinter())) {
                 blocked = true; //required successful print dialog, but failed
             }
             if (privilegedMethods.contains(name) && !trayManager.showGatewayDialog(certificate)) {
