@@ -522,13 +522,16 @@ public class TrayManager {
         return ports.replaceAll(", $", "");
     }
 
-    /** Thread safe method for setting the warning status message */
+    /**
+     * Thread safe method for setting an info status message
+     */
     public void displayInfoMessage(String text) {
         displayMessage(name, text, TrayIcon.MessageType.INFO);
     }
 
     /**
-     * Thread safe method for setting the warning status message
+     * Thread safe method for setting a fine status message.   Fine messages are suppressed unless "Show all
+     * notifications" is checked.
      */
     public void displayFineMessage(String text) {
         displayMessage(name, text, TrayIcon.MessageType.NONE);
