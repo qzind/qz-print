@@ -49,13 +49,13 @@ public class PrintSocketClient {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         log.info("Connection opened:" + session.getRemoteAddress());
-        trayManager.displayInfoMessage("Client connected");
+        trayManager.displayFineMessage("Client connected");
     }
 
     @OnWebSocketClose
     public void onClose(Session session, int closeCode, String reason) {
         log.info("Connection closed: " + closeCode + " - " + reason);
-        trayManager.displayInfoMessage("Client disconnected");
+        trayManager.displayFineMessage("Client disconnected");
     }
 
     @OnWebSocketError

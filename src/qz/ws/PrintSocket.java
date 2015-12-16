@@ -76,7 +76,7 @@ public class PrintSocket {
         }
 
         log.info("WebSocket close: " + statusCode + " - " + reason);
-        trayManager.displayInfoMessage("Client disconnected");
+        trayManager.displayFineMessage("Client disconnected");
     }
 
 
