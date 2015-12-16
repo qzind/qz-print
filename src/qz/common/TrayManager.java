@@ -83,6 +83,9 @@ public class TrayManager {
     // The shortcut and startup helper
     private final DeployUtilities shortcutCreator;
 
+    private final PropertyHelper prefs;
+    private String notificationsKey = "tray.notifications";
+
     // Action to run when reload is triggered
     private Thread reloadThread;
 
@@ -95,6 +98,8 @@ public class TrayManager {
         // Setup the web socket log file writer
         trayLogger = Logger.getLogger(TrayManager.class.getName());
         addLogHandler(trayLogger);
+
+        prefs = new PropertyHelper(SystemUtilities.getDataDirectory() + File.separator + Constants.PREFS_FILE + ".properties");
 
         // Setup the shortcut name so that the UI components can use it
         shortcutCreator = DeployUtilities.getSystemShortcutCreator();
@@ -182,6 +187,7 @@ public class TrayManager {
         sitesDialog = new SiteManagerDialog(sitesItem, iconCache);
 
         anonymousItem = new JCheckBoxMenuItem("Block Anonymous Requests");
+        anonymousItem.setToolTipText("Blocks all requests that do no contain a valid certificate/signature");
         anonymousItem.setMnemonic(KeyEvent.VK_K);
         anonymousItem.setState(PrintSocket.UNSIGNED.isBlocked());
         anonymousItem.addActionListener(anonymousListener);
@@ -190,6 +196,12 @@ public class TrayManager {
         logItem.setMnemonic(KeyEvent.VK_L);
         logItem.addActionListener(logListener);
         logDialog = new LogDialog(logItem, iconCache);
+
+        JCheckBoxMenuItem notificationsItem = new JCheckBoxMenuItem("Show all notifications");
+        notificationsItem.setToolTipText("Shows all connect/disconnect messages, useful for debugging purposes");
+        notificationsItem.setMnemonic(KeyEvent.VK_S);
+        notificationsItem.setState(prefs.getBoolean(notificationsKey, false));
+        notificationsItem.addActionListener(notificationsListener);
 
         JMenuItem openItem = new JMenuItem("Open file location", iconCache.getIcon(IconCache.Icon.FOLDER_ICON));
         openItem.setMnemonic(KeyEvent.VK_O);
@@ -202,6 +214,7 @@ public class TrayManager {
         advancedMenu.add(sitesItem);
         advancedMenu.add(anonymousItem);
         advancedMenu.add(logItem);
+        advancedMenu.add(notificationsItem);
         advancedMenu.add(new JSeparator());
         advancedMenu.add(openItem);
         advancedMenu.add(desktopItem);
@@ -241,6 +254,15 @@ public class TrayManager {
         popup.add(separator);
         popup.add(exitItem);
     }
+
+
+    private final ActionListener notificationsListener = new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            JCheckBoxMenuItem j = (JCheckBoxMenuItem)e.getSource();
+            prefs.setProperty(notificationsKey, j.getState());
+        }
+    };
 
     private final ActionListener openListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
@@ -342,6 +364,7 @@ public class TrayManager {
         for (Handler h : trayLogger.getHandlers()) {
             trayLogger.removeHandler(h);
         }
+        prefs.save();
         System.exit(returnCode);
     }
 	
@@ -503,6 +526,13 @@ public class TrayManager {
     }
 
     /**
+     * Thread safe method for setting the warning status message
+     */
+    public void displayFineMessage(String text) {
+        displayMessage(name, text, Level.FINE);
+    }
+
+    /**
      * Thread safe method for setting the default icon
      */
     public void setDefaultIcon() {
@@ -564,7 +594,10 @@ public class TrayManager {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    tray.displayMessage(caption, text, level);
+                    boolean showAllNotifications = prefs.getBoolean(notificationsKey, false);
+                    if (showAllNotifications || (level == Level.INFO || level == Level.SEVERE)) {
+                        tray.displayMessage(caption, text, level);
+                    }
                     trayLogger.log(level, "Tray Message: " + text);
                 }
             }));
