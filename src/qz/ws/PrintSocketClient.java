@@ -36,7 +36,7 @@ public class PrintSocketClient {
 
     private final TrayManager trayManager = PrintSocketServer.getTrayManager();
 
-    private static final HashMap<Integer,Certificate> certificates = new HashMap<>(); //port -> public certificate
+    private static final HashMap<Integer,Certificate> openConnections = new HashMap<>(); //port -> public certificate
     private static final AtomicBoolean dialogOpen = new AtomicBoolean(false);
 
     private static final HashMap<String,SerialIO> openSerialPorts = new HashMap<>(); //serial port -> SerialIO object
@@ -45,17 +45,72 @@ public class PrintSocketClient {
         SERIAL, USB
     }
 
+    private enum Method {
+        WEBSOCKET_GET_NETWORK_INFO("websocket.getNetworkInfo", true),
+        PRINTERS_GET_DEFAULT("printers.getDefault", true, "access connected printers"),
+        PRINTERS_FIND("printers.find", true, "access connected printers"),
+        PRINT("print", true, "print to %s"),
+        SERIAL_FIND_PORTS("serial.findPorts", true, "access serial ports"),
+        SERIAL_OPEN_PORT("serial.openPort", true, "open a serial port"),
+        SERIAL_SEND_DATA("serial.sendData", true, "send data over a serial port"),
+        SERIAL_CLOSE_PORT("serial.closePort", true, "close a serial port"),
+        GET_VERSION("getVersion", false),
+        INVALID("", false);
+
+
+        private String callName;
+        private String dialogPrompt;
+        private boolean dialogShown;
+
+        Method(String callName, boolean dialogShown) {
+            this(callName, dialogShown, "access local resources");
+        }
+
+        Method(String callName, boolean dialogShown, String dialogPrompt) {
+            this.callName = callName;
+
+            this.dialogShown = dialogShown;
+            this.dialogPrompt = dialogPrompt;
+        }
+
+        public boolean isDialogShown() {
+            return dialogShown;
+        }
+
+        public String getDialogPrompt() {
+            return dialogPrompt;
+        }
+
+        public static Method findFromCall(String call) {
+            for(Method m : Method.values()) {
+                if (m.callName.equals(call)) {
+                    return m;
+                }
+            }
+
+            return INVALID;
+        }
+    }
+
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
-        log.info("Connection opened:" + session.getRemoteAddress());
+        log.info("Connection opened: " + session.getRemoteAddress());
         trayManager.displayFineMessage("Client connected");
+
+        //new connections are unknown until they send a proper certificate
+        openConnections.put(session.getRemoteAddress().getPort(), Certificate.UNKNOWN);
     }
 
     @OnWebSocketClose
     public void onClose(Session session, int closeCode, String reason) {
         log.info("Connection closed: " + closeCode + " - " + reason);
         trayManager.displayFineMessage("Client disconnected");
+
+        Integer port = session.getRemoteAddress().getPort();
+        if (openConnections.get(port) != null) {
+            openConnections.remove(port);
+        }
     }
 
     @OnWebSocketError
@@ -81,11 +136,43 @@ public class PrintSocketClient {
         try {
             log.debug("Message: " + message);
             JSONObject json = new JSONObject(message);
-            uid = json.getString("uid");
+            uid = json.optString("uid");
 
-            //TODO - check certificates / signing
+            Integer connectionPort = session.getRemoteAddress().getPort();
+            Certificate certificate = openConnections.get(connectionPort);
 
-            processMessage(session, json);
+            //if sent a certificate use that instead for this connection
+            if (!json.isNull("certificate")) {
+                certificate = new Certificate(json.getString("certificate"));
+                openConnections.put(connectionPort, certificate);
+                log.debug("Received new certificate from connection through {}", connectionPort);
+
+                if (!allowedFromDialog(certificate, "connect to QZ")) {
+                    session.disconnect();
+                }
+
+                return; //this is a setup call, so no further processing is needed
+            }
+
+            //check request signature
+            if (certificate != Certificate.UNKNOWN) {
+                if (json.getLong("timestamp") + Constants.VALID_SIGNING_PERIOD < System.currentTimeMillis()
+                        || json.getLong("timestamp") - Constants.VALID_SIGNING_PERIOD > System.currentTimeMillis()) {
+                    //bad timestamps use the expired certificate
+                    log.warn("Expired signature on request");
+                    Certificate.EXPIRED.adjustStaticCertificate(certificate);
+                    certificate = Certificate.EXPIRED;
+                } else if (!validSignature(certificate, json)) {
+                    //bad signatures use the unsigned certificate
+                    log.warn("Bad signature on request");
+                    Certificate.UNSIGNED.adjustStaticCertificate(certificate);
+                    certificate = Certificate.UNSIGNED;
+                } else {
+                    log.trace("Valid signature from {}", certificate.getCommonName());
+                }
+            }
+
+            processMessage(session, json, certificate);
         }
         catch(JSONException e) {
             log.error("Bad JSON: {}", e.getMessage());
@@ -97,28 +184,47 @@ public class PrintSocketClient {
         }
     }
 
+    private boolean validSignature(Certificate certificate, JSONObject message) throws JSONException {
+        JSONObject copy = new JSONObject(message, new String[] {"call", "params", "timestamp"});
+        String signature = message.optString("signature");
+
+        return certificate.isSignatureValid(signature, copy.toString().replaceAll("\\\\/", "/"));
+    }
+
     /**
      * Determine which method was called from web API
      *
      * @param session WebSocket session
      * @param json    JSON received from web API
      */
-    private void processMessage(Session session, JSONObject json) throws JSONException {
+    private void processMessage(Session session, JSONObject json, Certificate certificate) throws JSONException {
         String UID = json.getString("uid");
-        String call = json.getString("call");
+        Method call = Method.findFromCall(json.getString("call"));
         JSONObject params = json.optJSONObject("params");
         if (params == null) { params = new JSONObject(); }
 
-        //TODO - gateway dialog
+        String prompt = call.getDialogPrompt();
+        if (call == Method.PRINT) {
+            //special formatting for print dialogs
+            JSONObject pr = params.getJSONObject("printer");
+            prompt = String.format(prompt, pr.optString("name", pr.optString("file", pr.optString("host", "an undefined location"))));
+        }
 
+        if (call.isDialogShown() && !allowedFromDialog(certificate, prompt)) {
+            sendError(session, UID, "Request blocked");
+            return;
+        }
+
+
+        //call appropriate methods
         switch(call) {
-            case "websocket.getNetworkInfo":
+            case WEBSOCKET_GET_NETWORK_INFO:
                 sendResult(session, UID, NetworkUtilities.getNetworkJSON());
                 break;
-            case "printers.getDefault":
+            case PRINTERS_GET_DEFAULT:
                 sendResult(session, UID, PrintServiceLookup.lookupDefaultPrintService().getName());
                 break;
-            case "printers.find":
+            case PRINTERS_FIND:
                 if (params.has("query")) {
                     sendResult(session, UID, PrintServiceMatcher.getPrinterJSON(params.getString("query")));
                 } else {
@@ -126,17 +232,17 @@ public class PrintSocketClient {
                 }
                 break;
 
-            case "print":
+            case PRINT:
                 processPrintRequest(session, UID, params);
                 break;
 
-            case "serial.findPorts":
+            case SERIAL_FIND_PORTS:
                 sendResult(session, UID, SerialUtilities.getSerialJSON());
                 break;
-            case "serial.openPort":
+            case SERIAL_OPEN_PORT:
                 setupSerialPort(session, UID, params);
                 break;
-            case "serial.sendData":
+            case SERIAL_SEND_DATA:
                 SerialProperties props = new SerialProperties(params.getJSONObject("properties"));
                 try {
                     SerialIO io = openSerialPorts.get(params.getString("port"));
@@ -151,7 +257,7 @@ public class PrintSocketClient {
                     sendError(session, UID, e);
                 }
                 break;
-            case "serial.closePort":
+            case SERIAL_CLOSE_PORT:
                 try {
                     SerialIO io = openSerialPorts.get(params.getString("port"));
                     if (io != null) {
@@ -167,14 +273,28 @@ public class PrintSocketClient {
                 }
                 break;
 
-            case "getVersion":
+            case GET_VERSION:
                 sendResult(session, UID, Constants.VERSION);
                 break;
 
             default:
-                sendError(session, UID, "Invalid function call: " + call);
+                sendError(session, UID, "Invalid function call: " + json.getString("call"));
                 break;
         }
+    }
+
+    private boolean allowedFromDialog(Certificate certificate, String prompt) {
+        //wait until previous prompts are closed
+        while(dialogOpen.get()) {
+            try { Thread.sleep(1000); } catch(Exception ignore) {}
+        }
+
+        dialogOpen.set(true);
+        //prompt user for access
+        boolean allowed = trayManager.showGatewayDialog(certificate, prompt);
+        dialogOpen.set(false);
+
+        return allowed;
     }
 
     /**

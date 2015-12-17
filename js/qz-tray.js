@@ -38,7 +38,17 @@ if (!Array.isArray) {
 ///// PRIVATE METHODS /////
 
 var _qz = {
-    DEBUG: false,
+    DEBUG: true,
+    log: {
+        //Debugging messages
+        trace: function() { if (_qz.DEBUG) { console.log.apply(console, arguments); } },
+        //General messages
+        info: function() { console.info.apply(console, arguments); },
+        //Debugging errors
+        warn: function() { if (_qz.DEBUG) { console.warn.apply(console, arguments); } },
+        //General errors
+        error: function() { console.error.apply(console, arguments); }
+    },
 
     connection: null,
     connectConfig: {
@@ -75,23 +85,21 @@ var _qz = {
             _qz.connection = new WebSocket(address);
         }
         catch(err) {
-            console.error(err);
+            _qz.log.error(err);
         }
 
         if (_qz.connection != null) {
             _qz.connection.established = false;
 
             _qz.connection.onopen = function(evt) {
-                if (_qz.DEBUG) { console.trace(evt); }
-                console.info("Established connection with QZ Tray on " + address);
+                _qz.log.trace(evt);
+                _qz.log.info("Established connection with QZ Tray on " + address);
 
                 _qz.setupWebsocket();
 
-                //TODO - send some certificates
-
                 if (config.keepAlive > 0) {
                     var interval = window.setInterval(function() {
-                        if (_qz.connection == null) {
+                        if (!qz.isActive()) {
                             clearInterval(interval);
                             return;
                         }
@@ -111,7 +119,7 @@ var _qz = {
             };
 
             _qz.connection.onerror = function(evt) {
-                if (_qz.DEBUG) { console.error(evt); }
+                _qz.log.trace(evt);
 
                 config.port.usingIndex++;
 
@@ -136,8 +144,8 @@ var _qz = {
 
         //called when an open connection is closed
         _qz.connection.onclose = function(evt) {
-            if (_qz.DEBUG) { console.trace(evt); }
-            console.info("Closed connection with QZ Tray");
+            _qz.log.trace(evt);
+            _qz.log.info("Closed connection with QZ Tray");
 
             //if this is set, then an explicit close call was made
             if (_qz.connection.promise != undefined) {
@@ -155,18 +163,36 @@ var _qz = {
 
         //send objects to qz
         _qz.connection.sendData = function(obj) {
+            if (obj.timestamp == undefined) {
+                obj.timestamp = Date.now();
+            }
             if (obj.promise != undefined) {
                 obj.uid = _qz.newUID();
                 _qz.pendingCalls[obj.uid] = obj.promise;
             }
 
             try {
-                //TODO - signing
-                //TODO - ensure prototype does not mess with our stringify
-                _qz.connection.send(JSON.stringify(obj));
+                if (obj.call != undefined && obj.signature == undefined) {
+                    var signObj = {
+                        call: obj.call,
+                        params: obj.params,
+                        timestamp: obj.timestamp
+                    };
+
+                    _qz.callSign(JSON.stringify(signObj)).then(function(signature) {
+                        obj.signature = signature;
+                        _qz.signContent = undefined;
+
+                        //TODO - ensure prototype does not mess with our stringify
+                        _qz.connection.send(JSON.stringify(obj));
+                    });
+                } else {
+                    //called for pre-signed content and (unsigned) setup calls
+                    _qz.connection.send(JSON.stringify(obj));
+                }
             }
             catch(err) {
-                console.error(err);
+                _qz.log.error(err);
 
                 if (obj.promise != undefined) {
                     obj.promise.reject(err);
@@ -181,14 +207,14 @@ var _qz = {
 
             if (returned.uid == null) {
                 if (returned.type == null) {
-                    if (_qz.DEBUG) { console.error("Response is incorrectly formatted", returned); }
+                    _qz.log.warn("Response is incorrectly formatted", returned);
                 } else {
                     if (returned.type == _qz.streams.serial) {
                         _qz.callSerial(returned.key, returned.data)
                     } else if (returned.type == _qz.streams.usb) {
                         //TODO - usb callback
                     } else {
-                        if (_qz.DEBUG) { console.error("Cannot determine stream type for callback", returned); }
+                        _qz.log.warn("Cannot determine stream type for callback", returned);
                     }
                 }
 
@@ -197,7 +223,7 @@ var _qz = {
 
             var promise = _qz.pendingCalls[returned.uid];
             if (promise == undefined) {
-                if (_qz.DEBUG) {console.error('No promise found for returned result');}
+                _qz.log.warn('No promise found for returned result');
             } else {
                 if (returned.error != undefined) {
                     promise.reject(new Error(returned.error));
@@ -208,6 +234,14 @@ var _qz = {
 
             delete _qz.pendingCalls[returned.uid];
         };
+
+
+        //send up the certificate before making any calls
+        //also gives the user a chance to deny the connection
+        _qz.callCert().then(function(cert) {
+            var msg = { certificate: cert };
+            _qz.connection.sendData(msg);
+        });
     },
 
     pendingCalls: {}, //library of promises waiting response, id -> promise
@@ -270,13 +304,17 @@ var _qz = {
         }
     },
 
-    certCallbacks: [],
-    callCert: function() {},
+    certPromise: function(resolve, reject) { reject("Undefined"); },
+    callCert: function() {
+        return new RSVP.Promise(_qz.certPromise);
+    },
 
-    //TODO - signature time frame check
-    //TODO - what message parts get signed ?? - pre-sign compatible !!
-    signCallbacks: [],
-    callSign: function(toSign) {}
+    signContent: undefined,
+    signaturePromise: function(resolve) { resolve(""); },
+    callSign: function(toSign) {
+        _qz.signContent = toSign;
+        return new RSVP.Promise(_qz.signaturePromise);
+    }
 };
 
 
@@ -329,7 +367,7 @@ window.qz = {
          */
         connect: function(options) {
             return new RSVP.Promise(function(resolve, reject) {
-                if (_qz.connection != null) {
+                if (qz.isActive()) {
                     reject(new Error("An open connection with QZ Tray already exists"));
                     return;
                 }
@@ -358,7 +396,7 @@ window.qz = {
          */
         disconnect: function() {
             return new RSVP.Promise(function(resolve, reject) {
-                if (_qz.connection != null) {
+                if (qz.isActive()) {
                     _qz.connection.close();
                     _qz.connection.promise = { resolve: resolve, reject: reject };
                 } else {
@@ -522,6 +560,11 @@ window.qz = {
      * Send data to selected config for printing.
      * The promise for this method will resolve when the document has been sent to the printer. Actual printing may not be complete.
      *
+     * Optionally, print requests can be pre-signed:
+     * Signed content consists of a JSON object string containing no spacing,
+     * following the format of the "call" and "params" keys in the API call, with the addition of a "timestamp" key in milliseconds
+     * ex. <code>'{"call":"<callName>","params":{...},"timestamp":1450000000}'</code>
+     *
      * @param {Object<Config>} config Previously created config object.
      * @param {Array<Object|string>} data Array of data being sent to the printer. String values are interpreted the same as the default <code>[raw]</code> object value.
      *  @param {string} data.data
@@ -538,13 +581,14 @@ window.qz = {
      *   @param {string|number} [data.options.dotDensity] Used only with raw printing <code>[visual]</code> type.
      *   @param {string} [data.options.xmlTag] Required if passing xml data. Tag name containing base64 formatted data.
      *   @param {number} [data.options.pageWidth=1280] Used only with <code>[html]</code> type printing. Width of the web page to render.
-     * @param {boolean} [signed] Indicate if the data is already signed. Will call signing methods if false.
+     * @param {boolean} [signature] Pre-signed signature of JSON string containing <code>call</code>, <code>params</code>, and <code>timestamp</code>.
+     * @param {number} [signingTimestamp] Required with <code>signature</code>. Timestamp used with pre-signed content.
      *
      * @returns {Promise<null|Error>}
      *
-     * @see config.create
+     * @see qz.config.create
      */
-    print: function(config, data, signed) {
+    print: function(config, data, signature, signingTimestamp) {
         return new RSVP.Promise(function(resolve, reject) {
             var msg = {
                 call: 'print',
@@ -554,9 +598,10 @@ window.qz = {
                 params: {
                     printer: config.getPrinter(),
                     options: config.getOptions(),
-                    data: data,
-                    signed: signed
-                }
+                    data: data
+                },
+                signature: signature,
+                timestamp: signingTimestamp
             };
 
             _qz.connection.sendData(msg);
@@ -676,30 +721,35 @@ window.qz = {
     signing: {
         /**
          * List of functions called when requesting a public certificate for signing requests.
-         * Should return a public certificate as a string.
          *
-         * @param {Function|Array<Function>} calls Single or array of <code>Function()</code> calls.
+         * @param {Function} promiseCall <code>Function({function} resolve)</code> called as promise for getting the public certificate.
+         *        Should call <code>resolve</code> parameter with the result.
          */
-        setCertificateCallbacks: function(calls) {
-            if (typeof calls == 'function' || Array.isArray(calls)) {
-                _qz.certCallbacks = calls;
-            } else {
-                throw new Error('Invalid argument');
-            }
+        setCertificatePromise: function(promiseCall) {
+            _qz.certPromise = promiseCall;
         },
 
         /**
          * List of functions called to sign a request to the connection.
-         * Should return just the signed string of the passed `stringToSign` param.
+         * Use <code>qz.signing.getContent()</code> to get the content to sign.
          *
-         * @param {Function|Array<Function>} calls Single or array of <code>Function({string} toSign)</code> calls.
+         * @param {Function} promiseCall <code>Function({function} resolve)</code> called as promise for signing requests.
+         *        Should call <code>resolve</code> parameter with the result.
+         * @see qz.signing.getContent
          */
-        setSigningCallbacks: function(calls) {
-            if (typeof calls == 'function' || Array.isArray(calls)) {
-                _qz.signCallbacks = calls;
-            } else {
-                throw new Error('Invalid argument');
-            }
+        setSignaturePromise: function(promiseCall) {
+            _qz.signaturePromise = promiseCall;
+        },
+
+        /**
+         * Call to get the string currently needing signed.
+         * Mainly used inside the promise function needed for signing requests.
+         *
+         * @returns {string} String needing signed. <code>Undefined</code> if unnecessary.
+         * @see qz.signing.setSignaturePromise
+         */
+        getContent: function() {
+            return _qz.signContent;
         }
     },
 

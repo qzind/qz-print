@@ -275,7 +275,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
 
                     Certificate certificate = Certificate.loadCertificate(dataMap);
                     // Don't include the unsigned certificate if we are blocking it, there is a menu option instead
-                    if (!certList.contains(certificate) && !Certificate.UNSIGNED.equals(certificate)) {
+                    if (!certList.contains(certificate) && !Certificate.UNKNOWN.equals(certificate)) {
                         certList.add(certificate);
                     }
                 }

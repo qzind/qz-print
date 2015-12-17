@@ -102,18 +102,27 @@ public class Certificate {
         }
     }
 
-    // We are going to pass this for all unsigned requests
-    // This way, paid or not, users will have to Allow/Deny all unsigned requests, encouraging security
+    //Pre-set certificates for various situations that could arise with bad security requests
+    public static final Certificate UNKNOWN;
+    public static final Certificate EXPIRED;
     public static final Certificate UNSIGNED;
 
     static {
         HashMap<String,String> map = new HashMap<String,String>();
-        map.put("fingerprint", "UNSIGNED REQUEST");
+        map.put("fingerprint", "UNKNOWN REQUEST");
         map.put("commonName", "An anonymous request");
         map.put("organization", "Unknown");
         map.put("validFrom", "0000-00-00 00:00:00");
         map.put("validTo", "0000-00-00 00:00:00");
         map.put("valid", "false");
+        UNKNOWN = Certificate.loadCertificate(map);
+
+        map.put("fingerprint", "EXPIRED REQUEST");
+        map.put("commonName", ""); //filled in per request
+        map.put("organization", ""); //filled in per request
+        EXPIRED = Certificate.loadCertificate(map);
+
+        map.put("fingerprint", "UNSIGNED REQUEST");
         UNSIGNED = Certificate.loadCertificate(map);
     }
 
@@ -210,6 +219,24 @@ public class Certificate {
         cert.valid = Boolean.parseBoolean(data.get("valid"));
 
         return cert;
+    }
+
+    /**
+     * Copies the company information from a valid certificate to show on an invalid signature certificate.
+     *
+     * @param copyFrom The valid certificate that failed a signature check
+     */
+    public void adjustStaticCertificate(Certificate copyFrom) {
+        if (this != UNSIGNED && this != EXPIRED) {
+            throw new UnsupportedOperationException("Cannot adjust a non-static certificate's values");
+        }
+
+        commonName = copyFrom.commonName;
+        organization = copyFrom.organization;
+
+        validFrom = copyFrom.validFrom;
+        validTo = copyFrom.validTo;
+        valid = false; //this is bad request, so never trusted
     }
 
     /**

@@ -41,9 +41,10 @@ public class Constants {
     public static final String PROBE_REQUEST = "getProgramName";
     public static final String PROBE_RESPONSE = ABOUT_TITLE;
 
-    public static final String WHITE_LIST = "Permanently allowed %s to access local resources";
-    public static final String BLACK_LIST = "Permanently blocked %s from accessing local resources";
+    public static final String WHITE_LIST = "Permanently allowed \"%s\" to access local resources";
+    public static final String BLACK_LIST = "Permanently blocked \"%s\" from accessing local resources";
 
+    public static final long VALID_SIGNING_PERIOD = 15 * 60 * 1000; //millis
     public static final int EXPIRY_WARN = 30;   // days
     public static final Color WARNING_COLOR = Color.RED;
     public static final Color TRUSTED_COLOR = Color.BLUE;

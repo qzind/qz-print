@@ -176,7 +176,7 @@ public class TrayManager {
         anonymousItem = new JCheckBoxMenuItem("Block Anonymous Requests");
         anonymousItem.setToolTipText("Blocks all requests that do no contain a valid certificate/signature");
         anonymousItem.setMnemonic(KeyEvent.VK_K);
-        anonymousItem.setState(Certificate.UNSIGNED.isBlocked());
+        anonymousItem.setState(Certificate.UNKNOWN.isBlocked());
         anonymousItem.addActionListener(anonymousListener);
 
         JMenuItem logItem = new JMenuItem("View Logs...", iconCache.getIcon(IconCache.Icon.LOG_ICON));
@@ -294,9 +294,9 @@ public class TrayManager {
             log.debug("Block unsigned: {}", checkBoxState);
 
             if (checkBoxState) {
-                blackList(Certificate.UNSIGNED);
+                blackList(Certificate.UNKNOWN);
             } else {
-                FileUtilities.deleteFromFile(Constants.BLOCK_FILE, Certificate.UNSIGNED.data());
+                FileUtilities.deleteFromFile(Constants.BLOCK_FILE, Certificate.UNKNOWN.data());
             }
         }
     };
@@ -403,7 +403,7 @@ public class TrayManager {
         JOptionPane.showMessageDialog(tray, message, name, JOptionPane.ERROR_MESSAGE);
     }
 
-    public boolean showGatewayDialog(final Certificate cert) {
+    public boolean showGatewayDialog(final Certificate cert, final String prompt) {
         if (cert == null) {
             displayErrorMessage("Invalid certificate");
             return false;
@@ -412,51 +412,25 @@ public class TrayManager {
                 SwingUtilities.invokeAndWait(new Runnable() {
                     @Override
                     public void run() {
-                        gatewayDialog.prompt("%s wants to access local resources", cert);
+                        gatewayDialog.prompt("%s wants to " + prompt, cert);
                     }
                 });
             }
             catch(Exception ignore) {}
 
             if (gatewayDialog.isApproved()) {
-                log.info("Allowed {} to access local resources", cert.getCommonName());
+                log.info("Allowed {} to {}", cert.getCommonName(), prompt);
                 if (gatewayDialog.isPersistent()) {
                     whiteList(cert);
                 }
             } else {
-                log.info("Blocked {} from accessing local resources", cert.getCommonName());
+                log.info("Denied {} to {}", cert.getCommonName(), prompt);
                 if (gatewayDialog.isPersistent()) {
-                    blackList(cert);
-                }
-            }
-        }
-
-        return gatewayDialog.isApproved();
-    }
-
-    public boolean showPrintDialog(final Certificate cert, final String printer) {
-        try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    gatewayDialog.prompt("%s wants to print to " + printer, cert);
-                }
-            });
-        }
-        catch(Exception ignore) {}
-
-        if (gatewayDialog.isApproved()) {
-            log.info("Allowed {} to print to {}", cert.getCommonName(), printer);
-            if (gatewayDialog.isPersistent()) {
-                whiteList(cert);
-            }
-        } else {
-            log.info("Blocked {} from printing to {}", cert.getCommonName(), printer);
-            if (gatewayDialog.isPersistent()) {
-                if (Certificate.UNSIGNED.equals(cert)) {
-                    anonymousItem.doClick(); // if always block anonymous requests -> flag menu item
-                } else {
-                    blackList(cert);
+                    if (Certificate.UNKNOWN.equals(cert)) {
+                        anonymousItem.doClick(); // if always block anonymous requests -> flag menu item
+                    } else {
+                        blackList(cert);
+                    }
                 }
             }
         }
@@ -466,7 +440,7 @@ public class TrayManager {
 
     private void whiteList(Certificate cert) {
         FileUtilities.printLineToFile(Constants.ALLOW_FILE, cert.data());
-        displayInfoMessage(String.format(Constants.WHITE_LIST, "\"" + cert.getOrganization() + "\""));
+        displayInfoMessage(String.format(Constants.WHITE_LIST, cert.getOrganization()));
     }
 
     private void blackList(Certificate cert) {
