@@ -65,7 +65,7 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
                     images.add(WebApp.capture(source, fromFile, pageWidth));
                 }
                 catch(IOException e) {
-                    throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", data.getString("format"), source), e);
+                    throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", format, source), e);
                 }
             }
 
