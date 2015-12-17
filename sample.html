@@ -542,7 +542,7 @@
 <!--TODO - better commenting-->
 <script>
     /// Authentication setup ///
-    qz.signing.setCertificatePromise(function(resolve) {
+    qz.security.setCertificatePromise(function(resolve) {
         //Preferred method - from server
 //        resolve($.ajax("/assets/auth/digital-certificate.txt"));
 
@@ -612,9 +612,9 @@
                 "-----END CERTIFICATE-----\n");
     });
 
-    qz.signing.setSignaturePromise(function(resolve) {
+    qz.security.setSignaturePromise(function(resolve) {
         //Preferred method - from server
-//        resolve($.ajax("/secure/url/for/sign-message?request=" + qz.signing.getContent()));
+//        resolve($.ajax("/secure/url/for/sign-message?request=" + qz.security.getContent()));
 
         //Alternate method - unsigned
         resolve();

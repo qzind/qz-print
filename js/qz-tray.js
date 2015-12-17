@@ -38,33 +38,19 @@ if (!Array.isArray) {
 ///// PRIVATE METHODS /////
 
 var _qz = {
-    DEBUG: true,
+    DEBUG: false,
+
     log: {
-        //Debugging messages
+        /** Debugging messages */
         trace: function() { if (_qz.DEBUG) { console.log.apply(console, arguments); } },
-        //General messages
+        /** General messages */
         info: function() { console.info.apply(console, arguments); },
-        //Debugging errors
+        /** Debugging errors */
         warn: function() { if (_qz.DEBUG) { console.warn.apply(console, arguments); } },
-        //General errors
+        /** General errors */
         error: function() { console.error.apply(console, arguments); }
     },
 
-    connection: null,
-    connectConfig: {
-        host: "localhost",
-        usingSecure: true,
-        protocol: {
-            secure: "wss://",
-            insecure: "ws://"
-        },
-        port: {
-            secure: [8181, 8282, 8383, 8484],
-            insecure: [8182, 8283, 8384, 8485],
-            usingIndex: 0
-        },
-        keepAlive: 60
-    },
 
     //stream types (PrintSocketClient.StreamType)
     streams: {
@@ -72,248 +58,302 @@ var _qz = {
         usb: 'USB'
     },
 
-    //loop through possible ports to open connection, sets web socket calls that will settle the promise
-    findConnection: function(config, resolve, reject) {
-        var address;
-        if (config.usingSecure) {
-            address = config.protocol.secure + config.host + ":" + config.port.secure[config.port.usingIndex];
-        } else {
-            address = config.protocol.insecure + config.host + ":" + config.port.insecure[config.port.usingIndex];
-        }
 
-        try {
-            _qz.connection = new WebSocket(address);
-        }
-        catch(err) {
-            _qz.log.error(err);
-        }
+    websocket: {
+        /** The actual websocket object managing the connection. */
+        connection: null,
 
-        if (_qz.connection != null) {
-            _qz.connection.established = false;
+        /** Default parameters used on new connections. Override values using options parameter on {@link qz.websocket.connect}. */
+        connectConfig: {
+            host: "localhost",      //host QZ Tray is running on
+            usingSecure: true,      //boolean use of secure protocol
+            protocol: {
+                secure: "wss://",   //secure websocket
+                insecure: "ws://"   //insecure websocket
+            },
+            port: {
+                secure: [8181, 8282, 8383, 8484],   //list of secure ports QZ Tray could be listening on
+                insecure: [8182, 8283, 8384, 8485], //list of insecure ports QZ Tray could be listening on
+                usingIndex: 0                       //array index of port being used by connection
+            },
+            keepAlive: 60                           //time between pings to keep connection alive, in seconds
+        },
 
-            _qz.connection.onopen = function(evt) {
-                _qz.log.trace(evt);
-                _qz.log.info("Established connection with QZ Tray on " + address);
+        setup: {
+            /** Loop through possible ports to open connection, sets web socket calls that will settle the promise. */
+            findConnection: function(config, resolve, reject) {
+                var address;
+                if (config.usingSecure) {
+                    address = config.protocol.secure + config.host + ":" + config.port.secure[config.port.usingIndex];
+                } else {
+                    address = config.protocol.insecure + config.host + ":" + config.port.insecure[config.port.usingIndex];
+                }
 
-                _qz.setupWebsocket();
+                try {
+                    _qz.websocket.connection = new WebSocket(address);
+                }
+                catch(err) {
+                    _qz.log.error(err);
+                }
 
-                if (config.keepAlive > 0) {
-                    var interval = window.setInterval(function() {
-                        if (!qz.isActive()) {
-                            clearInterval(interval);
+                if (_qz.websocket.connection != null) {
+                    _qz.websocket.connection.established = false;
+
+                    //called on successful connection to qz, begins setup of websocket calls and resolves connect promise
+                    _qz.websocket.connection.onopen = function(evt) {
+                        _qz.log.trace(evt);
+                        _qz.log.info("Established connection with QZ Tray on " + address);
+
+                        _qz.websocket.setup.openConnection();
+
+                        if (config.keepAlive > 0) {
+                            var interval = window.setInterval(function() {
+                                if (!qz.isActive()) {
+                                    clearInterval(interval);
+                                    return;
+                                }
+
+                                _qz.websocket.connection.send("ping");
+                            }, config.keepAlive * 1000);
+                        }
+
+                        resolve();
+                    };
+
+                    //called during websocket close during setup
+                    _qz.websocket.connection.onclose = function() {
+                        // Safari compatibility fix to raise error event
+                        if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
+                            _qz.websocket.connection.onerror();
+                        }
+                    };
+
+                    //called for errors during setup (such as invalid ports), reject connect promise only if all ports have been tried
+                    _qz.websocket.connection.onerror = function(evt) {
+                        _qz.log.trace(evt);
+
+                        config.port.usingIndex++;
+
+                        if ((config.usingSecure && config.port.usingIndex >= config.port.secure.length)
+                            || (!config.usingSecure && config.port.usingIndex >= config.port.insecure.length)) {
+                            //give up, all hope is lost
+                            reject(new Error("Unable to establish connection with QZ"));
                             return;
                         }
 
-                        _qz.connection.send("ping");
-                    }, config.keepAlive * 1000);
-                }
-
-                resolve();
-            };
-
-            _qz.connection.onclose = function() {
-                // Safari compatibility fix to raise error event
-                if (navigator.userAgent.indexOf('Safari') != -1 && navigator.userAgent.indexOf('Chrome') == -1) {
-                    _qz.connection.onerror();
-                }
-            };
-
-            _qz.connection.onerror = function(evt) {
-                _qz.log.trace(evt);
-
-                config.port.usingIndex++;
-
-                if ((config.usingSecure && config.port.usingIndex >= config.port.secure.length)
-                    || (!config.usingSecure && config.port.usingIndex >= config.port.insecure.length)) {
-                    //give up, all hope is lost
-                    reject(new Error("Unable to establish connection with QZ"));
-                    return;
-                }
-
-                // recursive call until connection established or all ports are exhausted
-                _qz.findConnection(config, resolve, reject);
-            };
-        } else {
-            reject(new Error("Unable to establish connection with QZ"));
-        }
-    },
-
-    //finish setting calls on success, sets web socket calls that won't settle the promise
-    setupWebsocket: function() {
-        _qz.connection.established = true;
-
-        //called when an open connection is closed
-        _qz.connection.onclose = function(evt) {
-            _qz.log.trace(evt);
-            _qz.log.info("Closed connection with QZ Tray");
-
-            //if this is set, then an explicit close call was made
-            if (_qz.connection.promise != undefined) {
-                _qz.connection.promise.resolve();
-            }
-
-            _qz.callClose(evt);
-            _qz.connection = null;
-        };
-
-        //called for any errors with an open connection
-        _qz.connection.onerror = function(evt) {
-            _qz.callError(evt);
-        };
-
-        //send objects to qz
-        _qz.connection.sendData = function(obj) {
-            if (obj.timestamp == undefined) {
-                obj.timestamp = Date.now();
-            }
-            if (obj.promise != undefined) {
-                obj.uid = _qz.newUID();
-                _qz.pendingCalls[obj.uid] = obj.promise;
-            }
-
-            try {
-                if (obj.call != undefined && obj.signature == undefined) {
-                    var signObj = {
-                        call: obj.call,
-                        params: obj.params,
-                        timestamp: obj.timestamp
+                        // recursive call until connection established or all ports are exhausted
+                        _qz.websocket.setup.findConnection(config, resolve, reject);
                     };
-
-                    _qz.callSign(JSON.stringify(signObj)).then(function(signature) {
-                        obj.signature = signature;
-                        _qz.signContent = undefined;
-
-                        //TODO - ensure prototype does not mess with our stringify
-                        _qz.connection.send(JSON.stringify(obj));
-                    });
                 } else {
-                    //called for pre-signed content and (unsigned) setup calls
-                    _qz.connection.send(JSON.stringify(obj));
+                    reject(new Error("Unable to establish connection with QZ"));
                 }
-            }
-            catch(err) {
-                _qz.log.error(err);
+            },
 
-                if (obj.promise != undefined) {
-                    obj.promise.reject(err);
-                    delete _qz.pendingCalls[obj.uid];
-                }
-            }
-        };
+            /** Finish setting calls on successful connection, sets web socket calls that won't settle the promise. */
+            openConnection: function() {
+                _qz.websocket.connection.established = true;
 
-        //receive message from qz
-        _qz.connection.onmessage = function(evt) {
-            var returned = $.parseJSON(evt.data);
+                //called when an open connection is closed
+                _qz.websocket.connection.onclose = function(evt) {
+                    _qz.log.trace(evt);
+                    _qz.log.info("Closed connection with QZ Tray");
 
-            if (returned.uid == null) {
-                if (returned.type == null) {
-                    _qz.log.warn("Response is incorrectly formatted", returned);
-                } else {
-                    if (returned.type == _qz.streams.serial) {
-                        _qz.callSerial(returned.key, returned.data)
-                    } else if (returned.type == _qz.streams.usb) {
-                        //TODO - usb callback
-                    } else {
-                        _qz.log.warn("Cannot determine stream type for callback", returned);
+                    //if this is set, then an explicit close call was made
+                    if (_qz.websocket.connection.promise != undefined) {
+                        _qz.websocket.connection.promise.resolve();
                     }
-                }
 
-                return;
+                    _qz.websocket.callClose(evt);
+                    _qz.websocket.connection = null;
+                };
+
+                //called for any errors with an open connection
+                _qz.websocket.connection.onerror = function(evt) {
+                    _qz.websocket.callError(evt);
+                };
+
+                //send JSON objects to qz
+                _qz.websocket.connection.sendData = function(obj) {
+                    if (obj.timestamp == undefined) {
+                        obj.timestamp = Date.now();
+                    }
+                    if (obj.promise != undefined) {
+                        obj.uid = _qz.websocket.setup.newUID();
+                        _qz.websocket.pendingCalls[obj.uid] = obj.promise;
+                    }
+
+                    try {
+                        if (obj.call != undefined && obj.signature == undefined) {
+                            var signObj = {
+                                call: obj.call,
+                                params: obj.params,
+                                timestamp: obj.timestamp
+                            };
+
+                            _qz.security.callSign(JSON.stringify(signObj)).then(function(signature) {
+                                obj.signature = signature;
+                                _qz.signContent = undefined;
+
+                                //TODO - ensure prototype does not mess with our stringify
+                                _qz.websocket.connection.send(JSON.stringify(obj));
+                            });
+                        } else {
+                            //called for pre-signed content and (unsigned) setup calls
+                            _qz.websocket.connection.send(JSON.stringify(obj));
+                        }
+                    }
+                    catch(err) {
+                        _qz.log.error(err);
+
+                        if (obj.promise != undefined) {
+                            obj.promise.reject(err);
+                            delete _qz.websocket.pendingCalls[obj.uid];
+                        }
+                    }
+                };
+
+                //receive message from qz
+                _qz.websocket.connection.onmessage = function(evt) {
+                    var returned = $.parseJSON(evt.data);
+
+                    if (returned.uid == null) {
+                        if (returned.type == null) {
+                            _qz.log.warn("Response is incorrectly formatted", returned);
+                        } else {
+                            if (returned.type == _qz.streams.serial) {
+                                _qz.serial.callSerial(returned.key, returned.data)
+                            } else if (returned.type == _qz.streams.usb) {
+                                //TODO - usb callback
+                            } else {
+                                _qz.log.warn("Cannot determine stream type for callback", returned);
+                            }
+                        }
+
+                        return;
+                    }
+
+                    var promise = _qz.websocket.pendingCalls[returned.uid];
+                    if (promise == undefined) {
+                        _qz.log.warn('No promise found for returned result');
+                    } else {
+                        if (returned.error != undefined) {
+                            promise.reject(new Error(returned.error));
+                        } else {
+                            promise.resolve(returned.result);
+                        }
+                    }
+
+                    delete _qz.websocket.pendingCalls[returned.uid];
+                };
+
+
+                //send up the certificate before making any calls
+                //also gives the user a chance to deny the connection
+                _qz.security.callCert().then(function(cert) {
+                    var msg = { certificate: cert };
+                    _qz.websocket.connection.sendData(msg);
+                });
+            },
+
+            /** Generate unique ID used to map a response to a call. */
+            newUID: function() {
+                var len = 6;
+                return (new Array(len + 1).join("0") + (Math.random() * Math.pow(36, len) << 0).toString(36)).slice(-len)
             }
+        },
 
-            var promise = _qz.pendingCalls[returned.uid];
-            if (promise == undefined) {
-                _qz.log.warn('No promise found for returned result');
+        /** Library of promises awaiting a response, uid -> promise */
+        pendingCalls: {},
+
+        /** List of functions to call on error from the websocket. */
+        errorCallbacks: [],
+        /** Calls all functions registered to listen for errors. */
+        callError: function(evt) {
+            if (Array.isArray(_qz.websocket.errorCallbacks)) {
+                for(var i = 0; i < _qz.websocket.errorCallbacks.length; i++) {
+                    _qz.websocket.errorCallbacks[i](evt);
+                }
             } else {
-                if (returned.error != undefined) {
-                    promise.reject(new Error(returned.error));
-                } else {
-                    promise.resolve(returned.result);
+                _qz.websocket.errorCallbacks(evt);
+            }
+        },
+
+        /** List of function to call on closing from the websocket. */
+        closedCallbacks: [],
+        /** Calls all functions registered to listen for closing. */
+        callClose: function(evt) {
+            if (Array.isArray(_qz.websocket.closedCallbacks)) {
+                for(var i = 0; i < _qz.websocket.closedCallbacks.length; i++) {
+                    _qz.websocket.closedCallbacks[i](evt);
                 }
+            } else {
+                _qz.websocket.closedCallbacks(evt);
             }
-
-            delete _qz.pendingCalls[returned.uid];
-        };
-
-
-        //send up the certificate before making any calls
-        //also gives the user a chance to deny the connection
-        _qz.callCert().then(function(cert) {
-            var msg = { certificate: cert };
-            _qz.connection.sendData(msg);
-        });
-    },
-
-    pendingCalls: {}, //library of promises waiting response, id -> promise
-    newUID: function() {
-        var len = 6;
-        return (new Array(len + 1).join("0") + (Math.random() * Math.pow(36, len) << 0).toString(36)).slice(-len)
-    },
-
-
-    defaultConfig: {
-        color: true,
-        copies: 1,
-        dpi: 72,
-        duplex: false,
-        margins: 0,
-        orientation: null,
-        paperThickness: null,
-        printerTray: null,
-        rotation: 0,
-        size: null,
-
-        altPrinting: false,
-        encoding: null,
-        endOfDoc: null,
-        language: null,
-        perSpool: 1
-    },
-
-
-    errorCallbacks: [],
-    callError: function(evt) {
-        if (Array.isArray(_qz.errorCallbacks)) {
-            for(var i = 0; i < _qz.errorCallbacks.length; i++) {
-                _qz.errorCallbacks[i](evt);
-            }
-        } else {
-            _qz.errorCallbacks(evt);
         }
     },
 
-    closedCallbacks: [],
-    callClose: function(evt) {
-        if (Array.isArray(_qz.closedCallbacks)) {
-            for(var i = 0; i < _qz.closedCallbacks.length; i++) {
-                _qz.closedCallbacks[i](evt);
-            }
-        } else {
-            _qz.closedCallbacks(evt);
+    printing: {
+        /** Default options used for new printer configs. Can be overridden using {@link qz.configs.setDefaults}. */
+        defaultConfig: {
+            //value purposes are explained in the qz.configs.setDefaults docs
+
+            color: true,
+            copies: 1,
+            dpi: 72,
+            duplex: false,
+            margins: 0,
+            orientation: null,
+            paperThickness: null,
+            printerTray: null,
+            rotation: 0,
+            size: null,
+
+            altPrinting: false,
+            encoding: null,
+            endOfDoc: null,
+            language: null,
+            perSpool: 1
         }
     },
 
-    serialCallbacks: [],
-    callSerial: function(port, output) {
-        if (Array.isArray(_qz.serialCallbacks)) {
-            for(var i = 0; i < _qz.serialCallbacks.length; i++) {
-                _qz.serialCallbacks[i](port, output);
+
+    serial: {
+        /** List of functions call when receiving data from serial connection. */
+        serialCallbacks: [],
+        /** Calls all functions registered to listen for serial events. */
+        callSerial: function(port, output) {
+            if (Array.isArray(_qz.serial.serialCallbacks)) {
+                for(var i = 0; i < _qz.serial.serialCallbacks.length; i++) {
+                    _qz.serial.serialCallbacks[i](port, output);
+                }
+            } else {
+                _qz.serial.serialCallbacks(port, output);
             }
-        } else {
-            _qz.serialCallbacks(port, output);
         }
     },
 
-    certPromise: function(resolve, reject) { reject("Undefined"); },
-    callCert: function() {
-        return new RSVP.Promise(_qz.certPromise);
+    usb: {
+        //empty
     },
 
-    signContent: undefined,
-    signaturePromise: function(resolve) { resolve(""); },
-    callSign: function(toSign) {
-        _qz.signContent = toSign;
-        return new RSVP.Promise(_qz.signaturePromise);
+
+    security: {
+        /** Function used to resolve promise when acquiring site's public certificate. */
+        certPromise: function(resolve, reject) { reject("Undefined"); },
+        /** Called to create new promise (using {@link _qz.security.certPromise}) for certificate retrieval. */
+        callCert: function() {
+            return new RSVP.Promise(_qz.security.certPromise);
+        },
+
+        /** Holds the current content waiting to be signed by the site. */
+        signContent: undefined,
+        /** Function used to resolve promise when requiring signed calls. */
+        signaturePromise: function(resolve) { resolve(""); },
+        /** Called to create new promise (using {@link _qz.security.signaturePromise}) for signed calls. */
+        callSign: function(toSign) {
+            _qz.security.signContent = toSign;
+            return new RSVP.Promise(_qz.security.signaturePromise);
+        }
     }
 };
 
@@ -384,8 +424,8 @@ window.qz = {
                     options.usingSecure = false;
                 }
 
-                var config = $.extend(true, {}, _qz.connectConfig, options);
-                _qz.findConnection(config, resolve, reject);
+                var config = $.extend(true, {}, _qz.websocket.connectConfig, options);
+                _qz.websocket.setup.findConnection(config, resolve, reject);
             });
         },
 
@@ -397,8 +437,8 @@ window.qz = {
         disconnect: function() {
             return new RSVP.Promise(function(resolve, reject) {
                 if (qz.isActive()) {
-                    _qz.connection.close();
-                    _qz.connection.promise = { resolve: resolve, reject: reject };
+                    _qz.websocket.connection.close();
+                    _qz.websocket.connection.promise = { resolve: resolve, reject: reject };
                 } else {
                     reject(new Error("No open connection with QZ Tray"))
                 }
@@ -412,7 +452,7 @@ window.qz = {
          * @param {Function|Array<Function>} calls Single or array of <code>Function({Event} event)</code> calls.
          */
         setErrorCallbacks: function(calls) {
-            _qz.errorCallbacks = calls;
+            _qz.websocket.errorCallbacks = calls;
         },
 
         /**
@@ -422,7 +462,7 @@ window.qz = {
          * @param {Function|Array<Function>} calls Single or array of <code>Function({Event} event)</code> calls.
          */
         setClosedCallbacks: function(calls) {
-            _qz.closedCallbacks = calls;
+            _qz.websocket.closedCallbacks = calls;
         },
 
         /**
@@ -437,7 +477,7 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.sendData(msg);
+                _qz.websocket.connection.sendData(msg);
             });
         }
 
@@ -452,7 +492,7 @@ window.qz = {
      * @see connect
      */
     isActive: function() {
-        return _qz.connection != null && _qz.connection.established;
+        return _qz.websocket.connection != null && _qz.websocket.connection.established;
     },
 
 
@@ -470,7 +510,7 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.sendData(msg);
+                _qz.websocket.connection.sendData(msg);
             });
         },
 
@@ -492,7 +532,7 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.sendData(msg);
+                _qz.websocket.connection.sendData(msg);
             });
         }
     },
@@ -532,7 +572,7 @@ window.qz = {
          *  @param {number} [options.perSpool=1] Number of pages per spool.
          */
         setDefaults: function(options) {
-            $.extend(true, _qz.defaultConfig, options);
+            $.extend(true, _qz.printing.defaultConfig, options);
         },
 
         /**
@@ -550,7 +590,7 @@ window.qz = {
          * @see config.setDefaults
          */
         create: function(printer, options) {
-            var myOpts = $.extend(true, {}, _qz.defaultConfig, options);
+            var myOpts = $.extend(true, {}, _qz.printing.defaultConfig, options);
             return new Config(printer, myOpts);
         }
     },
@@ -604,7 +644,7 @@ window.qz = {
                 timestamp: signingTimestamp
             };
 
-            _qz.connection.sendData(msg);
+            _qz.websocket.connection.sendData(msg);
         });
     },
 
@@ -623,7 +663,7 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.sendData(msg);
+                _qz.websocket.connection.sendData(msg);
             });
         },
 
@@ -633,7 +673,7 @@ window.qz = {
          * @param {Function|Array<Function>} calls Single or array of <code>Function({string} portName, {string} output)</code> calls.
          */
         setSerialCallbacks: function(calls) {
-            _qz.serialCallbacks = calls;
+            _qz.serial.serialCallbacks = calls;
         },
 
         /**
@@ -658,7 +698,7 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.sendData(msg);
+                _qz.websocket.connection.sendData(msg);
             });
         },
 
@@ -690,7 +730,7 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.sendData(msg);
+                _qz.websocket.connection.sendData(msg);
             });
         },
 
@@ -711,14 +751,14 @@ window.qz = {
                     }
                 };
 
-                _qz.connection.sendData(msg);
+                _qz.websocket.connection.sendData(msg);
             });
         }
     },
 
 
     /** Calls related to signing connection requests. */
-    signing: {
+    security: {
         /**
          * List of functions called when requesting a public certificate for signing requests.
          *
@@ -726,19 +766,19 @@ window.qz = {
          *        Should call <code>resolve</code> parameter with the result.
          */
         setCertificatePromise: function(promiseCall) {
-            _qz.certPromise = promiseCall;
+            _qz.security.certPromise = promiseCall;
         },
 
         /**
          * List of functions called to sign a request to the connection.
-         * Use <code>qz.signing.getContent()</code> to get the content to sign.
+         * Use <code>qz.security.getContent()</code> to get the content to sign.
          *
          * @param {Function} promiseCall <code>Function({function} resolve)</code> called as promise for signing requests.
          *        Should call <code>resolve</code> parameter with the result.
-         * @see qz.signing.getContent
+         * @see qz.security.getContent
          */
         setSignaturePromise: function(promiseCall) {
-            _qz.signaturePromise = promiseCall;
+            _qz.security.signaturePromise = promiseCall;
         },
 
         /**
@@ -746,10 +786,10 @@ window.qz = {
          * Mainly used inside the promise function needed for signing requests.
          *
          * @returns {string} String needing signed. <code>Undefined</code> if unnecessary.
-         * @see qz.signing.setSignaturePromise
+         * @see qz.security.setSignaturePromise
          */
         getContent: function() {
-            return _qz.signContent;
+            return _qz.security.signContent;
         }
     },
 
@@ -767,7 +807,7 @@ window.qz = {
                 }
             };
 
-            _qz.connection.sendData(msg);
+            _qz.websocket.connection.sendData(msg);
         });
     }
 
