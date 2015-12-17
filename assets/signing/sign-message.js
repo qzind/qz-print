@@ -22,18 +22,20 @@
 // #                                                       #
 // #########################################################
 
+var key = "private-key.pem";
+var pass = "S3cur3P@ssw0rd";
 
-app.post('request', /* Auth validation middleware , */ function(req, res) {
+app.get('/sign', function(req, res) {
     var crypto = require('crypto');
     var fs = require('fs');
     var path = require('path');
-    var toSign = req.body.requestToSign;
+    var toSign = req.query.requestToSign;
 
-    fs.readFile(path.join(__dirname, './private-key.pem'), 'utf-8', function(err, privateKey) {
+    fs.readFile(path.join(__dirname, '\\' + key), 'utf-8', function(err, privateKey) {
         var sign = crypto.createSign('SHA1');
 
         sign.update(toSign);
-        var signature = sign.sign(privateKey, 'base64');
+        var signature = sign.sign({ key: privateKey, passphrase: pass }, 'base64');
 
         res.set('Content-Type', 'text/plain');
         res.send(signature);
