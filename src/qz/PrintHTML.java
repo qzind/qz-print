@@ -94,6 +94,9 @@ public class PrintHTML extends JLabel implements Printable {
 
         try{
             for (String s : getHTMLDataArray()) {
+                if (s.trim().isEmpty()) {
+                    continue;
+                }
                 this.setText(s + "</html>");
                 j.add(this);
 
