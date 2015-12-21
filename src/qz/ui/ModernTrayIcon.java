@@ -38,6 +38,7 @@ import java.awt.event.WindowListener;
  * @author A. Tres Finocchiaro
  */
 public class ModernTrayIcon extends JXTrayIcon {
+    private static Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
     private JFrame invisibleFrame;
     private JPopupMenu popup;
     private int x = 0, y = 0;
@@ -81,14 +82,9 @@ public class ModernTrayIcon extends JXTrayIcon {
         invisibleFrame.addWindowListener(new WindowListener() {
             @Override
             public void windowActivated(WindowEvent we) {
-                // X11 bug
-                if (SystemUtilities.isFedora()) {
-                    popup.show(invisibleFrame, 0, 0);
-                } else {
-                    popup.setInvoker(invisibleFrame);
-                    popup.setVisible(true);
-                    popup.setLocation(x, SystemUtilities.isWindows() ? y - popup.getHeight() : y);
-                }
+                popup.setInvoker(invisibleFrame);
+                popup.setVisible(true);
+                popup.setLocation(x, y > screenSize.getHeight() / 2 ? y - popup.getHeight() : y);
                 popup.requestFocus();
             }
 
