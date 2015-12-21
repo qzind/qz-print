@@ -24,7 +24,10 @@ package qz.utils;
 
 import qz.common.Constants;
 
+import javax.swing.*;
 import java.io.File;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Utility class for OS detection functions.
@@ -170,5 +173,15 @@ public class SystemUtilities {
         }
         return uname;
     }
-    
+
+    public static boolean setSystemLookAndFeel() {
+        try {
+            UIManager.getDefaults().put("Button.showMnemonics", Boolean.TRUE);
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            return true;
+        } catch (Exception e) {
+            Logger.getLogger(SystemUtilities.class.getName()).log(Level.WARNING,  "Error getting the default look and feel");
+        }
+        return false;
+    }
 }
