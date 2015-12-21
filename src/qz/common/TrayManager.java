@@ -26,6 +26,7 @@ import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
+import org.jdesktop.swinghelper.tray.JXTrayIcon;
 import qz.auth.Certificate;
 import qz.deploy.DeployUtilities;
 import qz.deploy.WindowsDeploy;
@@ -58,11 +59,7 @@ public class TrayManager {
     // The cached icons
     private final IconCache iconCache;
 
-    // Time in millis before the popup menu disappears
-    final int POPUP_TIMEOUT = 2000;
-
-    // Custom swing pop-up menu
-    AutoHidePopupTray tray;
+    JXTrayIcon tray;
 
     private ConfirmDialog confirmDialog;
     private GatewayDialog gatewayDialog;
@@ -105,15 +102,27 @@ public class TrayManager {
         shortcutCreator = DeployUtilities.getSystemShortcutCreator();
         shortcutCreator.setShortcutName(Constants.ABOUT_TITLE);
 
-        // Initialize a custom Swing system tray that hides after a timeout
-        tray = new AutoHidePopupTray(POPUP_TIMEOUT);
-        tray.setToolTipText(name);
+        SystemUtilities.setSystemLookAndFeel();
 
-        // Iterates over all images denoted by IconCache.getTypes() and caches them
-        iconCache = new IconCache(tray.getIconSize());
-        tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
+        if (SystemTray.isSupported()) {
+            // Accommodate some OS-specific tray bugs
+            tray = SystemUtilities.isLinux() ? new ModernTrayIcon() : new JXTrayIcon(new ImageIcon(new byte[1]).getImage());
 
-        // Linux spcecific tasks
+            // Iterates over all images denoted by IconCache.getTypes() and caches them
+            iconCache = new IconCache(tray.getSize());
+            tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
+            tray.setToolTip(name);
+
+            try {
+                SystemTray.getSystemTray().add(tray);
+            } catch (AWTException awt) {
+                trayLogger.log(Level.SEVERE, "Could not attach tray", awt);
+            }
+        } else {
+            iconCache = new IconCache();
+        }
+
+        // OS-specific tasks
         if (SystemUtilities.isLinux()) {
             // Fix the tray icon to look proper on Ubuntu
             UbuntuUtilities.fixTrayIcons(iconCache);
@@ -131,32 +140,7 @@ public class TrayManager {
         // The ok/cancel dialog
         confirmDialog = new ConfirmDialog(null, "Please Confirm", iconCache);
 
-        addMenuItems(tray);
-        //tray.displayMessage(name, name + " is running.", Level.INFO);
-
-	if (tray.getTrayIcon()!=null){
-            tray.getTrayIcon().addMouseListener(new MouseListener() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getClickCount() == 2) {
-                        tray.setVisible(false);
-                        aboutListener.actionPerformed(new ActionEvent(e.getSource(),e.getID(),null));
-                    }
-                }
-
-                @Override
-                public void mousePressed(MouseEvent e) {}
-
-                @Override
-                public void mouseReleased(MouseEvent e) {}
-
-                @Override
-                public void mouseEntered(MouseEvent e) {}
-
-                @Override
-                public void mouseExited(MouseEvent e) {}
-            });
-	}
+        addMenuItems();
     }
 
     /**
@@ -176,7 +160,9 @@ public class TrayManager {
     /**
      * Builds the swing pop-up menu with the specified items
      */
-    private void addMenuItems(JPopupMenu popup) {
+    private void addMenuItems() {
+        JPopupMenu popup = new JPopupMenu();
+
         JMenu advancedMenu = new JMenu("Advanced");
         advancedMenu.setMnemonic(KeyEvent.VK_A);
         advancedMenu.setIcon(iconCache.getIcon(IconCache.Icon.SETTINGS_ICON));
@@ -253,6 +239,8 @@ public class TrayManager {
         popup.add(startupItem);
         popup.add(separator);
         popup.add(exitItem);
+
+        tray.setJPopupMenu(popup);
     }
 
 
@@ -391,10 +379,10 @@ public class TrayManager {
             // Remove shortcut entry
             if (confirmDialog.prompt("Remove " + name + " from " + toggleType + "?")) {
                 if (!shortcutCreator.removeShortcut(toggleType)) {
-                    tray.displayMessage(name, "Error removing " + toggleType + " entry", Level.SEVERE);
+                    tray.displayMessage(name, "Error removing " + toggleType + " entry", TrayIcon.MessageType.ERROR);
                     checkBoxState = true;   // Set our checkbox back to true
                 } else {
-                    tray.displayMessage(name, "Successfully removed " + toggleType + " entry", Level.INFO);
+                    tray.displayMessage(name, "Successfully removed " + toggleType + " entry", TrayIcon.MessageType.INFO);
                 }
             } else {
                 checkBoxState = true;   // Set our checkbox back to true
@@ -402,10 +390,10 @@ public class TrayManager {
         } else {
             // Add shortcut entry
             if (!shortcutCreator.createShortcut(toggleType)) {
-                tray.displayMessage(name, "Error creating " + toggleType + " entry", Level.SEVERE);
+                tray.displayMessage(name, "Error creating " + toggleType + " entry", TrayIcon.MessageType.ERROR);
                 checkBoxState = false;   // Set our checkbox back to false
             } else {
-                tray.displayMessage(name, "Successfully added " + toggleType + " entry", Level.INFO);
+                tray.displayMessage(name, "Successfully added " + toggleType + " entry", TrayIcon.MessageType.INFO);
             }
         }
 
@@ -418,7 +406,7 @@ public class TrayManager {
      * Displays a basic error dialog.
      */
     private void showErrorDialog(String message) {
-        JOptionPane.showMessageDialog(tray, message, name, JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(null, message, name, JOptionPane.ERROR_MESSAGE);
     }
 
     public boolean showGatewayDialog(final Certificate cert) {
@@ -522,7 +510,7 @@ public class TrayManager {
      * Thread safe method for setting an info status message
      */
     public void displayInfoMessage(String text) {
-        displayMessage(name, text, Level.INFO);
+        displayMessage(name, text, TrayIcon.MessageType.INFO);
     }
 
     /**
@@ -530,7 +518,7 @@ public class TrayManager {
      * notifications" is checked.
      */
     public void displayFineMessage(String text) {
-        displayMessage(name, text, Level.FINE);
+        displayMessage(name, text, TrayIcon.MessageType.NONE);
     }
 
     /**
@@ -544,7 +532,7 @@ public class TrayManager {
      * Thread safe method for setting the error status message
      */
     public void displayErrorMessage(String text) {
-        displayMessage(name, text, Level.SEVERE);
+        displayMessage(name, text, TrayIcon.MessageType.ERROR);
     }
 
     /**
@@ -558,7 +546,7 @@ public class TrayManager {
      * Thread safe method for setting the warning status message
      */
     public void displayWarningMessage(String text) {
-        displayMessage(name, text, Level.WARNING);
+        displayMessage(name, text, TrayIcon.MessageType.WARNING);
     }
 
 
@@ -577,7 +565,7 @@ public class TrayManager {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    tray.setIcon(iconCache.getIcon(i));
+                    tray.setImage(iconCache.getImage(i));
                 }
             }));
         }
@@ -590,18 +578,31 @@ public class TrayManager {
      * @param text        The text body of the tray message
      * @param level The message type: Level.INFO, .WARN, .SEVERE
      */
-    private void displayMessage(final String caption, final String text, final Level level) {
+    private void displayMessage(final String caption, final String text, final TrayIcon.MessageType level) {
         if (tray != null) {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
                 @Override
                 public void run() {
                     boolean showAllNotifications = prefs.getBoolean(notificationsKey, false);
-                    if (showAllNotifications || (level == Level.INFO || level == Level.SEVERE)) {
+                    if (showAllNotifications || (level == TrayIcon.MessageType.INFO || level == TrayIcon.MessageType.ERROR)) {
                         tray.displayMessage(caption, text, level);
                     }
-                    trayLogger.log(level, "Tray Message: " + text);
+                    trayLogger.log(convertLevel(level), "Tray Message: " + text);
                 }
             }));
+        }
+    }
+
+    public static Level convertLevel(TrayIcon.MessageType level) {
+        switch (level) {
+            case NONE:
+                return Level.FINE;
+            case ERROR:
+                return Level.SEVERE;
+            case WARNING:
+                return Level.WARNING;
+            default:
+                return Level.INFO;
         }
     }
 

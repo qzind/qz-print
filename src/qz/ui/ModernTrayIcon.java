@@ -1,0 +1,146 @@
+/**
+ * @author Tres Finocchiaro
+ *
+ * Copyright (C) 2013 Tres Finocchiaro, QZ Industries
+ *
+ * IMPORTANT: This software is dual-licensed
+ *
+ * LGPL 2.1 This is free software. This software and source code are released
+ * under the "LGPL 2.1 License". A copy of this license should be distributed
+ * with this software. http://www.gnu.org/licenses/lgpl-2.1.html
+ *
+ * QZ INDUSTRIES SOURCE CODE LICENSE This software and source code *may* instead
+ * be distributed under the "QZ Industries Source Code License", available by
+ * request ONLY. If source code for this project is to be made proprietary for
+ * an individual and/or a commercial entity, written permission via a copy of
+ * the "QZ Industries Source Code License" must be obtained first. If you've
+ * obtained a copy of the proprietary license, the terms and conditions of the
+ * license apply only to the licensee identified in the agreement. Only THEN may
+ * the LGPL 2.1 license be voided.
+ *
+ */
+
+package qz.ui;
+
+import org.jdesktop.swinghelper.tray.JXTrayIcon;
+import qz.utils.SystemUtilities;
+
+import javax.swing.*;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
+import java.awt.*;
+import java.awt.event.AWTEventListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
+
+/**
+ * @author A. Tres Finocchiaro
+ */
+public class ModernTrayIcon extends JXTrayIcon {
+    private JFrame invisibleFrame;
+    private JPopupMenu popup;
+    private int x = 0, y = 0;
+
+    public ModernTrayIcon() {
+        super(new ImageIcon(new byte[1]).getImage());
+    }
+
+    public ModernTrayIcon(Image image) {
+        super(image);
+    }
+
+    public ModernTrayIcon(Image image, String tooltip) {
+        super(image);
+        setToolTip(tooltip);
+    }
+
+    public ModernTrayIcon(Image image, String tooltip, JPopupMenu popup) {
+        super(image);
+        setToolTip(tooltip);
+        setJPopupMenu(popup);
+    }
+
+    @Override
+    public void setJPopupMenu(final JPopupMenu popup) {
+        this.popup = popup;
+
+        invisibleFrame = new JFrame();
+        invisibleFrame.setAlwaysOnTop(true);
+        invisibleFrame.setUndecorated(true);
+        invisibleFrame.setBackground(Color.BLACK);
+        invisibleFrame.setSize(0, 0);
+        invisibleFrame.pack();
+
+        popup.addPopupMenuListener(new PopupMenuListener() {
+            @Override public void popupMenuWillBecomeVisible(PopupMenuEvent e) {}
+            @Override public void popupMenuWillBecomeInvisible(PopupMenuEvent e) { invisibleFrame.setVisible(false); }
+            @Override public void popupMenuCanceled(PopupMenuEvent e) { invisibleFrame.setVisible(false); }
+        });
+
+        invisibleFrame.addWindowListener(new WindowListener() {
+            @Override
+            public void windowActivated(WindowEvent we) {
+                // X11 bug
+                if (SystemUtilities.isFedora()) {
+                    popup.show(invisibleFrame, 0, 0);
+                } else {
+                    popup.setInvoker(invisibleFrame);
+                    popup.setVisible(true);
+                    popup.setLocation(x, SystemUtilities.isWindows() ? y - popup.getHeight() : y);
+                }
+                popup.requestFocus();
+            }
+
+            @Override public void windowOpened(WindowEvent we) {}
+            @Override public void windowClosing(WindowEvent we) {}
+            @Override public void windowClosed(WindowEvent we) {}
+            @Override public void windowIconified(WindowEvent we) {}
+            @Override public void windowDeiconified(WindowEvent we) {}
+            @Override public void windowDeactivated(WindowEvent we) {}
+        });
+
+        addTrayListener();
+    }
+
+    @Override
+    public JPopupMenu getJPopupMenu() {
+        return popup;
+    }
+
+    /**
+     * Functional equivalent of a <code>MouseAdapter</code>, but accommodates an edge-case in Gnome3 where the tray
+     * icon cannot listen on mouse events.
+     */
+    private void addTrayListener() {
+        Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
+            @Override
+            public void eventDispatched(AWTEvent e) {
+                Point p = isTrayEvent(e);
+                if (p != null) {
+                    x = p.x; y = p.y;
+                    invisibleFrame.setVisible(true);
+                    invisibleFrame.requestFocus();
+                }
+            }
+        }, MouseEvent.MOUSE_EVENT_MASK);
+    }
+
+    /**
+     * Determines if TrayIcon event is detected
+     * @param e An AWTEvent
+     * @return A Point on the screen which the tray event occurred, or null if none is found
+     */
+    private static Point isTrayEvent(AWTEvent e) {
+        if (e instanceof MouseEvent) {
+            MouseEvent me = (MouseEvent)e;
+
+            if (me.getID() == MouseEvent.MOUSE_RELEASED && me.getSource() != null) {
+                if (me.getSource().getClass().getName().contains("TrayIcon")) {
+                    return me.getLocationOnScreen();
+                }
+            }
+        }
+        return null;
+    }
+}
