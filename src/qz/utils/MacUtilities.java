@@ -25,7 +25,11 @@ package qz.utils;
 import com.apple.OSXAdapter;
 import qz.common.TrayManager;
 
+import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import java.awt.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Utility class for MacOS specific functions.
@@ -58,7 +62,7 @@ public class MacUtilities {
     
     /**
      * Adds a listener to register the Apple "Quit" to call trayManager.exit(0)
-     * @param aboutDialog
+     * @param trayManager
      */
     public static void registerQuitHandler(TrayManager trayManager) {
     	MacUtilities.trayManager = trayManager;
@@ -69,5 +73,4 @@ public class MacUtilities {
             e.printStackTrace();
         }
     }
-
 }

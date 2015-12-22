@@ -32,6 +32,8 @@ import qz.deploy.DeployUtilities;
 import qz.deploy.WindowsDeploy;
 import qz.ui.*;
 import qz.deploy.LinuxCertificate;
+import qz.ui.tray.ClassicTrayIcon;
+import qz.ui.tray.ModernTrayIcon;
 import qz.utils.FileUtilities;
 import qz.utils.MacUtilities;
 import qz.utils.SystemUtilities;
@@ -106,7 +108,14 @@ public class TrayManager {
 
         if (SystemTray.isSupported()) {
             // Accommodate some OS-specific tray bugs
-            tray = SystemUtilities.isLinux() ? new ModernTrayIcon() : new JXTrayIcon(new ImageIcon(new byte[1]).getImage());
+            Image blank = new ImageIcon(new byte[1]).getImage();
+            if (SystemUtilities.isWindows()) {
+                tray = new JXTrayIcon(blank);
+            } else if (SystemUtilities.isMac()) {
+                tray = new ClassicTrayIcon(blank);
+            } else {
+                tray = new ModernTrayIcon(blank);
+            }
 
             // Iterates over all images denoted by IconCache.getTypes() and caches them
             iconCache = new IconCache(tray.getSize());
@@ -347,7 +356,7 @@ public class TrayManager {
              if (confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
         }
     };
-    
+
     public void exit(int returnCode) {
         for (Handler h : trayLogger.getHandlers()) {
             trayLogger.removeHandler(h);
@@ -355,7 +364,7 @@ public class TrayManager {
         prefs.save();
         System.exit(returnCode);
     }
-	
+
     /**
      * Process toggle/checkbox events as they relate to creating shortcuts
      *

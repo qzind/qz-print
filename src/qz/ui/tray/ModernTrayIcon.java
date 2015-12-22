@@ -20,10 +20,9 @@
  *
  */
 
-package qz.ui;
+package qz.ui.tray;
 
 import org.jdesktop.swinghelper.tray.JXTrayIcon;
-import qz.utils.SystemUtilities;
 
 import javax.swing.*;
 import javax.swing.event.PopupMenuEvent;
@@ -43,23 +42,8 @@ public class ModernTrayIcon extends JXTrayIcon {
     private JPopupMenu popup;
     private int x = 0, y = 0;
 
-    public ModernTrayIcon() {
-        super(new ImageIcon(new byte[1]).getImage());
-    }
-
     public ModernTrayIcon(Image image) {
         super(image);
-    }
-
-    public ModernTrayIcon(Image image, String tooltip) {
-        super(image);
-        setToolTip(tooltip);
-    }
-
-    public ModernTrayIcon(Image image, String tooltip, JPopupMenu popup) {
-        super(image);
-        setToolTip(tooltip);
-        setJPopupMenu(popup);
     }
 
     @Override
@@ -100,6 +84,13 @@ public class ModernTrayIcon extends JXTrayIcon {
     }
 
     @Override
+    public void setImage(Image image) {
+        super.setImage(image);
+        if (invisibleFrame != null) {
+            invisibleFrame.setIconImage(image);
+        }
+    }
+
     public JPopupMenu getJPopupMenu() {
         return popup;
     }
