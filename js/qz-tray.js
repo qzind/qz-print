@@ -757,6 +757,185 @@ window.qz = {
     },
 
 
+    /** Calls related to interaction with USB devices. */
+    usb: {
+        /**
+         * List of available USB devices. Includes (hexadecimal) vendor ID, (hexadecimal) product ID, and hub status.
+         * If support, also returns manufacturer and product descriptions.
+         *
+         * @param includeHubs Whether to include USB hubs.
+         * @returns {Promise<Array<Object>|Error>} Array of JSON objects containing information on connected USB devices.
+         */
+        listDevices: function(includeHubs) {
+            return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'usb.listDevices',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        includeHubs: includeHubs
+                    }
+                };
+
+                _qz.websocket.connection.sendData(msg);
+            });
+        },
+
+        /**
+         * @param vendorId Hex string of USB device's vendor ID.
+         * @param productId Hex string of USB device's product ID.
+         * @returns {Promise<Array<string>|Error>} List of available (hexadecimal) interfaces on a USB device.
+         */
+        listInterfaces: function(vendorId, productId) {
+            return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'usb.listInterfaces',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        vendorId: vendorId,
+                        productId: productId
+                    }
+                };
+
+                _qz.websocket.connection.sendData(msg);
+            });
+        },
+
+        /**
+         * @param vendorId Hex string of USB device's vendor ID.
+         * @param productId Hex string of USB device's product ID.
+         * @param iface Hex string of interface on the USB device to search.
+         * @returns {Promise<Array<string>|Error>} List of available (hexadecimal) endpoints on a USB device's interface.
+         */
+        listEndpoints: function(vendorId, productId, iface) {
+            return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'usb.listEndpoints',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        vendorId: vendorId,
+                        productId: productId,
+                        interface: iface
+                    }
+                };
+
+                _qz.websocket.connection.sendData(msg);
+            });
+        },
+
+        /**
+         * Claim a USB device's interface to enable sending/reading data across an endpoint.
+         *
+         * @param vendorId Hex string of USB device's vendor ID.
+         * @param productId Hex string of USB device's product ID.
+         * @param iface Hex string of interface on the USB device to claim.
+         * @returns {Promise<null|Error>}
+         */
+        claimDevice: function(vendorId, productId, iface) {
+            return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'usb.claimDevice',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        vendorId: vendorId,
+                        productId: productId,
+                        interface: iface
+                    }
+                };
+
+                _qz.websocket.connection.sendData(msg);
+            });
+        },
+
+        /**
+         * Send data to a claimed USB device.
+         *
+         * @param vendorId Hex string of USB device's vendor ID.
+         * @param productId Hex string of USB device's product ID.
+         * @param endpoint Hex string of endpoint on the claimed interface for the USB device.
+         * @param data Bytes to send over specified endpoint.
+         * @returns {Promise<null|Error>}
+         */
+        sendData: function(vendorId, productId, endpoint, data) {
+            return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'usb.sendData',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        vendorId: vendorId,
+                        productId: productId,
+                        endpoint: endpoint,
+                        data: data
+                    }
+                };
+
+                _qz.websocket.connection.sendData(msg);
+            });
+        },
+
+        /**
+         * Read data from a claimed USB device.
+         *
+         * @param vendorId Hex string of USB device's vendor ID.
+         * @param productId Hex string of USB device's product ID.
+         * @param endpoint Hex string of endpoint on the claimed interface for the USB device.
+         * @param responseSize Size of the byte array to receive a response in.
+         * @returns {Promise<Array<string>|Error>} List of (hexadecimal) bytes received from the USB device.
+         */
+        readData: function(vendorId, productId, endpoint, responseSize) {
+            return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'usb.readData',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        vendorId: vendorId,
+                        productId: productId,
+                        endpoint: endpoint,
+                        responseSize: responseSize
+                    }
+                };
+
+                _qz.websocket.connection.sendData(msg);
+            });
+        },
+
+        /**
+         * Release a claimed USB device to free resources after sending/reading data.
+         *
+         * @param vendorId Hex string of USB device's vendor ID.
+         * @param productId Hex string of USB device's product ID.
+         * @returns {Promise<null|Error>}
+         */
+        releaseDevice: function(vendorId, productId) {
+            return new RSVP.Promise(function(resolve, reject) {
+                var msg = {
+                    call: 'usb.releaseDevice',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    },
+                    params: {
+                        vendorId: vendorId,
+                        productId: productId
+                    }
+                };
+
+                _qz.websocket.connection.sendData(msg);
+            });
+        }
+    },
+
+
     /** Calls related to signing connection requests. */
     security: {
         /**

@@ -43,15 +43,15 @@ public class SerialUtilities {
     /**
      * @return JSON array of {@code getSerialPorts()} result.
      */
-    public static JSONArray getSerialJSON() {
-        String[] names = getSerialPorts();
-        JSONArray ports = new JSONArray();
+    public static JSONArray getSerialPortsJSON() {
+        String[] ports = getSerialPorts();
+        JSONArray portJSON = new JSONArray();
 
-        for(String name : names) {
-            ports.put(name);
+        for(String name : ports) {
+            portJSON.put(name);
         }
 
-        return ports;
+        return portJSON;
     }
 
 
