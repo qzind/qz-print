@@ -12,44 +12,27 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="JQuery" level="application" />
+    <orderEntry type="library" name="bootstrap" level="application" />
+    <orderEntry type="library" name="bootstrap-select" level="application" />
     <orderEntry type="module-library">
       <library>
         <CLASSES>
           <root url="file://$MODULE_DIR$/lib" />
+          <root url="file://$MODULE_DIR$/lib/communication" />
+          <root url="file://$MODULE_DIR$/lib/jre" />
+          <root url="file://$MODULE_DIR$/lib/logging" />
+          <root url="file://$MODULE_DIR$/lib/printing" />
+          <root url="file://$MODULE_DIR$/lib/websocket" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
         <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/lib/ws" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-        <jarDirectory url="file://$MODULE_DIR$/lib/ws" recursive="false" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/lib/printing" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-        <jarDirectory url="file://$MODULE_DIR$/lib/printing" recursive="false" />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="file://$MODULE_DIR$/lib/jre" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
+        <jarDirectory url="file://$MODULE_DIR$/lib/communication" recursive="false" />
         <jarDirectory url="file://$MODULE_DIR$/lib/jre" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/lib/logging" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/lib/printing" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/lib/websocket" recursive="false" />
       </library>
     </orderEntry>
   </component>
