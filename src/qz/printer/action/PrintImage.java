@@ -35,6 +35,8 @@ import qz.utils.PrintingUtilities;
 
 import javax.imageio.ImageIO;
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.Copies;
+import javax.print.attribute.standard.CopiesSupported;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.print.PageFormat;
@@ -100,6 +102,7 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         PrintOptions.Pixel pxlOpts = options.getPixelOptions();
         PrintRequestAttributeSet attributes = applyDefaultSettings(pxlOpts, page);
 
+
         if (pxlOpts.getSize() != null) {
             scaleImage = options.getPixelOptions().getSize().isFitImage();
         }
@@ -110,9 +113,17 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         job.setPrintable(this, page);
 
         log.info("Starting image printing ({} copies)", pxlOpts.getCopies());
-        for(int i = 0; i < pxlOpts.getCopies(); i++) {
+        CopiesSupported cSupport = (CopiesSupported)output.getPrintService().getSupportedAttributeValues(Copies.class, output.getPrintService().getSupportedDocFlavors()[0], attributes);
+
+        if (cSupport.contains(pxlOpts.getCopies())) {
+            attributes.add(new Copies(pxlOpts.getCopies()));
             job.print(attributes);
+        } else {
+            for(int i = 0; i < pxlOpts.getCopies(); i++) {
+                job.print(attributes);
+            }
         }
+
     }
 
 

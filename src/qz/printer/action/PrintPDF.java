@@ -12,6 +12,8 @@ import qz.printer.PrintOptions;
 import qz.printer.PrintOutput;
 
 import javax.print.attribute.PrintRequestAttributeSet;
+import javax.print.attribute.standard.Copies;
+import javax.print.attribute.standard.CopiesSupported;
 import java.awt.print.Book;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
@@ -71,8 +73,16 @@ public class PrintPDF extends PrintPixel implements PrintProcessor {
         job.setPageable(book);
 
         log.info("Starting pdf printing ({} copies)", options.getPixelOptions().getCopies());
-        for(int i = 0; i < options.getPixelOptions().getCopies(); i++) {
+
+        PrintOptions.Pixel pxlOpts = options.getPixelOptions();
+        CopiesSupported cSupport = (CopiesSupported)output.getPrintService().getSupportedAttributeValues(Copies.class, output.getPrintService().getSupportedDocFlavors()[0], attributes);
+        if (cSupport.contains(pxlOpts.getCopies())) {
+            attributes.add(new Copies(pxlOpts.getCopies()));
             job.print(attributes);
+        } else {
+            for(int i = 0; i < pxlOpts.getCopies(); i++) {
+                job.print(attributes);
+            }
         }
 
         for(PDDocument doc : pdfs) {
