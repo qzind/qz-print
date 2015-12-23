@@ -566,41 +566,10 @@ public class TrayManager {
                     if (showAllNotifications || (level == TrayIcon.MessageType.INFO || level == TrayIcon.MessageType.ERROR)) {
                         tray.displayMessage(caption, text, level);
                     }
-                    // trayLogger.log(level, "Tray Message: " + text);
                 }
             }));
         }
     }
-
-    /* TODO - replace with log4j file appender
-    public void addLogHandler(Logger logger) {
-        if (logHandler == null) {
-            try {
-                logHandler = createLogHandler();
-            }
-            catch(IOException e) {
-                logger.log(Level.WARNING, String.format("Could not write to log file %s. Log history be limited to the console only.", Constants.LOG_FILE), e);
-            }
-        }
-
-        if (logHandler != null) {
-            logger.addHandler(logHandler);
-        }
-    }
-
-    public FileHandler createLogHandler() throws IOException {
-        String logFile = SystemUtilities.getDataDirectory() + File.separator + Constants.LOG_FILE + "%g.log";
-
-        FileHandler logHandler = new FileHandler(logFile, Constants.LOG_SIZE, Constants.LOG_ROTATIONS, true);
-        logHandler.setFormatter(new Formatter() {
-            @Override
-            public String format(LogRecord logRecord) {
-                return String.format("[%s] %tY-%<tm-%<td %<tH:%<tM:%<tS - %s\r\n", logRecord.getLevel().toString(), new Date(), logRecord.getMessage());
-            }
-        });
-        return logHandler;
-    }
-    */
 
     public void singleInstanceCheck(Integer[] insecurePorts, Integer insecurePortIndex) {
         for(int port : insecurePorts) {

@@ -1,26 +1,21 @@
 package qz.ui;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import qz.common.Constants;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.WriterAppender;
 import qz.utils.SystemUtilities;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.io.OutputStream;
 
 /**
  * Created by Tres on 2/26/2015.
  */
-public class LogDialog extends BasicDialog implements Runnable {
-
-    private static final Logger log = LoggerFactory.getLogger(LogDialog.class);
+public class LogDialog extends BasicDialog {
 
     private final int ROWS = 20;
     private final int COLS = 80;
@@ -30,9 +25,8 @@ public class LogDialog extends BasicDialog implements Runnable {
 
     private JButton clearButton;
 
-    private Thread readerThread;
-    private AtomicBoolean threadRunning;
-    private AtomicBoolean clearLogFile;
+    private WriterAppender logStream;
+
 
     public LogDialog(JMenuItem caller, IconCache iconCache) {
         super(caller, iconCache);
@@ -41,7 +35,11 @@ public class LogDialog extends BasicDialog implements Runnable {
 
     public void initComponents() {
         setIconImage(getImage(IconCache.Icon.LOG_ICON));
-        setHeader(new LinkLabel(SystemUtilities.getDataDirectory() + File.separator));
+
+        LinkLabel logDirLabel = new LinkLabel(SystemUtilities.getDataDirectory() + File.separator);
+        logDirLabel.setText("Open Log Location");
+        setHeader(logDirLabel);
+
         logArea = new JTextArea(ROWS, COLS);
         logArea.setEditable(false);
         logArea.setLineWrap(true);
@@ -52,124 +50,34 @@ public class LogDialog extends BasicDialog implements Runnable {
         clearButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                clearButton.setEnabled(false);
-                clearLogFile.set(true);
+                logArea.setText(null);
             }
         });
-
-        readerThread = new Thread(this);
-        threadRunning = new AtomicBoolean(false);
-        clearLogFile = new AtomicBoolean(false);
 
         logPane = new JScrollPane(logArea);
         setContent(logPane, true);
         setResizable(true);
-    }
 
-    /**
-     * Thread safe append
-     *
-     * @param data The data to append to the log window
-     */
-    public LogDialog append(final String data) {
-        SwingUtilities.invokeLater(new Runnable() {
+        // add new appender to Log4J just for text area
+        logStream = new WriterAppender(new PatternLayout("%d{ISO8601} [%p] %m%n"), new OutputStream() {
             @Override
-            public void run() {
-                logArea.append(data);
-                clearButton.setEnabled(true);
+            public void write(int b) throws IOException {
+                logArea.append(String.valueOf((char)b));
+                logPane.getVerticalScrollBar().setValue(logPane.getVerticalScrollBar().getMaximum());
             }
         });
-
-        return this;
-    }
-
-    public LogDialog clear() {
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                logArea.setText(null);
-            }
-        });
-        return this;
     }
 
     @Override
     public void setVisible(boolean visible) {
-        if (visible && !readerThread.isAlive()) {
-            threadRunning.set(true);
-            readerThread = new Thread(this);
-            readerThread.start();
+        if (visible) {
+            logArea.setText(null);
+            org.apache.log4j.Logger.getRootLogger().addAppender(logStream);
         } else {
-            clear();
-            threadRunning.set(false);
+            org.apache.log4j.Logger.getRootLogger().removeAppender(logStream);
         }
 
         super.setVisible(visible);
     }
 
-    public void run() {
-        threadRunning.set(true);
-        BufferedReader br = null;
-        File previousLogFile = null;
-
-        try {
-            String buffer;
-
-            // Reads the log file and prints to the text area
-            while(threadRunning.get()) {
-                File activeLogFile = getActiveLogFile();
-                if (br == null || !activeLogFile.equals(previousLogFile)) {
-                    previousLogFile = activeLogFile;
-                    if (br != null) {
-                        try { br.close(); }
-                        catch(Exception ignore) {}
-                    }
-
-                    br = new BufferedReader(new FileReader(activeLogFile));
-                    log.info("Reading {}", activeLogFile.getPath());
-                }
-
-                if (isVisible()) {
-                    if (clearLogFile.get()) {
-                        clear();
-                        clearLogFile.set(false);
-                    } else if ((buffer = br.readLine()) != null) {
-                        append(buffer).append("\r\n");
-                    } else {
-                        sleep(500);
-                    }
-                }
-            }
-        }
-        catch(IOException e) {
-            e.printStackTrace();
-        }
-        finally {
-            threadRunning.set(false);
-            if (br != null) {
-                try { br.close(); } catch(Exception ignore) {}
-            }
-        }
-    }
-
-    public File getActiveLogFile() {
-        File logFile = null;
-        File[] dataDir = new File(SystemUtilities.getDataDirectory()).listFiles();
-
-        if (dataDir != null) {
-            for(File file : dataDir) {
-                if (file.getName().startsWith(Constants.LOG_FILE) && file.getName().contains(".log") && !file.getName().contains(".lck")) {
-                    if (logFile == null || file.lastModified() > logFile.lastModified()) {
-                        logFile = file;
-                    }
-                }
-            }
-        }
-
-        return logFile;
-    }
-
-    public void sleep(int millis) {
-        try { Thread.sleep(millis); } catch(InterruptedException ignore) {}
-    }
 }

@@ -17,6 +17,11 @@
 
 package qz.ws;
 
+import org.apache.log4j.Level;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.rolling.FixedWindowRollingPolicy;
+import org.apache.log4j.rolling.RollingFileAppender;
+import org.apache.log4j.rolling.SizeBasedTriggeringPolicy;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.util.MultiException;
@@ -28,8 +33,10 @@ import org.slf4j.LoggerFactory;
 import qz.common.Constants;
 import qz.common.TrayManager;
 import qz.deploy.DeployUtilities;
+import qz.utils.SystemUtilities;
 
 import javax.swing.*;
+import java.io.File;
 import java.net.BindException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -59,6 +66,9 @@ public class PrintSocketServer {
                 System.exit(0);
             }
         }
+
+        setupFileLogging();
+
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
@@ -73,6 +83,26 @@ public class PrintSocketServer {
         }
 
         log.warn("The web socket server is no longer running");
+    }
+
+    public static void setupFileLogging() {
+        FixedWindowRollingPolicy rollingPolicy = new FixedWindowRollingPolicy();
+        rollingPolicy.setFileNamePattern(SystemUtilities.getDataDirectory() + File.separator + Constants.LOG_FILE + ".log.%i");
+        rollingPolicy.setMaxIndex(Constants.LOG_ROTATIONS);
+
+        SizeBasedTriggeringPolicy triggeringPolicy = new SizeBasedTriggeringPolicy(Constants.LOG_SIZE);
+
+        RollingFileAppender fileAppender = new RollingFileAppender();
+        fileAppender.setLayout(new PatternLayout("%d{ISO8601} [%p] %m%n"));
+        fileAppender.setThreshold(Level.INFO);
+        fileAppender.setFile(SystemUtilities.getDataDirectory() + File.separator + Constants.LOG_FILE + ".log");
+        fileAppender.setRollingPolicy(rollingPolicy);
+        fileAppender.setTriggeringPolicy(triggeringPolicy);
+
+        fileAppender.setImmediateFlush(true);
+        fileAppender.activateOptions();
+
+        org.apache.log4j.Logger.getRootLogger().addAppender(fileAppender);
     }
 
     public static void runServer() {

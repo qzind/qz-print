@@ -8,7 +8,6 @@
             <param name="ConversionPattern" value="[%p] %d{ISO8601} @ %c:%L%n\t%m%n" />
         </layout>
     </appender>
-    <!-- TODO - define log file appender -->
 
     <!-- Packages -->
     <category name="qz">

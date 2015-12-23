@@ -1,6 +1,7 @@
 package qz.common;
 
 import java.awt.*;
+import java.io.PrintStream;
 
 /**
  * Created by robert on 7/9/2014.
@@ -50,7 +51,7 @@ public class Constants {
     public static final Color TRUSTED_COLOR = Color.BLUE;
 
     public static final String RAW_PRINT = ABOUT_TITLE + " Raw Print";
-    public static final String IMAGE_PRINT = ABOUT_TITLE + " 2D Print";
+    public static final String IMAGE_PRINT = ABOUT_TITLE + " Pixel Print";
     public static final String PDF_PRINT = ABOUT_TITLE + " PDF Print";
     public static final String HTML_PRINT = ABOUT_TITLE + " HTML Print";
 
