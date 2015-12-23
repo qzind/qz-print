@@ -40,6 +40,7 @@ public class WebApp extends Application {
     private static Stage stage;
     private static WebView webView;
     private static double pageWidth;
+    private static double densityScale;
 
     private static PauseTransition snap;
 
@@ -63,6 +64,9 @@ public class WebApp extends Application {
 
                         webView.setPrefHeight(height);
                         webView.autosize();
+
+                        webView.setScaleX(densityScale);
+                        webView.setScaleY(densityScale);
 
                         snap.playFromStart();
                     }
@@ -124,7 +128,7 @@ public class WebApp extends Application {
      * @param fromFile If the passed {@code source} is from a url/file location
      * @return BufferedImage of the rendered html
      */
-    public static BufferedImage capture(final String source, final boolean fromFile, final double width) throws IOException {
+    public static BufferedImage capture(final String source, final boolean fromFile, final double width, final double density) throws IOException {
         final AtomicReference<BufferedImage> capture = new AtomicReference<>();
         final AtomicReference<Throwable> error = new AtomicReference<>();
 
@@ -147,6 +151,7 @@ public class WebApp extends Application {
             public void run() {
                 try {
                     pageWidth = width;
+                    densityScale = density / 72.0;
 
                     webView.setPrefSize(100, 100);
                     webView.autosize();

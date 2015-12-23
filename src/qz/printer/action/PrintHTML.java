@@ -62,7 +62,7 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
                 if (option != null) { pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH); }
 
                 try {
-                    images.add(WebApp.capture(source, fromFile, pageWidth));
+                    images.add(WebApp.capture(source, fromFile, pageWidth, options.getPixelOptions().getDensity()));
                 }
                 catch(IOException e) {
                     throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", format, source), e);
