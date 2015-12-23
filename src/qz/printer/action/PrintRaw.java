@@ -178,22 +178,24 @@ public class PrintRaw implements PrintProcessor {
             pages.add(commands);
         }
 
-        for(ByteArrayBuilder bab : pages) {
-            try {
-                if (output.isSetHost()) {
-                    printToHost(output.getHost(), output.getPort(), bab.getByteArray());
-                } else if (output.isSetFile()) {
-                    printToFile(output.getFile(), bab.getByteArray());
-                } else {
-                    if (rawOpts.isAltPrinting()) {
-                        printToAlternate(output.getPrintService(), bab.getByteArray());
+        for(int i = 0; i < rawOpts.getCopies(); i++) {
+            for(ByteArrayBuilder bab : pages) {
+                try {
+                    if (output.isSetHost()) {
+                        printToHost(output.getHost(), output.getPort(), bab.getByteArray());
+                    } else if (output.isSetFile()) {
+                        printToFile(output.getFile(), bab.getByteArray());
                     } else {
-                        printToPrinter(output.getPrintService(), bab.getByteArray());
+                        if (rawOpts.isAltPrinting()) {
+                            printToAlternate(output.getPrintService(), bab.getByteArray());
+                        } else {
+                            printToPrinter(output.getPrintService(), bab.getByteArray());
+                        }
                     }
                 }
-            }
-            catch(IOException e) {
-                throw new PrintException(e);
+                catch(IOException e) {
+                    throw new PrintException(e);
+                }
             }
         }
     }

@@ -41,6 +41,10 @@ public class PrintOptions {
             try { rawOptions.perSpool = configOpts.getInt("perSpool"); }
             catch(JSONException e) { warn("integer", "perSpool", configOpts.opt("perSpool")); }
         }
+        if (!configOpts.isNull("copies")) {
+            try { rawOptions.copies = configOpts.getInt("copies"); }
+            catch(JSONException e) { warn("integer", "copies", configOpts.opt("copies")); }
+        }
 
         //check for pixel options
         if (!configOpts.isNull("colorType")) {
@@ -181,6 +185,7 @@ public class PrintOptions {
         private String endOfDoc = null;         //End of document character
         private String language = null;         //Printer language
         private int perSpool = 1;               //Pages per spool
+        private int copies = 1;                 //Job copies
 
 
         public boolean isAltPrinting() {
@@ -201,6 +206,10 @@ public class PrintOptions {
 
         public int getPerSpool() {
             return perSpool;
+        }
+
+        public int getCopies() {
+            return copies;
         }
     }
 

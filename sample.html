@@ -97,15 +97,15 @@
 
         <div class="col-md-8">
             <ul class="nav nav-tabs" role="tablist">
-                <li role="presentation" class="active"><a href="#rawTab" role="tab" data-toggle="tab">Raw Printing</a></li>
-                <li role="presentation"><a href="#pixelTab" role="tab" data-toggle="tab">Pixel Printing</a></li>
-                <li role="presentation"><a href="#serialTab" role="tab" data-toggle="tab">Serial</a></li>
-                <li role="presentation"><a href="#usbTab" role="tab" data-toggle="tab">USB</a></li>
+                <li id="rawTab" role="presentation" class="active"><a href="#rawContent" role="tab" data-toggle="tab">Raw Printing</a></li>
+                <li id="pxlTab" role="presentation"><a href="#pxlContent" role="tab" data-toggle="tab">Pixel Printing</a></li>
+                <li id="serialTab" role="presentation"><a href="#serialContent" role="tab" data-toggle="tab">Serial</a></li>
+                <li id="usbTab" role="presentation"><a href="#usbContent" role="tab" data-toggle="tab">USB</a></li>
             </ul>
         </div>
 
         <div class="tab-content">
-            <div id="rawTab" class="tab-pane active col-md-8">
+            <div id="rawContent" class="tab-pane active col-md-8">
                 <h3>Raw Printing</h3>
 
                 <div class="row">
@@ -196,6 +196,11 @@
                                             <label for="rawPerSpool">Per Spool</label>
                                             <input type="number" id="rawPerSpool" class="form-control pull-right" />
                                         </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="rawCopies">Copies</label>
+                                            <input type="number" id="rawCopies" class="form-control pull-right" />
+                                        </div>
                                     </div>
                                 </div>
                                 <hr />
@@ -210,7 +215,7 @@
                 </div>
             </div>
 
-            <div id="pixelTab" class="tab-pane col-md-8">
+            <div id="pxlContent" class="tab-pane col-md-8">
                 <h3>Pixel Printing</h3>
 
                 <div class="row">
@@ -391,7 +396,7 @@
                 </div>
             </div>
 
-            <div id="serialTab" class="tab-pane col-md-8">
+            <div id="serialContent" class="tab-pane col-md-8">
                 <h3>Serial</h3>
                 <hr />
 
@@ -483,7 +488,7 @@
                 </div>
             </div>
 
-            <div id="usbTab" class="tab-pane col-md-8">
+            <div id="usbContent" class="tab-pane col-md-8">
                 <h3>USB</h3>
                 <hr />
 
@@ -1180,6 +1185,7 @@
         $("#rawEncoding").val(null);
         $("#rawEndOfDoc").val(null);
         $("#rawAltPrinting").prop('checked', false);
+        $("#rawCopies").val(1);
     }
 
     function resetPixelOptions() {
@@ -1392,6 +1398,13 @@
             };
         }
 
+        var copies = 1;
+        if ($("#rawTab").hasClass("active")) {
+            copies = $("rawCopies").val();
+        } else {
+            copies = $("#pxlCopies").val();
+        }
+
         cfg.reconfigure({
             altPrinting: $("#rawAltPrinting").prop('checked'),
             encoding: $("#rawEncoding").val(),
@@ -1400,7 +1413,7 @@
             perSpool: $("#rawPerSpool").val(),
 
             colorType: $("#pxlColorType").val(),
-            copies: $("#pxlCopies").val(),
+            copies: copies,
             density: $("#pxlDensity").val(),
             duplex: $("#pxlDuplex").prop('checked'),
             margins: pxlMargins,
