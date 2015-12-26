@@ -30,6 +30,7 @@ import java.net.BindException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
@@ -56,7 +57,7 @@ public class PrintWebSocketServer {
             });
             runServer();
         }catch(Exception e){
-            log.severe("Could not start tray manager");        
+            log.log(Level.SEVERE, "Could not start tray manager", e);
         }
     }
 

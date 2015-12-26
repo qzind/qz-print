@@ -56,10 +56,6 @@ public class JXTrayIcon extends TrayIcon {
     public JXTrayIcon(Image image) {
         super(image);
         addMouseListener(new MouseAdapter() {
-            public void mousePressed(MouseEvent e) {
-                showJPopupMenu(e);
-            }
-
             public void mouseReleased(MouseEvent e) {
                 showJPopupMenu(e);
             }
