@@ -23,15 +23,9 @@
 package qz.ui.tray;
 
 import org.jdesktop.swinghelper.tray.JXTrayIcon;
-import qz.utils.MacUtilities;
-import qz.utils.ShellUtilities;
-import qz.utils.SystemUtilities;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
-import java.awt.peer.TrayIconPeer;
-import java.lang.reflect.Field;
 
 /**
  * Wraps a Swing JPopupMenu into an AWT PopupMenu
