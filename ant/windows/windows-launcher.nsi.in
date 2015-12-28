@@ -1,7 +1,7 @@
 ;------------------
-; ${socket.name} Launcher
+; ${project.name} Launcher
 ;------------------
-; Creates a ${build.socket.name}.exe launcher which performs automatic JRE detection
+; Creates a ${project.filename}.exe launcher which performs automatic JRE detection
 
 !include x64.nsh
 !include LogicLib.nsh
@@ -12,17 +12,17 @@
 RequestExecutionLevel user
 
 ; Application information
-Name "${socket.name}"
-Caption "${socket.name}"
+Name "${project.name}"
+Caption "${project.name}"
 Icon "${basedir}\${branding.dir}\${windows.icon}"
-OutFile "${build.socket.name}.exe"
+OutFile "${project.filename}.exe"
  
 SilentInstall silent
 AutoCloseWindow true
 ShowInstDetails nevershow
 
 ; Full path to jar
-!define JAR "$EXEDIR\${build.socket.name}.jar"
+!define JAR "$EXEDIR\${project.filename}.jar"
 
 Section ""  
   ${If} ${RunningX64}
