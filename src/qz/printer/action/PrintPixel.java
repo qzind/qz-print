@@ -3,19 +3,20 @@ package qz.printer.action;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.printer.PrintOptions;
+import qz.printer.PrintOutput;
 import qz.utils.SystemUtilities;
 
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.ResolutionSyntax;
-import javax.print.attribute.standard.MediaSizeName;
-import javax.print.attribute.standard.PrinterResolution;
-import javax.print.attribute.standard.Sides;
+import javax.print.attribute.standard.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
 import java.awt.image.IndexColorModel;
 import java.awt.print.PageFormat;
 import java.awt.print.Paper;
+import java.awt.print.PrinterException;
+import java.awt.print.PrinterJob;
 import java.util.Arrays;
 import java.util.List;
 
@@ -91,6 +92,23 @@ public abstract class PrintPixel {
         log.trace("{}", Arrays.toString(attributes.toArray()));
 
         return attributes;
+    }
+
+
+    protected void printCopies(PrintOutput output, PrintOptions.Pixel pxlOpts, PrinterJob job, PrintRequestAttributeSet attributes) throws PrinterException {
+        log.info("Starting printing ({} copies)", pxlOpts.getCopies());
+
+        CopiesSupported cSupport = (CopiesSupported)output.getPrintService()
+                .getSupportedAttributeValues(Copies.class, output.getPrintService().getSupportedDocFlavors()[0], attributes);
+
+        if (cSupport.contains(pxlOpts.getCopies())) {
+            attributes.add(new Copies(pxlOpts.getCopies()));
+            job.print(attributes);
+        } else {
+            for(int i = 0; i < pxlOpts.getCopies(); i++) {
+                job.print(attributes);
+            }
+        }
     }
 
     /**
