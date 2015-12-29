@@ -18,7 +18,7 @@ public class PrintOutput {
 
 
     public PrintOutput(JSONObject configPrinter) throws JSONException, IllegalArgumentException {
-        if (configPrinter == null) { configPrinter = new JSONObject(); }
+        if (configPrinter == null) { return; }
 
         if (configPrinter.has("name")) {
             service = PrintServiceMatcher.findPrinter(configPrinter.getString("name"));

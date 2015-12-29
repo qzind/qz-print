@@ -173,8 +173,8 @@ public class PrintSocketClient {
 
             //check request signature
             if (certificate != Certificate.UNKNOWN) {
-                if (json.getLong("timestamp") + Constants.VALID_SIGNING_PERIOD < System.currentTimeMillis()
-                        || json.getLong("timestamp") - Constants.VALID_SIGNING_PERIOD > System.currentTimeMillis()) {
+                if (json.optLong("timestamp") + Constants.VALID_SIGNING_PERIOD < System.currentTimeMillis()
+                        || json.optLong("timestamp") - Constants.VALID_SIGNING_PERIOD > System.currentTimeMillis()) {
                     //bad timestamps use the expired certificate
                     log.warn("Expired signature on request");
                     Certificate.EXPIRED.adjustStaticCertificate(certificate);
@@ -215,16 +215,21 @@ public class PrintSocketClient {
      * @param json    JSON received from web API
      */
     private void processMessage(Session session, JSONObject json, Certificate certificate) throws JSONException, SerialPortException, UsbException {
-        String UID = json.getString("uid");
-        Method call = Method.findFromCall(json.getString("call"));
+        String UID = json.optString("uid");
+        Method call = Method.findFromCall(json.optString("call"));
         JSONObject params = json.optJSONObject("params");
         if (params == null) { params = new JSONObject(); }
 
         String prompt = call.getDialogPrompt();
         if (call == Method.PRINT) {
             //special formatting for print dialogs
-            JSONObject pr = params.getJSONObject("printer");
-            prompt = String.format(prompt, pr.optString("name", pr.optString("file", pr.optString("host", "an undefined location"))));
+            JSONObject pr = params.optJSONObject("printer");
+            if (pr != null) {
+                prompt = String.format(prompt, pr.optString("name", pr.optString("file", pr.optString("host", "an undefined location"))));
+            } else {
+                sendError(session, UID, "A printer must be specified before printing");
+                return;
+            }
         }
 
         if (call.isDialogShown() && !allowedFromDialog(certificate, prompt)) {
@@ -257,24 +262,24 @@ public class PrintSocketClient {
                 setupSerialPort(session, UID, params);
                 break;
             case SERIAL_SEND_DATA: {
-                SerialProperties props = new SerialProperties(params.getJSONObject("properties"));
-                SerialIO serial = openSerialPorts.get(params.getString("port"));
+                SerialProperties props = new SerialProperties(params.optJSONObject("properties"));
+                SerialIO serial = openSerialPorts.get(params.optString("port"));
                 if (serial != null) {
-                    serial.sendData(props, params.getString("data"));
+                    serial.sendData(props, params.optString("data"));
                     sendResult(session, UID, null);
                 } else {
-                    sendError(session, UID, String.format("Serial port [%s] must be opened first.", params.getString("port")));
+                    sendError(session, UID, String.format("Serial port [%s] must be opened first.", params.optString("port")));
                 }
                 break;
             }
             case SERIAL_CLOSE_PORT: {
-                SerialIO serial = openSerialPorts.get(params.getString("port"));
+                SerialIO serial = openSerialPorts.get(params.optString("port"));
                 if (serial != null) {
                     serial.close();
-                    openSerialPorts.remove(params.getString("port"));
+                    openSerialPorts.remove(params.optString("port"));
                     sendResult(session, UID, null);
                 } else {
-                    sendError(session, UID, String.format("Serial port [%s] is not open.", params.getString("port")));
+                    sendError(session, UID, String.format("Serial port [%s] is not open.", params.optString("port")));
                 }
                 break;
             }
@@ -292,12 +297,12 @@ public class PrintSocketClient {
                                                                                 UsbUtilities.hexToByte(params.getString("interface"))));
                 break;
             case USB_CLAIM_DEVICE: {
-                short vendorId = UsbUtilities.hexToShort(params.getString("vendorId"));
-                short productId = UsbUtilities.hexToShort(params.getString("productId"));
+                short vendorId = UsbUtilities.hexToShort(params.optString("vendorId"));
+                short productId = UsbUtilities.hexToShort(params.optString("productId"));
 
-                if (findOpenDevice(params.getString("vendorId"), params.getString("productId")) == null) {
+                if (findOpenDevice(params.optString("vendorId"), params.optString("productId")) == null) {
                     UsbIO usb = new UsbIO(vendorId, productId);
-                    usb.open(UsbUtilities.hexToByte(params.getString("interface")));
+                    usb.open(UsbUtilities.hexToByte(params.optString("interface")));
 
                     //add to open list
                     HashMap<Short,UsbIO> productMap = openUsbDevices.get(vendorId);
@@ -309,47 +314,47 @@ public class PrintSocketClient {
 
                     sendResult(session, UID, null);
                 } else {
-                    sendError(session, UID, String.format("USB Device [v:%s p:%s] is already claimed.", params.get("vendorId"), params.get("productId")));
+                    sendError(session, UID, String.format("USB Device [v:%s p:%s] is already claimed.", params.opt("vendorId"), params.opt("productId")));
                 }
 
                 break;
             }
             case USB_SEND_DATA: {
-                UsbIO usb = findOpenDevice(params.getString("vendorId"), params.getString("productId"));
+                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
-                    usb.sendData(UsbUtilities.hexToByte(params.getString("endpoint")), params.getString("data").getBytes());
+                    usb.sendData(UsbUtilities.hexToByte(params.optString("endpoint")), params.optString("data").getBytes());
                     sendResult(session, UID, null);
                 } else {
-                    sendError(session, UID, String.format("USB Device [v:%s p:%s] must be claimed first.", params.get("vendorId"), params.get("productId")));
+                    sendError(session, UID, String.format("USB Device [v:%s p:%s] must be claimed first.", params.opt("vendorId"), params.opt("productId")));
                 }
 
                 break;
             }
             case USB_READ_DATA: {
-                UsbIO usb = findOpenDevice(params.getString("vendorId"), params.getString("productId"));
+                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
-                    byte[] response = usb.readData(UsbUtilities.hexToByte(params.getString("endpoint")), params.getInt("responseSize"));
+                    byte[] response = usb.readData(UsbUtilities.hexToByte(params.optString("endpoint")), params.optInt("responseSize"));
                     JSONArray hex = new JSONArray();
                     for(byte b : response) {
                         hex.put(UsbUtil.toHexString(b));
                     }
                     sendResult(session, UID, hex);
                 } else {
-                    sendError(session, UID, String.format("USB Device [v:%s p:%s] must be claimed first.", params.get("vendorId"), params.get("productId")));
+                    sendError(session, UID, String.format("USB Device [v:%s p:%s] must be claimed first.", params.opt("vendorId"), params.opt("productId")));
                 }
 
                 break;
             }
             case USB_RELEASE_DEVICE: {
-                UsbIO usb = findOpenDevice(params.getString("vendorId"), params.getString("productId"));
+                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
                     usb.close();
-                    openUsbDevices.get(UsbUtilities.hexToShort(params.getString("vendorId")))
-                            .remove(UsbUtilities.hexToShort(params.getString("productId")));
+                    openUsbDevices.get(UsbUtilities.hexToShort(params.optString("vendorId")))
+                            .remove(UsbUtilities.hexToShort(params.optString("productId")));
 
                     sendResult(session, UID, null);
                 } else {
-                    sendError(session, UID, String.format("USB Device [v:%s p:%s] is not claimed.", params.get("vendorId"), params.get("productId")));
+                    sendError(session, UID, String.format("USB Device [v:%s p:%s] is not claimed.", params.opt("vendorId"), params.opt("productId")));
                 }
 
                 break;
@@ -363,7 +368,7 @@ public class PrintSocketClient {
                 break;
 
             default:
-                sendError(session, UID, "Invalid function call: " + json.getString("call"));
+                sendError(session, UID, "Invalid function call: " + json.optString("call", "NONE"));
                 break;
         }
     }
@@ -397,7 +402,7 @@ public class PrintSocketClient {
             PrintProcessor processor = PrintingUtilities.getPrintProcessor(params.getJSONArray("data"));
             log.debug("Using {} to print", processor.getClass().getName());
 
-            processor.parseData(params.getJSONArray("data"), options);
+            processor.parseData(params.optJSONArray("data"), options);
             processor.print(output, options);
             log.info("Printing complete");
 

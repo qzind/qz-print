@@ -21,7 +21,7 @@ public class PrintOptions {
      * Parses the provided JSON Object into relevant Pixel and Raw options
      */
     public PrintOptions(JSONObject configOpts) {
-        if (configOpts == null) { configOpts = new JSONObject(); }
+        if (configOpts == null) { return; }
 
         //check for raw options
         if (!configOpts.isNull("altPrinting")) {

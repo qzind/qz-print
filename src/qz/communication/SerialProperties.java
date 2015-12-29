@@ -23,6 +23,8 @@ public class SerialProperties {
      * Parses the provided JSON object into relevant SerialPort constants
      */
     public SerialProperties(JSONObject serialProps) {
+        if (serialProps == null) { return; }
+
         if (!serialProps.isNull("baudRate")) {
             try { baudRate = SerialUtilities.parseBaudRate(serialProps.getString("baudRate")); }
             catch(JSONException e) { log.warn("Cannot read {} as a value for baud rate, using default", serialProps.opt("baudRate")); }
