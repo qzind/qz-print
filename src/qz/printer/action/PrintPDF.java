@@ -2,6 +2,7 @@ package qz.printer.action;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.printing.PDFPrintable;
+import org.apache.pdfbox.printing.Scaling;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -60,17 +61,18 @@ public class PrintPDF extends PrintPixel implements PrintProcessor {
         job.setPrintService(output.getPrintService());
         PageFormat page = job.getPageFormat(null);
 
-        PrintRequestAttributeSet attributes = applyDefaultSettings(options.getPixelOptions(), page);
+        PrintOptions.Pixel pxlOpts = options.getPixelOptions();
+        PrintRequestAttributeSet attributes = applyDefaultSettings(pxlOpts, page);
 
         Book book = new Book();
         for(PDDocument doc : pdfs) {
-            book.append(new PDFPrintable(doc), page, doc.getNumberOfPages());
+            book.append(new PDFPrintable(doc, Scaling.ACTUAL_SIZE, false, (pxlOpts.getDensity() * pxlOpts.getUnits().fromInch())), page, doc.getNumberOfPages());
         }
 
         job.setJobName(Constants.PDF_PRINT);
         job.setPageable(book);
 
-        printCopies(output, options.getPixelOptions(), job, attributes);
+        printCopies(output, pxlOpts, job, attributes);
 
         for(PDDocument doc : pdfs) {
             try { doc.close(); } catch(IOException ignore) {}
