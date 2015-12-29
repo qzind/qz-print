@@ -701,7 +701,7 @@
 
     /// Connection ///
     function startConnection() {
-        if (!qz.isActive()) {
+        if (!qz.websocket.isActive()) {
             updateState('Waiting', 'default');
 
             qz.websocket.connect().then(function() {
@@ -714,7 +714,7 @@
     }
 
     function endConnection() {
-        if (qz.isActive()) {
+        if (qz.websocket.isActive()) {
             qz.websocket.disconnect().then(function() {
                 updateState('Inactive', 'default');
             }).catch(handleConnectionError);
@@ -1293,7 +1293,7 @@
 
     var qzVersion = 0;
     function findVersion() {
-        qz.getVersion().then(function(data) {
+        qz.api.getVersion().then(function(data) {
             $("#qz-version").html(data);
             qzVersion = data;
         }).catch(displayError);

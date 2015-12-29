@@ -3,8 +3,9 @@
 /**
  * @overview QZ Tray Connector
  *
- * @requires module:RSVP
- *     Provides Promises/A+ functionality for API calls
+ * @requires RSVP
+ *     Provides Promises/A+ functionality for API calls.
+ *     Can be overridden via <code>qz.api.setPromiseType</code> to remove dependency.
  */
 
 
@@ -106,7 +107,7 @@ var _qz = {
 
                         if (config.keepAlive > 0) {
                             var interval = window.setInterval(function() {
-                                if (!qz.isActive()) {
+                                if (!qz.websocket.isActive()) {
                                     clearInterval(interval);
                                     return;
                                 }
@@ -341,7 +342,7 @@ var _qz = {
         certPromise: function(resolve, reject) { reject("Undefined"); },
         /** Called to create new promise (using {@link _qz.security.certPromise}) for certificate retrieval. */
         callCert: function() {
-            return new RSVP.Promise(_qz.security.certPromise);
+            return _qz.tools.promise(_qz.security.certPromise);
         },
 
         /** Holds the current content waiting to be signed by the site. */
@@ -351,12 +352,17 @@ var _qz = {
         /** Called to create new promise (using {@link _qz.security.signaturePromise}) for signed calls. */
         callSign: function(toSign) {
             _qz.security.signContent = toSign;
-            return new RSVP.Promise(_qz.security.signaturePromise);
+            return _qz.tools.promise(_qz.security.signaturePromise);
         }
     },
 
 
     tools: {
+        /** Create a new promise */
+        promise: function(resolver) {
+            return new RSVP.Promise(resolver);
+        },
+
         /** Performs deep copy to target from remaining params */
         extend: function(target) {
             //special case when reassigning properties as objects in a deep copy
@@ -430,6 +436,16 @@ window.qz = {
 
     /** Calls related specifically to the web socket connection. */
     websocket: {
+        /**
+         * Check connection status. Active connection is necessary for other calls to run.
+         *
+         * @returns {boolean} If there is an active connection with QZ Tray.
+         *
+         * @see connect
+         */
+        isActive: function() {
+            return _qz.websocket.connection != null && _qz.websocket.connection.established;
+        },
 
         /**
          * Call to setup connection with QZ Tray on user's system.
@@ -442,14 +458,14 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         connect: function(options) {
-            return new RSVP.Promise(function(resolve, reject) {
-                if (qz.isActive()) {
+            return _qz.tools.promise(function(resolve, reject) {
+                if (qz.websocket.isActive()) {
                     reject(new Error("An open connection with QZ Tray already exists"));
                     return;
                 }
 
                 // Old standard of WebSocket used const CLOSED as 2, new standards use const CLOSED as 3, we need the newer standard for jetty
-                if (!"WebSocket" in window || WebSocket.CLOSED == null || WebSocket.CLOSED == 2) {
+                if (!"WebSocket" in window || !WebSocket.CLOSED || WebSocket.CLOSED == 2) {
                     reject(new Error("Web Sockets are not supported by this browser"));
                     return;
                 }
@@ -471,8 +487,8 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         disconnect: function() {
-            return new RSVP.Promise(function(resolve, reject) {
-                if (qz.isActive()) {
+            return _qz.tools.promise(function(resolve, reject) {
+                if (qz.websocket.isActive()) {
                     _qz.websocket.connection.close();
                     _qz.websocket.connection.promise = { resolve: resolve, reject: reject };
                 } else {
@@ -505,7 +521,7 @@ window.qz = {
          * @returns {Promise<Object<{ipAddress: String, macAddress: String}>|Error>} Connected system's network information.
          */
         getNetworkInfo: function() {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'websocket.getNetworkInfo',
                     promise: {
@@ -520,25 +536,13 @@ window.qz = {
     },
 
 
-    /**
-     * Check connection status. Active connection is necessary for other calls to run.
-     *
-     * @returns {boolean} If there is an active connection with QZ Tray.
-     *
-     * @see connect
-     */
-    isActive: function() {
-        return _qz.websocket.connection != null && _qz.websocket.connection.established;
-    },
-
-
     /** Calls related to getting printer information from the connection. */
     printers: {
         /**
          * @returns {Promise<string|Error>} Name of the connected system's default printer.
          */
         getDefault: function() {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'printers.getDefault',
                     promise: {
@@ -557,7 +561,7 @@ window.qz = {
          *                                                Otherwise an array of printers found on the connected system.
          */
         find: function(query) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'printers.find',
                     promise: {
@@ -665,7 +669,7 @@ window.qz = {
      * @see qz.config.create
      */
     print: function(config, data, signature, signingTimestamp) {
-        return new RSVP.Promise(function(resolve, reject) {
+        return _qz.tools.promise(function(resolve, reject) {
             var msg = {
                 call: 'print',
                 promise: {
@@ -691,7 +695,7 @@ window.qz = {
          * @returns {Promise<Array<string>|Error>} Communication (RS232, COM, TTY) ports available on connected system.
          */
         findPorts: function() {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'serial.findPorts',
                     promise: {
@@ -722,7 +726,7 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         openPort: function(port, bounds) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'serial.openPort',
                     promise: {
@@ -753,7 +757,7 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         sendData: function(port, data, properties) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'serial.sendData',
                     promise: {
@@ -776,7 +780,7 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         closePort: function(port) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'serial.closePort',
                     promise: {
@@ -803,7 +807,7 @@ window.qz = {
          * @returns {Promise<Array<Object>|Error>} Array of JSON objects containing information on connected USB devices.
          */
         listDevices: function(includeHubs) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'usb.listDevices',
                     promise: {
@@ -824,7 +828,7 @@ window.qz = {
          * @returns {Promise<Array<string>|Error>} List of available (hexadecimal) interfaces on a USB device.
          */
         listInterfaces: function(vendorId, productId) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'usb.listInterfaces',
                     promise: {
@@ -847,7 +851,7 @@ window.qz = {
          * @returns {Promise<Array<string>|Error>} List of available (hexadecimal) endpoints on a USB device's interface.
          */
         listEndpoints: function(vendorId, productId, iface) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'usb.listEndpoints',
                     promise: {
@@ -873,7 +877,7 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         claimDevice: function(vendorId, productId, iface) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'usb.claimDevice',
                     promise: {
@@ -900,7 +904,7 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         sendData: function(vendorId, productId, endpoint, data) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'usb.sendData',
                     promise: {
@@ -928,7 +932,7 @@ window.qz = {
          * @returns {Promise<Array<string>|Error>} List of (hexadecimal) bytes received from the USB device.
          */
         readData: function(vendorId, productId, endpoint, responseSize) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'usb.readData',
                     promise: {
@@ -954,7 +958,7 @@ window.qz = {
          * @returns {Promise<null|Error>}
          */
         releaseDevice: function(vendorId, productId) {
-            return new RSVP.Promise(function(resolve, reject) {
+            return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'usb.releaseDevice',
                     promise: {
@@ -1008,22 +1012,35 @@ window.qz = {
         }
     },
 
-    /**
-     * Get version of connected QZ Tray application
-     *
-     * @returns {Promise<string|Error>} Version number of QZ Tray
-     */
-    getVersion: function() {
-        return new RSVP.Promise(function(resolve, reject) {
-            var msg = {
-                call: 'getVersion',
-                promise: {
-                    resolve: resolve, reject: reject
-                }
-            };
+    /** Calls related to compatibility adjustments */
+    api: {
+        /**
+         * Get version of connected QZ Tray application.
+         *
+         * @returns {Promise<string|Error>} Version number of QZ Tray.
+         */
+        getVersion: function() {
+            return _qz.tools.promise(function(resolve, reject) {
+                var msg = {
+                    call: 'getVersion',
+                    promise: {
+                        resolve: resolve, reject: reject
+                    }
+                };
 
-            _qz.websocket.connection.sendData(msg);
-        });
+                _qz.websocket.connection.sendData(msg);
+            });
+        },
+
+        /**
+         * Change the promise library used by QZ API.
+         * Should be called before any initialization to avoid possible errors.
+         *
+         * @param {Function} promiser <code>Function({function} resolver)</code> called to create new promises.
+         */
+        setPromiseType: function(promiser) {
+            _qz.tools.promise = promiser;
+        }
     }
 
 };
