@@ -3,8 +3,6 @@
 /**
  * @overview QZ Tray Connector
  *
- * @requires module:jQuery
- *     Makes javascript usable
  * @requires module:RSVP
  *     Provides Promises/A+ functionality for API calls
  */
@@ -214,7 +212,7 @@ var _qz = {
 
                 //receive message from qz
                 _qz.websocket.connection.onmessage = function(evt) {
-                    var returned = $.parseJSON(evt.data);
+                    var returned = JSON.parse(evt.data);
 
                     if (returned.uid == null) {
                         if (returned.type == null) {
@@ -292,6 +290,7 @@ var _qz = {
         }
     },
 
+
     printing: {
         /** Default options used for new printer configs. Can be overridden using {@link qz.configs.setDefaults}. */
         defaultConfig: {
@@ -354,6 +353,43 @@ var _qz = {
             _qz.security.signContent = toSign;
             return new RSVP.Promise(_qz.security.signaturePromise);
         }
+    },
+
+
+    tools: {
+        /** Performs deep copy to target from remaining params */
+        extend: function(target) {
+            //special case when reassigning properties as objects in a deep copy
+            if (typeof target !== 'object') {
+                target = {};
+            }
+
+            for(var i = 1; i < arguments.length; i++) {
+                var source = arguments[i];
+                if (!source) { continue; }
+
+                for(var key in source) {
+                    if (source.hasOwnProperty(key)) {
+                        if (target === source[key]) { continue; }
+
+                        if (source[key] && source[key].constructor && source[key].constructor === Object) {
+                            var clone;
+                            if (Array.isArray(source[key])) {
+                                clone = target[key] || [];
+                            } else {
+                                clone = target[key] || {};
+                            }
+
+                            target[key] = _qz.tools.extend(clone, source[key]);
+                        } else if (source[key] !== undefined) {
+                            target[key] = source[key];
+                        }
+                    }
+                }
+            }
+
+            return target;
+        }
     }
 };
 
@@ -373,7 +409,7 @@ function Config(printer, opts) {
     };
 
     this.reconfigure = function(newOpts) {
-        $.extend(true, this.config, newOpts);
+        _qz.tools.extend(this.config, newOpts);
     };
     this.getOptions = function() {
         return this.config;
@@ -424,7 +460,7 @@ window.qz = {
                     options.usingSecure = false;
                 }
 
-                var config = $.extend(true, {}, _qz.websocket.connectConfig, options);
+                var config = _qz.tools.extend({}, _qz.websocket.connectConfig, options);
                 _qz.websocket.setup.findConnection(config, resolve, reject);
             });
         },
@@ -572,7 +608,7 @@ window.qz = {
          *  @param {number} [options.perSpool=1] Number of pages per spool.
          */
         setDefaults: function(options) {
-            $.extend(true, _qz.printing.defaultConfig, options);
+            _qz.tools.extend(_qz.printing.defaultConfig, options);
         },
 
         /**
@@ -590,7 +626,7 @@ window.qz = {
          * @see config.setDefaults
          */
         create: function(printer, options) {
-            var myOpts = $.extend(true, {}, _qz.printing.defaultConfig, options);
+            var myOpts = _qz.tools.extend({}, _qz.printing.defaultConfig, options);
             return new Config(printer, myOpts);
         }
     },
