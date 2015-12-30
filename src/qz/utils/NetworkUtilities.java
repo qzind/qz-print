@@ -45,7 +45,7 @@ public class NetworkUtilities {
 
 
     public static NetworkUtilities getInstance() {
-        return getInstance("google.com", 80); //TODO - make sure still works with s protocol
+        return getInstance("google.com", 443);
     }
 
     public static NetworkUtilities getInstance(String hostname, int port) {
