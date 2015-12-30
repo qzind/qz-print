@@ -31,121 +31,85 @@ import org.slf4j.LoggerFactory;
 
 import javax.print.PrintService;
 import javax.print.PrintServiceLookup;
-import javax.print.attribute.standard.PrinterName;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class PrintServiceMatcher {
 
     private static final Logger log = LoggerFactory.getLogger(PrintServiceMatcher.class);
 
-    private static PrintService[] printers = null;
-
-
-    public static PrintService[] findPrinters() {
-        return findPrinters(false);
-    }
-
-    public static PrintService[] findPrinters(boolean forceSearch) {
-        if (forceSearch || printers == null || printers.length == 0) {
-            printers = PrintServiceLookup.lookupPrintServices(null, null);
-            log.info("Found {} printers", printers.length);
-        }
+    public static PrintService[] getPrintServices() {
+        PrintService[] printers = PrintServiceLookup.lookupPrintServices(null, null);
+        log.debug("Found {} printers", printers.length);
 
         return printers;
     }
 
     /**
-     * Finds a printer in the PrintServices listing and returns it's respective PrintService.
-     * <p>
-     * If a PrintService is supplied, the same PrintService is returned.
-     * If an Object is supplied, it calls the "toString()" method and
-     * then does a standard name search.
-     * </p>
+     * Finds {@code PrintService} by looking at any matches to {@code printerSearch}.
      *
-     * @param printerNameObject The object holding the name of the printer to search for.
-     * @return PrintService ps for RawPrint(ps, cmds)
+     * @param printerSearch Search query to compare against service names.
      */
-    public static PrintService findPrinter(Object printerNameObject) {
+    public static PrintService matchService(String printerSearch) {
         PrintService exact = null;
         PrintService begins = null;
         PrintService partial = null;
 
-        String printerName;
-        if (printerNameObject == null) {
-            return null;
-        } else if (printerNameObject instanceof String) {
-            printerName = "\\Q" + printerNameObject + "\\E";
-        } else if (printerNameObject instanceof PrintService) {
-            return (PrintService)printerNameObject;
-        } else {
-            printerName = "\\Q" + printerNameObject.toString() + "\\E";
-        }
+        log.debug("Searching for PrintService matching {}", printerSearch);
 
-        // Get print service list
-        findPrinters();
-
-        log.debug("Printer specified: {}", printerName);
-
-        Pattern patternExact = Pattern.compile("\\b" + printerName + "\\b", Pattern.CASE_INSENSITIVE);
-        Pattern patternStart = Pattern.compile("\\b" + printerName, Pattern.CASE_INSENSITIVE);
-        Pattern patternPartial = Pattern.compile(printerName, Pattern.CASE_INSENSITIVE);
-
-        // Search for best match by name
+        // Search services for matches
+        PrintService[] printers = getPrintServices();
         for(PrintService ps : printers) {
-            String sysPrinter = ps.getAttribute(PrinterName.class).getValue();
+            String printerName = ps.getName();
 
-            Matcher matchExact = patternExact.matcher(sysPrinter);
-            Matcher matchStart = patternStart.matcher(sysPrinter);
-            Matcher matchPartial = patternPartial.matcher(sysPrinter);
-
-            if (matchExact.find()) {
+            if (printerName.equals(printerSearch)) {
                 exact = ps;
-                log.trace("Printer name match: {}", sysPrinter);
-            } else if (matchStart.find()) {
+            }
+            if (printerName.startsWith(printerSearch)) {
                 begins = ps;
-                log.trace("Printer name beginning match: {}", sysPrinter);
-            } else if (matchPartial.find()) {
+            }
+            if (printerName.contains(printerSearch)) {
                 partial = ps;
-                log.trace("Printer name partial match: {}", sysPrinter);
             }
         }
 
         // Return closest match
+        PrintService use = null;
         if (exact != null) {
-            log.info("Using best match: {}", exact.getName());
-            return exact;
+            use = exact;
         } else if (begins != null) {
-            log.info("Using best match: {}", begins.getName());
-            return begins;
+            use = begins;
         } else if (partial != null) {
-            log.info("Using best match: {}", partial.getName());
-            return partial;
+            use = partial;
         }
 
-        // Couldn't find printer
-        log.warn("Printer not found: {}", printerName);
-        return null;
+        if (use != null) {
+            log.debug("Found match: {}", use.getName());
+        } else {
+            log.warn("Printer not found: {}", printerSearch);
+        }
+
+        return use;
     }
 
 
     public static JSONArray getPrintersJSON() throws JSONException {
         JSONArray list = new JSONArray();
 
-        findPrinters(false);
-        for(PrintService printService : printers) {
-            list.put(printService.getName());
+        PrintService[] printers = getPrintServices();
+        for(PrintService ps : printers) {
+            list.put(ps.getName());
         }
 
         return list;
     }
 
     public static String getPrinterJSON(String query) throws JSONException {
-        PrintService service = PrintServiceMatcher.findPrinter(query);
-        String printerName = null;
-        if (service != null) { printerName = service.getName(); }
+        PrintService service = PrintServiceMatcher.matchService(query);
 
-        return printerName;
+        if (service != null) {
+            return service.getName();
+        } else {
+            return null;
+        }
     }
 
 }

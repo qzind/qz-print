@@ -21,7 +21,7 @@ public class PrintOutput {
         if (configPrinter == null) { return; }
 
         if (configPrinter.has("name")) {
-            service = PrintServiceMatcher.findPrinter(configPrinter.getString("name"));
+            service = PrintServiceMatcher.matchService(configPrinter.getString("name"));
             if (service == null) {
                 throw new IllegalArgumentException("Cannot find printer with name \"" + configPrinter.getString("name") + "\"");
             }
