@@ -15,6 +15,8 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.joor.Reflect;
+import org.joor.ReflectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +42,7 @@ public class WebApp extends Application {
     private static Stage stage;
     private static WebView webView;
     private static double pageWidth;
-    private static double densityScale;
+    private static double pageZoom;
 
     private static PauseTransition snap;
 
@@ -51,22 +53,27 @@ public class WebApp extends Application {
             log.trace("New state: {} > {}", oldState, newState);
 
             if (newState == Worker.State.SUCCEEDED) {
-                webView.setPrefWidth(pageWidth);
+                try {
+                    Reflect.on(webView).call("setZoom", pageZoom);
+                }
+                catch(ReflectException e) {
+                    log.warn("Unable zoom, using default quality");
+                    pageZoom = 1; //only zoom affects webView scaling
+                }
+
+                webView.setPrefWidth(pageWidth * pageZoom);
                 webView.autosize();
 
                 //we have to resize the width first, for responsive html, then calculate the best fit height
-                PauseTransition resize = new PauseTransition(Duration.millis(100));
+                final PauseTransition resize = new PauseTransition(Duration.millis(100));
                 resize.setOnFinished(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent actionEvent) {
                         String heightText = webView.getEngine().executeScript("Math.max(document.body.offsetHeight, document.body.scrollHeight)").toString();
                         double height = Double.parseDouble(heightText);
 
-                        webView.setPrefHeight(height);
+                        webView.setPrefHeight(height * pageZoom);
                         webView.autosize();
-
-                        webView.setScaleX(densityScale);
-                        webView.setScaleY(densityScale);
 
                         snap.playFromStart();
                     }
@@ -128,7 +135,7 @@ public class WebApp extends Application {
      * @param fromFile If the passed {@code source} is from a url/file location
      * @return BufferedImage of the rendered html
      */
-    public static BufferedImage capture(final String source, final boolean fromFile, final double width, final double density) throws IOException {
+    public static BufferedImage capture(final String source, final boolean fromFile, final double width, final double zoom) throws IOException {
         final AtomicReference<BufferedImage> capture = new AtomicReference<>();
         final AtomicReference<Throwable> error = new AtomicReference<>();
 
@@ -151,7 +158,7 @@ public class WebApp extends Application {
             public void run() {
                 try {
                     pageWidth = width;
-                    densityScale = density / 72.0;
+                    pageZoom = zoom;
 
                     webView.setPrefSize(100, 100);
                     webView.autosize();
@@ -165,15 +172,16 @@ public class WebApp extends Application {
                         @Override
                         public void handle(ActionEvent actionEvent) {
                             try {
-                                log.debug("Capturing image");
+                                log.debug("Attempting image capture");
 
                                 WritableImage snapshot = webView.snapshot(new SnapshotParameters(), null);
                                 capture.set(SwingFXUtils.fromFXImage(snapshot, null));
-
-                                stage.hide(); //hide stage so users won't have to manually close it
                             }
                             catch(Throwable t) {
                                 error.set(t);
+                            }
+                            finally {
+                                stage.hide(); //hide stage so users won't have to manually close it
                             }
                         }
                     });

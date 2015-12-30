@@ -58,13 +58,22 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
                 boolean fromFile = (format == PrintingUtilities.Format.FILE) || (format == PrintingUtilities.Format.AUTO && source.startsWith("http"));
 
                 double pageWidth = WebApp.DEFAULT_WIDTH;
+                double pageZoom = 1.0;
                 JSONObject option = data.optJSONObject("options");
-                if (option != null) { pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH); }
+                if (option != null) {
+                    pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH);
+                    pageZoom = option.optDouble("pageZoom", 1.0);
+                }
 
                 try {
-                    images.add(WebApp.capture(source, fromFile, pageWidth, options.getPixelOptions().getDensity()));
+                    images.add(WebApp.capture(source, fromFile, pageWidth, pageZoom));
                 }
                 catch(IOException e) {
+                    //JavaFX image loader becomes null if webView is too large, throwing an IllegalArgumentException on screen capture attempt
+                    if (e.getCause() != null && e.getCause() instanceof IllegalArgumentException) {
+                        throw new UnsupportedOperationException("Image or Density is too large for HTML printing", e);
+                    }
+
                     throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as HTML", format, source), e);
                 }
             }

@@ -1021,7 +1021,7 @@
                 '       </tr>' +
                 '   </table>' +
                 '</html>',
-                options: { pageWidth: 640 }
+                options: { pageWidth: 640, pageZoom: 8 }
             }
         ];
 
@@ -1032,7 +1032,7 @@
         var config = getUpdatedConfig();
 
         var printData = [
-            { type: 'html', format: 'file', data: getPath() + '/sample.html' }
+            { type: 'html', format: 'file', data: getPath() + '/sample.html', options: { pageWidth: $(window).width(), pageZoom: 1 } }
         ];
 
         qz.print(config, printData).catch(displayError);
@@ -1406,24 +1406,24 @@
         }
 
         cfg.reconfigure({
-            altPrinting: $("#rawAltPrinting").prop('checked'),
-            encoding: $("#rawEncoding").val(),
-            endOfDoc: $("#rawEndOfDoc").val(),
-            language: $("#rawLanguage").val(),
-            perSpool: $("#rawPerSpool").val(),
+                            altPrinting: $("#rawAltPrinting").prop('checked'),
+                            encoding: $("#rawEncoding").val(),
+                            endOfDoc: $("#rawEndOfDoc").val(),
+                            language: $("#rawLanguage").val(),
+                            perSpool: $("#rawPerSpool").val(),
 
-            colorType: $("#pxlColorType").val(),
-            copies: copies,
-            density: $("#pxlDensity").val(),
-            duplex: $("#pxlDuplex").prop('checked'),
-            margins: pxlMargins,
-            orientation: $("#pxlOrientation").val(),
-            paperThickness: $("#pxlPaperThickness").val(),
-            printerTray: $("#pxlPrinterTray").val(),
-            rotation: $("#pxlRotation").val(),
-            size: pxlSize,
-            units: $("input[name='pxlUnits']:checked").val()
-        });
+                            colorType: $("#pxlColorType").val(),
+                            copies: copies,
+                            density: $("#pxlDensity").val(),
+                            duplex: $("#pxlDuplex").prop('checked'),
+                            margins: pxlMargins,
+                            orientation: $("#pxlOrientation").val(),
+                            paperThickness: $("#pxlPaperThickness").val(),
+                            printerTray: $("#pxlPrinterTray").val(),
+                            rotation: $("#pxlRotation").val(),
+                            size: pxlSize,
+                            units: $("input[name='pxlUnits']:checked").val()
+                        });
     }
 
     function setPrintFile() {

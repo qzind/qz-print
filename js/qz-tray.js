@@ -661,6 +661,7 @@ window.qz = {
      *   @param {string|number} [data.options.dotDensity] Used only with raw printing <code>[visual]</code> type.
      *   @param {string} [data.options.xmlTag] Required if passing xml data. Tag name containing base64 formatted data.
      *   @param {number} [data.options.pageWidth=1280] Used only with <code>[html]</code> type printing. Width of the web page to render.
+     *   @param {number} [data.options.pageZoom=1] Used only with <code>[html]</code> type printing. Improves quality of final render. Only usable on systems with JavaFX 8.
      * @param {boolean} [signature] Pre-signed signature of JSON string containing <code>call</code>, <code>params</code>, and <code>timestamp</code>.
      * @param {number} [signingTimestamp] Required with <code>signature</code>. Timestamp used with pre-signed content.
      *
