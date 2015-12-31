@@ -112,7 +112,7 @@ public class PrintSocketClient {
 
     @OnWebSocketConnect
     public void onConnect(Session session) {
-        log.info("Connection opened: " + session.getRemoteAddress());
+        log.info("Connection opened from {} on socket port {}", session.getRemoteAddress(), session.getLocalAddress().getPort());
         trayManager.displayFineMessage("Client connected");
 
         //new connections are unknown until they send a proper certificate
@@ -121,7 +121,7 @@ public class PrintSocketClient {
 
     @OnWebSocketClose
     public void onClose(Session session, int closeCode, String reason) {
-        log.info("Connection closed: " + closeCode + " - " + reason);
+        log.info("Connection closed: {} - {}", closeCode, reason);
         trayManager.displayFineMessage("Client disconnected");
 
         Integer port = session.getRemoteAddress().getPort();
@@ -151,7 +151,7 @@ public class PrintSocketClient {
 
         String uid = null;
         try {
-            log.debug("Message: " + message);
+            log.debug("Message: {}", message);
             JSONObject json = new JSONObject(message);
             uid = json.optString("uid");
 
