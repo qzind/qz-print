@@ -15,7 +15,7 @@ RequestExecutionLevel user
 Name "${project.name}"
 Caption "${project.name}"
 Icon "${basedir}\${branding.dir}\${windows.icon}"
-OutFile "${project.filename}.exe"
+OutFile "${dist.dir}\${project.filename}.exe"
  
 SilentInstall silent
 AutoCloseWindow true
