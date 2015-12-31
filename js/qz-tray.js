@@ -1,7 +1,11 @@
 'use strict';
 
 /**
+ * @version 2.0.0
  * @overview QZ Tray Connector
+ * <p/>
+ * Connects a web client to the QZ Tray software.
+ * Enables printing and device communication from javascript.
  *
  * @requires RSVP
  *     Provides Promises/A+ functionality for API calls.
@@ -418,10 +422,13 @@ var qz = (function() {
 ///// PUBLIC METHODS /////
 //TODO - examples in docs ??
 
-    /** @namespace */
+    /** @namespace qz */
     return {
 
-        /** Calls related specifically to the web socket connection. */
+        /**
+         * Calls related specifically to the web socket connection.
+         * @namespace qz.websocket
+         */
         websocket: {
             /**
              * Check connection status. Active connection is necessary for other calls to run.
@@ -429,6 +436,8 @@ var qz = (function() {
              * @returns {boolean} If there is an active connection with QZ Tray.
              *
              * @see connect
+             *
+             * @memberof  qz.websocket
              */
             isActive: function() {
                 return _qz.websocket.connection != null && _qz.websocket.connection.established;
@@ -443,6 +452,8 @@ var qz = (function() {
              *  @param {number} [options.keepAlive=60] Seconds between keep-alive pings to keep connection open. Set to 0 to disable.
              *
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.websocket
              */
             connect: function(options) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -472,6 +483,8 @@ var qz = (function() {
              * Stop any active connection with QZ Tray.
              *
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.websocket
              */
             disconnect: function() {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -489,6 +502,8 @@ var qz = (function() {
              * Also called if {@link websocket#connect} fails to connect.
              *
              * @param {Function|Array<Function>} calls Single or array of <code>Function({Event} event)</code> calls.
+             *
+             * @memberof qz.websocket
              */
             setErrorCallbacks: function(calls) {
                 _qz.websocket.errorCallbacks = calls;
@@ -499,6 +514,8 @@ var qz = (function() {
              * Also called when {@link websocket#disconnect} is called.
              *
              * @param {Function|Array<Function>} calls Single or array of <code>Function({Event} event)</code> calls.
+             *
+             * @memberof qz.websocket
              */
             setClosedCallbacks: function(calls) {
                 _qz.websocket.closedCallbacks = calls;
@@ -506,6 +523,8 @@ var qz = (function() {
 
             /**
              * @returns {Promise<Object<{ipAddress: String, macAddress: String}>|Error>} Connected system's network information.
+             *
+             * @memberof qz.websocket
              */
             getNetworkInfo: function() {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -523,10 +542,15 @@ var qz = (function() {
         },
 
 
-        /** Calls related to getting printer information from the connection. */
+        /**
+         * Calls related to getting printer information from the connection.
+         * @namespace qz.printers
+         */
         printers: {
             /**
              * @returns {Promise<string|Error>} Name of the connected system's default printer.
+             *
+             * @memberof qz.printers
              */
             getDefault: function() {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -544,8 +568,10 @@ var qz = (function() {
             /**
              * @param {string} [query] Search for a specific printer. All printers are returned if not provided.
              *
-             * @returns {Promise<Array<string>|string|Error>} The matched printer name if `query` is provided.
-             *                                                Otherwise an array of printers found on the connected system.
+             * @returns {Promise<Array<string>|string|Error>} The matched printer name if <code>query</code> is provided.
+             *                                                Otherwise an array of printer names found on the connected system.
+             *
+             * @memberof qz.printers
              */
             find: function(query) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -564,7 +590,10 @@ var qz = (function() {
             }
         },
 
-        /** Calls related to setting up new printer configurations. */
+        /**
+         * Calls related to setting up new printer configurations.
+         * @namespace qz.configs
+         */
         configs: {
             /**
              * Default options used by new configs if not overridden.
@@ -597,6 +626,8 @@ var qz = (function() {
              *  @param {string} [options.endOfDoc=null]
              *  @param {string} [options.language=null] Printer language
              *  @param {number} [options.perSpool=1] Number of pages per spool.
+             *
+             * @memberof qz.configs
              */
             setDefaults: function(options) {
                 _qz.tools.extend(_qz.printing.defaultConfig, options);
@@ -615,6 +646,8 @@ var qz = (function() {
              * @returns {Config} The new config.
              *
              * @see config.setDefaults
+             *
+             * @memberof qz.configs
              */
             create: function(printer, options) {
                 var myOpts = _qz.tools.extend({}, _qz.printing.defaultConfig, options);
@@ -626,7 +659,7 @@ var qz = (function() {
         /**
          * Send data to selected config for printing.
          * The promise for this method will resolve when the document has been sent to the printer. Actual printing may not be complete.
-         *
+         * <p/>
          * Optionally, print requests can be pre-signed:
          * Signed content consists of a JSON object string containing no spacing,
          * following the format of the "call" and "params" keys in the API call, with the addition of a "timestamp" key in milliseconds
@@ -638,10 +671,10 @@ var qz = (function() {
          *  @param {string} data.type Valid values <code>[html|image|pdf|raw]</code>
          *  @param {string} [data.format='auto'] Format of data provided. Generally only needed for raw printing<p/>
          *      The <code>[auto]</code> format is valid for all data types.<p/>
-         *      For <code>[html]</code> types, valid formats are <code>[file|plain]</code>.<p/>
-         *      For <code>[image]</code> types, valid formats are <code>[base64|file|visual]</code>.<p/>
-         *      For <code>[pdf]</code> types, valid format is <code>[file]</code>.<p/>
-         *      For <code>[raw]</code> types, valid formats are <code>[base64|file|visual|plain|hex|xml]</code>, use of <code>[auto]</code> assumes <code>[plain]</code>.
+         *      For <code>[html]</code> types, valid formats include <code>[file|plain]</code>.<p/>
+         *      For <code>[image]</code> types, valid formats include <code>[base64|file|visual]</code>.<p/>
+         *      For <code>[pdf]</code> types, valid format include <code>[file]</code>.<p/>
+         *      For <code>[raw]</code> types, valid formats include <code>[base64|file|visual|plain|hex|xml]</code>, use of <code>[auto]</code> assumes <code>[plain]</code>.
          *  @param {Object} [data.options]
          *   @param {number} [data.options.x] Used only with raw printing <code>[visual]</code> type. The X position of the image.
          *   @param {number} [data.options.y] Used only with raw printing <code>[visual]</code> type. The Y position of the image.
@@ -655,6 +688,8 @@ var qz = (function() {
          * @returns {Promise<null|Error>}
          *
          * @see qz.config.create
+         *
+         * @memberof qz
          */
         print: function(config, data, signature, signingTimestamp) {
             return _qz.tools.promise(function(resolve, reject) {
@@ -677,10 +712,15 @@ var qz = (function() {
         },
 
 
-        /** Calls related to interaction with serial ports. */
+        /**
+         * Calls related to interaction with serial ports.
+         * @namespace qz.serial
+         */
         serial: {
             /**
              * @returns {Promise<Array<string>|Error>} Communication (RS232, COM, TTY) ports available on connected system.
+             *
+             * @memberof qz.serial
              */
             findPorts: function() {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -699,6 +739,8 @@ var qz = (function() {
              * List of functions called for any response from open serial ports.
              *
              * @param {Function|Array<Function>} calls Single or array of <code>Function({string} portName, {string} output)</code> calls.
+             *
+             * @memberof qz.serial
              */
             setSerialCallbacks: function(calls) {
                 _qz.serial.serialCallbacks = calls;
@@ -712,6 +754,8 @@ var qz = (function() {
              *  @param {number} [bounds.width] Used for fixed-width response serial communication.
              *
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.serial
              */
             openPort: function(port, bounds) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -743,6 +787,8 @@ var qz = (function() {
              *  @param {string} [properties.flowControl='NONE']
              *
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.serial
              */
             sendData: function(port, data, properties) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -766,6 +812,8 @@ var qz = (function() {
              * @param {string} port Name of port to close.
              *
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.serial
              */
             closePort: function(port) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -785,7 +833,10 @@ var qz = (function() {
         },
 
 
-        /** Calls related to interaction with USB devices. */
+        /**
+         * Calls related to interaction with USB devices.
+         * @namespace qz.usb
+         */
         usb: {
             /**
              * List of available USB devices. Includes (hexadecimal) vendor ID, (hexadecimal) product ID, and hub status.
@@ -793,6 +844,8 @@ var qz = (function() {
              *
              * @param includeHubs Whether to include USB hubs.
              * @returns {Promise<Array<Object>|Error>} Array of JSON objects containing information on connected USB devices.
+             *
+             * @memberof qz.usb
              */
             listDevices: function(includeHubs) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -814,6 +867,8 @@ var qz = (function() {
              * @param vendorId Hex string of USB device's vendor ID.
              * @param productId Hex string of USB device's product ID.
              * @returns {Promise<Array<string>|Error>} List of available (hexadecimal) interfaces on a USB device.
+             *
+             * @memberof qz.usb
              */
             listInterfaces: function(vendorId, productId) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -837,6 +892,8 @@ var qz = (function() {
              * @param productId Hex string of USB device's product ID.
              * @param iface Hex string of interface on the USB device to search.
              * @returns {Promise<Array<string>|Error>} List of available (hexadecimal) endpoints on a USB device's interface.
+             *
+             * @memberof qz.usb
              */
             listEndpoints: function(vendorId, productId, iface) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -863,6 +920,8 @@ var qz = (function() {
              * @param productId Hex string of USB device's product ID.
              * @param iface Hex string of interface on the USB device to claim.
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.usb
              */
             claimDevice: function(vendorId, productId, iface) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -890,6 +949,8 @@ var qz = (function() {
              * @param endpoint Hex string of endpoint on the claimed interface for the USB device.
              * @param data Bytes to send over specified endpoint.
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.usb
              */
             sendData: function(vendorId, productId, endpoint, data) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -918,6 +979,8 @@ var qz = (function() {
              * @param endpoint Hex string of endpoint on the claimed interface for the USB device.
              * @param responseSize Size of the byte array to receive a response in.
              * @returns {Promise<Array<string>|Error>} List of (hexadecimal) bytes received from the USB device.
+             *
+             * @memberof qz.usb
              */
             readData: function(vendorId, productId, endpoint, responseSize) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -944,6 +1007,8 @@ var qz = (function() {
              * @param vendorId Hex string of USB device's vendor ID.
              * @param productId Hex string of USB device's product ID.
              * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.usb
              */
             releaseDevice: function(vendorId, productId) {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -964,13 +1029,18 @@ var qz = (function() {
         },
 
 
-        /** Calls related to signing connection requests. */
+        /**
+         * Calls related to signing connection requests.
+         * @namespace qz.security
+         */
         security: {
             /**
              * List of functions called when requesting a public certificate for signing requests.
              *
              * @param {Function} promiseCall <code>Function({function} resolve)</code> called as promise for getting the public certificate.
              *        Should call <code>resolve</code> parameter with the result.
+             *
+             * @memberof qz.security
              */
             setCertificatePromise: function(promiseCall) {
                 _qz.security.certPromise = promiseCall;
@@ -983,6 +1053,8 @@ var qz = (function() {
              * @param {Function} promiseCall <code>Function({function} resolve)</code> called as promise for signing requests.
              *        Should call <code>resolve</code> parameter with the result.
              * @see qz.security.getContent
+             *
+             * @memberof qz.security
              */
             setSignaturePromise: function(promiseCall) {
                 _qz.security.signaturePromise = promiseCall;
@@ -994,18 +1066,25 @@ var qz = (function() {
              *
              * @returns {string} String needing signed. <code>Undefined</code> if unnecessary.
              * @see qz.security.setSignaturePromise
+             *
+             * @memberof qz.security
              */
             getContent: function() {
                 return _qz.security.signContent;
             }
         },
 
-        /** Calls related to compatibility adjustments */
+        /**
+         * Calls related to compatibility adjustments
+         * @namespace qz.api
+         */
         api: {
             /**
              * Get version of connected QZ Tray application.
              *
              * @returns {Promise<string|Error>} Version number of QZ Tray.
+             *
+             * @memberof qz.api
              */
             getVersion: function() {
                 return _qz.tools.promise(function(resolve, reject) {
@@ -1025,6 +1104,8 @@ var qz = (function() {
              * Should be called before any initialization to avoid possible errors.
              *
              * @param {Function} promiser <code>Function({function} resolver)</code> called to create new promises.
+             *
+             * @memberof qz.api
              */
             setPromiseType: function(promiser) {
                 _qz.tools.promise = promiser;
