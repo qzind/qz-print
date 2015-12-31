@@ -101,7 +101,7 @@ public abstract class PrintPixel {
         CopiesSupported cSupport = (CopiesSupported)output.getPrintService()
                 .getSupportedAttributeValues(Copies.class, output.getPrintService().getSupportedDocFlavors()[0], attributes);
 
-        if (cSupport.contains(pxlOpts.getCopies())) {
+        if (cSupport != null && cSupport.contains(pxlOpts.getCopies())) {
             attributes.add(new Copies(pxlOpts.getCopies()));
             job.print(attributes);
         } else {
