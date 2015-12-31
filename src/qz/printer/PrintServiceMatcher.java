@@ -54,11 +54,12 @@ public class PrintServiceMatcher {
         PrintService partial = null;
 
         log.debug("Searching for PrintService matching {}", printerSearch);
+        printerSearch = printerSearch.toLowerCase();
 
         // Search services for matches
         PrintService[] printers = getPrintServices();
         for(PrintService ps : printers) {
-            String printerName = ps.getName();
+            String printerName = ps.getName().toLowerCase();
 
             if (printerName.equals(printerSearch)) {
                 exact = ps;
