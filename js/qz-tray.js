@@ -177,16 +177,15 @@ var qz = (function() {
                                     timestamp: obj.timestamp
                                 };
 
-                                _qz.security.callSign(JSON.stringify(signObj)).then(function(signature) {
+                                _qz.security.callSign(_qz.tools.stringify(signObj)).then(function(signature) {
                                     obj.signature = signature;
                                     _qz.signContent = undefined;
 
-                                    //TODO - ensure prototype does not mess with our stringify
-                                    _qz.websocket.connection.send(JSON.stringify(obj));
+                                    _qz.websocket.connection.send(_qz.tools.stringify(obj));
                                 });
                             } else {
                                 //called for pre-signed content and (unsigned) setup calls
-                                _qz.websocket.connection.send(JSON.stringify(obj));
+                                _qz.websocket.connection.send(_qz.tools.stringify(obj));
                             }
                         }
                         catch(err) {
@@ -351,6 +350,18 @@ var qz = (function() {
             /** Create a new promise */
             promise: function(resolver) {
                 return new RSVP.Promise(resolver);
+            },
+
+            stringify: function(object) {
+                //old versions of prototype affect stringify
+                var pjson = Array.prototype.toJSON;
+                delete Array.prototype.toJSON;
+
+                var result = JSON.stringify(object);
+
+                Array.prototype.toJSON = pjson;
+
+                return result;
             },
 
             /** Performs deep copy to target from remaining params */
