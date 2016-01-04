@@ -122,7 +122,7 @@ public class TrayManager {
         //tray.displayMessage(name, name + " is running.", Level.INFO);
 
         if (tray.getTrayIcon() != null) {
-            tray.getTrayIcon().addMouseListener(new MouseListener() {
+            tray.getTrayIcon().addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseClicked(MouseEvent e) {
                     if (e.getClickCount() == 2) {
@@ -130,18 +130,6 @@ public class TrayManager {
                         aboutListener.actionPerformed(new ActionEvent(e.getSource(), e.getID(), null));
                     }
                 }
-
-                @Override
-                public void mousePressed(MouseEvent e) {}
-
-                @Override
-                public void mouseReleased(MouseEvent e) {}
-
-                @Override
-                public void mouseEntered(MouseEvent e) {}
-
-                @Override
-                public void mouseExited(MouseEvent e) {}
             });
         }
     }
@@ -489,12 +477,16 @@ public class TrayManager {
      * Returns a String representation of the ports assigned to the specified Server
      */
     public static String getPorts(Server server) {
-        String ports = "";
+        StringBuilder ports = new StringBuilder();
         for(Connector c : server.getConnectors()) {
-            ports = ports + ((ServerConnector)c).getLocalPort() + ", ";
+            if (ports.length() > 0) {
+                ports.append(", ");
+            }
+
+            ports.append(((ServerConnector)c).getLocalPort());
         }
 
-        return ports.replaceAll(", $", "");
+        return ports.toString();
     }
 
     /**
