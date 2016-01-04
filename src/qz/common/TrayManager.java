@@ -469,10 +469,11 @@ public class TrayManager {
                 public void run() {
                     try {
                         setDangerIcon();
-                        server.stop();
                         running.set(false);
-                        securePortIndex.set(-1);
-                        insecurePortIndex.set(-1);
+                        securePortIndex.set(0);
+                        insecurePortIndex.set(0);
+
+                        server.stop();
                     }
                     catch(Exception e) {
                         displayErrorMessage("Error stopping print socket: " + e.getLocalizedMessage());

@@ -149,10 +149,6 @@ public class PrintSocketServer {
                 log.info("Server started on port(s) " + TrayManager.getPorts(server));
 
                 server.join();
-
-                // Don't remove this next line or while loop will seize on restart
-                //TODO - find out why
-                log.info("Shutting down server");
             }
             catch(BindException | MultiException e) {
                 //order of getConnectors is the order we added them -> insecure first
