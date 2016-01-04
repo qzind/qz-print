@@ -220,6 +220,12 @@ public class PrintSocketClient {
         JSONObject params = json.optJSONObject("params");
         if (params == null) { params = new JSONObject(); }
 
+        if (call == Method.INVALID) {
+            //incorrect message format, likely incompatible qz version
+            session.close(4003, "Connected to incompatible QZ Tray version");
+            return;
+        }
+
         String prompt = call.getDialogPrompt();
         if (call == Method.PRINT) {
             //special formatting for print dialogs

@@ -1281,6 +1281,10 @@
     qz.websocket.setClosedCallbacks(function(evt) {
         updateState('Inactive', 'default');
         console.log(evt);
+
+        if (evt.reason) {
+            displayMessage("<strong>Connection closed:</strong> " + evt.reason, 'alert-warning');
+        }
     });
 
     qz.websocket.setErrorCallbacks(handleConnectionError);

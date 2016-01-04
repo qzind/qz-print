@@ -205,7 +205,9 @@ var qz = (function() {
 
                         if (returned.uid == null) {
                             if (returned.type == null) {
-                                _qz.log.warn("Response is incorrectly formatted", returned);
+                                //incorrect response format, likely connected to incompatible qz version
+                                _qz.websocket.connection.close(4003, "Connected to incompatible QZ Tray version");
+
                             } else {
                                 if (returned.type == _qz.streams.serial) {
                                     _qz.serial.callSerial(returned.key, returned.data)
