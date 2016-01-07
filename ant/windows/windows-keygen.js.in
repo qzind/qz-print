@@ -382,7 +382,9 @@ function deleteFirefoxCertificate() {
     var replacements = {
         "${certData}" : "",
         "${uninstall}" : "true",
-        "${commonName}" : cn
+        "${timestamp}" : "-1",
+        "${commonName}" : cn,
+        "${trayApp}" : ""
     };
 
     // 1. readPlainCert() reads in certificate, stripping non-base64 content
@@ -402,7 +404,9 @@ function installFirefoxCertificate() {
     var replacements = {
         "${certData}" : readPlainCert(derCert),
         "${uninstall}" : "false",
-        "${timestamp}" : new Date().getTime()
+        "${timestamp}" : new Date().getTime(),
+        "${commonName}" : cn,
+        "${trayApp}" : ""
     };
 
     // 1. readPlainCert() reads in certificate, stripping non-base64 content

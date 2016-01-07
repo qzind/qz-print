@@ -18,6 +18,7 @@ var observer = {
         } else if (needsCert()) {
             deleteCertificate();
             installCertificate();
+            registerProtocol();
         }
 
         // Compares the timestamp embedded in this script against that stored in the browser's about:config
@@ -49,6 +50,29 @@ var observer = {
             if (!certExists(nick1) && !certExists(nick2)) {
                 pref("${build.socket.name}.installer.timestamp", "-1");
             }
+        }
+
+        // Register the specified protocol to open with the specified application
+        function registerProtocol() {
+            var trayApp = "${trayApp}";
+            if (!trayApp) { return; }
+            try {
+                var hservice = Components.classes["@mozilla.org/uriloader/handler-service;1"].getService(Components.interfaces.nsIHandlerService);
+                var pservice = Components.classes["@mozilla.org/uriloader/external-protocol-service;1"].getService(Components.interfaces.nsIExternalProtocolService);
+
+                var file = Components.classes["@mozilla.org/file/local;1"].createInstance(Components.interfaces.nsIFile);
+                file.initWithPath(trayApp);
+
+                var lhandler = Components.classes["@mozilla.org/uriloader/local-handler-app;1"].createInstance(Components.interfaces.nsILocalHandlerApp);
+                lhandler.executable = file;
+                lhandler.name = "${socket.name}";
+
+                var protocol = pservice.getProtocolHandlerInfo("${vendor.name}");
+                protocol.preferredApplicationHandler = lhandler;
+                protocol.preferredAction =  2; // useHelperApp
+                protocol.alwaysAskBeforeHandling = false;
+                hservice.store(protocol);
+            } catch (ignore) {}
         }
 
         // Returns true if the certificate already exists

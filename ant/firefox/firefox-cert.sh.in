@@ -55,6 +55,7 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 	bindir="$ffdir/Contents/Resources/"
 	prefdir="$ffdir/Contents/Resources/defaults/pref"
 	installdir="${apple.installdir}"
+	trayapp="$installdir"  # use .app package
 else
 	# Linux, etc
 	location=$(readlink -f "$0")
@@ -64,6 +65,7 @@ else
 	bindir="$ffdir"
 	prefdir="$ffdir/defaults/pref"
 	installdir="${linux.installdir}"
+	trayapp=""  # skip
 fi
 
 # Firefox was not found, skip Firefox certificate installation
@@ -108,7 +110,11 @@ if [ "$1" == "uninstall" ]; then
         ret2=$?
         perl -pi -e "s#\\\${timestamp}#-1#g" "$bindir/${firefoxconfig.name}"
         ret3=$?
-        if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ]; then
+        perl -pi -e "s#\\\${commonName}#$cname#g" "$bindir/${firefoxconfig.name}"
+        ret4=$?
+        perl -pi -e "s#\\\${trayApp}##g" "$bindir/${firefoxconfig.name}"
+        ret5=$?
+        if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ] && [ $ret4 -eq 0 ] && [ $ret5 -eq 0 ]; then
             echo -e "${bash.success} Certificate removed successfully"
         else
             echo -e "${bash.failure} ${socket.name} Certificate removal failed"
@@ -177,7 +183,9 @@ if [ -f "$bindir/${firefoxconfig.name}" ]; then
     ret3=$?
     perl -pi -e "s#\\\${commonName}#$cname#g" "$bindir/${firefoxconfig.name}"
     ret4=$?
-    if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ] && [ $ret4 -eq 0 ]; then
+    perl -pi -e "s#\\\${trayApp}#$trayapp#g" "$bindir/${firefoxconfig.name}"
+    ret5=$?
+    if [ $ret1 -eq 0 ] && [ $ret2 -eq 0 ] && [ $ret3 -eq 0 ] && [ $ret4 -eq 0 ] && [ $ret5 -eq 0 ]; then
         echo -e "${bash.success} Certificate installed"
     else
         echo -e "${bash.failure} Certificate installation failed"
