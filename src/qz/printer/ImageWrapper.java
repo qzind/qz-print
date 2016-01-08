@@ -344,7 +344,7 @@ public class ImageWrapper {
                         .append(getWidth() / 8).append(",")
                         .append(getHeight()).append(",");
 
-                getByteBuffer().append(epl, charset).append(getBytes());
+                getByteBuffer().append(epl, charset).append(getBytes()).append(new byte[] {10});
                 break;
             case CPCL:
                 String cpclHexAsString = ByteUtilities.getHexString(getImageAsIntArray());
@@ -355,7 +355,7 @@ public class ImageWrapper {
                         .append(getyPos()).append(" ")
                         .append(cpclHexAsString);
 
-                getByteBuffer().append(cpcl, charset);
+                getByteBuffer().append(cpcl, charset).append(new byte[] {13, 10});
                 break;
             default:
                 throw new InvalidRawImageException(charset.name() + " image conversion is not yet supported.");
