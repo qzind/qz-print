@@ -25,6 +25,7 @@ package qz.common;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.jdesktop.swinghelper.tray.JXTrayIcon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.auth.Certificate;
@@ -32,6 +33,8 @@ import qz.deploy.DeployUtilities;
 import qz.deploy.LinuxCertificate;
 import qz.deploy.WindowsDeploy;
 import qz.ui.*;
+import qz.ui.tray.ClassicTrayIcon;
+import qz.ui.tray.ModernTrayIcon;
 import qz.utils.*;
 import qz.ws.PrintSocketServer;
 import qz.ws.SingleInstanceChecker;
@@ -56,7 +59,7 @@ public class TrayManager {
     private final IconCache iconCache;
 
     // Custom swing pop-up menu
-    private AutoHidePopupTray tray;
+    private JXTrayIcon tray;
 
     private ConfirmDialog confirmDialog;
     private GatewayDialog gatewayDialog;
@@ -91,14 +94,31 @@ public class TrayManager {
         shortcutCreator = DeployUtilities.getSystemShortcutCreator();
         shortcutCreator.setShortcutName(Constants.ABOUT_TITLE);
 
-        // Initialize a custom Swing system tray that hides after a timeout
-        int POPUP_TIMEOUT = 2000;
-        tray = new AutoHidePopupTray(POPUP_TIMEOUT);
-        tray.setToolTipText(name);
+        SystemUtilities.setSystemLookAndFeel();
 
-        // Iterates over all images denoted by IconCache.getTypes() and caches them
-        iconCache = new IconCache(tray.getIconSize());
-        tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
+        if (SystemTray.isSupported()) {
+            Image blank = new ImageIcon(new byte[1]).getImage();
+            if (SystemUtilities.isWindows()) {
+                tray = new JXTrayIcon(blank);
+            } else if (SystemUtilities.isMac()) {
+                tray = new ClassicTrayIcon(blank);
+            } else {
+                tray = new ModernTrayIcon(blank);
+            }
+
+            // Iterates over all images denoted by IconCache.getTypes() and caches them
+            iconCache = new IconCache(tray.getSize());
+            tray.setImage(iconCache.getImage(IconCache.Icon.DANGER_ICON));
+            tray.setToolTip(name);
+
+            try {
+                SystemTray.getSystemTray().add(tray);
+            } catch (AWTException awt) {
+                log.error("Could not attach tray", awt);
+            }
+        } else {
+            iconCache = new IconCache();
+        }
 
         // Linux specific tasks
         if (SystemUtilities.isLinux()) {
@@ -118,20 +138,7 @@ public class TrayManager {
         // The ok/cancel dialog
         confirmDialog = new ConfirmDialog(null, "Please Confirm", iconCache);
 
-        addMenuItems(tray);
-        //tray.displayMessage(name, name + " is running.", Level.INFO);
-
-        if (tray.getTrayIcon() != null) {
-            tray.getTrayIcon().addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    if (e.getClickCount() == 2) {
-                        tray.setVisible(false);
-                        aboutListener.actionPerformed(new ActionEvent(e.getSource(), e.getID(), null));
-                    }
-                }
-            });
-        }
+        addMenuItems();
     }
 
     /**
@@ -151,7 +158,9 @@ public class TrayManager {
     /**
      * Builds the swing pop-up menu with the specified items
      */
-    private void addMenuItems(JPopupMenu popup) {
+    private void addMenuItems() {
+        JPopupMenu popup = new JPopupMenu();
+
         JMenu advancedMenu = new JMenu("Advanced");
         advancedMenu.setMnemonic(KeyEvent.VK_A);
         advancedMenu.setIcon(iconCache.getIcon(IconCache.Icon.SETTINGS_ICON));
@@ -228,6 +237,8 @@ public class TrayManager {
         popup.add(startupItem);
         popup.add(separator);
         popup.add(exitItem);
+
+        tray.setJPopupMenu(popup);
     }
 
 
@@ -388,7 +399,7 @@ public class TrayManager {
      * Displays a basic error dialog.
      */
     private void showErrorDialog(String message) {
-        JOptionPane.showMessageDialog(tray, message, name, JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(null, message, name, JOptionPane.ERROR_MESSAGE);
     }
 
     public boolean showGatewayDialog(final Certificate cert, final String prompt) {
@@ -537,7 +548,7 @@ public class TrayManager {
             SwingUtilities.invokeLater(new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    tray.setIcon(iconCache.getIcon(i));
+                    tray.setImage(iconCache.getImage(i));
                 }
             }));
         }

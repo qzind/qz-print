@@ -22,8 +22,10 @@
 
 package qz.utils;
 
+import org.slf4j.LoggerFactory;
 import qz.common.Constants;
 
+import javax.swing.*;
 import java.io.File;
 
 /**
@@ -182,4 +184,14 @@ public class SystemUtilities {
         return uname;
     }
 
+    public static boolean setSystemLookAndFeel() {
+        try {
+            UIManager.getDefaults().put("Button.showMnemonics", Boolean.TRUE);
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            return true;
+        } catch (Exception e) {
+            LoggerFactory.getLogger(SystemUtilities.class).warn("Error getting the default look and feel");
+        }
+        return false;
+    }
 }
