@@ -131,9 +131,9 @@ public class PrintOptions {
                     catch(JSONException e) { warn("double", "size.height", subSize.opt("height")); }
                 }
 
-                if (!subSize.isNull("scaleImage")) {
-                    try { s.fitImage = subSize.getBoolean("scaleImage"); }
-                    catch(JSONException e) { warn("boolean", "size.scaleImage", subSize.opt("scaleImage")); }
+                if (!subSize.isNull("scaleContent")) {
+                    try { s.scaleContent = subSize.getBoolean("scaleContent"); }
+                    catch(JSONException e) { warn("boolean", "size.scaleContent", subSize.opt("scaleContent")); }
                 }
 
                 psOptions.size = s;
@@ -217,7 +217,7 @@ public class PrintOptions {
     public class Pixel {
         private ColorType colorType = ColorType.COLOR;  //Color / black&white
         private int copies = 1;                         //Job copies
-        private int density = 72;                       //Pixel density (DPI or DPMM)
+        private int density = 0;                        //Pixel density (DPI or DPMM)
         private boolean duplex = false;                 //Double/single sided
         private Margins margins = new Margins();        //Page margins
         private Orientation orientation = null;         //Page orientation
@@ -277,9 +277,9 @@ public class PrintOptions {
 
     /** Pixel page size options */
     public class Size {
-        private double width = -1;          //Page width
-        private double height = -1;         //Page height
-        private boolean fitImage = false;   //Adjust paper size for best image fit
+        private double width = -1;              //Page width
+        private double height = -1;             //Page height
+        private boolean scaleContent = false;   //Adjust paper size for best image fit
 
 
         public double getWidth() {
@@ -290,8 +290,8 @@ public class PrintOptions {
             return height;
         }
 
-        public boolean isFitImage() {
-            return fitImage;
+        public boolean scaleContent() {
+            return scaleContent;
         }
     }
 
@@ -329,7 +329,7 @@ public class PrintOptions {
 
     /** Pixel dimension values */
     public enum Unit {
-        INCH(1.0f, 1.0f), //iin = 1in
+        INCH(1.0f, 1.0f), //1in = 1in
         CM(.3937f, 2.54f), //1cm = .3937in ; 1in = 2.54cm
         MM(.03937f, 25.4f); //1mm = .03937in ; 1in = 25.4mm
 

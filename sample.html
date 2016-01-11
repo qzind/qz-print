@@ -16,6 +16,12 @@
 <link rel="stylesheet" href="css/bootstrap.min.css" />
 <link rel="stylesheet" href="css/style.css" />
 
+<style>
+    .tip {
+        border-bottom: 1px dashed;
+    }
+</style>
+
 
 <body id="qz-page" role="document">
 <nav class="navbar navbar-default navbar-static-top" role="navigation">
@@ -27,6 +33,7 @@
             <ul class="nav navbar-nav">
                 <!-- cheap way to avoid reimplementing the php menu -->
                 <li><a href="#">Demo Mode</a></li>
+                <li><a href="https://qz.io/api/" target="_docs">API</a></li>
             </ul>
         </div>
     </div>
@@ -46,6 +53,7 @@
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         Connection: <span id="qz-status" class="text-muted" style="font-weight: bold;">Unknown</span>
+                        <a id="launch" href="#" class="text-info pull-right" onclick="launchQZ();" style="display: none;">Launch QZ</a>
                     </h3>
                 </div>
 
@@ -232,26 +240,11 @@
                 <hr />
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-12">
                         <div class="form-group">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default" onclick="printHTML();">Print HTML</button>
-                                <button type="button" class="btn btn-default" onclick="printPage();">Print Current Page</button>
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default" onclick="printPDF();">Print PDF</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <div class="btn-group">
-                                <button type="button" class="btn btn-default" onclick="printImage(false);">Print Image</button>
-                                <button type="button" class="btn btn-default" onclick="printImage(true);">Print Scaled Image</button>
-                            </div>
+                            <button type="button" class="btn btn-default" onclick="printHTML();">Print HTML</button>
+                            <button type="button" class="btn btn-default" onclick="printPDF();">Print PDF</button>
+                            <button type="button" class="btn btn-default" onclick="printImage();">Print Image</button>
                         </div>
                     </div>
                 </div>
@@ -281,7 +274,9 @@
                                         </div>
 
                                         <div class="form-group form-inline">
-                                            <label for="pxlDensity">Density</label>
+                                            <label for="pxlDensity" class="tip" data-toggle="tooltip"
+                                                   title="DPI, DPCM, or DPMM depending on units specified">Density
+                                            </label>
                                             <input type="number" id="pxlDensity" class="form-control pull-right" />
                                         </div>
 
@@ -335,7 +330,7 @@
                                         </div>
 
                                         <div class="form-group">
-                                            <label for="pxlMargins">Margins</label>
+                                            <label for="pxlMargins" class="tip" data-toggle="tooltip" title="In relation to units specified">Margins</label>
                                             (
                                             <label for="pxlMarginsActive" class="inline">Individual:</label>
                                             <input type="checkbox" id="pxlMarginsActive" onclick="checkMarginsActive();">
@@ -370,15 +365,19 @@
                                         </div>
                                         <div class="inline" id="pxlSizeGroup">
                                             <div class="form-group form-inline">
-                                                <label for="pxlSizeWidth">&nbsp; Width:</label>
+                                                <label for="pxlSizeWidth" class="tip" data-toggle="tooltip" title="In relation to units specified">
+                                                    &nbsp; Width:
+                                                </label>
                                                 <input type="number" step="any" id="pxlSizeWidth" class="form-control pull-right" />
                                             </div>
                                             <div class="form-group form-inline">
-                                                <label for="pxlSizeHeight">&nbsp; Height:</label>
+                                                <label for="pxlSizeHeight" class="tip" data-toggle="tooltip" title="In relation to units specified">
+                                                    &nbsp; Height:
+                                                </label>
                                                 <input type="number" step="any" id="pxlSizeHeight" class="form-control pull-right" />
                                             </div>
                                             <div class="form-group form-inline">
-                                                <label for="pxlSizeScale">&nbsp; Scale Image:</label>
+                                                <label for="pxlSizeScale">&nbsp; Scale Content:</label>
                                                 <input type="checkbox" id="pxlSizeScale" class="form-control pull-right" />
                                             </div>
                                         </div>
@@ -690,16 +689,24 @@
                 "-----END CERTIFICATE-----\n");
     });
 
-    qz.security.setSignaturePromise(function(resolve) {
-        //Preferred method - from server
-//        resolve($.ajax("/secure/url/for/sign-message?request=" + qz.security.getContent()));
+    qz.security.setSignaturePromise(function(toSign) {
+        return function(resolve) {
+            //Preferred method - from server
+//            resolve($.ajax("/secure/url/for/sign-message?request=" + toSign));
 
-        //Alternate method - unsigned
-        resolve();
+            //Alternate method - unsigned
+            resolve();
+        };
     });
 
 
     /// Connection ///
+    function launchQZ() {
+        if (!qz.websocket.isActive()) {
+            window.location.assign("qz:launch");
+        }
+    }
+
     function startConnection() {
         if (!qz.websocket.isActive()) {
             updateState('Waiting', 'default');
@@ -1028,16 +1035,6 @@
         qz.print(config, printData).catch(displayError);
     }
 
-    function printPage() {
-        var config = getUpdatedConfig();
-
-        var printData = [
-            { type: 'html', format: 'file', data: getPath() + '/sample.html', options: { pageWidth: $(window).width(), pageZoom: 1 } }
-        ];
-
-        qz.print(config, printData).catch(displayError);
-    }
-
     function printPDF() {
         var config = getUpdatedConfig();
 
@@ -1048,12 +1045,7 @@
         qz.print(config, printData).catch(displayError);
     }
 
-    function printImage(scaling) {
-        if (scaling) {
-            $("#pxlSizeActive").prop('checked', true);
-            $("#pxlSizeScale").prop('checked', true);
-            checkSizeActive();
-        }
+    function printImage() {
         var config = getUpdatedConfig();
 
         var printData = [
@@ -1191,7 +1183,7 @@
     function resetPixelOptions() {
         $("#pxlColorType").val("color");
         $("#pxlCopies").val(1);
-        $("#pxlDensity").val(72);
+        $("#pxlDensity").val('');
         $("#pxlDuplex").prop('checked', false);
         $("#pxlOrientation").val("");
         $("#pxlPaperThickness").val(null);
@@ -1209,9 +1201,9 @@
 
         $("#pxlSizeWidth").val('');
         $("#pxlSizeHeight").val('');
-        $("#pxlSizeScale").prop('checked', false);
-        $("#pxlSizeActive").prop('checked', false);
-        $("#pxlSizeGroup").css('display', 'none');
+        $("#pxlSizeScale").prop('checked', true);
+        $("#pxlSizeActive").prop('checked', true);
+        $("#pxlSizeGroup").css('display', '');
     }
 
     function checkSizeActive() {
@@ -1275,7 +1267,9 @@
                 findPrinter($('#printerSearch').val(), true);
                 return false;
             }
-        })
+        });
+
+        $("[data-toggle='tooltip']").tooltip();
     });
 
     qz.websocket.setClosedCallbacks(function(evt) {
@@ -1348,6 +1342,12 @@
     function updateState(text, css) {
         $("#qz-status").html(text);
         $("#qz-connection").removeClass().addClass('panel panel-' + css);
+
+        if (text === "Inactive" || text === "Error") {
+            $("#launch").show();
+        } else {
+            $("#launch").hide();
+        }
     }
 
     function getPath() {
@@ -1388,7 +1388,7 @@
             pxlSize = {
                 width: $("#pxlSizeWidth").val(),
                 height: $("#pxlSizeHeight").val(),
-                scaleImage: $("#pxlSizeScale").prop('checked')
+                scaleContent: $("#pxlSizeScale").prop('checked')
             };
         }
 

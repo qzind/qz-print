@@ -102,7 +102,7 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
 
 
         if (pxlOpts.getSize() != null) {
-            scaleImage = options.getPixelOptions().getSize().isFitImage();
+            scaleImage = options.getPixelOptions().getSize().scaleContent();
         }
 
         imageRotation = pxlOpts.getRotation();

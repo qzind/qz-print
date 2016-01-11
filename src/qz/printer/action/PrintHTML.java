@@ -33,6 +33,7 @@ import qz.printer.PrintOptions;
 import qz.utils.PrintingUtilities;
 
 import java.awt.print.Printable;
+import java.awt.print.PrinterJob;
 import java.io.IOException;
 
 public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
@@ -57,13 +58,13 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
                 PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
                 boolean fromFile = (format == PrintingUtilities.Format.FILE) || (format == PrintingUtilities.Format.AUTO && source.startsWith("http"));
 
-                double pageWidth = WebApp.DEFAULT_WIDTH;
-                double pageZoom = 1.0;
-                JSONObject option = data.optJSONObject("options");
-                if (option != null) {
-                    pageWidth = option.optDouble("pageWidth", WebApp.DEFAULT_WIDTH);
-                    pageZoom = option.optDouble("pageZoom", 1.0);
+                double pageWidth = PrinterJob.getPrinterJob().getPageFormat(null).getImageableWidth();
+                if (!data.isNull("options")) {
+                    pageWidth = data.optJSONObject("options").optDouble("pageWidth", WebApp.DEFAULT_WIDTH);
                 }
+
+                double pageZoom = options.getPixelOptions().getDensity() / 72.0;
+                if (pageZoom <= 0) { pageZoom = 1; }
 
                 try {
                     images.add(WebApp.capture(source, fromFile, pageWidth, pageZoom));

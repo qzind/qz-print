@@ -334,14 +334,11 @@ var qz = (function() {
                 return _qz.tools.promise(_qz.security.certPromise);
             },
 
-            /** Holds the current content waiting to be signed by the site. */
-            signContent: undefined,
-            /** Function used to resolve promise when requiring signed calls. */
-            signaturePromise: function(resolve) { resolve(""); },
+            /** Function used to create promise resolver when requiring signed calls. */
+            signaturePromise: function() { return function(resolve) { resolve(); } },
             /** Called to create new promise (using {@link _qz.security.signaturePromise}) for signed calls. */
             callSign: function(toSign) {
-                _qz.security.signContent = toSign;
-                return _qz.tools.promise(_qz.security.signaturePromise);
+                return _qz.tools.promise(_qz.security.signaturePromise(toSign));
             }
         },
 
@@ -631,7 +628,7 @@ var qz = (function() {
              *  @param {Object} [options.size=null] Paper size.
              *   @param {number} [options.size.width=null] Page width.
              *   @param {number} [options.size.height=null] Page height.
-             *   @param {boolean} [options.size.scaleImage=false] Scales image to page size, keeping ratio.
+             *   @param {boolean} [options.size.scaleContent=false] Scales image to page size, keeping ratio.
              *  @param {string} [options.units] Page units, applies to paper size, margins, and density. Valid value  <code>[in|cm|mm]</code>
              *
              *  @param {boolean} [options.altPrinting=false]
@@ -1048,7 +1045,7 @@ var qz = (function() {
          */
         security: {
             /**
-             * List of functions called when requesting a public certificate for signing requests.
+             * Set promise resolver for calls to acquire the site's certificate.
              *
              * @param {Function} promiseCall <code>Function({function} resolve)</code> called as promise for getting the public certificate.
              *        Should call <code>resolve</code> parameter with the result.
@@ -1060,30 +1057,14 @@ var qz = (function() {
             },
 
             /**
-             * List of functions called to sign a request to the connection.
-             * Use <code>qz.security.getContent()</code> to get the content to sign.
+             * Set promise creator for calls to sign API calls.
              *
-             * @param {Function} promiseCall <code>Function({function} resolve)</code> called as promise for signing requests.
-             *        Should call <code>resolve</code> parameter with the result.
-             * @see qz.security.getContent
-             *
+             * @param {Function} promiseGen <code>Function({function} toSign)</code> Should return a function, <code>Function({function} resolve)</code>, that
+             *                              will sign the content and resolve the created promise.
              * @memberof qz.security
              */
-            setSignaturePromise: function(promiseCall) {
-                _qz.security.signaturePromise = promiseCall;
-            },
-
-            /**
-             * Call to get the string currently needing signed.
-             * Mainly used inside the promise function needed for signing requests.
-             *
-             * @returns {string} String needing signed. <code>Undefined</code> if unnecessary.
-             * @see qz.security.setSignaturePromise
-             *
-             * @memberof qz.security
-             */
-            getContent: function() {
-                return _qz.security.signContent;
+            setSignaturePromise: function(promiseGen) {
+                _qz.security.signaturePromise = promiseGen;
             }
         },
 

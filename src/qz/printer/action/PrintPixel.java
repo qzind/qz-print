@@ -54,8 +54,9 @@ public abstract class PrintPixel {
         final float DENSITY = pxlOpts.getDensity() * pxlOpts.getUnits().fromInch();
 
         log.trace("DPI: {}", DENSITY);
-        attributes.add(new PrinterResolution((int)DENSITY, (int)DENSITY, ResolutionSyntax.DPI));
-
+        if (DENSITY > 0) {
+            attributes.add(new PrinterResolution((int)DENSITY, (int)DENSITY, ResolutionSyntax.DPI));
+        }
 
         //apply sizing and margins
         Paper paper = new Paper();
