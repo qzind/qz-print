@@ -67,6 +67,8 @@ public class PrintSocketClient {
         USB_CLAIM_DEVICE("usb.claimDevice", true, "claim a USB device"),
         USB_SEND_DATA("usb.sendData", true, "use a USB device"),
         USB_READ_DATA("usb.readData", true, "use a USB device"),
+        USB_OPEN_STREAM("usb.openStream", true, "use a USB device"),
+        USB_CLOSE_STREAM("usb.closeStream", true, "use a USB device"),
         USB_RELEASE_DEVICE("usb.releaseDevice", true, "release a USB device"),
 
         WEBSOCKET_GET_NETWORK_INFO("websocket.getNetworkInfo", true),
@@ -179,7 +181,7 @@ public class PrintSocketClient {
                     log.warn("Expired signature on request");
                     Certificate.EXPIRED.adjustStaticCertificate(certificate);
                     certificate = Certificate.EXPIRED;
-                } else if (!validSignature(certificate, json)) {
+                } else if (json.isNull("signature") || !validSignature(certificate, json)) {
                     //bad signatures use the unsigned certificate
                     log.warn("Bad signature on request");
                     Certificate.UNSIGNED.adjustStaticCertificate(certificate);
@@ -220,7 +222,7 @@ public class PrintSocketClient {
         JSONObject params = json.optJSONObject("params");
         if (params == null) { params = new JSONObject(); }
 
-        if (call == Method.INVALID) {
+        if (call == Method.INVALID && (UID == null || UID.isEmpty())) {
             //incorrect message format, likely incompatible qz version
             session.close(4003, "Connected to incompatible QZ Tray version");
             return;
@@ -351,6 +353,21 @@ public class PrintSocketClient {
 
                 break;
             }
+            case USB_OPEN_STREAM: {
+                setupUsbStream(session, UID, params);
+                break;
+            }
+            case USB_CLOSE_STREAM: {
+                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
+                if (usb != null && usb.isStreaming()) {
+                    usb.setStreaming(false);
+                    sendResult(session, UID, null);
+                } else {
+                    sendError(session, UID, String.format("USB Device [v:%s p:%s] is not streaming data.", params.opt("vendorId"), params.opt("productId")));
+                }
+
+                break;
+            }
             case USB_RELEASE_DEVICE: {
                 UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
@@ -476,6 +493,54 @@ public class PrintSocketClient {
         return usb;
     }
 
+    private void setupUsbStream(final Session session, String UID, final JSONObject params) throws JSONException {
+        final UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
+
+        if (usb != null) {
+            if (!usb.isStreaming()) {
+                usb.setStreaming(true);
+
+                new Thread() {
+                    @Override
+                    public void run() {
+                        int interval = params.optInt("interval", 100);
+                        byte endpoint = UsbUtilities.hexToByte(params.optString("endpoint"));
+                        int size = params.optInt("responseSize");
+
+                        JSONArray streamKey = new JSONArray();
+                        streamKey.put(usb.getVendorId())
+                                .put(usb.getProductId())
+                                .put(usb.getInterface())
+                                .put(UsbUtil.toHexString(endpoint));
+
+                        try {
+                            while(usb.isOpen() && usb.isStreaming()) {
+                                byte[] response = usb.readData(endpoint, size);
+                                JSONArray hex = new JSONArray();
+                                for(byte b : response) {
+                                    hex.put(UsbUtil.toHexString(b));
+                                }
+                                sendStream(session, StreamType.USB, streamKey, hex);
+
+                                try { Thread.sleep(interval); } catch(Exception ignore) {}
+                            }
+                        }
+                        catch(UsbException e) {
+                            usb.setStreaming(false);
+                            sendStreamError(session, StreamType.USB, streamKey, e);
+                        }
+                    }
+                }.start();
+
+                sendResult(session, UID, null);
+            } else {
+                sendError(session, UID, String.format("USB Device [v:%s p:%s] is already streaming data.", params.opt("vendorId"), params.opt("productId")));
+            }
+        } else {
+            sendError(session, UID, String.format("USB Device [v:%s p:%s] must be claimed first.", params.opt("vendorId"), params.opt("productId")));
+        }
+    }
+
 
     /**
      * Send JSON reply to web API for call {@code messageUID}
@@ -538,12 +603,32 @@ public class PrintSocketClient {
      * @param key     ID associated with stream data
      * @param data    Data to send
      */
-    private void sendStream(Session session, StreamType type, String key, String data) {
+    private void sendStream(Session session, StreamType type, Object key, Object data) {
         try {
             JSONObject stream = new JSONObject();
             stream.put("type", type.name());
             stream.put("key", key);
             stream.put("data", data);
+            send(session, stream);
+        }
+        catch(JSONException e) {
+            log.error("Send stream failed", e);
+        }
+    }
+
+    private void sendStreamError(Session session, StreamType type, Object key, Exception ex) {
+        String message = ex.getMessage();
+        if (message == null) { message = ex.getClass().getSimpleName(); }
+
+        sendStreamError(session, type, key, message);
+    }
+
+    private void sendStreamError(Session session, StreamType type, Object key, Object errorMsg) {
+        try {
+            JSONObject stream = new JSONObject();
+            stream.put("type", type.name());
+            stream.put("key", key);
+            stream.put("error", errorMsg);
             send(session, stream);
         }
         catch(JSONException e) {

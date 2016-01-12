@@ -211,7 +211,7 @@ var qz = (function() {
                                 if (returned.type == _qz.streams.serial) {
                                     _qz.serial.callSerial(returned.key, returned.data)
                                 } else if (returned.type == _qz.streams.usb) {
-                                    //TODO - usb callback
+                                    _qz.usb.callUsb(returned.key, returned.data);
                                 } else {
                                     _qz.log.warn("Cannot determine stream type for callback", returned);
                                 }
@@ -307,7 +307,7 @@ var qz = (function() {
 
 
         serial: {
-            /** List of functions call when receiving data from serial connection. */
+            /** List of functions called when receiving data from serial connection. */
             serialCallbacks: [],
             /** Calls all functions registered to listen for serial events. */
             callSerial: function(port, output) {
@@ -321,8 +321,20 @@ var qz = (function() {
             }
         },
 
+
         usb: {
-            //empty
+            /** List of functions called when receiving data from usb connection. */
+            usbCallbacks: [],
+            /** Calls all functions registered to listen for usb events. Key[vendor,product,interface,endpoint] */
+            callUsb: function(keys, data) {
+                if (Array.isArray(_qz.usb.usbCallbacks)) {
+                    for(var i = 0; i < _qz.usb.usbCallbacks.length; i++) {
+                        _qz.usb.usbCallbacks[i](keys, data);
+                    }
+                } else {
+                    _qz.usb.usbCallbacks(keys, data);
+                }
+            }
         },
 
 
@@ -786,6 +798,7 @@ var qz = (function() {
 
             /**
              * Send commands over a serial port.
+             * Any responses from the device will be sent to serial callback functions.
              *
              * @param {string} port An open port to send data over.
              * @param {string} data The data to send to the serial device.
@@ -797,6 +810,8 @@ var qz = (function() {
              *  @param {string} [properties.flowControl='NONE']
              *
              * @returns {Promise<null|Error>}
+             *
+             * @see qz.serial.setSerialCallbacks
              *
              * @memberof qz.serial
              */
@@ -924,6 +939,18 @@ var qz = (function() {
             },
 
             /**
+             * List of functions called for any response from open usb devices.
+             *
+             * @param {Function|Array<Function>} calls Single or array of <code>Function({string[]} keys, {string[]} rawData)</code> calls.
+             *                                         Key array is formatted as [vendor, product, interface, endpoint]. Raw data is in hexadecimal format.
+             *
+             * @memberof qz.serial
+             */
+            setUsbCallbacks: function(calls) {
+                _qz.usb.usbCallbacks = calls;
+            },
+
+            /**
              * Claim a USB device's interface to enable sending/reading data across an endpoint.
              *
              * @param vendorId Hex string of USB device's vendor ID.
@@ -1004,6 +1031,68 @@ var qz = (function() {
                             productId: productId,
                             endpoint: endpoint,
                             responseSize: responseSize
+                        }
+                    };
+
+                    _qz.websocket.connection.sendData(msg);
+                });
+            },
+
+            /**
+             * Provides a continuous stream of read data from a claimed USB device.
+             *
+             * @param vendorId Hex string of USB device's vendor ID.
+             * @param productId Hex string of USB device's product ID.
+             * @param endpoint Hex string of endpoint on the claimed interface for the USB device.
+             * @param responseSize Size of the byte array to receive a response in.
+             * @param [interval=100] Frequency to send read data back, in milliseconds.
+             * @returns {Promise<null|Error>}
+             *
+             * @see qz.usb.setUsbCallbacks
+             *
+             * @memberof qz.usb
+             */
+            openStream: function(vendorId, productId, endpoint, responseSize, interval) {
+                return _qz.tools.promise(function(resolve, reject) {
+                    var msg = {
+                        call: 'usb.openStream',
+                        promise: {
+                            resolve: resolve, reject: reject
+                        },
+                        params: {
+                            vendorId: vendorId,
+                            productId: productId,
+                            endpoint: endpoint,
+                            responseSize: responseSize,
+                            interval: interval
+                        }
+                    };
+
+                    _qz.websocket.connection.sendData(msg);
+                });
+            },
+
+            /**
+             * Stops the stream of read data from a claimed USB device.
+             *
+             * @param vendorId Hex string of USB device's vendor ID.
+             * @param productId Hex string of USB device's product ID.
+             * @param endpoint Hex string of endpoint on the claimed interface for the USB device.
+             * @returns {Promise<null|Error>}
+             *
+             * @memberof qz.usb
+             */
+            closeStream: function(vendorId, productId, endpoint) {
+                return _qz.tools.promise(function(resolve, reject) {
+                    var msg = {
+                        call: 'usb.closeStream',
+                        promise: {
+                            resolve: resolve, reject: reject
+                        },
+                        params: {
+                            vendorId: vendorId,
+                            productId: productId,
+                            endpoint: endpoint
                         }
                     };
 

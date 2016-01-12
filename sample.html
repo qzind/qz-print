@@ -39,7 +39,8 @@
     </div>
 </nav>
 
-<div id="qz-alert" style="position: fixed; width: 70%; margin: 0 5% 0 25%; z-index: 999;"></div>
+<div id="qz-alert" style="position: fixed; width: 60%; margin: 0 4% 0 36%; z-index: 900;"></div>
+<div id="qz-pin" style="position: fixed; width: 30%; margin: 0 66% 0 4%; z-index: 900;"></div>
 
 <div class="container" role="main">
 
@@ -500,17 +501,22 @@
                                     <button type="button" class="btn btn-info" onclick="listUsbDeviceInterfaces();">List Device Interfaces</button>
                                     <button type="button" class="btn btn-info" onclick="listUsbInterfaceEndpoints();">List Interface Endpoints</button>
                                 </div>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-success" onclick="claimUsbDevice()">Claim Device</button>
+                                    <button type="button" class="btn btn-warning" onclick="releaseUsbDevice()">Release Device</button>
+                                </div>
                             </div>
                         </div>
                         <div class="form-group">
                             <div class="btn-toolbar">
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-success" onclick="claimUsbDevice()">Claim Device</button>
-                                    <button type="button" class="btn btn-warning" onclick="releaseUsbDevice()">Release Device</button>
+                                    <button type="button" class="btn btn-default" onclick="sendUsbData()">Send Raw Data</button>
+                                    <button type="button" class="btn btn-default" onclick="readUsbData()">Read Raw Data</button>
                                 </div>
                                 <div class="btn-group">
-                                    <button type="button" class="btn btn-default" onclick="sendUsbData()">Send Data</button>
-                                    <button type="button" class="btn btn-default" onclick="readUsbData()">Read Data</button>
+                                    <button type="button" class="btn btn-default" onclick="openUsbStream()">Open Stream</button>
+                                    <button type="button" class="btn btn-default" onclick="closeUsbStream()">Close Stream</button>
+                                    <button type="button" class="btn btn-default" id="scaleToggle" onclick="toggleScale()">Read as Weight</button>
                                 </div>
                             </div>
                         </div>
@@ -556,6 +562,11 @@
                                         <div class="form-group form-inline">
                                             <label for="usbResponse">Read size</label>
                                             <input type="text" id="usbResponse" class="form-control pull-right" />
+                                        </div>
+
+                                        <div class="form-group form-inline">
+                                            <label for="usbStream" class="tip" data-toggle="tooltip" title="in milliseconds">Stream Interval</label>
+                                            <input type="text" id="usbStream" class="form-control pull-right" />
                                         </div>
                                     </div>
                                 </div>
@@ -1120,7 +1131,7 @@
                 list += "</p><hr/>";
             }
 
-            displayMessage("<strong>Available usb devices:</strong><br/>" + list);
+            pinMessage("<strong>Available usb devices:</strong><br/>" + list);
         }).catch(displayError);
     }
 
@@ -1158,9 +1169,30 @@
 
     function readUsbData() {
         qz.usb.readData($("#usbVendor").val(), $("#usbProduct").val(), $("#usbEndpoint").val(), $("#usbResponse").val()).then(function(data) {
-            displayMessage("<strong>Raw response:</strong> " + data + "<br/>" +
-                           "<strong>Attempted scale reading:</strong> " + readScaleData(data, 2));
+            displayMessage("<strong>Raw response:</strong> " + data + "<br/>");
         }).catch(displayError);
+    }
+
+    function openUsbStream() {
+        qz.usb.openStream($("#usbVendor").val(), $("#usbProduct").val(), $("#usbEndpoint").val(), $("#usbResponse").val(), $("#usbStream").val()).then(function() {
+            pinMessage("Waiting on device", '' + $("#usbVendor").val() + $("#usbProduct").val());
+        }).catch(displayError);
+    }
+
+    function closeUsbStream() {
+        qz.usb.closeStream($("#usbVendor").val(), $("#usbProduct").val(), $("#usbEndpoint").val()).then(function() {
+            $('#' + $("#usbVendor").val() + $("#usbProduct").val()).attr('id', '').html("Stream closed");
+        }).catch(displayError);
+    }
+
+    function toggleScale() {
+        window.readingWeight = !readingWeight;
+
+        if (readingWeight) {
+            $("#scaleToggle").html("Read as Raw");
+        } else {
+            $("#scaleToggle").html("Read as Weight");
+        }
     }
 
     function releaseUsbDevice() {
@@ -1246,7 +1278,8 @@
         $("#usbInterface").val('');
         $("#usbEndpoint").val('');
         $("#usbData").val('');
-        $("#usbResponse").val('8');
+        $("#usbResponse").val(8);
+        $("#usbStream").val(10);
 
         // M/T PS60 - V:0x0EB8 P:0xF000, I:0x0 E:0x81 (precision of 2)
         // Dymo S100 - V:0x0922 P:0x8009, I:0x0 E:0x82 (precision of 1)
@@ -1255,6 +1288,8 @@
 
     /// Page load ///
     $(document).ready(function() {
+        window.readingWeight = false;
+
         resetRawOptions();
         resetPixelOptions();
         resetSerialOptions();
@@ -1286,6 +1321,21 @@
     qz.serial.setSerialCallbacks(function(port, output) {
         console.log('Serial', port, 'received output', output);
         displayMessage("Received output from serial port [" + port + "]: <em>" + output + "</em>");
+    });
+
+    qz.usb.setUsbCallbacks(function(keys, data) {
+        var pin = $('#' + keys[0] + keys[1]);
+
+        if (data.error == undefined) {
+            if (window.readingWeight) {
+                pin.html("<strong>Weight:</strong> " + readScaleData(data, 2));
+            } else {
+                pin.html("<strong>Raw data:</strong> " + data);
+            }
+        } else {
+            console.log(data.error);
+            pin.html("<strong>Error:</strong> " + data.error);
+        }
     });
 
 
@@ -1339,6 +1389,21 @@
         $("#qz-alert").append(alert);
     }
 
+    function pinMessage(msg, id, css) {
+        if (css == undefined) { css = 'alert-info'; }
+
+        var alert = $("<div/>").addClass('alert alert-dismissible fade in ' + css)
+                .css('max-height', '20em').css('overflow', 'auto').attr('role', 'alert')
+                .html("<button type='button' class='close' data-dismiss='alert'>&times;</button>");
+
+        var text = $("<div/>").html(msg);
+        if (id != undefined) { text.attr('id', id); }
+
+        alert.append(text);
+
+        $("#qz-pin").append(alert);
+    }
+
     function updateState(text, css) {
         $("#qz-status").html(text);
         $("#qz-connection").removeClass().addClass('panel panel-' + css);
@@ -1356,18 +1421,53 @@
     }
 
     /** Attempts to parse scale reading from USB raw output */
-    function readScaleData(rawArray, precision) {
-        rawArray.splice(0, 4); //drop first four bytes
-        rawArray.reverse(); //reverse remaining byte order
-
-        var hex = rawArray.join(""); //form bytes into a single hex string
-        var weight = parseInt(hex, 16); //parse into a number
-
-        while(precision-- > 0) { //move decimal point to match scale's precision
-            weight /= 10;
+    function readScaleData(data) {
+        // Get status
+        var status = parseInt(data[1], 16);
+        switch(status) {
+            case 1: // fault
+            case 5: // underweight
+            case 6: // overweight
+            case 7: // calibrate
+            case 8: // re-zero
+                status = 'Error';
+                break;
+            case 3: // busy
+                status = 'Busy';
+                break;
+            case 2: // stable at zero
+            case 4: // stable non-zero
+            default:
+                status = 'Stable';
         }
 
-        return weight;
+        // Get precision
+        var precision = parseInt(data[3], 16);
+        precision = precision ^ -256; //unsigned to signed
+
+        // Get weight
+        data.splice(0, 4);
+        data.reverse();
+        var weight = parseInt(data.join(''), 16);
+
+        weight *= Math.pow(10, precision);
+        weight = weight.toFixed(Math.abs(precision));
+
+        // Get units
+        var units = parseInt(data[2], 16);
+        switch(units) {
+            case 3:
+                units = 'kg';
+                break;
+            case 11:
+                units = 'oz';
+                break;
+            case 12:
+            default:
+                units = 'lbs';
+        }
+
+        return weight + units + ' - ' + status;
     }
 
 
