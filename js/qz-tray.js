@@ -11,7 +11,7 @@
  *     Provides Promises/A+ functionality for API calls.
  *     Can be overridden via <code>qz.api.setPromiseType</code> to remove dependency.
  */
-var qz = (function() {
+var qz = function() {
 
 ///// POLYFILLS /////
 
@@ -1197,4 +1197,15 @@ var qz = (function() {
 
     };
 
+};
+
+
+(function() {
+    if (typeof define === 'function' && define.amd) {
+        define(qz);
+    } else if (typeof exports === 'object') {
+        module.exports = qz;
+    } else {
+        window.qz = qz();
+    }
 })();
