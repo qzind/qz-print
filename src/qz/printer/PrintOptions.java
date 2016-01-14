@@ -118,6 +118,10 @@ public class PrintOptions {
             try { psOptions.rotation = configOpts.getDouble("rotation"); }
             catch(JSONException e) { warn("double", "rotation", configOpts.opt("rotation")); }
         }
+        if (!configOpts.isNull("scaleContent")) {
+            try { psOptions.scaleContent = configOpts.getBoolean("scaleContent"); }
+            catch(JSONException e) { warn("boolean", "size.scaleContent", configOpts.opt("scaleContent")); }
+        }
         if (!configOpts.isNull("size")) {
             Size s = new Size();
             JSONObject subSize = configOpts.optJSONObject("size");
@@ -129,11 +133,6 @@ public class PrintOptions {
                 if (!subSize.isNull("height")) {
                     try { s.height = subSize.getDouble("height"); }
                     catch(JSONException e) { warn("double", "size.height", subSize.opt("height")); }
-                }
-
-                if (!subSize.isNull("scaleContent")) {
-                    try { s.scaleContent = subSize.getBoolean("scaleContent"); }
-                    catch(JSONException e) { warn("boolean", "size.scaleContent", subSize.opt("scaleContent")); }
                 }
 
                 psOptions.size = s;
@@ -224,6 +223,7 @@ public class PrintOptions {
         private double paperThickness = -1;             //Paper thickness
         private String printerTray = null;              //Printer tray to use
         private double rotation = 0;                    //Image rotation
+        private boolean scaleContent = true;            //Adjust paper size for best image fit
         private Size size = null;                       //Paper size
         private Unit units = Unit.INCH;                 //Units for density, margins, size
 
@@ -264,6 +264,10 @@ public class PrintOptions {
             return rotation;
         }
 
+        public boolean scaleContent() {
+            return scaleContent;
+        }
+
         public Size getSize() {
             return size;
         }
@@ -279,8 +283,6 @@ public class PrintOptions {
     public class Size {
         private double width = -1;              //Page width
         private double height = -1;             //Page height
-        private boolean scaleContent = false;   //Adjust paper size for best image fit
-
 
         public double getWidth() {
             return width;
@@ -288,10 +290,6 @@ public class PrintOptions {
 
         public double getHeight() {
             return height;
-        }
-
-        public boolean scaleContent() {
-            return scaleContent;
         }
     }
 

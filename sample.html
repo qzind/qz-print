@@ -330,6 +330,11 @@
                                             </div>
                                         </div>
 
+                                        <div class="form-group form-inline">
+                                            <label for="pxlScale">Scale Content:</label>
+                                            <input type="checkbox" id="pxlScale" class="form-control pull-right" />
+                                        </div>
+
                                         <div class="form-group">
                                             <label for="pxlMargins" class="tip" data-toggle="tooltip" title="In relation to units specified">Margins</label>
                                             (
@@ -376,10 +381,6 @@
                                                     &nbsp; Height:
                                                 </label>
                                                 <input type="number" step="any" id="pxlSizeHeight" class="form-control pull-right" />
-                                            </div>
-                                            <div class="form-group form-inline">
-                                                <label for="pxlSizeScale">&nbsp; Scale Content:</label>
-                                                <input type="checkbox" id="pxlSizeScale" class="form-control pull-right" />
                                             </div>
                                         </div>
                                     </div>
@@ -1221,6 +1222,7 @@
         $("#pxlPaperThickness").val(null);
         $("#pxlPrinterTray").val(null);
         $("#pxlRotation").val(0);
+        $("#pxlScale").prop('checked', true);
         $("#pxlUnitsIN").prop('checked', true);
 
         $("#pxlMargins").val(0).css('display', '');
@@ -1233,9 +1235,8 @@
 
         $("#pxlSizeWidth").val('');
         $("#pxlSizeHeight").val('');
-        $("#pxlSizeScale").prop('checked', true);
-        $("#pxlSizeActive").prop('checked', true);
-        $("#pxlSizeGroup").css('display', '');
+        $("#pxlSizeActive").prop('checked', false);
+        $("#pxlSizeGroup").css('display', 'none');
     }
 
     function checkSizeActive() {
@@ -1487,8 +1488,7 @@
         if ($("#pxlSizeActive").prop('checked')) {
             pxlSize = {
                 width: $("#pxlSizeWidth").val(),
-                height: $("#pxlSizeHeight").val(),
-                scaleContent: $("#pxlSizeScale").prop('checked')
+                height: $("#pxlSizeHeight").val()
             };
         }
 
@@ -1525,6 +1525,7 @@
                             paperThickness: $("#pxlPaperThickness").val(),
                             printerTray: $("#pxlPrinterTray").val(),
                             rotation: $("#pxlRotation").val(),
+                            scaleContent: $("#pxlScale").prop('checked'),
                             size: pxlSize,
                             units: $("input[name='pxlUnits']:checked").val()
                         });

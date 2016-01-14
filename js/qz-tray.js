@@ -295,6 +295,7 @@ var qz = function() {
                 paperThickness: null,
                 printerTray: null,
                 rotation: 0,
+                scaleContent: true,
                 size: null,
 
                 altPrinting: false,
@@ -633,24 +634,24 @@ var qz = function() {
              *
              * @param {Object} options Default options used by printer configs if not overridden.
              *
-             *  @param {string} [options.colorType='color'] Valid values  <code>[color|greyscale|blackwhite]</code>
+             *  @param {string} [options.colorType='color'] Valid values <code>[color|greyscale|blackwhite]</code>
              *  @param {number} [options.copies=1] Number of copies to be printed.
-             *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on  <code>[options.units]</code>).
+             *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on <code>[options.units]</code>).
              *  @param {boolean} [options.duplex=false] Double sided printing
              *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides.
              *   @param {number} [options.margins.top=0]
              *   @param {number} [options.margins.right=0]
              *   @param {number} [options.margins.bottom=0]
              *   @param {number} [options.margins.left=0]
-             *  @param {string} [options.orientation=null] Valid values  <code>[portrait|landscape|reverse-landscape]</code>
+             *  @param {string} [options.orientation=null] Valid values <code>[portrait|landscape|reverse-landscape]</code>
              *  @param {number} [options.paperThickness=null]
              *  @param {string} [options.printerTray=null] //TODO - string?
              *  @param {number} [options.rotation=0] Image rotation in degrees.
+             *  @param {boolean} [options.scaleContent=true] Scales print content to page size, keeping ratio.
              *  @param {Object} [options.size=null] Paper size.
              *   @param {number} [options.size.width=null] Page width.
              *   @param {number} [options.size.height=null] Page height.
-             *   @param {boolean} [options.size.scaleContent=false] Scales image to page size, keeping ratio.
-             *  @param {string} [options.units] Page units, applies to paper size, margins, and density. Valid value  <code>[in|cm|mm]</code>
+             *  @param {string} [options.units] Page units, applies to paper size, margins, and density. Valid value <code>[in|cm|mm]</code>
              *
              *  @param {boolean} [options.altPrinting=false]
              *  @param {string} [options.encoding=null] Character set

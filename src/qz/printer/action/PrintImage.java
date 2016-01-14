@@ -30,7 +30,6 @@ import qz.common.Base64;
 import qz.common.Constants;
 import qz.printer.PrintOptions;
 import qz.printer.PrintOutput;
-import qz.utils.ByteUtilities;
 import qz.utils.PrintingUtilities;
 
 import javax.imageio.ImageIO;
@@ -98,11 +97,7 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         PrintOptions.Pixel pxlOpts = options.getPixelOptions();
         PrintRequestAttributeSet attributes = applyDefaultSettings(pxlOpts, page);
 
-
-        if (pxlOpts.getSize() != null) {
-            scaleImage = options.getPixelOptions().getSize().scaleContent();
-        }
-
+        scaleImage = options.getPixelOptions().scaleContent();
         imageRotation = pxlOpts.getRotation();
 
         job.setJobName(Constants.IMAGE_PRINT);
