@@ -92,7 +92,7 @@ public class PrintRaw implements PrintProcessor {
             JSONObject opt = data.optJSONObject("options");
             if (opt == null) { opt = new JSONObject(); }
 
-            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
+            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "PLAIN").toUpperCase());
             PrintOptions.Raw rawOpts = options.getRawOptions();
 
             encoding = rawOpts.getEncoding();
@@ -115,7 +115,7 @@ public class PrintRaw implements PrintProcessor {
                     case XML:
                         commands.append(Base64.decode(FileUtilities.readXMLFile(cmd, opt.optString("xmlTag"))));
                         break;
-                    case AUTO: case PLAIN:
+                    case PLAIN:
                     default:
                         commands.append(cmd.getBytes(encoding));
                         break;

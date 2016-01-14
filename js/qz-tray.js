@@ -373,6 +373,15 @@ var qz = function() {
                 return result;
             },
 
+            absolute: function(loc) {
+                if (document && typeof document.createElement === 'function') {
+                    var a = document.createElement("a");
+                    a.href = loc;
+                    return a.href;
+                }
+                return loc;
+            },
+
             /** Performs deep copy to target from remaining params */
             extend: function(target) {
                 //special case when reassigning properties as objects in a deep copy
@@ -691,12 +700,11 @@ var qz = function() {
          * @param {Array<Object|string>} data Array of data being sent to the printer. String values are interpreted the same as the default <code>[raw]</code> object value.
          *  @param {string} data.data
          *  @param {string} data.type Valid values <code>[html|image|pdf|raw]</code>
-         *  @param {string} [data.format='auto'] Format of data provided. Generally only needed for raw printing<p/>
-         *      The <code>[auto]</code> format is valid for all data types.<p/>
-         *      For <code>[html]</code> types, valid formats include <code>[file|plain]</code>.<p/>
-         *      For <code>[image]</code> types, valid formats include <code>[base64|file|visual]</code>.<p/>
-         *      For <code>[pdf]</code> types, valid format include <code>[file]</code>.<p/>
-         *      For <code>[raw]</code> types, valid formats include <code>[base64|file|visual|plain|hex|xml]</code>, use of <code>[auto]</code> assumes <code>[plain]</code>.
+         *  @param {string} [data.format] Format of data provided.<p/>
+         *      For <code>[html]</code> types, valid formats include <code>[file(default) | plain]</code>.<p/>
+         *      For <code>[image]</code> types, valid formats include <code>[base64 | file(default)]</code>.<p/>
+         *      For <code>[pdf]</code> types, valid format include <code>[file(default)]</code>.<p/>
+         *      For <code>[raw]</code> types, valid formats include <code>[base64 | file | hex | plain(default) | visual | xml]</code>.
          *  @param {Object} [data.options]
          *   @param {number} [data.options.x] Used only with raw printing <code>[visual]</code> type. The X position of the image.
          *   @param {number} [data.options.y] Used only with raw printing <code>[visual]</code> type. The Y position of the image.
@@ -714,6 +722,15 @@ var qz = function() {
          * @memberof qz
          */
         print: function(config, data, signature, signingTimestamp) {
+            //change relative links to absolute
+            for(var i = 0; i < data.length; i++) {
+                if (typeof data[i] === 'object') {
+                    if (!data[i].format || data[i].format.toUpperCase() === 'FILE') {
+                        data[i].data = _qz.tools.absolute(data[i].data);
+                    }
+                }
+            }
+
             return _qz.tools.promise(function(resolve, reject) {
                 var msg = {
                     call: 'print',

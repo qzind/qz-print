@@ -71,12 +71,10 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         for(int i = 0; i < printData.length(); i++) {
             JSONObject data = printData.getJSONObject(i);
 
-            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
-            boolean fromBase64 = (format == PrintingUtilities.Format.BASE64)
-                    || (format == PrintingUtilities.Format.AUTO && ByteUtilities.isBase64Image(data.getString("data")));
+            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "FILE").toUpperCase());
 
             try {
-                images.add(readImage(data.getString("data"), fromBase64));
+                images.add(readImage(data.getString("data"), (format == PrintingUtilities.Format.BASE64)));
             }
             catch(IOException e) {
                 throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as an image", format, data.getString("data")), e);

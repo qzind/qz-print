@@ -55,8 +55,7 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
                 JSONObject data = printData.getJSONObject(i);
                 String source = data.getString("data");
 
-                PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "AUTO").toUpperCase());
-                boolean fromFile = (format == PrintingUtilities.Format.FILE) || (format == PrintingUtilities.Format.AUTO && source.startsWith("http"));
+                PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "FILE").toUpperCase());
 
                 double pageWidth = PrinterJob.getPrinterJob().getPageFormat(null).getImageableWidth();
                 if (!data.isNull("options")) {
@@ -67,7 +66,7 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
                 if (pageZoom <= 0) { pageZoom = 1; }
 
                 try {
-                    images.add(WebApp.capture(source, fromFile, pageWidth, pageZoom));
+                    images.add(WebApp.capture(source, (format == PrintingUtilities.Format.FILE), pageWidth, pageZoom));
                 }
                 catch(IOException e) {
                     //JavaFX image loader becomes null if webView is too large, throwing an IllegalArgumentException on screen capture attempt

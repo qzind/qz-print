@@ -43,7 +43,7 @@ public class PrintPDF extends PrintPixel implements PrintProcessor {
                 pdfs.add(PDDocument.load(new URL(data.getString("data")).openStream()));
             }
             catch(IOException e) {
-                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as a PDF file", data.optString("format", "AUTO"), data.getString("data")), e);
+                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as a PDF file", data.optString("format", "FILE"), data.getString("data")), e);
             }
         }
 
