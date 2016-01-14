@@ -726,7 +726,7 @@ var qz = function() {
             //change relative links to absolute
             for(var i = 0; i < data.length; i++) {
                 if (typeof data[i] === 'object') {
-                    if (!data[i].format || data[i].format.toUpperCase() === 'FILE') {
+                    if ((!data[i].format && data[i].type.toUpperCase() !== 'RAW') || data[i].format.toUpperCase() === 'FILE') {
                         data[i].data = _qz.tools.absolute(data[i].data);
                     }
                 }
