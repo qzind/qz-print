@@ -325,7 +325,7 @@ public class PrintApplet extends PrintFunction implements Runnable {
             }
         }
         if (escapedString.endsWith(",")) {
-            escapedString = escapedString.substring(0, escapedString.indexOf(","));
+            escapedString = escapedString.substring(0, escapedString.lastIndexOf(","));
         }
 
         escapedString += ")";
