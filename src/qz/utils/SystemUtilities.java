@@ -113,7 +113,7 @@ public class SystemUtilities {
      * @return {@code true} if Unix, {@code false} otherwise
      */
     public static boolean isUnix() {
-        return (OS_NAME.contains("nix") || OS_NAME.contains("nux") || OS_NAME.indexOf("aix") > 0);
+        return (OS_NAME.contains("nix") || OS_NAME.contains("nux") || OS_NAME.indexOf("aix") > 0 || OS_NAME.contains("sunos"));
     }
 
     /**
