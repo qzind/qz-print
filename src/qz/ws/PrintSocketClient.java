@@ -26,6 +26,7 @@ import qz.utils.SerialUtilities;
 import qz.utils.UsbUtilities;
 
 import javax.print.PrintServiceLookup;
+import javax.security.cert.CertificateParsingException;
 import javax.usb.UsbException;
 import javax.usb.util.UsbUtil;
 import java.awt.print.PrinterAbortException;
@@ -151,22 +152,28 @@ public class PrintSocketClient {
         }
         if ("ping".equals(message)) { return; } //keep-alive call / no need to process
 
-        String uid = null;
+        String UID = null;
         try {
             log.debug("Message: {}", message);
             JSONObject json = new JSONObject(message);
-            uid = json.optString("uid");
+            UID = json.optString("uid");
 
             Integer connectionPort = session.getRemoteAddress().getPort();
             Certificate certificate = openConnections.get(connectionPort);
 
             //if sent a certificate use that instead for this connection
-            if (!json.isNull("certificate")) {
-                certificate = new Certificate(json.getString("certificate"));
-                openConnections.put(connectionPort, certificate);
-                log.debug("Received new certificate from connection through {}", connectionPort);
+            if (json.has("certificate")) {
+                try {
+                    certificate = new Certificate(json.optString("certificate"));
+                    openConnections.put(connectionPort, certificate);
+                    log.debug("Received new certificate from connection through {}", connectionPort);
+                }
+                catch(CertificateParsingException ignore) {}
 
-                if (!allowedFromDialog(certificate, "connect to QZ")) {
+                if (allowedFromDialog(certificate, "connect to QZ")) {
+                    sendResult(session, UID, null);
+                } else {
+                    sendError(session, UID, "Connection blocked by client");
                     session.disconnect();
                 }
 
@@ -195,11 +202,11 @@ public class PrintSocketClient {
         }
         catch(JSONException e) {
             log.error("Bad JSON: {}", e.getMessage());
-            sendError(session, uid, e);
+            sendError(session, UID, e);
         }
         catch(Exception e) {
             log.error("Problem processing message", e);
-            sendError(session, uid, e);
+            sendError(session, UID, e);
         }
     }
 

@@ -625,9 +625,9 @@
 <!--TODO - better commenting-->
 <script>
     /// Authentication setup ///
-    qz.security.setCertificatePromise(function(resolve) {
+    qz.security.setCertificatePromise(function(resolve, reject) {
         //Preferred method - from server
-//        resolve($.ajax("/assets/auth/digital-certificate.txt"));
+//        $.ajax("assets/signing/public-key.txt").then(resolve, reject);
 
         //Alternate method 1 - anonymous
 //        resolve();
@@ -696,9 +696,9 @@
     });
 
     qz.security.setSignaturePromise(function(toSign) {
-        return function(resolve) {
+        return function(resolve, reject) {
             //Preferred method - from server
-//            resolve($.ajax("/secure/url/for/sign-message?request=" + toSign));
+//            $.ajax("/secure/url/for/sign-message?request=" + toSign).then(resolve, reject);
 
             //Alternate method - unsigned
             resolve();

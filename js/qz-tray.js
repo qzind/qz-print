@@ -86,12 +86,12 @@ var qz = function() {
                     if (_qz.websocket.connection != null) {
                         _qz.websocket.connection.established = false;
 
-                        //called on successful connection to qz, begins setup of websocket calls and resolves connect promise
+                        //called on successful connection to qz, begins setup of websocket calls and resolves connect promise after certificate is sent
                         _qz.websocket.connection.onopen = function(evt) {
                             _qz.log.trace(evt);
                             _qz.log.info("Established connection with QZ Tray on " + address);
 
-                            _qz.websocket.setup.openConnection();
+                            _qz.websocket.setup.openConnection({ resolve: resolve, reject: reject });
 
                             if (config.keepAlive > 0) {
                                 var interval = window.setInterval(function() {
@@ -103,8 +103,6 @@ var qz = function() {
                                     _qz.websocket.connection.send("ping");
                                 }, config.keepAlive * 1000);
                             }
-
-                            resolve();
                         };
 
                         //called during websocket close during setup
@@ -137,7 +135,7 @@ var qz = function() {
                 },
 
                 /** Finish setting calls on successful connection, sets web socket calls that won't settle the promise. */
-                openConnection: function() {
+                openConnection: function(openPromise) {
                     _qz.websocket.connection.established = true;
 
                     //called when an open connection is closed
@@ -237,10 +235,12 @@ var qz = function() {
 
                     //send up the certificate before making any calls
                     //also gives the user a chance to deny the connection
-                    _qz.security.callCert().then(function(cert) {
-                        var msg = { certificate: cert };
-                        _qz.websocket.connection.sendData(msg);
-                    });
+                    function sendCert(cert) {
+                        if (cert === undefined) { cert = null; }
+                        _qz.websocket.connection.sendData({ certificate: cert, promise: openPromise });
+                    }
+
+                    _qz.security.callCert().then(sendCert).catch(sendCert);
                 },
 
                 /** Generate unique ID used to map a response to a call. */
@@ -341,7 +341,7 @@ var qz = function() {
 
         security: {
             /** Function used to resolve promise when acquiring site's public certificate. */
-            certPromise: function(resolve, reject) { reject("Undefined"); },
+            certPromise: function(resolve, reject) { reject(); },
             /** Called to create new promise (using {@link _qz.security.certPromise}) for certificate retrieval. */
             callCert: function() {
                 return _qz.tools.promise(_qz.security.certPromise);
