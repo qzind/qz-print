@@ -8,15 +8,18 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qz.common.Base64;
 import qz.common.Constants;
 import qz.printer.PrintOptions;
 import qz.printer.PrintOutput;
+import qz.utils.PrintingUtilities;
 
 import javax.print.attribute.PrintRequestAttributeSet;
 import java.awt.print.Book;
 import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -39,11 +42,20 @@ public class PrintPDF extends PrintPixel implements PrintProcessor {
         for(int i = 0; i < printData.length(); i++) {
             JSONObject data = printData.getJSONObject(i);
 
+            PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "FILE").toUpperCase());
+
             try {
-                pdfs.add(PDDocument.load(new URL(data.getString("data")).openStream()));
+                PDDocument doc;
+                if (format == PrintingUtilities.Format.BASE64) {
+                    doc = PDDocument.load(new ByteArrayInputStream(Base64.decode(data.getString("data"))));
+                } else {
+                    doc = PDDocument.load(new URL(data.getString("data")).openStream());
+                }
+
+                pdfs.add(doc);
             }
             catch(IOException e) {
-                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as a PDF file", data.optString("format", "FILE"), data.getString("data")), e);
+                throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as a PDF file", format, data.getString("data")), e);
             }
         }
 

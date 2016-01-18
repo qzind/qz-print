@@ -73,7 +73,14 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
             PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "FILE").toUpperCase());
 
             try {
-                images.add(readImage(data.getString("data"), (format == PrintingUtilities.Format.BASE64)));
+                BufferedImage bi;
+                if (format == PrintingUtilities.Format.BASE64) {
+                    bi = ImageIO.read(new ByteArrayInputStream(Base64.decode(data.getString("data"))));
+                } else {
+                    bi = ImageIO.read(new URL(data.getString("data")));
+                }
+
+                images.add(bi);
             }
             catch(IOException e) {
                 throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as an image", format, data.getString("data")), e);
@@ -166,21 +173,6 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
 
         // Valid page
         return PAGE_EXISTS;
-    }
-
-
-    /**
-     * Reads an image from base64 or a URL.
-     *
-     * @param rawData URL or Base64 encoded string
-     * @return BufferedImage from {@code rawData}
-     */
-    private static BufferedImage readImage(String rawData, boolean fromBase64) throws IOException {
-        if (fromBase64) {
-            return ImageIO.read(new ByteArrayInputStream(Base64.decode(rawData)));
-        } else {
-            return ImageIO.read(new URL(rawData));
-        }
     }
 
     /**

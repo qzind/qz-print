@@ -704,7 +704,7 @@ var qz = function() {
          *  @param {string} [data.format] Format of data provided.<p/>
          *      For <code>[html]</code> types, valid formats include <code>[file(default) | plain]</code>.<p/>
          *      For <code>[image]</code> types, valid formats include <code>[base64 | file(default)]</code>.<p/>
-         *      For <code>[pdf]</code> types, valid format include <code>[file(default)]</code>.<p/>
+         *      For <code>[pdf]</code> types, valid format include <code>[base64 | file(default)]</code>.<p/>
          *      For <code>[raw]</code> types, valid formats include <code>[base64 | file | hex | plain(default) | visual | xml]</code>.
          *  @param {Object} [data.options]
          *   @param {number} [data.options.x] Used only with raw printing <code>[visual]</code> type. The X position of the image.
