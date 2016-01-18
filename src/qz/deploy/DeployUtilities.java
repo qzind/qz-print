@@ -208,10 +208,8 @@ public abstract class DeployUtilities {
             return new WindowsDeploy();
         } else if (SystemUtilities.isMac()) {
             return new MacDeploy();
-        } else if (SystemUtilities.isLinux()) {
-            return new LinuxDeploy();
         } else {
-            throw new UnsupportedOperationException("Shortcut creation for this OS is not yet supported");
+            return new LinuxDeploy();
         }
     }
 

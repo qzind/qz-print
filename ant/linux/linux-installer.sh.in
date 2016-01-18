@@ -66,16 +66,20 @@ function progress_dialog() {
 
 # Check minimum java version
 function check_java() {
-   curver=$(java -version 2>&1 | grep -i version | cut -d'"' -f2 | cut -d'.' -f1-2) 
+   curver=$(java -version 2>&1 | grep -i version | awk -F"\"" '{ print $2 }' | awk -F"." '{ print $1 "." $2 }') 
    minver="${javac.target}"
 
    if [ -z "$curver" ]; then
       curver="0.0"
    fi
 
-   if [ $(echo "$curver>=$minver" | bc -l) -eq 0 ]; then
+   desired=$(echo -e "$minver\n$curver")
+   actual=$(echo "$desired" |sort -t '.' -k 1,1 -k 2,2 -n)
+
+   if [ "$desired" != "$actual" ]; then
       echo -e "\n\n${bash.failure}\n"
-      echo "Please install Java ${javac.target} or higher to continue\n"
+      echo -e "Please install Java ${javac.target} or higher to continue\n"
+      exit 1
    fi
 }
 
@@ -133,7 +137,7 @@ function restart_it() {
 }
 
 # Check for Ubuntu to fix System Tray
-grep -q "Ubuntu" /etc/lsb-release
+grep -q "Ubuntu" /etc/lsb-release > /dev/null 2>&1
 if [ $? -eq 0 ]; then
     gsettings set com.canonical.Unity.Panel systray-whitelist "['all']" > /dev/null 2>&1
     restart_it unity-panel-service 50
