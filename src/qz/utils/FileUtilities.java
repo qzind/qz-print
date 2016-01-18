@@ -213,6 +213,8 @@ public class FileUtilities {
             }
 
             bw.flush();
+            bw.close();
+            br.close();
 
             deleteFile(fileName);
             return temp.renameTo(file);

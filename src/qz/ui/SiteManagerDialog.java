@@ -70,14 +70,12 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
         appendListTab(allowList.getList(), "Allowed", IconCache.Icon.ALLOW_ICON, KeyEvent.VK_A);
         appendListTab(blockList.getList(), "Blocked", IconCache.Icon.BLOCK_ICON, KeyEvent.VK_B);
 
-        setHeader("Sites " + (tabbedPane.getSelectedIndex() == 0? Constants.WHITE_LIST:Constants.BLACK_LIST).toLowerCase());
+        setHeader(tabbedPane.getSelectedIndex() == 0? Constants.WHITE_SITES:Constants.BLACK_SITES);
 
         tabbedPane.addChangeListener(new ChangeListener() {
             @Override
             public void stateChanged(ChangeEvent e) {
-                certTable.setCertificate(null);
-                allowList.getList().clearSelection();
-                blockList.getList().clearSelection();
+                clearSelection();
 
                 switch(tabbedPane.getSelectedIndex()) {
                     case 1: setHeader("Sites " + Constants.BLACK_LIST.toLowerCase());
@@ -95,10 +93,9 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
         deleteButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                getSelectedList().remove(getSelectedCertificate());
                 deleteCertificate.set(getSelectedCertificate());
-                certTable.setCertificate(null);
                 deleteButton.setEnabled(false);
+                clearSelection();
             }
         });
         deleteButton.setEnabled(false);
@@ -214,6 +211,12 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
         }
 
         return blockList;
+    }
+
+    private void clearSelection() {
+        certTable.setCertificate(null);
+        allowList.getList().clearSelection();
+        blockList.getList().clearSelection();
     }
 
     public void run() {
