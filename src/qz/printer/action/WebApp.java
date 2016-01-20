@@ -34,7 +34,6 @@ public class WebApp extends Application {
 
     private static final Logger log = LoggerFactory.getLogger(WebApp.class);
 
-    public static final double DEFAULT_WIDTH = 1280; //width used for the browser
     private static final int PAUSES = 5; //number of pauses during capture before assuming failure
 
     private static WebApp instance = null;

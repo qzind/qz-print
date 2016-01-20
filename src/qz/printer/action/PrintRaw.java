@@ -106,7 +106,7 @@ public class PrintRaw implements PrintProcessor {
                     case FILE:
                         commands.append(FileUtilities.readRawFile(cmd));
                         break;
-                    case VISUAL:
+                    case IMAGE:
                         commands.append(getImageWrapper(cmd, opt, rawOpts).getImageCommand());
                         break;
                     case HEX:

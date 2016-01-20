@@ -57,9 +57,9 @@ public class PrintHTML extends PrintImage implements PrintProcessor, Printable {
 
                 PrintingUtilities.Format format = PrintingUtilities.Format.valueOf(data.optString("format", "FILE").toUpperCase());
 
-                double pageWidth = PrinterJob.getPrinterJob().getPageFormat(null).getImageableWidth();
+                double pageWidth = PrinterJob.getPrinterJob().getPageFormat(null).getWidth();
                 if (!data.isNull("options")) {
-                    pageWidth = data.optJSONObject("options").optDouble("pageWidth", WebApp.DEFAULT_WIDTH);
+                    pageWidth = data.optJSONObject("options").optDouble("pageWidth", pageWidth);
                 }
 
                 double pageZoom = options.getPixelOptions().getDensity() / 72.0;

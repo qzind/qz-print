@@ -700,19 +700,18 @@ var qz = function() {
          * @param {Object<Config>} config Previously created config object.
          * @param {Array<Object|string>} data Array of data being sent to the printer. String values are interpreted the same as the default <code>[raw]</code> object value.
          *  @param {string} data.data
-         *  @param {string} data.type Valid values <code>[html|image|pdf|raw]</code>
+         *  @param {string} data.type Valid values <code>[html | image | pdf | raw]</code>
          *  @param {string} [data.format] Format of data provided.<p/>
          *      For <code>[html]</code> types, valid formats include <code>[file(default) | plain]</code>.<p/>
          *      For <code>[image]</code> types, valid formats include <code>[base64 | file(default)]</code>.<p/>
          *      For <code>[pdf]</code> types, valid format include <code>[base64 | file(default)]</code>.<p/>
-         *      For <code>[raw]</code> types, valid formats include <code>[base64 | file | hex | plain(default) | visual | xml]</code>.
+         *      For <code>[raw]</code> types, valid formats include <code>[base64 | file | hex | plain(default) | image | xml]</code>.
          *  @param {Object} [data.options]
-         *   @param {number} [data.options.x] Used only with raw printing <code>[visual]</code> type. The X position of the image.
-         *   @param {number} [data.options.y] Used only with raw printing <code>[visual]</code> type. The Y position of the image.
-         *   @param {string|number} [data.options.dotDensity] Used only with raw printing <code>[visual]</code> type.
+         *   @param {number} [data.options.x] Used only with raw printing <code>[image]</code> format. The X position of the image.
+         *   @param {number} [data.options.y] Used only with raw printing <code>[image]</code> format. The Y position of the image.
+         *   @param {string|number} [data.options.dotDensity] Used only with raw printing <code>[image]</code> format.
          *   @param {string} [data.options.xmlTag] Required if passing xml data. Tag name containing base64 formatted data.
          *   @param {number} [data.options.pageWidth=1280] Used only with <code>[html]</code> type printing. Width of the web page to render.
-         *   @param {number} [data.options.pageZoom=1] Used only with <code>[html]</code> type printing. Improves quality of final render. Only usable on systems with JavaFX 8.
          * @param {boolean} [signature] Pre-signed signature of JSON string containing <code>call</code>, <code>params</code>, and <code>timestamp</code>.
          * @param {number} [signingTimestamp] Required with <code>signature</code>. Timestamp used with pre-signed content.
          *

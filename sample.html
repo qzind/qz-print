@@ -803,7 +803,7 @@
             'A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n',
             'A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n',
             'A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n',
-            { type: 'raw', format: 'visual', data: 'assets/img/image_sample_bw.png', options: { x: 150, y: 300 } },
+            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png', options: { x: 150, y: 300 } },
             '\nP1,1\n'
         ];
 
@@ -817,7 +817,7 @@
         var printData = [
             '^XA\n',
             '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qzVersion + '\n',
-            { type: 'raw', format: 'visual', data: 'assets/img/image_sample_bw.png' },
+            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png' },
             '^FS\n',
             '^XZ\n'
         ];
@@ -830,7 +830,7 @@
         var config = getUpdatedConfig();
 
         var printData = [
-            { type: 'raw', format: 'visual', data: 'assets/img/image_sample_bw.png', options: { dotDensity: 'single' } },
+            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png', options: { dotDensity: 'single' } },
             { type: 'raw', data: '\nPrinted using qz-print plugin.\n\n\n\n\n\n' }
         ];
 
@@ -1035,8 +1035,7 @@
                 '           <td valign="top">' + colB + '</td>' +
                 '       </tr>' +
                 '   </table>' +
-                '</html>',
-                options: { pageWidth: 640, pageZoom: 8 }
+                '</html>'
             }
         ];
 
