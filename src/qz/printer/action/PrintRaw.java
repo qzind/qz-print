@@ -107,7 +107,7 @@ public class PrintRaw implements PrintProcessor {
                         commands.append(FileUtilities.readRawFile(cmd));
                         break;
                     case IMAGE:
-                        commands.append(getImageWrapper(cmd, opt, rawOpts).getImageCommand());
+                        commands.append(getImageWrapper(cmd, opt).getImageCommand());
                         break;
                     case HEX:
                         commands.append(ByteUtilities.hexStringToByteArray(cmd));
@@ -127,7 +127,7 @@ public class PrintRaw implements PrintProcessor {
         }
     }
 
-    private ImageWrapper getImageWrapper(String cmd, JSONObject opt, PrintOptions.Raw rawOpts) throws IOException, JSONException {
+    private ImageWrapper getImageWrapper(String cmd, JSONObject opt) throws IOException, JSONException {
         BufferedImage buf;
         if (ByteUtilities.isBase64Image(cmd)) {
             buf = ImageIO.read(new ByteArrayInputStream(Base64.decode(cmd)));
@@ -135,7 +135,7 @@ public class PrintRaw implements PrintProcessor {
             buf = ImageIO.read(new URL(cmd));
         }
 
-        ImageWrapper iw = new ImageWrapper(buf, LanguageType.getType(rawOpts.getLanguage()));
+        ImageWrapper iw = new ImageWrapper(buf, LanguageType.getType(opt.optString("language")));
         iw.setCharset(Charset.forName(encoding));
 
         //ESCP only

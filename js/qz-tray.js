@@ -301,7 +301,6 @@ var qz = function() {
                 altPrinting: false,
                 encoding: null,
                 endOfDoc: null,
-                language: null,
                 perSpool: 1
             }
         },
@@ -656,7 +655,6 @@ var qz = function() {
              *  @param {boolean} [options.altPrinting=false]
              *  @param {string} [options.encoding=null] Character set
              *  @param {string} [options.endOfDoc=null]
-             *  @param {string} [options.language=null] Printer language
              *  @param {number} [options.perSpool=1] Number of pages per spool.
              *
              * @memberof qz.configs
@@ -707,11 +705,12 @@ var qz = function() {
          *      For <code>[pdf]</code> types, valid format include <code>[base64 | file(default)]</code>.<p/>
          *      For <code>[raw]</code> types, valid formats include <code>[base64 | file | hex | plain(default) | image | xml]</code>.
          *  @param {Object} [data.options]
-         *   @param {number} [data.options.x] Used only with raw printing <code>[image]</code> format. The X position of the image.
-         *   @param {number} [data.options.y] Used only with raw printing <code>[image]</code> format. The Y position of the image.
-         *   @param {string|number} [data.options.dotDensity] Used only with raw printing <code>[image]</code> format.
-         *   @param {string} [data.options.xmlTag] Required if passing xml data. Tag name containing base64 formatted data.
-         *   @param {number} [data.options.pageWidth=1280] Used only with <code>[html]</code> type printing. Width of the web page to render.
+         *   @param {string} [data.options.language] Required with <code>[raw]</code> type <code>[image]</code> format. Printer language.
+         *   @param {number} [data.options.x] Optional with <code>[raw]</code> type <code>[image]</code> format. The X position of the image.
+         *   @param {number} [data.options.y] Optional with <code>[raw]</code> type <code>[image]</code> format. The Y position of the image.
+         *   @param {string|number} [data.options.dotDensity] Optional with <code>[raw]</code> type <code>[image]</code> format.
+         *   @param {string} [data.options.xmlTag] Required with <code>[xml]</code> format. Tag name containing base64 formatted data.
+         *   @param {number} [data.options.pageWidth=1280] Optional with <code>[html]</code> type printing. Width of the web page to render.
          * @param {boolean} [signature] Pre-signed signature of JSON string containing <code>call</code>, <code>params</code>, and <code>timestamp</code>.
          * @param {number} [signingTimestamp] Required with <code>signature</code>. Timestamp used with pre-signed content.
          *
@@ -725,7 +724,8 @@ var qz = function() {
             //change relative links to absolute
             for(var i = 0; i < data.length; i++) {
                 if (typeof data[i] === 'object') {
-                    if ((!data[i].format && data[i].type.toUpperCase() !== 'RAW') || data[i].format.toUpperCase() === 'FILE') {
+                    if ((!data[i].format && data[i].type.toUpperCase() !== 'RAW') //unspecified format and not raw -> assume file
+                        || (data[i].format && (data[i].format.toUpperCase() === 'FILE' || data[i].format.toUpperCase() === 'IMAGE'))) {
                         data[i].data = _qz.tools.absolute(data[i].data);
                     }
                 }

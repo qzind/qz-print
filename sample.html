@@ -185,11 +185,6 @@
                                             <label for="rawEndOfDoc">End Of Doc</label>
                                             <input type="text" id="rawEndOfDoc" class="form-control pull-right" />
                                         </div>
-
-                                        <div class="form-group form-inline">
-                                            <label for="rawLanguage">Language</label>
-                                            <input type="text" id="rawLanguage" class="form-control pull-right" />
-                                        </div>
                                     </div>
                                     <div class="col-md-6">
                                         <div class="form-group form-inline">
@@ -790,7 +785,6 @@
 
     /// Raw Printers ///
     function printEPL() {
-        $("#rawLanguage").val("EPL");
         var config = getUpdatedConfig();
 
         var printData = [
@@ -803,7 +797,7 @@
             'A310,86,0,3,1,1,N,"TEST PRINT SUCCESSFUL"\n',
             'A310,116,0,3,1,1,N,"FROM SAMPLE.HTML"\n',
             'A310,146,0,3,1,1,N,"QZINDUSTRIES.COM"\n',
-            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png', options: { x: 150, y: 300 } },
+            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png', options: { language: 'EPL', x: 150, y: 300 } },
             '\nP1,1\n'
         ];
 
@@ -811,13 +805,12 @@
     }
 
     function printZPL() {
-        $("#rawLanguage").val("ZPLII");
         var config = getUpdatedConfig();
 
         var printData = [
             '^XA\n',
             '^FO50,50^ADN,36,20^FDPRINTED USING QZ PRINT PLUGIN ' + qzVersion + '\n',
-            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png' },
+            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png', options: { language: 'ZPLII' } },
             '^FS\n',
             '^XZ\n'
         ];
@@ -826,11 +819,10 @@
     }
 
     function printESCP() {
-        $("#rawLanguage").val("ESCP");
         var config = getUpdatedConfig();
 
         var printData = [
-            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png', options: { dotDensity: 'single' } },
+            { type: 'raw', format: 'image', data: 'assets/img/image_sample_bw.png', options: { language: 'ESCP', dotDensity: 'single' } },
             { type: 'raw', data: '\nPrinted using qz-print plugin.\n\n\n\n\n\n' }
         ];
 
@@ -1201,7 +1193,6 @@
     /// Resets ///
     function resetRawOptions() {
         $("#rawPerSpool").val(1);
-        $("#rawLanguage").val(null);
         $("#rawEncoding").val(null);
         $("#rawEndOfDoc").val(null);
         $("#rawAltPrinting").prop('checked', false);
@@ -1508,7 +1499,6 @@
                             altPrinting: $("#rawAltPrinting").prop('checked'),
                             encoding: $("#rawEncoding").val(),
                             endOfDoc: $("#rawEndOfDoc").val(),
-                            language: $("#rawLanguage").val(),
                             perSpool: $("#rawPerSpool").val(),
 
                             colorType: $("#pxlColorType").val(),
