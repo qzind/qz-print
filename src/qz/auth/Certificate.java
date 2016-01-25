@@ -4,6 +4,7 @@ import com.estontorise.simplersa.RSAKeyImpl;
 import com.estontorise.simplersa.RSAToolFactory;
 import com.estontorise.simplersa.interfaces.RSAKey;
 import com.estontorise.simplersa.interfaces.RSATool;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.ssl.X509CertificateChainBuilder;
 import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
@@ -254,7 +255,8 @@ public class Certificate {
 
             //On errors, assume failure.
             try {
-                return tool.verifyWithKey(data.getBytes(), Base64.decode(signature), thePublicKey);
+                String hash = DigestUtils.sha256Hex(data);
+                return tool.verifyWithKey(hash.getBytes(), Base64.decode(signature), thePublicKey);
             }
             catch(Exception e) {
                 log.error("Unable to verify signature", e);

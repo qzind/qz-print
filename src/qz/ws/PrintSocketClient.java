@@ -3,6 +3,7 @@ package qz.ws;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
@@ -214,7 +215,7 @@ public class PrintSocketClient {
         JSONObject copy = new JSONObject(message, new String[] {"call", "params", "timestamp"});
         String signature = message.optString("signature");
 
-        return certificate.isSignatureValid(signature, copy.toString().replaceAll("\\\\/", "/"));
+        return certificate.isSignatureValid(signature, StringEscapeUtils.unescapeJson(copy.toString()));
     }
 
     /**

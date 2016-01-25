@@ -10,6 +10,9 @@
  * @requires RSVP
  *     Provides Promises/A+ functionality for API calls.
  *     Can be overridden via <code>qz.api.setPromiseType</code> to remove dependency.
+ * @requires Sha256
+ *     Provides hashing algorithm for signing messages.
+ *     Can be overridden via <code>qz.api.setSha256Type</code> to remove dependency.
  */
 var qz = function() {
 
@@ -175,7 +178,7 @@ var qz = function() {
                                     timestamp: obj.timestamp
                                 };
 
-                                _qz.security.callSign(_qz.tools.stringify(signObj)).then(function(signature) {
+                                _qz.security.callSign(_qz.tools.hash(_qz.tools.stringify(signObj))).then(function(signature) {
                                     obj.signature = signature;
                                     _qz.signContent = undefined;
 
@@ -372,6 +375,8 @@ var qz = function() {
 
                 return result;
             },
+
+            hash: Sha256.hash,
 
             absolute: function(loc) {
                 if (document && typeof document.createElement === 'function') {
@@ -710,7 +715,7 @@ var qz = function() {
          *   @param {number} [data.options.y] Optional with <code>[raw]</code> type <code>[image]</code> format. The Y position of the image.
          *   @param {string|number} [data.options.dotDensity] Optional with <code>[raw]</code> type <code>[image]</code> format.
          *   @param {string} [data.options.xmlTag] Required with <code>[xml]</code> format. Tag name containing base64 formatted data.
-         *   @param {number} [data.options.pageWidth=1280] Optional with <code>[html]</code> type printing. Width of the web page to render.
+         *   @param {number} [data.options.pageWidth] Optional with <code>[html]</code> type printing. Width of the web page to render.
          * @param {boolean} [signature] Pre-signed signature of JSON string containing <code>call</code>, <code>params</code>, and <code>timestamp</code>.
          * @param {number} [signingTimestamp] Required with <code>signature</code>. Timestamp used with pre-signed content.
          *
@@ -1209,6 +1214,18 @@ var qz = function() {
              */
             setPromiseType: function(promiser) {
                 _qz.tools.promise = promiser;
+            },
+
+            /**
+             * Change the SHA-256 hashing library used by QZ API.
+             * Should be called before any initialization to avoid possible errors.
+             *
+             * @param {Function} hasher <code>Function({function} message)</code> called to create hash of passed string.
+             *
+             * @memberof qz.api
+             */
+            setSha256Type: function(hasher) {
+                _qz.tools.hash = hasher;
             }
         }
 
