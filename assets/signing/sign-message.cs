@@ -28,7 +28,7 @@ public void SignMessage(String message)
 	var KEY = "private-key.pfx";
 	var PASS = "S3cur3P@ssw0rd";
 
-	var cert = new X509Certificate2( KEY, PASS );
+	var cert = new X509Certificate2( KEY, PASS, X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable );
 	RSACryptoServiceProvider csp = (RSACryptoServiceProvider)cert.PrivateKey;
 
 	byte[] data = new ASCIIEncoding().GetBytes(message);
