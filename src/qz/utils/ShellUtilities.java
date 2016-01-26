@@ -22,6 +22,7 @@
 
 package qz.utils;
 
+import org.apache.commons.io.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,10 +88,11 @@ public class ShellUtilities {
      */
     public static String execute(String[] commandArray, String[] searchFor, boolean caseSensitive) {
         log.debug("Executing: {}", Arrays.toString(commandArray));
+        BufferedReader stdInput = null;
         try {
             // Create and execute our new process
             Process p = Runtime.getRuntime().exec(commandArray);
-            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            stdInput = new BufferedReader(new InputStreamReader(p.getInputStream(), Charsets.UTF_8));
             String s;
             while((s = stdInput.readLine()) != null) {
                 if (searchFor == null) {
@@ -111,6 +113,11 @@ public class ShellUtilities {
         }
         catch(IOException ex) {
             log.error("IOException executing: {}", Arrays.toString(commandArray), ex);
+        }
+        finally {
+            if (stdInput != null) {
+                try { stdInput.close(); } catch(Exception ignore) {}
+            }
         }
 
         return "";

@@ -1,10 +1,13 @@
 package qz.communication;
 
 import jssc.*;
+import org.apache.commons.codec.binary.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.utils.ByteUtilities;
 import qz.utils.SerialUtilities;
+
+import java.util.Arrays;
 
 /**
  * @author Tres
@@ -37,8 +40,8 @@ public class SerialIO {
     public SerialIO(String portName, byte[] dataBegin, byte[] dataEnd) {
         this.portName = portName;
 
-        this.dataBegin = dataBegin;
-        this.dataEnd = dataEnd;
+        this.dataBegin = Arrays.copyOf(dataBegin, dataBegin.length);
+        this.dataEnd = Arrays.copyOf(dataEnd, dataEnd.length);
     }
 
     /**
@@ -101,7 +104,7 @@ public class SerialIO {
                         byte[] output = new byte[end - begin];
                         System.arraycopy(data, begin, output, 0, end - begin);
 
-                        return new String(output);
+                        return StringUtils.newStringUtf8(output);
                     }
                 } else {
                     //fixed width response

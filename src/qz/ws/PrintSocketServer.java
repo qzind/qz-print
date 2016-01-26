@@ -38,6 +38,9 @@ import qz.utils.SystemUtilities;
 import javax.swing.*;
 import java.io.File;
 import java.net.BindException;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -51,8 +54,8 @@ public class PrintSocketServer {
     private static final Logger log = LoggerFactory.getLogger(PrintSocketServer.class);
 
     private static final int MAX_MESSAGE_SIZE = Integer.MAX_VALUE;
-    public static final Integer[] SECURE_PORTS = new Integer[] {8181, 8282, 8383, 8484};
-    public static final Integer[] INSECURE_PORTS = new Integer[] {8182, 8283, 8384, 8485};
+    public static final List<Integer> SECURE_PORTS = Collections.unmodifiableList(Arrays.asList(8182, 8283, 8384, 8485));
+    public static final List<Integer> INSECURE_PORTS = Collections.unmodifiableList(Arrays.asList(8182, 8283, 8384, 8485));
 
 
     private static TrayManager trayManager;
@@ -112,8 +115,8 @@ public class PrintSocketServer {
 
         Properties sslProperties = DeployUtilities.loadSSLProperties();
 
-        while(!running.get() && securePortIndex.get() < SECURE_PORTS.length && insecurePortIndex.get() < INSECURE_PORTS.length) {
-            Server server = new Server(INSECURE_PORTS[insecurePortIndex.get()]);
+        while(!running.get() && securePortIndex.get() < SECURE_PORTS.size() && insecurePortIndex.get() < INSECURE_PORTS.size()) {
+            Server server = new Server(INSECURE_PORTS.get(insecurePortIndex.get()));
 
             if (sslProperties != null) {
                 // Bind the secure socket on the proper port number (i.e. 9341), add it as an additional connector
@@ -126,7 +129,7 @@ public class PrintSocketServer {
 
                 ServerConnector connector = new ServerConnector(server, sslConnection, httpConnection);
                 connector.setHost("localhost");
-                connector.setPort(SECURE_PORTS[securePortIndex.get()]);
+                connector.setPort(SECURE_PORTS.get(securePortIndex.get()));
                 server.addConnector(connector);
             } else {
                 log.warn("Could not start secure WebSocket");

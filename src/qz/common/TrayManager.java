@@ -545,12 +545,12 @@ public class TrayManager {
     /** Thread safe method for setting the specified icon */
     private void setIcon(final IconCache.Icon i) {
         if (tray != null) {
-            SwingUtilities.invokeLater(new Thread(new Runnable() {
+            SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                     tray.setImage(iconCache.getImage(i));
                 }
-            }));
+            });
         }
     }
 
@@ -563,7 +563,7 @@ public class TrayManager {
      */
     private void displayMessage(final String caption, final String text, final TrayIcon.MessageType level) {
         if (tray != null) {
-            SwingUtilities.invokeLater(new Thread(new Runnable() {
+            SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
                     boolean showAllNotifications = prefs.getBoolean(notificationsKey, false);
@@ -571,13 +571,13 @@ public class TrayManager {
                         tray.displayMessage(caption, text, level);
                     }
                 }
-            }));
+            });
         }
     }
 
-    public void singleInstanceCheck(Integer[] insecurePorts, Integer insecurePortIndex) {
+    public void singleInstanceCheck(java.util.List<Integer> insecurePorts, Integer insecurePortIndex) {
         for(int port : insecurePorts) {
-            if (port != insecurePorts[insecurePortIndex]) {
+            if (port != insecurePorts.get(insecurePortIndex)) {
                 new SingleInstanceChecker(this, port);
             }
         }

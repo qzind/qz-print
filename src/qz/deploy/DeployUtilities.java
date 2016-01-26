@@ -350,9 +350,8 @@ public abstract class DeployUtilities {
         String sslPropertiesFile = DeployUtilities.detectPropertiesPath();
         log.info("SSL properties file from " + sslPropertiesFile);
 
-        try {
-            File propsFile = new File(sslPropertiesFile);
-            FileInputStream inputStream = new FileInputStream(propsFile);
+        File propsFile = new File(sslPropertiesFile);
+        try(FileInputStream inputStream = new FileInputStream(propsFile)) {
             sslProps.load(inputStream);
             return sslProps;
         }

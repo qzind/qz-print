@@ -73,7 +73,7 @@ public class ConfirmDialog extends JDialog {
         setLocationRelativeTo(null);    // center on main display
     }
 
-    private final ActionListener buttonAction = new ActionListener() {
+    private final transient ActionListener buttonAction = new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
             approved = e.getSource().equals(yesButton);

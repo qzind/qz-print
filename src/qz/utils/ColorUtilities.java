@@ -30,7 +30,7 @@ public class ColorUtilities {
 
     private static final Logger log = LoggerFactory.getLogger(ColorUtilities.class);
 
-    public static Color DEFAULT_COLOR = Color.WHITE;
+    public static final Color DEFAULT_COLOR = Color.WHITE;
 
     /**
      * Decode an HTML color string like '#F567BA;' into a {@link Color}

@@ -23,6 +23,7 @@
  */
 package qz.utils;
 
+import org.apache.commons.io.Charsets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.DOMException;
@@ -110,7 +111,7 @@ public class FileUtilities {
 
 
     public static String readLocalFile(String file) throws IOException {
-        return new String(readFile(new DataInputStream(new FileInputStream(file))));
+        return new String(readFile(new DataInputStream(new FileInputStream(file))), Charsets.UTF_8);
     }
 
     public static byte[] readRawFile(String url) throws IOException {

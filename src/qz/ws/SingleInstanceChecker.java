@@ -131,6 +131,6 @@ public class SingleInstanceChecker {
                     log.error("Couldn't close client after delay");
                 }
             }
-        });
+        }).start();
     }
 }

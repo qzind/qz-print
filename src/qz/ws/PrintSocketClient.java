@@ -3,6 +3,7 @@ package qz.ws;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -338,7 +339,7 @@ public class PrintSocketClient {
             case USB_SEND_DATA: {
                 UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
-                    usb.sendData(UsbUtilities.hexToByte(params.optString("endpoint")), params.optString("data").getBytes());
+                    usb.sendData(UsbUtilities.hexToByte(params.optString("endpoint")), StringUtils.getBytesUtf8(params.optString("data")));
                     sendResult(session, UID, null);
                 } else {
                     sendError(session, UID, String.format("USB Device [v:%s p:%s] must be claimed first.", params.opt("vendorId"), params.opt("productId")));

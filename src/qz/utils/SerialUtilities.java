@@ -6,6 +6,7 @@ package qz.utils;
 
 import jssc.SerialPort;
 import jssc.SerialPortList;
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONArray;
@@ -64,7 +65,7 @@ public class SerialUtilities {
             try {
                 //try to interpret entire string as single char representation (such as "\u0000" or "0xFFFF")
                 char literal = (char)Integer.parseInt(convert.substring(2), 16);
-                return String.valueOf(literal).getBytes();
+                return StringUtils.getBytesUtf8(String.valueOf(literal));
             }
             catch(NumberFormatException ignore) {}
         }

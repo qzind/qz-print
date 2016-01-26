@@ -123,7 +123,7 @@ public class SiteManagerDialog extends BasicDialog implements Runnable {
             threadRunning.set(false);
         }
 
-        if (visible & getSelectedList().getList().getSelectedIndex() < 0) {
+        if (visible && getSelectedList().getList().getSelectedIndex() < 0) {
             selectFirst();
         }
 

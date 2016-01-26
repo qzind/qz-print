@@ -21,6 +21,7 @@
  */
 package qz.printer.action;
 
+import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -308,7 +309,7 @@ public class PrintRaw implements PrintProcessor {
         Process process = Runtime.getRuntime().exec(new String[] {"bash", "-c", shellCmd});
         try { process.waitFor(); }catch(InterruptedException ignore) {}
 
-        BufferedReader buf = new BufferedReader(new InputStreamReader(process.getInputStream()));
+        BufferedReader buf = new BufferedReader(new InputStreamReader(process.getInputStream(), Charsets.UTF_8));
         String output = IOUtils.toString(buf);
         buf.close();
 

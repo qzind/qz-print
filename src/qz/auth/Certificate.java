@@ -4,6 +4,7 @@ import com.estontorise.simplersa.RSAKeyImpl;
 import com.estontorise.simplersa.RSAToolFactory;
 import com.estontorise.simplersa.interfaces.RSAKey;
 import com.estontorise.simplersa.interfaces.RSATool;
+import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.ssl.X509CertificateChainBuilder;
 import org.bouncycastle.asn1.x509.X509Name;
@@ -40,7 +41,7 @@ public class Certificate {
     public static final String[] saveFields = new String[] {"fingerprint", "commonName", "organization", "validFrom", "validTo", "valid"};
 
     private static boolean overrideTrustedRootCert = false;
-    private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
     private X509Certificate theCertificate;
     private String fingerprint;
@@ -50,6 +51,31 @@ public class Certificate {
     private Date validTo;
 
     private boolean valid = false; //used by review sites UI only
+
+
+    //Pre-set certificates for various situations that could arise with bad security requests
+    public static final Certificate UNKNOWN;
+    public static final Certificate EXPIRED;
+    public static final Certificate UNSIGNED;
+
+    static {
+        HashMap<String,String> map = new HashMap<>();
+        map.put("fingerprint", "UNKNOWN REQUEST");
+        map.put("commonName", "An anonymous request");
+        map.put("organization", "Unknown");
+        map.put("validFrom", "0000-00-00 00:00:00");
+        map.put("validTo", "0000-00-00 00:00:00");
+        map.put("valid", "false");
+        UNKNOWN = Certificate.loadCertificate(map);
+
+        map.put("fingerprint", "EXPIRED REQUEST");
+        map.put("commonName", ""); //filled in per request
+        map.put("organization", ""); //filled in per request
+        EXPIRED = Certificate.loadCertificate(map);
+
+        map.put("fingerprint", "UNSIGNED REQUEST");
+        UNSIGNED = Certificate.loadCertificate(map);
+    }
 
     static {
         try {
@@ -101,30 +127,6 @@ public class Certificate {
         catch(CertificateParsingException e) {
             e.printStackTrace();
         }
-    }
-
-    //Pre-set certificates for various situations that could arise with bad security requests
-    public static final Certificate UNKNOWN;
-    public static final Certificate EXPIRED;
-    public static final Certificate UNSIGNED;
-
-    static {
-        HashMap<String,String> map = new HashMap<String,String>();
-        map.put("fingerprint", "UNKNOWN REQUEST");
-        map.put("commonName", "An anonymous request");
-        map.put("organization", "Unknown");
-        map.put("validFrom", "0000-00-00 00:00:00");
-        map.put("validTo", "0000-00-00 00:00:00");
-        map.put("valid", "false");
-        UNKNOWN = Certificate.loadCertificate(map);
-
-        map.put("fingerprint", "EXPIRED REQUEST");
-        map.put("commonName", ""); //filled in per request
-        map.put("organization", ""); //filled in per request
-        EXPIRED = Certificate.loadCertificate(map);
-
-        map.put("fingerprint", "UNSIGNED REQUEST");
-        UNSIGNED = Certificate.loadCertificate(map);
     }
 
 
@@ -207,8 +209,8 @@ public class Certificate {
         cert.organization = data.get("organization");
 
         try {
-            cert.validFrom = dateFormat.parse(data.get("validFrom"));
-            cert.validTo = dateFormat.parse(data.get("validTo"));
+            cert.validFrom = cert.dateFormat.parse(data.get("validFrom"));
+            cert.validTo = cert.dateFormat.parse(data.get("validTo"));
         }
         catch(ParseException e) {
             cert.validFrom = new Date(0);
@@ -249,14 +251,14 @@ public class Certificate {
      * @return true if signature valid, false if not
      */
     public boolean isSignatureValid(String signature, String data) {
-        if (signature.length() > 0) {
+        if (!signature.isEmpty()) {
             RSATool tool = RSAToolFactory.getRSATool();
             RSAKey thePublicKey = new RSAKeyImpl(theCertificate.getPublicKey());
 
             //On errors, assume failure.
             try {
                 String hash = DigestUtils.sha256Hex(data);
-                return tool.verifyWithKey(hash.getBytes(), Base64.decode(signature), thePublicKey);
+                return tool.verifyWithKey(StringUtils.getBytesUtf8(hash), Base64.decode(signature), thePublicKey);
             }
             catch(Exception e) {
                 log.error("Unable to verify signature", e);
