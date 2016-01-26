@@ -13,6 +13,7 @@
         <option name="HTML_KEEP_WHITESPACES_INSIDE" value="pre,textarea" />
         <option name="HTML_INLINE_ELEMENTS" value="" />
         <option name="HTML_DONT_ADD_BREAKS_IF_INLINE_CONTENT" value="title,h1,h2,h3,h4,h5,h6,p,span,br,em,strong,li,a" />
+        <option name="FORMATTER_TAGS_ENABLED" value="true" />
         <CssCodeStyleSettings>
           <option name="HEX_COLOR_UPPER_CASE" value="true" />
         </CssCodeStyleSettings>
@@ -72,6 +73,5 @@
       </value>
     </option>
     <option name="USE_PER_PROJECT_SETTINGS" value="true" />
-    <option name="PREFERRED_PROJECT_CODE_STYLE" value="Spaced" />
   </component>
 </project>
