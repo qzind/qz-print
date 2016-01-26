@@ -2,6 +2,7 @@ package qz.ui;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import qz.utils.ShellUtilities;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,7 +43,7 @@ public class LinkLabel extends JLabel {
                         Desktop.getDesktop().mail(new URI(text));
                     } else {
                         File filePath = new File(text);
-                        Desktop.getDesktop().browse(filePath.isDirectory()? filePath.toURI():filePath.getParentFile().toURI());
+                        ShellUtilities.browseDirectory(filePath.isDirectory() ? text : filePath.getParent());
                     }
 
                 }
@@ -76,7 +77,7 @@ public class LinkLabel extends JLabel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    Desktop.getDesktop().browse(filePath.isDirectory()? filePath.toURI():filePath.getParentFile().toURI());
+                    ShellUtilities.browseDirectory(filePath.isDirectory()? filePath.getCanonicalPath() : filePath.getParent());
                 }
                 catch(IOException ex) {
                     log.error("", ex);

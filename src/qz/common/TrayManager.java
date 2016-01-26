@@ -253,14 +253,7 @@ public class TrayManager {
     private final ActionListener openListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
             try {
-                // To get Macs to open the package's contents rather than launching it, we -R the package's auth folder to
-                // select it in finder. Thus we are opening auth's parent folder rather than the package.
-                if (SystemUtilities.isMac()) {
-                    ShellUtilities.execute(new String[] {"open", "-R", shortcutCreator.getJarPath()});
-                } else {
-                    Desktop d = Desktop.getDesktop();
-                    d.open(new File(shortcutCreator.getParentDirectory()));
-                }
+                ShellUtilities.browseDirectory(shortcutCreator.getParentDirectory());
             }
             catch(Exception ex) {
                 if (!SystemUtilities.isLinux() || !ShellUtilities.execute(new String[] {"xdg-open", shortcutCreator.getParentDirectory()})) {
