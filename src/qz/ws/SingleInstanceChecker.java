@@ -75,14 +75,12 @@ public class SingleInstanceChecker {
         }
         catch(Exception e) {
             log.error("Could not connect to url {}", uri, e);
-            trayManager = null;
         }
     }
 
     @OnWebSocketClose
     public void onClose(int statusCode, String reason) {
         log.warn("Connection closed, {}", reason);
-        trayManager = null;
     }
 
     @OnWebSocketError
@@ -90,7 +88,6 @@ public class SingleInstanceChecker {
         if (!"Connection refused: no further information".equals(e.getMessage())) {
             log.error("WebSocket error", e);
         }
-        trayManager = null;
     }
 
     @OnWebSocketConnect
@@ -101,7 +98,6 @@ public class SingleInstanceChecker {
         catch(IOException e) {
             log.error("Could not send data to server", e);
             session.close();
-            trayManager = null;
         }
     }
 
