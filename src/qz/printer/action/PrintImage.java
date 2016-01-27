@@ -57,6 +57,7 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
     protected List<BufferedImage> images;
 
     protected boolean scaleImage = false;
+    protected Object interpolation = RenderingHints.VALUE_INTERPOLATION_BICUBIC;
     protected double imageRotation = 0;
 
 
@@ -104,7 +105,8 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         PrintOptions.Pixel pxlOpts = options.getPixelOptions();
         PrintRequestAttributeSet attributes = applyDefaultSettings(pxlOpts, page);
 
-        scaleImage = options.getPixelOptions().scaleContent();
+        scaleImage = options.getPixelOptions().isScaleContent();
+        interpolation = options.getPixelOptions().getInterpolation();
         imageRotation = pxlOpts.getRotation();
 
         job.setJobName(Constants.IMAGE_PRINT);
@@ -134,7 +136,7 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         Graphics2D graphics2D = (Graphics2D)graphics;
         // Suggested by Bahadir 8/23/2012
         graphics2D.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
-        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+        graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, interpolation);
         graphics2D.setRenderingHint(RenderingHints.KEY_COLOR_RENDERING, RenderingHints.VALUE_COLOR_RENDER_QUALITY);
         graphics2D.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);

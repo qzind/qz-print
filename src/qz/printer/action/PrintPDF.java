@@ -76,7 +76,7 @@ public class PrintPDF extends PrintPixel implements PrintProcessor {
         PrintOptions.Pixel pxlOpts = options.getPixelOptions();
         PrintRequestAttributeSet attributes = applyDefaultSettings(pxlOpts, page);
 
-        Scaling scale = (pxlOpts.scaleContent()? Scaling.SCALE_TO_FIT:Scaling.ACTUAL_SIZE);
+        Scaling scale = (pxlOpts.isScaleContent()? Scaling.SCALE_TO_FIT:Scaling.ACTUAL_SIZE);
 
         Book book = new Book();
         for(PDDocument doc : pdfs) {

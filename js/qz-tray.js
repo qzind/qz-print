@@ -289,10 +289,11 @@ var qz = function() {
             defaultConfig: {
                 //value purposes are explained in the qz.configs.setDefaults docs
 
-                color: true,
+                colorType: 'color',
                 copies: 1,
-                dpi: 72,
+                density: 72,
                 duplex: false,
+                interpolation: 'bicubic',
                 margins: 0,
                 orientation: null,
                 paperThickness: null,
@@ -300,6 +301,7 @@ var qz = function() {
                 rotation: 0,
                 scaleContent: true,
                 size: null,
+                units: 'in',
 
                 altPrinting: false,
                 encoding: null,
@@ -638,16 +640,17 @@ var qz = function() {
              *
              * @param {Object} options Default options used by printer configs if not overridden.
              *
-             *  @param {string} [options.colorType='color'] Valid values <code>[color|greyscale|blackwhite]</code>
+             *  @param {string} [options.colorType='color'] Valid values <code>[color | greyscale | blackwhite]</code>
              *  @param {number} [options.copies=1] Number of copies to be printed.
              *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on <code>[options.units]</code>).
              *  @param {boolean} [options.duplex=false] Double sided printing
+             *  @param {string} [options.interpolation='bicubic'] Valid values <code>[bicubic | bilinear | nearest-neighbor]</code>. Controls how images are handled when resized.
              *  @param {Object|number} [options.margins=0] If just a number is provided, it is used as the margin for all sides.
              *   @param {number} [options.margins.top=0]
              *   @param {number} [options.margins.right=0]
              *   @param {number} [options.margins.bottom=0]
              *   @param {number} [options.margins.left=0]
-             *  @param {string} [options.orientation=null] Valid values <code>[portrait|landscape|reverse-landscape]</code>
+             *  @param {string} [options.orientation=null] Valid values <code>[portrait | landscape | reverse-landscape]</code>
              *  @param {number} [options.paperThickness=null]
              *  @param {string} [options.printerTray=null] //TODO - string?
              *  @param {number} [options.rotation=0] Image rotation in degrees.
@@ -655,7 +658,7 @@ var qz = function() {
              *  @param {Object} [options.size=null] Paper size.
              *   @param {number} [options.size.width=null] Page width.
              *   @param {number} [options.size.height=null] Page height.
-             *  @param {string} [options.units] Page units, applies to paper size, margins, and density. Valid value <code>[in|cm|mm]</code>
+             *  @param {string} [options.units='in'] Page units, applies to paper size, margins, and density. Valid value <code>[in | cm | mm]</code>
              *
              *  @param {boolean} [options.altPrinting=false]
              *  @param {string} [options.encoding=null] Character set

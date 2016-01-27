@@ -279,6 +279,16 @@
                                         </div>
 
                                         <div class="form-group form-inline">
+                                            <label for="pxlInterpolation">Interpolation</label>
+                                            <select id="pxlInterpolation" class="form-control pull-right">
+                                                <option value="">Default</option>
+                                                <option value="bicubic">Bicubic</option>
+                                                <option value="bilinear">Bilinear</option>
+                                                <option value="nearest-neighbor">Nearest Neighbor</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="form-group form-inline">
                                             <label for="pxlOrientation">Orientation</label>
                                             <select id="pxlOrientation" class="form-control pull-right">
                                                 <option value="">Default</option>
@@ -1205,6 +1215,7 @@
         $("#pxlCopies").val(1);
         $("#pxlDensity").val('');
         $("#pxlDuplex").prop('checked', false);
+        $("#pxlInterpolation").val("");
         $("#pxlOrientation").val("");
         $("#pxlPaperThickness").val(null);
         $("#pxlPrinterTray").val(null);
@@ -1506,6 +1517,7 @@
                             copies: copies,
                             density: $("#pxlDensity").val(),
                             duplex: $("#pxlDuplex").prop('checked'),
+                            interpolation: $("#pxlInterpolation").val(),
                             margins: pxlMargins,
                             orientation: $("#pxlOrientation").val(),
                             paperThickness: $("#pxlPaperThickness").val(),

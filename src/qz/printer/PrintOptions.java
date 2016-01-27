@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.print.attribute.standard.Chromaticity;
 import javax.print.attribute.standard.OrientationRequested;
+import java.awt.*;
 import java.awt.print.PageFormat;
 
 public class PrintOptions {
@@ -71,6 +72,18 @@ public class PrintOptions {
             try { psOptions.duplex = configOpts.getBoolean("duplex"); }
             catch(JSONException e) { warn("boolean", "duplex", configOpts.opt("duplex")); }
         }
+        if (!configOpts.isNull("interpolation")) {
+            switch(configOpts.optString("interpolation")) {
+                case "bicubic":
+                    psOptions.interpolation = RenderingHints.VALUE_INTERPOLATION_BICUBIC; break;
+                case "bilinear":
+                    psOptions.interpolation = RenderingHints.VALUE_INTERPOLATION_BILINEAR; break;
+                case "nearest-neighbor": case "nearest":
+                    psOptions.interpolation = RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR; break;
+                default:
+                    warn("valid value", "interpolation", configOpts.opt("interpolation")); break;
+            }
+        }
         if (!configOpts.isNull("margins")) {
             Margins m = new Margins();
             JSONObject subMargins = configOpts.optJSONObject("margins");
@@ -120,7 +133,7 @@ public class PrintOptions {
         }
         if (!configOpts.isNull("scaleContent")) {
             try { psOptions.scaleContent = configOpts.getBoolean("scaleContent"); }
-            catch(JSONException e) { warn("boolean", "size.scaleContent", configOpts.opt("scaleContent")); }
+            catch(JSONException e) { warn("boolean", "scaleContent", configOpts.opt("scaleContent")); }
         }
         if (!configOpts.isNull("size")) {
             Size s = new Size();
@@ -149,7 +162,7 @@ public class PrintOptions {
                 case "in":
                     psOptions.units = Unit.INCH; break;
                 default:
-                    warn("valid value", "size.units", configOpts.opt("units")); break;
+                    warn("valid value", "units", configOpts.opt("units")); break;
             }
         }
     }
@@ -214,18 +227,19 @@ public class PrintOptions {
 
     /** Pixel printing options */
     public class Pixel {
-        private ColorType colorType = ColorType.COLOR;  //Color / black&white
-        private int copies = 1;                         //Job copies
-        private int density = 0;                        //Pixel density (DPI or DPMM)
-        private boolean duplex = false;                 //Double/single sided
-        private Margins margins = new Margins();        //Page margins
-        private Orientation orientation = null;         //Page orientation
-        private double paperThickness = -1;             //Paper thickness
-        private String printerTray = null;              //Printer tray to use
-        private double rotation = 0;                    //Image rotation
-        private boolean scaleContent = true;            //Adjust paper size for best image fit
-        private Size size = null;                       //Paper size
-        private Unit units = Unit.INCH;                 //Units for density, margins, size
+        private ColorType colorType = ColorType.COLOR;                              //Color / black&white
+        private int copies = 1;                                                     //Job copies
+        private int density = 0;                                                    //Pixel density (DPI or DPMM)
+        private boolean duplex = false;                                             //Double/single sided
+        private Object interpolation = RenderingHints.VALUE_INTERPOLATION_BICUBIC;  //Image interpolation
+        private Margins margins = new Margins();                                    //Page margins
+        private Orientation orientation = null;                                     //Page orientation
+        private double paperThickness = -1;                                         //Paper thickness
+        private String printerTray = null;                                          //Printer tray to use
+        private double rotation = 0;                                                //Image rotation
+        private boolean scaleContent = true;                                        //Adjust paper size for best image fit
+        private Size size = null;                                                   //Paper size
+        private Unit units = Unit.INCH;                                             //Units for density, margins, size
 
 
         public ColorType getColorType() {
@@ -242,6 +256,10 @@ public class PrintOptions {
 
         public boolean isDuplex() {
             return duplex;
+        }
+
+        public Object getInterpolation() {
+            return interpolation;
         }
 
         public Margins getMargins() {
@@ -264,7 +282,7 @@ public class PrintOptions {
             return rotation;
         }
 
-        public boolean scaleContent() {
+        public boolean isScaleContent() {
             return scaleContent;
         }
 
@@ -281,8 +299,8 @@ public class PrintOptions {
 
     /** Pixel page size options */
     public class Size {
-        private double width = -1;              //Page width
-        private double height = -1;             //Page height
+        private double width = -1;  //Page width
+        private double height = -1; //Page height
 
         public double getWidth() {
             return width;
@@ -295,10 +313,10 @@ public class PrintOptions {
 
     /** Pixel page margins options */
     public class Margins {
-        private double top = 0;             //Top page margin
-        private double right = 0;           //Right page margin
-        private double bottom = 0;          //Bottom page margin
-        private double left = 0;            //Left page margin
+        private double top = 0;     //Top page margin
+        private double right = 0;   //Right page margin
+        private double bottom = 0;  //Bottom page margin
+        private double left = 0;    //Left page margin
 
         private void setAll(double margin) {
             top = margin;
@@ -327,8 +345,8 @@ public class PrintOptions {
 
     /** Pixel dimension values */
     public enum Unit {
-        INCH(1.0f, 1.0f), //1in = 1in
-        CM(.3937f, 2.54f), //1cm = .3937in ; 1in = 2.54cm
+        INCH(1.0f, 1.0f),   //1in = 1in
+        CM(.3937f, 2.54f),  //1cm = .3937in ; 1in = 2.54cm
         MM(.03937f, 25.4f); //1mm = .03937in ; 1in = 25.4mm
 
         private final float fromInch;
