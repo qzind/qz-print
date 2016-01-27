@@ -4,6 +4,7 @@ import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import org.apache.commons.codec.binary.StringUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -33,6 +34,7 @@ import javax.usb.UsbException;
 import javax.usb.util.UsbUtil;
 import java.awt.print.PrinterAbortException;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -142,7 +144,9 @@ public class PrintSocketClient {
     }
 
     @OnWebSocketMessage
-    public void onMessage(Session session, String message) {
+    public void onMessage(Session session, Reader reader) throws IOException {
+        String message = IOUtils.toString(reader);
+
         if (message == null || message.isEmpty()) {
             sendError(session, null, "Message is empty");
             return;
