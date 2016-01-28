@@ -266,7 +266,12 @@ public class PrintSocketClient {
                 break;
             case PRINTERS_FIND:
                 if (params.has("query")) {
-                    sendResult(session, UID, PrintServiceMatcher.getPrinterJSON(params.getString("query")));
+                    String name = PrintServiceMatcher.getPrinterJSON(params.getString("query"));
+                    if (name != null) {
+                        sendResult(session, UID, name);
+                    } else {
+                        sendError(session, UID, "Specified printer could not be found.");
+                    }
                 } else {
                     sendResult(session, UID, PrintServiceMatcher.getPrintersJSON());
                 }
@@ -403,7 +408,7 @@ public class PrintSocketClient {
                 sendResult(session, UID, Constants.VERSION);
                 break;
 
-            default:
+            case INVALID: default:
                 sendError(session, UID, "Invalid function call: " + json.optString("call", "NONE"));
                 break;
         }

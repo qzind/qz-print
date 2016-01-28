@@ -766,12 +766,8 @@
     function findPrinter(query, set) {
         $("#printerSearch").val(query);
         qz.printers.find(query).then(function(data) {
-            if (data != undefined) {
-                displayMessage("<strong>Found:</strong> " + data);
-                if (set) { setPrinter(data); }
-            } else {
-                displayMessage("Could not find a printer using <em>" + query + "</em>", 'alert-warning');
-            }
+            displayMessage("<strong>Found:</strong> " + data);
+            if (set) { setPrinter(data); }
         }).catch(displayError);
     }
 
