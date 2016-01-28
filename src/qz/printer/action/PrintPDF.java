@@ -20,6 +20,7 @@ import java.awt.print.PageFormat;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -53,6 +54,9 @@ public class PrintPDF extends PrintPixel implements PrintProcessor {
                 }
 
                 pdfs.add(doc);
+            }
+            catch(FileNotFoundException e) {
+                throw new UnsupportedOperationException("PDF file specified could not be found.", e);
             }
             catch(IOException e) {
                 throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as a PDF file", format, data.getString("data")), e);

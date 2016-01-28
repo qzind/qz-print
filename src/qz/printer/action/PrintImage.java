@@ -32,6 +32,7 @@ import qz.printer.PrintOptions;
 import qz.printer.PrintOutput;
 import qz.utils.PrintingUtilities;
 
+import javax.imageio.IIOException;
 import javax.imageio.ImageIO;
 import javax.print.attribute.PrintRequestAttributeSet;
 import java.awt.*;
@@ -41,6 +42,7 @@ import java.awt.print.Printable;
 import java.awt.print.PrinterException;
 import java.awt.print.PrinterJob;
 import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -82,6 +84,13 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
                 }
 
                 images.add(bi);
+            }
+            catch(IIOException e) {
+                if (e.getCause() != null && e.getCause() instanceof FileNotFoundException) {
+                    throw new UnsupportedOperationException("Image file specified could not be found.", e);
+                } else {
+                    throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as an image", format, data.getString("data")), e);
+                }
             }
             catch(IOException e) {
                 throw new UnsupportedOperationException(String.format("Cannot parse (%s)%s as an image", format, data.getString("data")), e);
