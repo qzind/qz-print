@@ -395,6 +395,7 @@ public class PrintOptions {
     public enum ColorType {
         COLOR(Chromaticity.COLOR),
         GREYSCALE(Chromaticity.MONOCHROME),
+        GRAYSCALE(Chromaticity.MONOCHROME),
         BLACKWHITE(Chromaticity.MONOCHROME);
 
         private Chromaticity chromatic;

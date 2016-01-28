@@ -640,7 +640,7 @@ var qz = function() {
              *
              * @param {Object} options Default options used by printer configs if not overridden.
              *
-             *  @param {string} [options.colorType='color'] Valid values <code>[color | greyscale | blackwhite]</code>
+             *  @param {string} [options.colorType='color'] Valid values <code>[color | grayscale | blackwhite]</code>
              *  @param {number} [options.copies=1] Number of copies to be printed.
              *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on <code>[options.units]</code>).
              *  @param {boolean} [options.duplex=false] Double sided printing
