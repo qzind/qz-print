@@ -9,7 +9,6 @@ import qz.utils.SystemUtilities;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.ResolutionSyntax;
-import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -42,11 +41,10 @@ public abstract class PrintPixel {
             attributes.add(pxlOpts.getOrientation().getAsAttribute());
         }
 
-        // Fixes 4x6 labels on Mac OSX
-        if (pxlOpts.getSize() != null && pxlOpts.getUnits() == PrintOptions.Unit.INCH && pxlOpts.getSize().getWidth() == 4 && pxlOpts.getSize().getHeight() == 6) {
-            attributes.add(MediaSizeName.JAPANESE_POSTCARD);
+        if (pxlOpts.getSize() != null) {
+            attributes.add(MediaSize.findMedia((float)pxlOpts.getSize().getWidth(), (float)pxlOpts.getSize().getHeight(), pxlOpts.getUnits().getMediaSizeUnits()));
         } else {
-            attributes.add(MediaSize.findMedia((float)page.getWidth(), (float)page.getHeight(), Size2DSyntax.INCH));
+            attributes.add(MediaSize.findMedia((float)page.getWidth(), (float)page.getHeight(), pxlOpts.getUnits().getMediaSizeUnits()));
         }
 
         //TODO - set paper thickness

@@ -119,7 +119,7 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         imageRotation = pxlOpts.getRotation();
 
         job.setJobName(Constants.IMAGE_PRINT);
-        job.setPrintable(this, page);
+        job.setPrintable(this, job.validatePage(page));
 
         printCopies(output, pxlOpts, job, attributes);
     }

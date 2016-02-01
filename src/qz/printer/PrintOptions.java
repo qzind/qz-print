@@ -5,6 +5,7 @@ import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.Chromaticity;
 import javax.print.attribute.standard.OrientationRequested;
 import java.awt.*;
@@ -345,16 +346,18 @@ public class PrintOptions {
 
     /** Pixel dimension values */
     public enum Unit {
-        INCH(1.0f, 1.0f),   //1in = 1in
-        CM(.3937f, 2.54f),  //1cm = .3937in ; 1in = 2.54cm
-        MM(.03937f, 25.4f); //1mm = .03937in ; 1in = 25.4mm
+        INCH(1.0f, 1.0f, Size2DSyntax.INCH), //1in = 1in
+        CM(.3937f, 2.54f, 10000),            //1cm = .3937in ; 1in = 2.54cm
+        MM(.03937f, 25.4f, Size2DSyntax.MM); //1mm = .03937in ; 1in = 25.4mm
 
         private final float fromInch;
         private final float toInch; //multiplicand to convert to inches
+        private final int µm;
 
-        Unit(float toIN, float fromIN) {
+        Unit(float toIN, float fromIN, int µm) {
             toInch = toIN;
             fromInch = fromIN;
+            this.µm = µm;
         }
 
         public float toInch() {
@@ -363,6 +366,10 @@ public class PrintOptions {
 
         public float fromInch() {
             return fromInch;
+        }
+
+        public int getMediaSizeUnits() {
+            return µm;
         }
     }
 
