@@ -86,6 +86,8 @@ public class PrintSocket {
 
     private static Throwable lastError = null;
 
+    private static boolean serialIOEnabled = false;
+
     @OnWebSocketConnect
     public void onConnect(Session session) {
         log.info("Server connect: " + session.getRemoteAddress());
@@ -281,38 +283,44 @@ public class PrintSocket {
                                     if (qz.getSerialIO() != null && qz.getSerialIO().isOpen()) {
                                         qz.getSerialIO().clearOutput();
 
-                                        new Thread() {
-                                            public void run() {
-                                                while(qz.getSerialIO() != null) {
-                                                    if (qz.getSerialIO().getOutput() != null) {
+                                        if (!serialIOEnabled) {
+                                            serialIOEnabled = true;
+                                            new Thread() {
+                                                public void run() {
+                                                    while (qz.getSerialIO().getPortName() != null) {
+                                                        if (qz.getSerialIO().getOutput() != null) {
+                                                            try {
+                                                                JSONObject portMsg = new JSONObject();
+                                                                portMsg.put("init", false);
+                                                                portMsg.put("callback", "qzSerialReturned");
+                                                                JSONArray res = new JSONArray();
+                                                                res.put(qz.getSerialIO().getPortName());
+                                                                res.put(new String(qz.getSerialIO().getOutput(), qz.getCharset()));
+                                                                portMsg.put("result", res);
+
+                                                                sendResponse(session, portMsg);
+                                                                qz.getSerialIO().clearOutput();
+                                                            } catch (JSONException e) {
+                                                                log.warning("Issue sending data received from serial port - " + e.getMessage());
+                                                            }
+                                                        }
                                                         try {
-                                                            JSONObject portMsg = new JSONObject();
-                                                            portMsg.put("init", false);
-                                                            portMsg.put("callback", "qzSerialReturned");
-                                                            JSONArray res = new JSONArray();
-                                                            res.put(qz.getSerialIO().getPortName());
-                                                            res.put(new String(qz.getSerialIO().getOutput(), qz.getCharset()));
-                                                            portMsg.put("result", res);
-
-                                                            sendResponse(session, portMsg);
-                                                            qz.getSerialIO().clearOutput();
-                                                        }
-                                                        catch(JSONException e) {
-                                                            log.warning("Issue sending data received from serial port - " + e.getMessage());
-                                                        }
+                                                            Thread.sleep(20);
+                                                        } catch (Exception ignore) {}
                                                     }
+                                                    serialIOEnabled = false;
                                                 }
-                                            }
 
-                                            private Session session;
-                                            private PrintFunction qz;
+                                                private Session session;
+                                                private PrintFunction qz;
 
-                                            public Thread setup(Session session, PrintFunction qz) {
-                                                this.session = session;
-                                                this.qz = qz;
-                                                return this;
-                                            }
-                                        }.setup(session, qz).start();
+                                                public Thread setup(Session session, PrintFunction qz) {
+                                                    this.session = session;
+                                                    this.qz = qz;
+                                                    return this;
+                                                }
+                                            }.setup(session, qz).start();
+                                        }
                                     }
                                 }
                                 if ("closePort".equals(name)) {
