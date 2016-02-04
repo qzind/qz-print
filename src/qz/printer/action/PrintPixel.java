@@ -9,6 +9,7 @@ import qz.utils.SystemUtilities;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.ResolutionSyntax;
+import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -30,6 +31,10 @@ public abstract class PrintPixel {
     protected PrintRequestAttributeSet applyDefaultSettings(PrintOptions.Pixel pxlOpts, PageFormat page) {
         PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
 
+        // Java prints using inches at 72dpi
+        final float CONVERT = 72 * pxlOpts.getUnits().toInch();
+        final float DENSITY = pxlOpts.getDensity() * pxlOpts.getUnits().fromInch();
+
         //apply general attributes
         if (pxlOpts.getColorType() != null) {
             attributes.add(pxlOpts.getColorType().getChromatic());
@@ -42,17 +47,15 @@ public abstract class PrintPixel {
         }
 
         if (pxlOpts.getSize() != null) {
-            attributes.add(MediaSize.findMedia((float)pxlOpts.getSize().getWidth(), (float)pxlOpts.getSize().getHeight(), pxlOpts.getUnits().getMediaSizeUnits()));
+            attributes.add(MediaSize.findMedia((float)pxlOpts.getSize().getWidth() / CONVERT, (float)pxlOpts.getSize().getHeight() / CONVERT, pxlOpts.getUnits().getMediaSizeUnits()));
         } else {
-            attributes.add(MediaSize.findMedia((float)page.getWidth(), (float)page.getHeight(), pxlOpts.getUnits().getMediaSizeUnits()));
+            attributes.add(MediaSize.findMedia((float)page.getWidth() / 72f, (float)page.getHeight() / 72f, Size2DSyntax.INCH));
         }
 
         //TODO - set paper thickness
         //TODO - set printer tray
 
-        // Java prints using inches at 72dpi
-        final float CONVERT = 72 * pxlOpts.getUnits().toInch();
-        final float DENSITY = pxlOpts.getDensity() * pxlOpts.getUnits().fromInch();
+
 
         log.trace("DPI: {}", DENSITY);
         if (DENSITY > 0) {
