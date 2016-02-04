@@ -56,7 +56,6 @@ public abstract class PrintPixel {
         //TODO - set printer tray
 
 
-
         log.trace("DPI: {}", DENSITY);
         if (DENSITY > 0) {
             attributes.add(new PrinterResolution((int)DENSITY, (int)DENSITY, ResolutionSyntax.DPI));

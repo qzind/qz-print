@@ -163,7 +163,7 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
 
         if (scaleImage) {
             // scale image to smallest edge, keeping size ratio
-            if ((imgToPrint.getWidth() / imgToPrint.getHeight()) >= (boundW / boundH)) {
+            if (((float)imgToPrint.getWidth() / (float)imgToPrint.getHeight()) >= (boundW / boundH)) {
                 imgW = (int)boundW;
                 imgH = (int)(imgToPrint.getHeight() / (imgToPrint.getWidth() / boundW));
             } else {
