@@ -1170,7 +1170,7 @@
 
     function openUsbStream() {
         qz.usb.openStream($("#usbVendor").val(), $("#usbProduct").val(), $("#usbEndpoint").val(), $("#usbResponse").val(), $("#usbStream").val()).then(function() {
-            pinMessage("Waiting on device", '' + $("#usbVendor").val() + $("#usbProduct").val());
+            pinMessage("Waiting on device", '' + $("#usbVendor").val().replace(/^0x/, '') + $("#usbProduct").val().replace(/^0x/, ''));
         }).catch(displayError);
     }
 

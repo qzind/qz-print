@@ -44,12 +44,10 @@ public class PrintSocketClient {
     private static final Logger log = LoggerFactory.getLogger(PrintSocketClient.class);
 
     private final TrayManager trayManager = PrintSocketServer.getTrayManager();
-
-    private static final HashMap<Integer,Certificate> openConnections = new HashMap<>(); //port -> public certificate
     private static final AtomicBoolean dialogOpen = new AtomicBoolean(false);
 
-    private static final HashMap<String,SerialIO> openSerialPorts = new HashMap<>(); //serial port -> SerialIO object
-    private static final HashMap<Short,HashMap<Short,UsbIO>> openUsbDevices = new HashMap<>(); //vendor id -> product id -> UsbIO object
+    //websocket port -> Connection
+    private static final HashMap<Integer,SocketConnection> openConnections = new HashMap<>();
 
     private enum StreamType {
         SERIAL, USB
@@ -122,7 +120,7 @@ public class PrintSocketClient {
         trayManager.displayFineMessage("Client connected");
 
         //new connections are unknown until they send a proper certificate
-        openConnections.put(session.getRemoteAddress().getPort(), Certificate.UNKNOWN);
+        openConnections.put(session.getRemoteAddress().getPort(), new SocketConnection(Certificate.UNKNOWN));
     }
 
     @OnWebSocketClose
@@ -131,8 +129,14 @@ public class PrintSocketClient {
         trayManager.displayFineMessage("Client disconnected");
 
         Integer port = session.getRemoteAddress().getPort();
-        if (openConnections.get(port) != null) {
-            openConnections.remove(port);
+        SocketConnection closed = openConnections.remove(port);
+        if (closed != null) {
+            try {
+                closed.disconnect();
+            }
+            catch(Exception e) {
+                log.error("Failed to close communication channel", e);
+            }
         }
     }
 
@@ -164,13 +168,15 @@ public class PrintSocketClient {
             UID = json.optString("uid");
 
             Integer connectionPort = session.getRemoteAddress().getPort();
-            Certificate certificate = openConnections.get(connectionPort);
+            SocketConnection connection = openConnections.get(connectionPort);
+            Certificate certificate = connection.getCertificate();
 
             //if sent a certificate use that instead for this connection
             if (json.has("certificate")) {
                 try {
                     certificate = new Certificate(json.optString("certificate"));
-                    openConnections.put(connectionPort, certificate);
+
+                    connection.setCertificate(certificate);
                     log.debug("Received new certificate from connection through {}", connectionPort);
                 }
                 catch(CertificateParsingException ignore) {}
@@ -203,7 +209,7 @@ public class PrintSocketClient {
                 }
             }
 
-            processMessage(session, json, certificate);
+            processMessage(session, json, connection, certificate);
         }
         catch(JSONException e) {
             log.error("Bad JSON: {}", e.getMessage());
@@ -228,7 +234,7 @@ public class PrintSocketClient {
      * @param session WebSocket session
      * @param json    JSON received from web API
      */
-    private void processMessage(Session session, JSONObject json, Certificate certificate) throws JSONException, SerialPortException, UsbException {
+    private void processMessage(Session session, JSONObject json, SocketConnection connection, Certificate shownCertificate) throws JSONException, SerialPortException, UsbException {
         String UID = json.optString("uid");
         Method call = Method.findFromCall(json.optString("call"));
         JSONObject params = json.optJSONObject("params");
@@ -252,7 +258,7 @@ public class PrintSocketClient {
             }
         }
 
-        if (call.isDialogShown() && !allowedFromDialog(certificate, prompt)) {
+        if (call.isDialogShown() && !allowedFromDialog(shownCertificate, prompt)) {
             sendError(session, UID, "Request blocked");
             return;
         }
@@ -284,11 +290,11 @@ public class PrintSocketClient {
                 sendResult(session, UID, SerialUtilities.getSerialPortsJSON());
                 break;
             case SERIAL_OPEN_PORT:
-                setupSerialPort(session, UID, params);
+                setupSerialPort(session, UID, connection, params);
                 break;
             case SERIAL_SEND_DATA: {
                 SerialProperties props = new SerialProperties(params.optJSONObject("properties"));
-                SerialIO serial = openSerialPorts.get(params.optString("port"));
+                SerialIO serial = connection.getSerialPort(params.optString("port"));
                 if (serial != null) {
                     serial.sendData(props, params.optString("data"));
                     sendResult(session, UID, null);
@@ -298,10 +304,10 @@ public class PrintSocketClient {
                 break;
             }
             case SERIAL_CLOSE_PORT: {
-                SerialIO serial = openSerialPorts.get(params.optString("port"));
+                SerialIO serial = connection.getSerialPort(params.optString("port"));
                 if (serial != null) {
                     serial.close();
-                    openSerialPorts.remove(params.optString("port"));
+                    connection.removeSerialPort(params.optString("port"));
                     sendResult(session, UID, null);
                 } else {
                     sendError(session, UID, String.format("Serial port [%s] is not open.", params.optString("port")));
@@ -325,17 +331,10 @@ public class PrintSocketClient {
                 short vendorId = UsbUtilities.hexToShort(params.optString("vendorId"));
                 short productId = UsbUtilities.hexToShort(params.optString("productId"));
 
-                if (findOpenDevice(params.optString("vendorId"), params.optString("productId")) == null) {
+                if (connection.getUsbDevice(params.optString("vendorId"), params.optString("productId")) == null) {
                     UsbIO usb = new UsbIO(vendorId, productId);
                     usb.open(UsbUtilities.hexToByte(params.optString("interface")));
-
-                    //add to open list
-                    HashMap<Short,UsbIO> productMap = openUsbDevices.get(vendorId);
-                    if (productMap == null) {
-                        productMap = new HashMap<>();
-                    }
-                    productMap.put(productId, usb);
-                    openUsbDevices.put(vendorId, productMap);
+                    connection.addUsbDevice(vendorId, productId, usb);
 
                     sendResult(session, UID, null);
                 } else {
@@ -345,7 +344,7 @@ public class PrintSocketClient {
                 break;
             }
             case USB_SEND_DATA: {
-                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
+                UsbIO usb = connection.getUsbDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
                     usb.sendData(UsbUtilities.hexToByte(params.optString("endpoint")), StringUtils.getBytesUtf8(params.optString("data")));
                     sendResult(session, UID, null);
@@ -356,7 +355,7 @@ public class PrintSocketClient {
                 break;
             }
             case USB_READ_DATA: {
-                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
+                UsbIO usb = connection.getUsbDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
                     byte[] response = usb.readData(UsbUtilities.hexToByte(params.optString("endpoint")), params.optInt("responseSize"));
                     JSONArray hex = new JSONArray();
@@ -371,11 +370,11 @@ public class PrintSocketClient {
                 break;
             }
             case USB_OPEN_STREAM: {
-                setupUsbStream(session, UID, params);
+                setupUsbStream(session, UID, connection, params);
                 break;
             }
             case USB_CLOSE_STREAM: {
-                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
+                UsbIO usb = connection.getUsbDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null && usb.isStreaming()) {
                     usb.setStreaming(false);
                     sendResult(session, UID, null);
@@ -386,11 +385,10 @@ public class PrintSocketClient {
                 break;
             }
             case USB_RELEASE_DEVICE: {
-                UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
+                UsbIO usb = connection.getUsbDevice(params.optString("vendorId"), params.optString("productId"));
                 if (usb != null) {
                     usb.close();
-                    openUsbDevices.get(UsbUtilities.hexToShort(params.optString("vendorId")))
-                            .remove(UsbUtilities.hexToShort(params.optString("productId")));
+                    connection.removeUsbDevice(UsbUtilities.hexToShort(params.optString("vendorId")), UsbUtilities.hexToShort(params.optString("productId")));
 
                     sendResult(session, UID, null);
                 } else {
@@ -458,9 +456,9 @@ public class PrintSocketClient {
         }
     }
 
-    private void setupSerialPort(final Session session, String UID, JSONObject params) throws JSONException {
+    private void setupSerialPort(final Session session, String UID, SocketConnection connection, JSONObject params) throws JSONException {
         final String portName = params.getString("port");
-        if (openSerialPorts.containsKey(portName)) {
+        if (connection.getSerialPort(portName) != null) {
             sendError(session, UID, String.format("Serial port [%s] is already open.", portName));
             return;
         }
@@ -477,7 +475,7 @@ public class PrintSocketClient {
 
         try {
             if (serial.open()) {
-                openSerialPorts.put(portName, serial);
+                connection.addSerialPort(portName, serial);
 
                 //apply listener here, so we can send all replies to the browser
                 serial.applyPortListener(new SerialPortEventListener() {
@@ -499,19 +497,8 @@ public class PrintSocketClient {
         }
     }
 
-    private UsbIO findOpenDevice(String vendorId, String productId) {
-        UsbIO usb = null;
-
-        HashMap<Short,UsbIO> productMap = openUsbDevices.get(UsbUtilities.hexToShort(vendorId));
-        if (productMap != null) {
-            usb = productMap.get(UsbUtilities.hexToShort(productId));
-        }
-
-        return usb;
-    }
-
-    private void setupUsbStream(final Session session, String UID, final JSONObject params) throws JSONException {
-        final UsbIO usb = findOpenDevice(params.optString("vendorId"), params.optString("productId"));
+    private void setupUsbStream(final Session session, String UID, SocketConnection connection, final JSONObject params) throws JSONException {
+        final UsbIO usb = connection.getUsbDevice(params.optString("vendorId"), params.optString("productId"));
 
         if (usb != null) {
             if (!usb.isStreaming()) {
