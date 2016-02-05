@@ -713,22 +713,29 @@
         };
     });
 
-
     /// Connection ///
     function launchQZ() {
         if (!qz.websocket.isActive()) {
             window.location.assign("qz:launch");
+
+            var wait = 1000; //ms
+            var reconnect = function(ignore) {
+                if (!qz.websocket.isActive()) {
+                    console.log("Retrying connection...");
+                    window.setTimeout(function() { startConnection(reconnect); }, wait);
+                }
+            }
         }
     }
 
-    function startConnection() {
+    function startConnection(errorHandler) {
         if (!qz.websocket.isActive()) {
             updateState('Waiting', 'default');
 
             qz.websocket.connect().then(function() {
                 updateState('Active', 'success');
                 findVersion();
-            }).catch(handleConnectionError);
+            }).catch(errorHandler ? errorHandler : handleConnectionError);
         } else {
             displayMessage('An active connection with QZ already exists.', 'alert-warning');
         }
