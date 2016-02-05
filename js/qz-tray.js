@@ -291,6 +291,7 @@ var qz = function() {
 
                 colorType: 'color',
                 copies: 1,
+                jobName: null,
                 density: 0,
                 duplex: false,
                 interpolation: 'bicubic',
@@ -642,6 +643,7 @@ var qz = function() {
              *
              *  @param {string} [options.colorType='color'] Valid values <code>[color | grayscale | blackwhite]</code>
              *  @param {number} [options.copies=1] Number of copies to be printed.
+             *  @param {string} [options.jobName=null] Name to display in print queue.
              *  @param {number} [options.density=72] Pixel density (DPI, DPMM, or DPCM depending on <code>[options.units]</code>).
              *  @param {boolean} [options.duplex=false] Double sided printing
              *  @param {string} [options.interpolation='bicubic'] Valid values <code>[bicubic | bilinear | nearest-neighbor]</code>. Controls how images are handled when resized.

@@ -47,6 +47,9 @@ public class PrintOptions {
             try { rawOptions.copies = configOpts.getInt("copies"); }
             catch(JSONException e) { warn("integer", "copies", configOpts.opt("copies")); }
         }
+        if (!configOpts.isNull("jobName")) {
+            rawOptions.jobName = configOpts.optString("jobName", null);
+        }
 
         //check for pixel options
         if (!configOpts.isNull("colorType")) {
@@ -64,6 +67,9 @@ public class PrintOptions {
                 log.warn("Cannot have less than one copy");
                 psOptions.copies = 1;
             }
+        }
+        if (!configOpts.isNull("jobName")) {
+            psOptions.jobName = configOpts.optString("jobName", null);
         }
         if (!configOpts.isNull("density")) {
             try { psOptions.density = configOpts.getDouble("density"); }
@@ -199,6 +205,7 @@ public class PrintOptions {
         private String language = null;         //Printer language
         private int perSpool = 1;               //Pages per spool
         private int copies = 1;                 //Job copies
+        private String jobName = null;          //Job name
 
 
         public boolean isAltPrinting() {
@@ -224,12 +231,17 @@ public class PrintOptions {
         public int getCopies() {
             return copies;
         }
+
+        public String getJobName(String defaultVal) {
+            return jobName == null || jobName.isEmpty() ? defaultVal : jobName;
+        }
     }
 
     /** Pixel printing options */
     public class Pixel {
         private ColorType colorType = ColorType.COLOR;                              //Color / black&white
         private int copies = 1;                                                     //Job copies
+        private String jobName = null;                                              //Job name
         private double density = 0;                                                 //Pixel density (DPI or DPMM)
         private boolean duplex = false;                                             //Double/single sided
         private Object interpolation = RenderingHints.VALUE_INTERPOLATION_BICUBIC;  //Image interpolation
@@ -249,6 +261,10 @@ public class PrintOptions {
 
         public int getCopies() {
             return copies;
+        }
+
+        public String getJobName(String defaultVal) {
+            return jobName == null || jobName.isEmpty() ? defaultVal : jobName;
         }
 
         public double getDensity() {

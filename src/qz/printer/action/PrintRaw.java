@@ -190,7 +190,7 @@ public class PrintRaw implements PrintProcessor {
                         if (rawOpts.isAltPrinting()) {
                             printToAlternate(output.getPrintService(), bab.getByteArray());
                         } else {
-                            printToPrinter(output.getPrintService(), bab.getByteArray());
+                            printToPrinter(output.getPrintService(), bab.getByteArray(), rawOpts);
                         }
                     }
                 }
@@ -235,14 +235,14 @@ public class PrintRaw implements PrintProcessor {
     /**
      * Constructs a {@code SimpleDoc} with the {@code commands} byte array.
      */
-    private void printToPrinter(PrintService service, byte[] cmds) throws PrintException {
+    private void printToPrinter(PrintService service, byte[] cmds, PrintOptions.Raw rawOpts) throws PrintException {
         if (service == null) { throw new NullPrintServiceException("Service cannot be null"); }
         if (cmds == null || cmds.length == 0) { throw new NullCommandException("No commands found to send to the printer"); }
 
         SimpleDoc doc = new SimpleDoc(cmds, DocFlavor.BYTE_ARRAY.AUTOSENSE, null);
 
         PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
-        attributes.add(new JobName(Constants.RAW_PRINT, Locale.getDefault()));
+        attributes.add(new JobName(rawOpts.getJobName(Constants.RAW_PRINT), Locale.getDefault()));
 
         DocPrintJob printJob = service.createPrintJob();
 

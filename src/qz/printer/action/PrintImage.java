@@ -114,11 +114,11 @@ public class PrintImage extends PrintPixel implements PrintProcessor, Printable 
         PrintOptions.Pixel pxlOpts = options.getPixelOptions();
         PrintRequestAttributeSet attributes = applyDefaultSettings(pxlOpts, page);
 
-        scaleImage = options.getPixelOptions().isScaleContent();
-        interpolation = options.getPixelOptions().getInterpolation();
+        scaleImage = pxlOpts.isScaleContent();
+        interpolation = pxlOpts.getInterpolation();
         imageRotation = pxlOpts.getRotation();
 
-        job.setJobName(Constants.IMAGE_PRINT);
+        job.setJobName(pxlOpts.getJobName(Constants.IMAGE_PRINT));
         job.setPrintable(this, job.validatePage(page));
 
         printCopies(output, pxlOpts, job, attributes);
