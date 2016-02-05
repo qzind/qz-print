@@ -291,7 +291,7 @@ var qz = function() {
 
                 colorType: 'color',
                 copies: 1,
-                density: 72,
+                density: 0,
                 duplex: false,
                 interpolation: 'bicubic',
                 margins: 0,
