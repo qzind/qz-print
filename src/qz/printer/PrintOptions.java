@@ -66,8 +66,8 @@ public class PrintOptions {
             }
         }
         if (!configOpts.isNull("density")) {
-            try { psOptions.density = configOpts.getInt("density"); }
-            catch(JSONException e) { warn("integer", "density", configOpts.opt("density")); }
+            try { psOptions.density = configOpts.getDouble("density"); }
+            catch(JSONException e) { warn("double", "density", configOpts.opt("density")); }
         }
         if (!configOpts.isNull("duplex")) {
             try { psOptions.duplex = configOpts.getBoolean("duplex"); }
@@ -230,7 +230,7 @@ public class PrintOptions {
     public class Pixel {
         private ColorType colorType = ColorType.COLOR;                              //Color / black&white
         private int copies = 1;                                                     //Job copies
-        private int density = 0;                                                    //Pixel density (DPI or DPMM)
+        private double density = 0;                                                 //Pixel density (DPI or DPMM)
         private boolean duplex = false;                                             //Double/single sided
         private Object interpolation = RenderingHints.VALUE_INTERPOLATION_BICUBIC;  //Image interpolation
         private Margins margins = new Margins();                                    //Page margins
@@ -251,7 +251,7 @@ public class PrintOptions {
             return copies;
         }
 
-        public int getDensity() {
+        public double getDensity() {
             return density;
         }
 

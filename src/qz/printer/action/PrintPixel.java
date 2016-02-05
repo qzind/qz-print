@@ -33,7 +33,7 @@ public abstract class PrintPixel {
 
         // Java prints using inches at 72dpi
         final float CONVERT = 72 * pxlOpts.getUnits().toInch();
-        final float DENSITY = pxlOpts.getDensity() * pxlOpts.getUnits().fromInch();
+        final float DENSITY = (float)pxlOpts.getDensity() * pxlOpts.getUnits().fromInch();
 
         //apply general attributes
         if (pxlOpts.getColorType() != null) {
