@@ -68,6 +68,10 @@ Section
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\${socket.name}" \
                    "EstimatedSize" "${build.socket.size}"
 
+  ; Allow localhost connections for Microsoft Edge
+  DetailPrint "Whitelisting loopback connections for Microsoft Edge..."
+  nsExec::ExecToLog "CheckNetIsolation.exe LoopbackExempt -a -n=$\"Microsoft.MicrosoftEdge_8wekyb3d8bbwe$\""
+
   ; Mimetype support, e.g. ${vendor.name}:launch
   WriteRegStr HKCR "${vendor.name}" "" "URL:${socket.name} Protocol"
   WriteRegStr HKCR "${vendor.name}" "URL Protocol" ""
