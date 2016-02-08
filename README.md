@@ -1,7 +1,7 @@
 qz-print
 ========
 
-Free browser applet for sending documents and raw commands to a printer.
+Browser plugin for sending documents and raw commands to a printer or attached device.
 
 ##Getting Started
   * See our [Getting Started](../../wiki/getting-started) guide.
