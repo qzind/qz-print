@@ -17,10 +17,6 @@ RequestExecutionLevel admin
 
 ;-------------------------------
 
-InstallDir "$PROGRAMFILES\${project.name}"
-
-;-------------------------------
-
 !define MUI_ICON "${basedir}\${branding.dir}\${windows.icon}"
 
 !insertmacro MUI_PAGE_WELCOME
@@ -182,16 +178,21 @@ SectionEnd
 ;-------------------------------
 
 Function .onInit
+  ${If} ${RunningX64}
+      SetRegView 64
+  ${EndIf}
+  ${If} $InstDir == ""
     ${If} ${RunningX64}
-        SetRegView 64
-        StrCpy $INSTDIR "$PROGRAMFILES64\${project.name}"
+      StrCpy $INSTDIR "$PROGRAMFILES64\${project.name}"
+    ${Else}
+      StrCpy $INSTDIR "$PROGRAMFILES\${project.name}"
     ${EndIf}
+  ${EndIf}
 FunctionEnd
 
 Function un.onInit
     ${If} ${RunningX64}
         SetRegView 64
-        StrCpy $INSTDIR "$PROGRAMFILES64\${project.name}"
     ${EndIf}
 FunctionEnd
 
