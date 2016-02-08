@@ -128,7 +128,7 @@ public class PrintSocketServer {
                 HttpConnectionFactory httpConnection = new HttpConnectionFactory(new HttpConfiguration());
 
                 ServerConnector connector = new ServerConnector(server, sslConnection, httpConnection);
-                connector.setHost("localhost");
+                connector.setHost(sslProperties.getProperty("wss.host"));
                 connector.setPort(SECURE_PORTS.get(securePortIndex.get()));
                 server.addConnector(connector);
             } else {

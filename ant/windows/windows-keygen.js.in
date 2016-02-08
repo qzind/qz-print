@@ -241,6 +241,7 @@ function createJavaKeystore() {
     file.WriteLine("wss.keystore=" + keyStore.replace(/\\/g, "\\\\"));
     file.WriteLine("wss.keypass=" + password);
     file.WriteLine("wss.storepass=" + password);
+    file.WriteLine("wss.host=${jks.host}");
     file.Close();
 
     return true;
