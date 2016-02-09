@@ -80,6 +80,7 @@ var qz = function() {
                     }
 
                     try {
+                        _qz.log.trace("Attempting connection", address);
                         _qz.websocket.connection = new WebSocket(address);
                     }
                     catch(err) {
@@ -162,6 +163,8 @@ var qz = function() {
 
                     //send JSON objects to qz
                     _qz.websocket.connection.sendData = function(obj) {
+                        _qz.log.trace("Preparing object for websocket", obj);
+
                         if (obj.timestamp == undefined) {
                             obj.timestamp = Date.now();
                         }
@@ -179,12 +182,15 @@ var qz = function() {
                                 };
 
                                 _qz.security.callSign(_qz.tools.hash(_qz.tools.stringify(signObj))).then(function(signature) {
+                                    _qz.log.trace("Signature for call", signature);
                                     obj.signature = signature;
                                     _qz.signContent = undefined;
 
                                     _qz.websocket.connection.send(_qz.tools.stringify(obj));
                                 });
                             } else {
+                                _qz.log.trace("Signature for call", obj.signature);
+
                                 //called for pre-signed content and (unsigned) setup calls
                                 _qz.websocket.connection.send(_qz.tools.stringify(obj));
                             }
@@ -221,9 +227,11 @@ var qz = function() {
                             return;
                         }
 
+                        _qz.log.trace("Received response from websocket", returned);
+
                         var promise = _qz.websocket.pendingCalls[returned.uid];
                         if (promise == undefined) {
-                            _qz.log.warn('No promise found for returned result');
+                            _qz.log.warn('No promise found for returned response');
                         } else {
                             if (returned.error != undefined) {
                                 promise.reject(new Error(returned.error));
@@ -1189,6 +1197,15 @@ var qz = function() {
          * @namespace qz.api
          */
         api: {
+            /**
+             * Show or hide QZ api debugging statements in the browser console.
+             *
+             * @param {boolean} show Whether the debugging logs for QZ should be shown. Hidden by default.
+             */
+            showDebug: function(show) {
+                _qz.DEBUG = show;
+            },
+
             /**
              * Get version of connected QZ Tray application.
              *
