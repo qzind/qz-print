@@ -1,16 +1,17 @@
-                            QZ Industries, LLC
-          ATTRIBUTION, LICENSING AND SUMMARY OF QZ-PRINT COMPONENTS
-                        Version 1.1, May 2015
+          ATTRIBUTION, LICENSING AND SUMMARY OF COMPONENTS
+                     Version 1.2, February 2016
 
-QZ-PRINT / QZ-TRAY Application
-  Copyright (c) 2008-2013 QZ Industries, LLC
-  Dual Licensed:
-  LGPL-2.1 License* (attached) - OR -
-  QZ Industries Source Code License (proprietary)
-  *Premium versions of QZ-PRINT are also subject to an additional sofware 
-  usage agreement.
+Project Source Code (unless otherwise specified):
+  Copyright (c) 2013-2016 QZ Industries, LLC
+  LGPL-2.1 License (attached)
   https://qz.io
 
+All API Examples (unless otherwise specified):
+  Covers: JavaScript examples, Wiki API Examples, Signing API Examples
+  Public Domain (no restrictions)
+______________________________________________________________________
+
+Other licenses:
 
 jOOR Reflection Library (As-Is, No Modifications)
   Copyright (c) 2011-2012, Lukas Eder, lukas.eder@gmail.com
@@ -18,18 +19,18 @@ jOOR Reflection Library (As-Is, No Modifications)
   https://github.com/jOOQ/jOOR
 
 
-jetty Web Server (As-Is, No Modifications)
+jetty Web Server Library (As-Is, No Modifications)
   Copyright (c) 1995-2014 Eclipse Foundation
   Apache License, Version 2.0 (attached), with Copyright Notice
   http://eclipse.org/jetty/
 
-	 
-PDF-Renderer Library (As-Is, No Modifications)
-  Copyright (c) 2004 Sun Microsystems, Inc. and Java.net
-  LGPL-2.1 License (attached), with Copyright notice
-  https://java.net/projects/pdf-renderer
 
-	 
+Apache PDFBox (As-Is, No Modifications)
+  Copyright (C) 2009–2015 The Apache Software Foundation
+  Apache License, Version 2.0 (attached), with Copyright Notice
+  https://pdfbox.apache.org/
+
+
 jSSC Library (As-Is, No Modifications)
   Copyright (c) 2010-2013 Alexey Sokolov (scream3r) 
   LGPL-2.1 License (attached), with Copyright notice

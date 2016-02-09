@@ -11,7 +11,7 @@ import org.bouncycastle.asn1.x509.X509Name;
 import org.bouncycastle.jce.PrincipalUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import qz.common.Base64;
+import net.sourceforge.iharder.Base64;
 import qz.common.Constants;
 import qz.utils.ByteUtilities;
 import qz.utils.FileUtilities;

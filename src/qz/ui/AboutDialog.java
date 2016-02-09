@@ -12,7 +12,6 @@ import java.net.URL;
 
 /**
  * Created by Tres on 2/26/2015.
- * <p/>
  * Displays a basic about dialog
  */
 public class AboutDialog extends BasicDialog {

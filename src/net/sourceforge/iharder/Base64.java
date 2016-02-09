@@ -1,35 +1,12 @@
 /**
- * @author Tres Finocchiaro
+ * @author Robert Harder
  * 
  * Copyright (C) 2010 Robert Harder, iharder.sourceforge.net
- * 
- * IMPORTANT:  This software is dual-licensed
- * 
- * LGPL 2.1
- * This is free software.  This software and source code are released under 
- * the "LGPL 2.1 License".  A copy of this license should be distributed with 
- * this software. http://www.gnu.org/licenses/lgpl-2.1.html
- * 
- * QZ INDUSTRIES SOURCE CODE LICENSE
- * This software and source code *may* instead be distributed under the 
- * "QZ Industries Source Code License", available by request ONLY.  If source 
- * code for this project is to be made proprietary for an individual and/or a
- * commercial entity, written permission via a copy of the "QZ Industries Source
- * Code License" must be obtained first.  If you've obtained a copy of the 
- * proprietary license, the terms and conditions of the license apply only to 
- * the licensee identified in the agreement.  Only THEN may the LGPL 2.1 license
- * be voided.
- * 
- * TRANSFERENCE OF LICENSE FOR BASE64.JAVA ONLY
- * Robert Harder has released Base64.java source into the Public Domain.
- * Per Robert's instructions, an individual or company can do whatever he/she 
- * wants with it. Under these terms, this file's source code is re-licensed
- * under the licenses listed above.  To obtain an original copy of Robert's
- * code, please visit iharder.sourceforge.net
- * 
+ *
+ * License: Public Domain
  */
 
-package qz.common;
+package net.sourceforge.iharder;
 
 /**
  * <p>Encodes and decodes to and from Base64 notation.</p>
