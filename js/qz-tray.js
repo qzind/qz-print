@@ -1201,6 +1201,8 @@ var qz = function() {
              * Show or hide QZ api debugging statements in the browser console.
              *
              * @param {boolean} show Whether the debugging logs for QZ should be shown. Hidden by default.
+             *
+             * @memberof qz.api
              */
             showDebug: function(show) {
                 _qz.DEBUG = show;
