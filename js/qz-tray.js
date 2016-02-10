@@ -66,7 +66,9 @@ var qz = function() {
                     insecure: [8182, 8283, 8384, 8485], //list of insecure ports QZ Tray could be listening on
                     usingIndex: 0                       //array index of port being used by connection
                 },
-                keepAlive: 60                           //time between pings to keep connection alive, in seconds
+                keepAlive: 60,                          //time between pings to keep connection alive, in seconds
+                retries: 0,                             //number of times to reconnect before failing
+                delay: 0                                //seconds before firing a connection
             },
 
             setup: {
@@ -497,6 +499,8 @@ var qz = function() {
              *  @param {string} [options.host='localhost'] Host running the QZ Tray software.
              *  @param {boolean} [options.usingSecure=true] If the web socket should try to use secure ports for connecting.
              *  @param {number} [options.keepAlive=60] Seconds between keep-alive pings to keep connection open. Set to 0 to disable.
+             *  @param {number} [options.retries=0] Number of times to reconnect before failing.
+             *  @param {number} [options.delay=0] Seconds before firing a connection.  Ignored if <code>options.retries</code> is 0.
              *
              * @returns {Promise<null|Error>}
              *
@@ -522,7 +526,28 @@ var qz = function() {
                     }
 
                     var config = _qz.tools.extend({}, _qz.websocket.connectConfig, options);
-                    _qz.websocket.setup.findConnection(config, resolve, reject);
+
+                    var attempt = function(count) {
+                        var nextAttempt = function() {
+                            if (count < options.retries) {
+                                attempt(count + 1);
+                            } else {
+                                reject.apply(null, arguments);
+                            }
+                        };
+
+                        var delayed = function() {
+                            var config = _qz.tools.extend({}, _qz.websocket.connectConfig, options);
+                            _qz.websocket.setup.findConnection(config, resolve, nextAttempt)
+                        };
+                        if (count == 0) {
+                            delayed(); // only retries will be called with a delay
+                        } else {
+                            setTimeout(delayed, options.delay * 1000);
+                        }
+                    };
+
+                    attempt(0);
                 });
             },
 

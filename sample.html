@@ -730,27 +730,19 @@
     function launchQZ() {
         if (!qz.websocket.isActive()) {
             window.location.assign("qz:launch");
-
-            var wait = 1000; //ms
-            var reconnect = function(ignore) {
-                if (!qz.websocket.isActive()) {
-                    console.log("Retrying connection...");
-                    window.setTimeout(function() { startConnection(reconnect); }, wait);
-                }
-            }
-
-            reconnect();
+            //Retry 5 times, pausing 1 second between each attempt
+            startConnection({retries: 5, delay: 1});
         }
     }
 
-    function startConnection(errorHandler) {
+    function startConnection(config) {
         if (!qz.websocket.isActive()) {
             updateState('Waiting', 'default');
 
-            qz.websocket.connect().then(function() {
+            qz.websocket.connect(config).then(function() {
                 updateState('Active', 'success');
                 findVersion();
-            }).catch(errorHandler ? errorHandler : handleConnectionError);
+            }).catch(handleConnectionError);
         } else {
             displayMessage('An active connection with QZ already exists.', 'alert-warning');
         }
