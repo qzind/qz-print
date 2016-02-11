@@ -321,7 +321,8 @@ public class TrayManager {
 
     private final ActionListener exitListener = new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-            if (confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
+            boolean showAllNotifications = prefs.getBoolean(notificationsKey, false);
+            if (!showAllNotifications || confirmDialog.prompt("Exit " + name + "?")) { exit(0); }
         }
     };
 
@@ -353,10 +354,10 @@ public class TrayManager {
             // Remove shortcut entry
             if (confirmDialog.prompt("Remove " + name + " from " + toggleType + "?")) {
                 if (!shortcutCreator.removeShortcut(toggleType)) {
-                    tray.displayMessage(name, "Error removing " + toggleType + " entry", TrayIcon.MessageType.ERROR);
+                    displayErrorMessage("Error removing " + toggleType + " entry");
                     checkBoxState = true;   // Set our checkbox back to true
                 } else {
-                    tray.displayMessage(name, "Successfully removed " + toggleType + " entry", TrayIcon.MessageType.INFO);
+                    displayInfoMessage("Successfully removed " + toggleType + " entry");
                 }
             } else {
                 checkBoxState = true;   // Set our checkbox back to true
@@ -364,10 +365,10 @@ public class TrayManager {
         } else {
             // Add shortcut entry
             if (!shortcutCreator.createShortcut(toggleType)) {
-                tray.displayMessage(name, "Error creating " + toggleType + " entry", TrayIcon.MessageType.ERROR);
+                displayErrorMessage("Error creating " + toggleType + " entry");
                 checkBoxState = false;   // Set our checkbox back to false
             } else {
-                tray.displayMessage(name, "Successfully added " + toggleType + " entry", TrayIcon.MessageType.INFO);
+                displayInfoMessage("Successfully added " + toggleType + " entry");
             }
         }
 
@@ -482,18 +483,11 @@ public class TrayManager {
     }
 
     /**
-     * Thread safe method for setting an info status message
+     * Thread safe method for setting a fine status message.  Messages are suppressed unless "Show all
+     * notifications" is checked.
      */
     public void displayInfoMessage(String text) {
         displayMessage(name, text, TrayIcon.MessageType.INFO);
-    }
-
-    /**
-     * Thread safe method for setting a fine status message.   Fine messages are suppressed unless "Show all
-     * notifications" is checked.
-     */
-    public void displayFineMessage(String text) {
-        displayMessage(name, text, TrayIcon.MessageType.NONE);
     }
 
     /**
@@ -548,7 +542,7 @@ public class TrayManager {
                 @Override
                 public void run() {
                     boolean showAllNotifications = prefs.getBoolean(notificationsKey, false);
-                    if (showAllNotifications || (level == TrayIcon.MessageType.INFO || level == TrayIcon.MessageType.ERROR)) {
+                    if (showAllNotifications || level == TrayIcon.MessageType.ERROR) {
                         tray.displayMessage(caption, text, level);
                     }
                 }
