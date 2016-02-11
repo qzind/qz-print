@@ -7,7 +7,7 @@ import com.estontorise.simplersa.interfaces.RSATool;
 import org.apache.commons.codec.binary.StringUtils;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.ssl.X509CertificateChainBuilder;
-import org.bouncycastle.asn1.x509.X509Name;
+import org.bouncycastle.asn1.x509.*;
 import org.bouncycastle.jce.PrincipalUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -131,6 +131,7 @@ public class Certificate {
 
 
     /** Decodes a certificate and intermediate certificate from the given string */
+    @SuppressWarnings("deprecation")
     public Certificate(String in) throws CertificateParsingException {
         try {
             //Setup X.509
