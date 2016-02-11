@@ -91,7 +91,7 @@ public class PrintSocket {
     @OnWebSocketConnect
     public void onConnect(Session session) {
         log.info("Server connect: " + session.getRemoteAddress());
-        trayManager.displayFineMessage("Client connected");
+        trayManager.displayInfoMessage("Client connected");
     }
 
     @OnWebSocketClose
@@ -107,7 +107,7 @@ public class PrintSocket {
         }
 
         log.info("WebSocket close: " + statusCode + " - " + reason);
-        trayManager.displayFineMessage("Client disconnected");
+        trayManager.displayInfoMessage("Client disconnected");
     }
 
     @OnWebSocketError
