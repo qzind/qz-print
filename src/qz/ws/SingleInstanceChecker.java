@@ -62,7 +62,7 @@ public class SingleInstanceChecker {
             client.connect(this, targetUri, request);
         }
         catch(Exception e) {
-            log.error("Could not connect to url {}", uri, e);
+            log.warn("Could not connect to url {}", uri, e);
         }
     }
 
@@ -73,8 +73,8 @@ public class SingleInstanceChecker {
 
     @OnWebSocketError
     public void onError(Throwable e) {
-        if (!"Connection refused: no further information".equals(e.getMessage())) {
-            log.error("WebSocket error", e);
+        if (!e.getMessage().contains("Connection refused")) {
+            log.warn("WebSocket error", e);
         }
     }
 
@@ -84,7 +84,7 @@ public class SingleInstanceChecker {
             session.getRemote().sendString(Constants.PROBE_REQUEST);
         }
         catch(IOException e) {
-            log.error("Could not send data to server", e);
+            log.warn("Could not send data to server", e);
             session.close();
         }
     }
