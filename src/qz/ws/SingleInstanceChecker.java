@@ -84,7 +84,7 @@ public class SingleInstanceChecker {
 
     @OnWebSocketError
     public void onError(Throwable e) {
-        if (!e.getMessage().equals("Connection refused: no further information")) {
+        if (!e.getMessage().contains("Connection refused")) {
             log.log(Level.WARNING, "WebSocket error,  " + e.getMessage());
         }
         trayManager = null;
