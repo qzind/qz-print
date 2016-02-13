@@ -1004,7 +1004,7 @@ var qz = function() {
              * @param {Function|Array<Function>} calls Single or array of <code>Function({string[]} keys, {string[]} rawData)</code> calls.
              *                                         Key array is formatted as [vendor, product, interface, endpoint]. Raw data is in hexadecimal format.
              *
-             * @memberof qz.serial
+             * @memberof qz.usb
              */
             setUsbCallbacks: function(calls) {
                 _qz.usb.usbCallbacks = calls;
