@@ -73,7 +73,7 @@ public class UsbIO {
      * @param endpoint Endpoint on the usb device interface to pass data across
      * @param data     Byte array of data to send, or to be written from a receive
      */
-    private void exchangeData(byte endpoint, byte[] data) throws UsbException {
+    private synchronized void exchangeData(byte endpoint, byte[] data) throws UsbException {
         UsbPipe pipe = iface.getUsbEndpoint(endpoint).getUsbPipe();
         if (!pipe.isOpen()) { pipe.open(); }
 
