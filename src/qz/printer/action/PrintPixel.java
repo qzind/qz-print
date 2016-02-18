@@ -105,16 +105,20 @@ public abstract class PrintPixel {
         PrinterResolution rUsing = (PrinterResolution)attributes.get(PrinterResolution.class);
         if (rUsing != null) {
             PrinterResolution[] rSupport = (PrinterResolution[])output.getPrintService().getSupportedAttributeValues(PrinterResolution.class, output.getPrintService().getSupportedDocFlavors()[0], attributes);
-            boolean usingSupported = false;
-            for(PrinterResolution r : rSupport) {
-                if (rUsing.equals(r)) {
-                    usingSupported = true;
-                    break;
+            if (rSupport != null) {
+                boolean usingSupported = false;
+                for(PrinterResolution r : rSupport) {
+                    if (rUsing.equals(r)) {
+                        usingSupported = true;
+                        break;
+                    }
                 }
-            }
-            if (!usingSupported) {
-                log.warn("Not using a supported DPI for printing");
-                log.debug("Available DPI: {}", ArrayUtils.toString(rSupport));
+                if (!usingSupported) {
+                    log.warn("Not using a supported DPI for printing");
+                    log.debug("Available DPI: {}", ArrayUtils.toString(rSupport));
+                }
+            } else {
+                log.warn("Supported printer densities not found");
             }
         }
 
