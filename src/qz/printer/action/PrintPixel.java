@@ -1,5 +1,6 @@
 package qz.printer.action;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import qz.printer.PrintOptions;
@@ -9,7 +10,6 @@ import qz.utils.SystemUtilities;
 import javax.print.attribute.HashPrintRequestAttributeSet;
 import javax.print.attribute.PrintRequestAttributeSet;
 import javax.print.attribute.ResolutionSyntax;
-import javax.print.attribute.Size2DSyntax;
 import javax.print.attribute.standard.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.ColorModel;
@@ -31,10 +31,6 @@ public abstract class PrintPixel {
     protected PrintRequestAttributeSet applyDefaultSettings(PrintOptions.Pixel pxlOpts, PageFormat page) {
         PrintRequestAttributeSet attributes = new HashPrintRequestAttributeSet();
 
-        // Java prints using inches at 72dpi
-        final float CONVERT = 72 * pxlOpts.getUnits().toInch();
-        final float DENSITY = (float)pxlOpts.getDensity() * pxlOpts.getUnits().fromInch();
-
         //apply general attributes
         if (pxlOpts.getColorType() != null) {
             attributes.add(pxlOpts.getColorType().getChromatic());
@@ -47,16 +43,20 @@ public abstract class PrintPixel {
         }
 
         if (pxlOpts.getSize() != null) {
-            attributes.add(MediaSize.findMedia((float)pxlOpts.getSize().getWidth() / CONVERT, (float)pxlOpts.getSize().getHeight() / CONVERT, pxlOpts.getUnits().getMediaSizeUnits()));
+            attributes.add(new MediaPrintableArea(0, 0, (float)pxlOpts.getSize().getWidth(), (float)pxlOpts.getSize().getHeight(), pxlOpts.getUnits().getMediaSizeUnits()));
         } else {
-            attributes.add(MediaSize.findMedia((float)page.getWidth() / 72f, (float)page.getHeight() / 72f, Size2DSyntax.INCH));
+            attributes.add(new MediaPrintableArea(0, 0, (float)page.getWidth() / 72f, (float)page.getHeight() / 72f, PrintOptions.Unit.INCH.getMediaSizeUnits()));
         }
 
         //TODO - set paper thickness
         //TODO - set printer tray
 
 
-        log.trace("DPI: {}", DENSITY);
+        // Java prints using inches at 72dpi
+        final float DENSITY = (float)pxlOpts.getDensity() * pxlOpts.getUnits().as1Inch();
+        final float CONVERT = pxlOpts.getUnits().toInches() * 72f;
+
+        log.trace("DPI: {}\tCNV: {}", DENSITY, CONVERT);
         if (DENSITY > 0) {
             attributes.add(new PrinterResolution((int)DENSITY, (int)DENSITY, ResolutionSyntax.DPI));
         }
@@ -101,6 +101,22 @@ public abstract class PrintPixel {
 
     protected void printCopies(PrintOutput output, PrintOptions.Pixel pxlOpts, PrinterJob job, PrintRequestAttributeSet attributes) throws PrinterException {
         log.info("Starting printing ({} copies)", pxlOpts.getCopies());
+
+        PrinterResolution rUsing = (PrinterResolution)attributes.get(PrinterResolution.class);
+        if (rUsing != null) {
+            PrinterResolution[] rSupport = (PrinterResolution[])output.getPrintService().getSupportedAttributeValues(PrinterResolution.class, output.getPrintService().getSupportedDocFlavors()[0], attributes);
+            boolean usingSupported = false;
+            for(PrinterResolution r : rSupport) {
+                if (rUsing.equals(r)) {
+                    usingSupported = true;
+                    break;
+                }
+            }
+            if (!usingSupported) {
+                log.warn("Not using a supported DPI for printing");
+                log.debug("Available DPI: {}", ArrayUtils.toString(rSupport));
+            }
+        }
 
         CopiesSupported cSupport = (CopiesSupported)output.getPrintService()
                 .getSupportedAttributeValues(Copies.class, output.getPrintService().getSupportedDocFlavors()[0], attributes);

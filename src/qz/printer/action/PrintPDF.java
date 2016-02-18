@@ -84,7 +84,7 @@ public class PrintPDF extends PrintPixel implements PrintProcessor {
 
         Book book = new Book();
         for(PDDocument doc : pdfs) {
-            book.append(new PDFPrintable(doc, scale, false, (float)(pxlOpts.getDensity() * pxlOpts.getUnits().fromInch()), false), page, doc.getNumberOfPages());
+            book.append(new PDFPrintable(doc, scale, false, (float)(pxlOpts.getDensity() * pxlOpts.getUnits().as1Inch()), false), page, doc.getNumberOfPages());
         }
 
         job.setJobName(pxlOpts.getJobName(Constants.PDF_PRINT));

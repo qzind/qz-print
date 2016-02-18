@@ -376,11 +376,11 @@ public class PrintOptions {
             this.µm = µm;
         }
 
-        public float toInch() {
+        public float toInches() {
             return toInch;
         }
 
-        public float fromInch() {
+        public float as1Inch() {
             return fromInch;
         }
 
