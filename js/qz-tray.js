@@ -768,7 +768,9 @@ var qz = function() {
             for(var i = 0; i < data.length; i++) {
                 if (typeof data[i] === 'object') {
                     if ((!data[i].format && data[i].type.toUpperCase() !== 'RAW') //unspecified format and not raw -> assume file
-                        || (data[i].format && (data[i].format.toUpperCase() === 'FILE' || data[i].format.toUpperCase() === 'IMAGE'))) {
+                        || (data[i].format && (data[i].format.toUpperCase() === 'FILE'
+                            || data[i].format.toUpperCase() === 'IMAGE'
+                            || data[i].format.toUpperCase() === 'XML'))) {
                         data[i].data = _qz.tools.absolute(data[i].data);
                     }
                 }
