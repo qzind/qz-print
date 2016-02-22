@@ -1,5 +1,6 @@
 package qz.ui;
 
+import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.WriterAppender;
 import qz.utils.SystemUtilities;
@@ -59,13 +60,14 @@ public class LogDialog extends BasicDialog {
         setResizable(true);
 
         // add new appender to Log4J just for text area
-        logStream = new WriterAppender(new PatternLayout("%d{ISO8601} [%p] %m%n"), new OutputStream() {
+        logStream = new WriterAppender(new PatternLayout("[%p] %d{ISO8601} @ %c:%L%n\t%m%n"), new OutputStream() {
             @Override
             public void write(int b) throws IOException {
                 logArea.append(String.valueOf((char)b));
                 logPane.getVerticalScrollBar().setValue(logPane.getVerticalScrollBar().getMaximum());
             }
         });
+        logStream.setThreshold(Level.TRACE);
     }
 
     @Override
