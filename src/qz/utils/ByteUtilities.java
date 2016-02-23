@@ -187,8 +187,4 @@ public class ByteUtilities {
         return hex.toString();
     }
 
-    public static boolean isBase64Image(String path) {
-        return path.startsWith("data:image/") && path.contains(";base64,");
-    }
-
 }

@@ -9,6 +9,7 @@
  */
 package qz.printer.action;
 
+import net.sourceforge.iharder.Base64;
 import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.codehaus.jettison.json.JSONArray;
@@ -16,7 +17,6 @@ import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import net.sourceforge.iharder.Base64;
 import qz.common.ByteArrayBuilder;
 import qz.common.Constants;
 import qz.exception.NullCommandException;
@@ -38,6 +38,7 @@ import javax.print.event.PrintJobEvent;
 import javax.print.event.PrintJobListener;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -118,10 +119,12 @@ public class PrintRaw implements PrintProcessor {
 
     private ImageWrapper getImageWrapper(String cmd, JSONObject opt) throws IOException, JSONException {
         BufferedImage buf;
-        if (ByteUtilities.isBase64Image(cmd)) {
-            buf = ImageIO.read(new ByteArrayInputStream(Base64.decode(cmd)));
-        } else {
+        try {
             buf = ImageIO.read(new URL(cmd));
+        }
+        catch(MalformedURLException e) {
+            //if it's not a URL, it has to be base64
+            buf = ImageIO.read(new ByteArrayInputStream(Base64.decode(cmd)));
         }
 
         ImageWrapper iw = new ImageWrapper(buf, LanguageType.getType(opt.optString("language")));
