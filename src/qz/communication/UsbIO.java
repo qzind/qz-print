@@ -2,10 +2,7 @@ package qz.communication;
 
 import qz.utils.UsbUtilities;
 
-import javax.usb.UsbDevice;
-import javax.usb.UsbException;
-import javax.usb.UsbInterface;
-import javax.usb.UsbPipe;
+import javax.usb.*;
 import javax.usb.util.UsbUtil;
 
 public class UsbIO {
@@ -30,7 +27,14 @@ public class UsbIO {
 
     public void open(byte ifc) throws UsbException {
         iface = device.getActiveUsbConfiguration().getUsbInterface(ifc);
-        iface.claim();
+
+        iface.claim(new UsbInterfacePolicy() {
+            @Override
+            public boolean forceClaim(UsbInterface usbInterface) {
+                // Releases kernel driver for systems that auto-claim usb devices
+                return true;
+            }
+        });
     }
 
     public boolean isOpen() {
