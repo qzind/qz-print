@@ -1458,8 +1458,8 @@
         var precision = parseInt(data[3], 16);
         precision = precision ^ -256; //unsigned to signed
 
-        if (precision < 0) { precision = 0; }
-        if (precision < 20) { precision = 20; }
+        // xor on 0 causes issues
+        if (precision == -256) { precision = 0; }
 
         // Get weight
         data.splice(0, 4);
