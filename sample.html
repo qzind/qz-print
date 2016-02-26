@@ -1458,6 +1458,9 @@
         var precision = parseInt(data[3], 16);
         precision = precision ^ -256; //unsigned to signed
 
+        if (precision < 0) { precision = 0; }
+        if (precision < 20) { precision = 20; }
+
         // Get weight
         data.splice(0, 4);
         data.reverse();
