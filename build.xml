@@ -342,6 +342,10 @@
             <filterchain><expandproperties/></filterchain>
         </copy>
 
+        <copy file="${linux.udev.in}" tofile="${linux.udev.out}" >
+            <filterchain><expandproperties/></filterchain>
+        </copy>
+
         <copy file="${linux.packager.in}" tofile="${linux.packager.out}" >
             <filterchain><expandproperties/></filterchain>
         </copy>

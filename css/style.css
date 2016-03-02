@@ -343,3 +343,8 @@ footer {
 .tip {
     border-bottom: 1px dashed;
 }
+
+code {
+    color: #31708F;
+    background-color: #D9EDF7;
+}

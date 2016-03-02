@@ -1135,11 +1135,12 @@
                 if (device.hub) { list += "USB Hub"; }
 
                 list += "<p>" +
-                        "   VendorID: <em>0x" + device.vendorId + "</em><br/>" +
-                        "   ProductID: <em>0x" + device.productId + "</em><br/>";
+                        "   VendorID: <code>0x" + device.vendorId + "</code>" +
+                        usbButton(["usbVendor", "usbProduct"], [device.vendorId, device.productId]) + "<br/>" +
+                        "   ProductID: <code>0x" + device.productId + "</code><br/>";
 
-                if (device.manufacturer) { list += "   Manufacturer: <em>" + device.manufacturer + "</em><br/>"; }
-                if (device.product) { list += "   Product: <em>" + device.product + "</em><br/>"; }
+                if (device.manufacturer) { list += "   Manufacturer: <code>" + device.manufacturer + "</code><br/>"; }
+                if (device.product) { list += "   Product: <code>" + device.product + "</code><br/>"; }
 
                 list += "</p><hr/>";
             }
@@ -1152,7 +1153,7 @@
         qz.usb.listInterfaces($("#usbVendor").val(), $("#usbProduct").val()).then(function(data) {
             var list = '';
             for(var i = 0; i < data.length; i++) {
-                list += "&nbsp; 0x" + data[i] + "<br/>";
+                list += "&nbsp; <code>0x" + data[i] + "</code>" + usbButton(["usbInterface"], [data[i]]) + "<br/>";
             }
 
             displayMessage("<strong>Available device interfaces:</strong><br/>" + list);
@@ -1163,7 +1164,7 @@
         qz.usb.listEndpoints($("#usbVendor").val(), $("#usbProduct").val(), $("#usbInterface").val()).then(function(data) {
             var list = '';
             for(var i = 0; i < data.length; i++) {
-                list += "&nbsp; 0x" + data[i] + "<br/>";
+                list += "&nbsp; <code>0x" + data[i] + "</code>" + usbButton(["usbEndpoint"], [data[i]]) + "<br/>";
             }
 
             displayMessage("<strong>Available interface endpoints:</strong><br/>" + list);
@@ -1432,6 +1433,15 @@
         var path = window.location.href;
         return path.substring(0, path.lastIndexOf("/"));
     }
+
+    function usbButton(ids, data) {
+        var click = "";
+        for (var i in ids) {
+            click += "$('#" + ids[i] + "').val('0x" + data[i] + "');$('#" + ids[i] + "').fadeOut(300).fadeIn(500);";
+        }
+        return '<button class="btn btn-default btn-xs" onclick="' + click + '" data-dismiss="alert">Use This</button>';
+    }
+
 
     /** Attempts to parse scale reading from USB raw output */
     function readScaleData(data) {

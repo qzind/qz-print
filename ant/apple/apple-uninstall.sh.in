@@ -3,8 +3,9 @@
 #                         ${project.name} Apple OS X Postinstall                      #
 ###############################################################################
 #  Description:                                                               #
-#    1. Generates and installs certificate for secure websockets              #
-#    2. Installs certificate to Firefox                                       #
+#    1. Removes certificate for secure websockets                             #
+#    2. Removes certificate in Firefox                                        #
+#    3. Removes application bundle                                            #
 #                                                                             #
 #  Usage:                                                                     #
 #    $ sudo ./uninstall                                                       #
