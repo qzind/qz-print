@@ -37,7 +37,7 @@ makekeystore="${makekeystore/$keystore/$keystorepath}"
 
 # Handle CN=${jks.cn} override
 if [ -n "$1" ]; then
-    cname="CN={jks.cn},"
+    cname="CN=${jks.cn},"
     makekeystore="${makekeystore/$cname/$1}"
 fi
 
