@@ -38,7 +38,8 @@ makekeystore="${makekeystore/$keystore/$keystorepath}"
 # Handle CN=${jks.cn} override
 if [ -n "$1" ]; then
     cname="CN=${jks.cn},"
-    makekeystore="${makekeystore/$cname/$1}"
+    override="CN=$1,"
+    makekeystore="${makekeystore/$cname/$override}"
 fi
 
 # Cert export variable substitutions
