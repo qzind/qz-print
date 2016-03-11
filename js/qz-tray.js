@@ -14,7 +14,7 @@
  *     Provides hashing algorithm for signing messages.
  *     Can be overridden via <code>qz.api.setSha256Type</code> to remove dependency.
  */
-var qz = function() {
+var qz = (function() {
 
 ///// POLYFILLS /////
 
@@ -83,7 +83,7 @@ var qz = function() {
 
                     try {
                         _qz.log.trace("Attempting connection", address);
-                        _qz.websocket.connection = new WebSocket(address);
+                        _qz.websocket.connection = new _qz.tools.ws(address);
                     }
                     catch(err) {
                         _qz.log.error(err);
@@ -100,7 +100,7 @@ var qz = function() {
                             _qz.websocket.setup.openConnection({ resolve: resolve, reject: reject });
 
                             if (config.keepAlive > 0) {
-                                var interval = window.setInterval(function() {
+                                var interval = setInterval(function() {
                                     if (!qz.websocket.isActive()) {
                                         clearInterval(interval);
                                         return;
@@ -389,7 +389,8 @@ var qz = function() {
                 return result;
             },
 
-            hash: Sha256.hash,
+            hash: typeof Sha256 !== 'undefined' ? Sha256.hash : null,
+            ws: typeof WebSocket !== 'undefined' ? WebSocket : null,
 
             absolute: function(loc) {
                 if (document && typeof document.createElement === 'function') {
@@ -513,19 +514,21 @@ var qz = function() {
                         return;
                     }
 
-                    // Old standard of WebSocket used const CLOSED as 2, new standards use const CLOSED as 3, we need the newer standard for jetty
-                    if (!"WebSocket" in window || !WebSocket.CLOSED || WebSocket.CLOSED == 2) {
-                        reject(new Error("Web Sockets are not supported by this browser"));
+                    if (!_qz.tools.ws) {
+                        reject(new Error("WebSocket not supported by this browser"));
+                        return;
+                    }
+
+                    if (!_qz.tools.ws.CLOSED || _qz.tools.ws.CLOSED == 2) {
+                        reject(new Error("Unsupported WebSocket version detected: HyBi-00/Hixie-76"));
                         return;
                     }
 
                     //disable secure ports if page is not secure
-                    if (location.protocol !== 'https:') {
+                    if (typeof location === 'undefined' || location.protocol !== 'https:') {
                         if (options == undefined) { options = {}; }
                         options.usingSecure = false;
                     }
-
-                    var config = _qz.tools.extend({}, _qz.websocket.connectConfig, options);
 
                     var attempt = function(count) {
                         var nextAttempt = function() {
@@ -1277,12 +1280,24 @@ var qz = function() {
              */
             setSha256Type: function(hasher) {
                 _qz.tools.hash = hasher;
+            },
+
+            /**
+             * Change the WebSocket handler.
+             * Should be called before any initialization to avoid possible errors.
+             *
+             * @param {Function} ws <code>Function({function} WebSocket)</code> called to override the internal WebSocket handler.
+             *
+             * @memberof qz.api
+             */
+            setWebSocketType: function(ws) {
+                _qz.tools.ws = ws;
             }
         }
 
     };
 
-};
+})();
 
 
 (function() {
@@ -1291,6 +1306,6 @@ var qz = function() {
     } else if (typeof exports === 'object') {
         module.exports = qz;
     } else {
-        window.qz = qz();
+        window.qz = qz;
     }
 })();
