@@ -1,7 +1,16 @@
-qz-print
+QZ Print
 ========
 
-Browser plugin for sending documents and raw commands to a printer or attached device.
+###End Of Life Warning
+For a modern version of QZ Print, please visit the new and improved 2.0 branch here:
+https://github.com/qzind/tray
+
+QZ Print was a Java applet which sent raw commands to the printer using JavaScript and NPAPI/ActiveX LiveConnect calls.
+Due to the deprecation of NPAPI in Chrome (2015) and Firefox (2017), QZ Tray was born as a wrapper around the obsolete LiveConnect calls.
+
+QZ Tray's codebase was inhibited by the LiveConnect API and a brand new API was written to support modern, asynronous technologies, such as JavaScript Promises, Node.js, etc.
+
+The 1.9 branch will become End Of Life January 1, 2017.  Until that time, the branch will only receive critical patches and updates.
 
 ##Getting Started
   * See our [Getting Started](../../wiki/getting-started) guide.
