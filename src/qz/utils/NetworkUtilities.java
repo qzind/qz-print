@@ -41,14 +41,6 @@ public class NetworkUtilities {
     private String hostname = "www.google.com";
     private int port = 80;
 
-    public NetworkUtilities() throws SocketException, ReflectException, UnknownHostException {
-        try {
-            gatherNetworkInfo();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
     public void setHostname(String hostname) {
         this.hostname = hostname;
     }
@@ -75,11 +67,17 @@ public class NetworkUtilities {
         }
     }
 
-    public String getHardwareAddress() {
+    public String getHardwareAddress() throws IOException {
+        if (this.macAddress == null) {
+            gatherNetworkInfo();
+        }
         return this.macAddress;
     }
 
-    public String getInetAddress() {
+    public String getInetAddress() throws IOException {
+        if (this.ipAddress == null) {
+            gatherNetworkInfo();
+        }
         return this.ipAddress;
     }
 }

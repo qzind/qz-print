@@ -718,6 +718,14 @@ public class PrintFunction extends Applet {
         return this.getIPAddress();
     }
 
+    public void setHostname(String hostname) throws SocketException, ReflectException, UnknownHostException {
+        getNetworkUtilities().setHostname(hostname);
+    }
+
+    public void setPort(int port) throws SocketException, ReflectException, UnknownHostException {
+        getNetworkUtilities().setPort(port);
+    }
+
     /**
      * Returns a comma separated <code>String</code> containing all MAC
      * Addresses found on the system, or <code>null</code> if none are found.

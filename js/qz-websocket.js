@@ -326,6 +326,11 @@ function mapMethods(websocket, methods) {
         window["qz"][key](setupMethods);
     }
 
+    // Special case for getNetworkUtilities
+    qz.getNetworkUtilities = function() {
+        return {setHostname: qz.setHostname, setPort: qz.setPort}
+    };
+
     logger.log("Sent methods off to get rehabilitated");
 }
 

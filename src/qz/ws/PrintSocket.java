@@ -78,7 +78,7 @@ public class PrintSocket {
     private final List<String> printingMethods = Arrays.asList("print", "printHTML", "printPS", "printToFile", "printToHost");
     // List of methods that will cause the gateway dialog to pop-up
     private final List<String> privilegedMethods = Arrays.asList("findNetworkInfo", "closePort", "findPrinter", "findPrinters",
-            "findPorts", "openPort", "send", "setSerialProperties", "setSerialBegin", "setSerialEnd", "getSerialIO");
+            "findPorts", "openPort", "send", "setSerialProperties", "setSerialBegin", "setSerialEnd", "getSerialIO", "setHostname", "setPort");
 
     private final TrayManager trayManager = PrintWebSocketServer.getTrayManager();
 

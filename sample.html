@@ -869,8 +869,8 @@ function listNetworkInfo() {
     if (isLoaded()) {
         // Makes a quick connection to www.google.com to determine the active interface
         // Note, if you don't wish to use google.com, you can customize the host and port
-        // qz.getNetworkUtilities().setHostname("qzindustries.com");
-        // qz.getNetworkUtilities().setPort(80);
+        qz.getNetworkUtilities().setHostname("qz.io");    // optional, default is google.com
+        qz.getNetworkUtilities().setPort(80);             // optional, default is 80
         qz.findNetworkInfo();
 
         // Automatically gets called when "qz.findPrinter()" is finished.
