@@ -139,7 +139,8 @@ public class Certificate {
 
                     for(X509Certificate x509Certificate : x509Certificates) {
                         if (x509Certificate.equals(trustedRootCert.theCertificate)) {
-                            valid = true;
+                            Date now = new Date();
+                            valid = (getValidFromDate().compareTo(now) <= 0) && (getValidToDate().compareTo(now) > 0);
                         }
                     }
                 }
@@ -154,7 +155,8 @@ public class Certificate {
                 if (qzCrl.isLoaded()) {
                     if (qzCrl.isRevoked(getFingerprint()) || theIntermediateCertificate == null || qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate))) {
                         log.warning("Problem verifying certificate with CRL");
-                        valid = false;
+                        Date now = new Date();
+                        valid = (getValidFromDate().compareTo(now) <= 0) && (getValidToDate().compareTo(now) > 0);
                     }
                 } else {
                     //Assume nothing is revoked, because we can't get the CRL
