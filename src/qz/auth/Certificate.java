@@ -155,8 +155,7 @@ public class Certificate {
                 if (qzCrl.isLoaded()) {
                     if (qzCrl.isRevoked(getFingerprint()) || theIntermediateCertificate == null || qzCrl.isRevoked(makeThumbPrint(theIntermediateCertificate))) {
                         log.warning("Problem verifying certificate with CRL");
-                        Date now = new Date();
-                        valid = (getValidFromDate().compareTo(now) <= 0) && (getValidToDate().compareTo(now) > 0);
+                        valid = false;
                     }
                 } else {
                     //Assume nothing is revoked, because we can't get the CRL
