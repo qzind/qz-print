@@ -429,7 +429,7 @@ public class PrintSocket {
         sendResponse(session, message.toString());
     }
 
-    private void sendResponse(Session session, String jsonMsg) {
+    private synchronized void sendResponse(Session session, String jsonMsg) {
         try {
             log.info("Response: " + jsonMsg);
             session.getRemote().sendString(jsonMsg);
