@@ -14,7 +14,7 @@
 
         <!-- Your custom code signing properties here. Feel free to change. -->
         <!-- The project will default to qz.ks if it doesn't exist -->
-        <property file="${user.home}/Desktop/Code Signing/private.properties"/>
+        <property file="../private/private.properties"/>
 
         <!-- The default code signing properties which uses qz.ks. -->
         <!-- Please leave this value the netbeans default as a fallback. -->
@@ -43,7 +43,8 @@
                     <include name="**/*.jar"/>
                 </fileset>
             </classpath>
-            <compilerarg value="-Xlint:-options"/>
+			<compilerarg value="-Xlint:-options"/>
+            <compilerarg value="-Djava.endorsed.dirs=${lib.dir}/jre/"/>
         </javac>
 
         <!-- Include non-class files from src in build directory -->
@@ -69,6 +70,7 @@
                 </fileset>
             </classpath>
             <compilerarg value="-Xlint:-options"/>
+            <compilerarg value="-Djava.endorsed.dirs=${lib.dir}/jre/"/>
         </javac>
 
         <!-- Include non-class files from src in build directory -->
