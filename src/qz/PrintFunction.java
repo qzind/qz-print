@@ -194,7 +194,12 @@ public class PrintFunction extends Applet {
         this.file = file;
 
         try{
-            getPrintPS().setPDF(PDDocument.load(new URL(file)));
+            if (file != null && file.startsWith("data:application/pdf;base64,")) {
+                ByteArrayInputStream stream = new ByteArrayInputStream(Base64.decode(file.split(",")[1]));
+                getPrintPS().setPDF(PDDocument.load(stream, true));
+            } else {
+                getPrintPS().setPDF(PDDocument.load(new URL(file)));
+            }
         } catch (Exception e) {
             log.log(Level.SEVERE, "Error appending data", e);
             set(e);
